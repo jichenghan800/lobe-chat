@@ -2,6 +2,7 @@
 import { BRANDING_NAME } from '@lobechat/business-const';
 import { describe, expect, it } from 'vitest';
 
+import { BRANDING_NAME } from '@/const/branding';
 import { DEFAULT_LANG } from '@/const/locale';
 
 import { AUTHOR_LIST, Ld } from './ld';
