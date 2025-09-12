@@ -2,6 +2,48 @@
 
 # Changelog
 
+## [Version&nbsp;1.126.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.125.1...v1.126.0)
+<sup>Released on **2025-09-12**</sup>
+
+
+#### ✨ Features
+
+- **misc**: ChatInput support resize.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Improve OpenAIStream processing to emit usage data for chunks lacking choices.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's improved
+
+* **misc**: ChatInput support resize, closes [#9215](https://github.com/jaworldwideorg/OneJA-Bot/issues/9215) ([5e814e0](https://github.com/jaworldwideorg/OneJA-Bot/commit/5e814e0))
+
+
+
+#### What's fixed
+
+* **misc**: Improve OpenAIStream processing to emit usage data for chunks lacking choices, closes [#9220](https://github.com/jaworldwideorg/OneJA-Bot/issues/9220) ([8ba662c](https://github.com/jaworldwideorg/OneJA-Bot/commit/8ba662c))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.125.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.125.0...v1.125.1)
 <sup>Released on **2025-09-11**</sup>
 
