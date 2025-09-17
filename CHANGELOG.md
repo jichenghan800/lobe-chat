@@ -2,6 +2,83 @@
 
 # Changelog
 
+## [Version&nbsp;1.127.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.126.0...v1.127.0)
+<sup>Released on **2025-09-17**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Improve db sql performance, refactor message proccesser to the context engine.
+
+
+#### ✨ Features
+
+- **misc**: Support Vercel AI Gateway provider.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Add qwen provider support for image-edit model, fix azure ai runtime error, fix open chat page with float link modal, Google stream error unable to abort request, improve db migrations sql.
+
+
+#### 💄 Styles
+
+- **misc**: Enable toggling search on/off via search button click & historyCount button, fix discover plugin link, improve error handle with agent config, support `.doc` file parse, update i18n, update i18n, update i18n, Update model configs, update SiliconCloud reasoning models.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Improve db sql performance, closes [#9283](https://github.com/jaworldwideorg/OneJA-Bot/issues/9283) ([cee555a](https://github.com/jaworldwideorg/OneJA-Bot/commit/cee555a))
+* **misc**: Refactor message proccesser to the context engine, closes [#9230](https://github.com/jaworldwideorg/OneJA-Bot/issues/9230) ([dacfffd](https://github.com/jaworldwideorg/OneJA-Bot/commit/dacfffd))
+
+
+
+#### What's improved
+
+* **misc**: Support Vercel AI Gateway provider, closes [#8883](https://github.com/jaworldwideorg/OneJA-Bot/issues/8883) ([5a4b0fd](https://github.com/jaworldwideorg/OneJA-Bot/commit/5a4b0fd))
+
+
+
+#### What's fixed
+
+* **misc**: Add qwen provider support for image-edit model, closes [#9277](https://github.com/jaworldwideorg/OneJA-Bot/issues/9277) [#9184](https://github.com/jaworldwideorg/OneJA-Bot/issues/9184) ([e137b33](https://github.com/jaworldwideorg/OneJA-Bot/commit/e137b33))
+* **misc**: Fix azure ai runtime error, closes [#9276](https://github.com/jaworldwideorg/OneJA-Bot/issues/9276) ([c21c14e](https://github.com/jaworldwideorg/OneJA-Bot/commit/c21c14e))
+* **misc**: Fix open chat page with float link modal, closes [#9235](https://github.com/jaworldwideorg/OneJA-Bot/issues/9235) ([2c677e5](https://github.com/jaworldwideorg/OneJA-Bot/commit/2c677e5))
+* **misc**: Google stream error unable to abort request, closes [#9180](https://github.com/jaworldwideorg/OneJA-Bot/issues/9180) ([78eaead](https://github.com/jaworldwideorg/OneJA-Bot/commit/78eaead))
+* **misc**: Improve db migrations sql, closes [#9295](https://github.com/jaworldwideorg/OneJA-Bot/issues/9295) ([96ff5aa](https://github.com/jaworldwideorg/OneJA-Bot/commit/96ff5aa))
+
+
+
+#### Styles
+
+* **misc**: Enable toggling search on/off via search button click & historyCount button, closes [#9173](https://github.com/jaworldwideorg/OneJA-Bot/issues/9173) ([240c7b7](https://github.com/jaworldwideorg/OneJA-Bot/commit/240c7b7))
+* **misc**: Fix discover plugin link, closes [#9240](https://github.com/jaworldwideorg/OneJA-Bot/issues/9240) ([cfb2246](https://github.com/jaworldwideorg/OneJA-Bot/commit/cfb2246))
+* **misc**: Improve error handle with agent config, closes [#9263](https://github.com/jaworldwideorg/OneJA-Bot/issues/9263) ([6656217](https://github.com/jaworldwideorg/OneJA-Bot/commit/6656217))
+* **misc**: Support `.doc` file parse, closes [#8182](https://github.com/jaworldwideorg/OneJA-Bot/issues/8182) ([ed42753](https://github.com/jaworldwideorg/OneJA-Bot/commit/ed42753))
+* **misc**: Update i18n, closes [#9294](https://github.com/jaworldwideorg/OneJA-Bot/issues/9294) ([c018f3d](https://github.com/jaworldwideorg/OneJA-Bot/commit/c018f3d))
+* **misc**: Update i18n, closes [#9243](https://github.com/jaworldwideorg/OneJA-Bot/issues/9243) ([04764ad](https://github.com/jaworldwideorg/OneJA-Bot/commit/04764ad))
+* **misc**: Update i18n, closes [#9237](https://github.com/jaworldwideorg/OneJA-Bot/issues/9237) ([642dc3b](https://github.com/jaworldwideorg/OneJA-Bot/commit/642dc3b))
+* **misc**: Update model configs, closes [#9170](https://github.com/jaworldwideorg/OneJA-Bot/issues/9170) ([f89b730](https://github.com/jaworldwideorg/OneJA-Bot/commit/f89b730))
+* **misc**: Update SiliconCloud reasoning models, closes [#9287](https://github.com/jaworldwideorg/OneJA-Bot/issues/9287) ([b47bb5b](https://github.com/jaworldwideorg/OneJA-Bot/commit/b47bb5b))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.126.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.125.1...v1.126.0)
 <sup>Released on **2025-09-12**</sup>
 
