@@ -2,6 +2,48 @@
 
 # Changelog
 
+## [Version&nbsp;1.128.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.127.1...v1.128.0)
+<sup>Released on **2025-09-19**</sup>
+
+
+#### ✨ Features
+
+- **misc**: Add scroll support for pinned assistants using ScrollShadow.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix oidc open direct issue.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's improved
+
+* **misc**: Add scroll support for pinned assistants using ScrollShadow, closes [#9319](https://github.com/jaworldwideorg/OneJA-Bot/issues/9319) [#9316](https://github.com/jaworldwideorg/OneJA-Bot/issues/9316) ([54c0ac4](https://github.com/jaworldwideorg/OneJA-Bot/commit/54c0ac4))
+
+
+
+#### What's fixed
+
+* **misc**: Fix oidc open direct issue, closes [#9315](https://github.com/jaworldwideorg/OneJA-Bot/issues/9315) ([70f52a3](https://github.com/jaworldwideorg/OneJA-Bot/commit/70f52a3))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.127.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.127.0...v1.127.1)
 <sup>Released on **2025-09-18**</sup>
 
