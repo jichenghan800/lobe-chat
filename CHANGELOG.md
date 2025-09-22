@@ -2,6 +2,81 @@
 
 # Changelog
 
+## [Version&nbsp;1.129.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.128.0...v1.129.0)
+<sup>Released on **2025-09-22**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Improve codebase, move the ModelProvider to model-bank.
+
+
+#### ✨ Features
+
+- **misc**: Qwen provider add qwen-image-edit model support, support google video understanding.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix missing provider in server message, fix non stream mode in OpenAI Response API, Update Responses search tool to web_search.
+
+
+#### 💄 Styles
+
+- **misc**: Added `AUTH_MICROSOFT_ENTRA_ID_BASE_URL` routing, Enable thinkingBudget control for Vertex Gemini 2.5 models, Enhanced AkashChat experience, extend custom provider runtime options, Optimized modelFetch for Vercel AI Gateway, update i18n, update i18n, Use ID as name if provider name is empty.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Improve codebase, closes [#9353](https://github.com/jaworldwideorg/OneJA-Bot/issues/9353) ([7dc000e](https://github.com/jaworldwideorg/OneJA-Bot/commit/7dc000e))
+* **misc**: Move the ModelProvider to model-bank, closes [#9374](https://github.com/jaworldwideorg/OneJA-Bot/issues/9374) ([d9a4361](https://github.com/jaworldwideorg/OneJA-Bot/commit/d9a4361))
+
+
+
+#### What's improved
+
+* **misc**: Qwen provider add qwen-image-edit model support, closes [#9311](https://github.com/jaworldwideorg/OneJA-Bot/issues/9311) ([a0074fc](https://github.com/jaworldwideorg/OneJA-Bot/commit/a0074fc))
+* **misc**: Support google video understanding, closes [#8761](https://github.com/jaworldwideorg/OneJA-Bot/issues/8761) ([f02d43b](https://github.com/jaworldwideorg/OneJA-Bot/commit/f02d43b))
+
+
+
+#### What's fixed
+
+* **misc**: Fix missing provider in server message, closes [#9361](https://github.com/jaworldwideorg/OneJA-Bot/issues/9361) ([4099dfd](https://github.com/jaworldwideorg/OneJA-Bot/commit/4099dfd))
+* **misc**: Fix non stream mode in OpenAI Response API, closes [#9360](https://github.com/jaworldwideorg/OneJA-Bot/issues/9360) ([1c61b21](https://github.com/jaworldwideorg/OneJA-Bot/commit/1c61b21))
+* **misc**: Update Responses search tool to web_search, closes [#9354](https://github.com/jaworldwideorg/OneJA-Bot/issues/9354) ([58d34ff](https://github.com/jaworldwideorg/OneJA-Bot/commit/58d34ff))
+
+
+
+#### Styles
+
+* **misc**: Added `AUTH_MICROSOFT_ENTRA_ID_BASE_URL` routing, closes [#9293](https://github.com/jaworldwideorg/OneJA-Bot/issues/9293) ([78a2f9e](https://github.com/jaworldwideorg/OneJA-Bot/commit/78a2f9e))
+* **misc**: Enable thinkingBudget control for Vertex Gemini 2.5 models, closes [#8223](https://github.com/jaworldwideorg/OneJA-Bot/issues/8223) ([c665646](https://github.com/jaworldwideorg/OneJA-Bot/commit/c665646))
+* **misc**: Enhanced AkashChat experience, closes [#9330](https://github.com/jaworldwideorg/OneJA-Bot/issues/9330) ([47ec2d8](https://github.com/jaworldwideorg/OneJA-Bot/commit/47ec2d8))
+* **misc**: Extend custom provider runtime options, closes [#9278](https://github.com/jaworldwideorg/OneJA-Bot/issues/9278) ([a94e881](https://github.com/jaworldwideorg/OneJA-Bot/commit/a94e881))
+* **misc**: Optimized modelFetch for Vercel AI Gateway, closes [#9342](https://github.com/jaworldwideorg/OneJA-Bot/issues/9342) ([45b7a43](https://github.com/jaworldwideorg/OneJA-Bot/commit/45b7a43))
+* **misc**: Update i18n, closes [#9363](https://github.com/jaworldwideorg/OneJA-Bot/issues/9363) ([785d5d7](https://github.com/jaworldwideorg/OneJA-Bot/commit/785d5d7))
+* **misc**: Update i18n, closes [#9338](https://github.com/jaworldwideorg/OneJA-Bot/issues/9338) ([d2ff75c](https://github.com/jaworldwideorg/OneJA-Bot/commit/d2ff75c))
+* **misc**: Use ID as name if provider name is empty, closes [#9356](https://github.com/jaworldwideorg/OneJA-Bot/issues/9356) ([7f60544](https://github.com/jaworldwideorg/OneJA-Bot/commit/7f60544))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.128.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.127.1...v1.128.0)
 <sup>Released on **2025-09-19**</sup>
 
