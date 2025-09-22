@@ -1,6 +1,21 @@
 [
   {
     "children": {
+      "improvements": [
+        "Added AUTH_MICROSOFT_ENTRA_ID_BASE_URL routing, Enable thinkingBudget control for Vertex Gemini 2.5 models, Enhanced AkashChat experience, extend custom provider runtime options, Optimized modelFetch for Vercel AI Gateway, update i18n, update i18n, Use ID as name if provider name is empty."
+      ],
+      "features": [
+        "Qwen provider add qwen-image-edit model support, support google video understanding."
+      ],
+      "fixes": [
+        "Fix missing provider in server message, fix non stream mode in OpenAI Response API, Update Responses search tool to web_search."
+      ]
+    },
+    "date": "2025-09-22",
+    "version": "1.129.0"
+  },
+  {
+    "children": {
       "features": [
         "Add scroll support for pinned assistants using ScrollShadow."
       ],
