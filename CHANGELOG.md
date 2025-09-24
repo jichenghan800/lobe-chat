@@ -2,6 +2,48 @@
 
 # Changelog
 
+### [Version&nbsp;1.129.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.129.0...v1.129.1)
+<sup>Released on **2025-09-24**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Refactor all `@/types` in model runtime to `@lobechat/types`.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Macos desktop sign.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Refactor all `@/types` in model runtime to `@lobechat/types`, closes [#9383](https://github.com/jaworldwideorg/OneJA-Bot/issues/9383) ([b050bd7](https://github.com/jaworldwideorg/OneJA-Bot/commit/b050bd7))
+
+
+
+#### What's fixed
+
+* **misc**: Macos desktop sign, closes [#9400](https://github.com/jaworldwideorg/OneJA-Bot/issues/9400) ([4349ad9](https://github.com/jaworldwideorg/OneJA-Bot/commit/4349ad9))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.129.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.128.0...v1.129.0)
 <sup>Released on **2025-09-22**</sup>
 
