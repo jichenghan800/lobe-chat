@@ -2,6 +2,18 @@
   {
     "children": {
       "improvements": [
+        "Refactor all @/types in model runtime to @lobechat/types."
+      ],
+      "fixes": [
+        "Macos desktop sign."
+      ]
+    },
+    "date": "2025-09-24",
+    "version": "1.129.1"
+  },
+  {
+    "children": {
+      "improvements": [
         "Added AUTH_MICROSOFT_ENTRA_ID_BASE_URL routing, Enable thinkingBudget control for Vertex Gemini 2.5 models, Enhanced AkashChat experience, extend custom provider runtime options, Optimized modelFetch for Vercel AI Gateway, update i18n, update i18n, Use ID as name if provider name is empty."
       ],
       "features": [
