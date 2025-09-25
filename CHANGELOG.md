@@ -2,41 +2,92 @@
 
 # Changelog
 
-### [Version&nbsp;1.129.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.129.0...v1.129.1)
+### [Version 1.132.13](https://github.com/lobehub/lobe-chat/compare/v1.132.12...v1.132.13)
+
+<sup>Released on **2025-09-25**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.12](https://github.com/lobehub/lobe-chat/compare/v1.132.11...v1.132.12)
+
+<sup>Released on **2025-09-25**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Slove setting proxy page with style error.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Slove setting proxy page with style error, closes [#9417](https://github.com/lobehub/lobe-chat/issues/9417) ([6d3e5d1](https://github.com/lobehub/lobe-chat/commit/6d3e5d1))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.11](https://github.com/lobehub/lobe-chat/compare/v1.132.10...v1.132.11)
+
 <sup>Released on **2025-09-24**</sup>
 
+#### 💄 Styles
 
-#### ♻ Code Refactoring
+- **misc**: Enhanced Nvidia NIM chat experience, OpenAI models in AiHubMix use Responses API.
 
-- **misc**: Refactor all `@/types` in model runtime to `@lobechat/types`.
+<br/>
 
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Enhanced Nvidia NIM chat experience, closes [#9408](https://github.com/lobehub/lobe-chat/issues/9408) ([13e936f](https://github.com/lobehub/lobe-chat/commit/13e936f))
+- **misc**: OpenAI models in AiHubMix use Responses API, closes [#9251](https://github.com/lobehub/lobe-chat/issues/9251) ([8636fe4](https://github.com/lobehub/lobe-chat/commit/8636fe4))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.10](https://github.com/lobehub/lobe-chat/compare/v1.132.9...v1.132.10)
+
+<sup>Released on **2025-09-24**</sup>
 
 #### 🐛 Bug Fixes
 
 - **misc**: Macos desktop sign.
 
-
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### Code refactoring
-
-* **misc**: Refactor all `@/types` in model runtime to `@lobechat/types`, closes [#9383](https://github.com/jaworldwideorg/OneJA-Bot/issues/9383) ([b050bd7](https://github.com/jaworldwideorg/OneJA-Bot/commit/b050bd7))
-
-
-
 #### What's fixed
 
-* **misc**: Macos desktop sign, closes [#9400](https://github.com/jaworldwideorg/OneJA-Bot/issues/9400) ([4349ad9](https://github.com/jaworldwideorg/OneJA-Bot/commit/4349ad9))
+- **misc**: Macos desktop sign, closes [#9400](https://github.com/lobehub/lobe-chat/issues/9400) ([4349ad9](https://github.com/lobehub/lobe-chat/commit/4349ad9))
 
 </details>
-
 
 <div align="right">
 
@@ -44,74 +95,41 @@
 
 </div>
 
-## [Version&nbsp;1.129.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.128.0...v1.129.0)
-<sup>Released on **2025-09-22**</sup>
+### [Version 1.132.9](https://github.com/lobehub/lobe-chat/compare/v1.132.8...v1.132.9)
 
+<sup>Released on **2025-09-23**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.8](https://github.com/lobehub/lobe-chat/compare/v1.132.7...v1.132.8)
+
+<sup>Released on **2025-09-23**</sup>
 
 #### ♻ Code Refactoring
 
-- **misc**: Improve codebase, move the ModelProvider to model-bank.
-
-
-#### ✨ Features
-
-- **misc**: Qwen provider add qwen-image-edit model support, support google video understanding.
-
-
-#### 🐛 Bug Fixes
-
-- **misc**: Fix missing provider in server message, fix non stream mode in OpenAI Response API, Update Responses search tool to web_search.
-
-
-#### 💄 Styles
-
-- **misc**: Added `AUTH_MICROSOFT_ENTRA_ID_BASE_URL` routing, Enable thinkingBudget control for Vertex Gemini 2.5 models, Enhanced AkashChat experience, extend custom provider runtime options, Optimized modelFetch for Vercel AI Gateway, update i18n, update i18n, Use ID as name if provider name is empty.
-
+- **misc**: Refactor all `@/types` in model runtime to `@lobechat/types`.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
 #### Code refactoring
 
-* **misc**: Improve codebase, closes [#9353](https://github.com/jaworldwideorg/OneJA-Bot/issues/9353) ([7dc000e](https://github.com/jaworldwideorg/OneJA-Bot/commit/7dc000e))
-* **misc**: Move the ModelProvider to model-bank, closes [#9374](https://github.com/jaworldwideorg/OneJA-Bot/issues/9374) ([d9a4361](https://github.com/jaworldwideorg/OneJA-Bot/commit/d9a4361))
-
-
-
-#### What's improved
-
-* **misc**: Qwen provider add qwen-image-edit model support, closes [#9311](https://github.com/jaworldwideorg/OneJA-Bot/issues/9311) ([a0074fc](https://github.com/jaworldwideorg/OneJA-Bot/commit/a0074fc))
-* **misc**: Support google video understanding, closes [#8761](https://github.com/jaworldwideorg/OneJA-Bot/issues/8761) ([f02d43b](https://github.com/jaworldwideorg/OneJA-Bot/commit/f02d43b))
-
-
-
-#### What's fixed
-
-* **misc**: Fix missing provider in server message, closes [#9361](https://github.com/jaworldwideorg/OneJA-Bot/issues/9361) ([4099dfd](https://github.com/jaworldwideorg/OneJA-Bot/commit/4099dfd))
-* **misc**: Fix non stream mode in OpenAI Response API, closes [#9360](https://github.com/jaworldwideorg/OneJA-Bot/issues/9360) ([1c61b21](https://github.com/jaworldwideorg/OneJA-Bot/commit/1c61b21))
-* **misc**: Update Responses search tool to web_search, closes [#9354](https://github.com/jaworldwideorg/OneJA-Bot/issues/9354) ([58d34ff](https://github.com/jaworldwideorg/OneJA-Bot/commit/58d34ff))
-
-
-
-#### Styles
-
-* **misc**: Added `AUTH_MICROSOFT_ENTRA_ID_BASE_URL` routing, closes [#9293](https://github.com/jaworldwideorg/OneJA-Bot/issues/9293) ([78a2f9e](https://github.com/jaworldwideorg/OneJA-Bot/commit/78a2f9e))
-* **misc**: Enable thinkingBudget control for Vertex Gemini 2.5 models, closes [#8223](https://github.com/jaworldwideorg/OneJA-Bot/issues/8223) ([c665646](https://github.com/jaworldwideorg/OneJA-Bot/commit/c665646))
-* **misc**: Enhanced AkashChat experience, closes [#9330](https://github.com/jaworldwideorg/OneJA-Bot/issues/9330) ([47ec2d8](https://github.com/jaworldwideorg/OneJA-Bot/commit/47ec2d8))
-* **misc**: Extend custom provider runtime options, closes [#9278](https://github.com/jaworldwideorg/OneJA-Bot/issues/9278) ([a94e881](https://github.com/jaworldwideorg/OneJA-Bot/commit/a94e881))
-* **misc**: Optimized modelFetch for Vercel AI Gateway, closes [#9342](https://github.com/jaworldwideorg/OneJA-Bot/issues/9342) ([45b7a43](https://github.com/jaworldwideorg/OneJA-Bot/commit/45b7a43))
-* **misc**: Update i18n, closes [#9363](https://github.com/jaworldwideorg/OneJA-Bot/issues/9363) ([785d5d7](https://github.com/jaworldwideorg/OneJA-Bot/commit/785d5d7))
-* **misc**: Update i18n, closes [#9338](https://github.com/jaworldwideorg/OneJA-Bot/issues/9338) ([d2ff75c](https://github.com/jaworldwideorg/OneJA-Bot/commit/d2ff75c))
-* **misc**: Use ID as name if provider name is empty, closes [#9356](https://github.com/jaworldwideorg/OneJA-Bot/issues/9356) ([7f60544](https://github.com/jaworldwideorg/OneJA-Bot/commit/7f60544))
+- **misc**: Refactor all `@/types` in model runtime to `@lobechat/types`, closes [#9383](https://github.com/lobehub/lobe-chat/issues/9383) ([b050bd7](https://github.com/lobehub/lobe-chat/commit/b050bd7))
 
 </details>
-
 
 <div align="right">
 
@@ -119,41 +137,344 @@
 
 </div>
 
-## [Version&nbsp;1.128.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.127.1...v1.128.0)
-<sup>Released on **2025-09-19**</sup>
+### [Version 1.132.7](https://github.com/lobehub/lobe-chat/compare/v1.132.6...v1.132.7)
 
+<sup>Released on **2025-09-23**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.6](https://github.com/lobehub/lobe-chat/compare/v1.132.5...v1.132.6)
+
+<sup>Released on **2025-09-23**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.5](https://github.com/lobehub/lobe-chat/compare/v1.132.4...v1.132.5)
+
+<sup>Released on **2025-09-22**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Move the ModelProvider to model-bank.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Move the ModelProvider to model-bank, closes [#9374](https://github.com/lobehub/lobe-chat/issues/9374) ([d9a4361](https://github.com/lobehub/lobe-chat/commit/d9a4361))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.4](https://github.com/lobehub/lobe-chat/compare/v1.132.3...v1.132.4)
+
+<sup>Released on **2025-09-22**</sup>
+
+#### 💄 Styles
+
+- **misc**: Enable thinkingBudget control for Vertex Gemini 2.5 models, update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Enable thinkingBudget control for Vertex Gemini 2.5 models, closes [#8223](https://github.com/lobehub/lobe-chat/issues/8223) ([c665646](https://github.com/lobehub/lobe-chat/commit/c665646))
+- **misc**: Update i18n, closes [#9363](https://github.com/lobehub/lobe-chat/issues/9363) ([785d5d7](https://github.com/lobehub/lobe-chat/commit/785d5d7))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.3](https://github.com/lobehub/lobe-chat/compare/v1.132.2...v1.132.3)
+
+<sup>Released on **2025-09-21**</sup>
+
+#### 💄 Styles
+
+- **misc**: Added `AUTH_MICROSOFT_ENTRA_ID_BASE_URL` routing.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Added `AUTH_MICROSOFT_ENTRA_ID_BASE_URL` routing, closes [#9293](https://github.com/lobehub/lobe-chat/issues/9293) ([78a2f9e](https://github.com/lobehub/lobe-chat/commit/78a2f9e))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.2](https://github.com/lobehub/lobe-chat/compare/v1.132.1...v1.132.2)
+
+<sup>Released on **2025-09-21**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix non stream mode in OpenAI Response API.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Fix non stream mode in OpenAI Response API, closes [#9360](https://github.com/lobehub/lobe-chat/issues/9360) ([1c61b21](https://github.com/lobehub/lobe-chat/commit/1c61b21))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.1](https://github.com/lobehub/lobe-chat/compare/v1.132.0...v1.132.1)
+
+<sup>Released on **2025-09-21**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix missing provider in server message.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Fix missing provider in server message, closes [#9361](https://github.com/lobehub/lobe-chat/issues/9361) ([4099dfd](https://github.com/lobehub/lobe-chat/commit/4099dfd))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 1.132.0](https://github.com/lobehub/lobe-chat/compare/v1.131.4...v1.132.0)
+
+<sup>Released on **2025-09-21**</sup>
 
 #### ✨ Features
 
-- **misc**: Add scroll support for pinned assistants using ScrollShadow.
+- **misc**: Support google video understanding.
 
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Support google video understanding, closes [#8761](https://github.com/lobehub/lobe-chat/issues/8761) ([f02d43b](https://github.com/lobehub/lobe-chat/commit/f02d43b))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.131.4](https://github.com/lobehub/lobe-chat/compare/v1.131.3...v1.131.4)
+
+<sup>Released on **2025-09-21**</sup>
+
+#### 💄 Styles
+
+- **misc**: Enhanced AkashChat experience.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Enhanced AkashChat experience, closes [#9330](https://github.com/lobehub/lobe-chat/issues/9330) ([47ec2d8](https://github.com/lobehub/lobe-chat/commit/47ec2d8))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.131.3](https://github.com/lobehub/lobe-chat/compare/v1.131.2...v1.131.3)
+
+<sup>Released on **2025-09-21**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Update Responses search tool to web_search.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Update Responses search tool to web_search, closes [#9354](https://github.com/lobehub/lobe-chat/issues/9354) ([58d34ff](https://github.com/lobehub/lobe-chat/commit/58d34ff))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.131.2](https://github.com/lobehub/lobe-chat/compare/v1.131.1...v1.131.2)
+
+<sup>Released on **2025-09-21**</sup>
+
+#### 💄 Styles
+
+- **misc**: Use ID as name if provider name is empty.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Use ID as name if provider name is empty, closes [#9356](https://github.com/lobehub/lobe-chat/issues/9356) ([7f60544](https://github.com/lobehub/lobe-chat/commit/7f60544))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.131.1](https://github.com/lobehub/lobe-chat/compare/v1.131.0...v1.131.1)
+
+<sup>Released on **2025-09-21**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Improve codebase.
+
+#### 💄 Styles
+
+- **misc**: Extend custom provider runtime options, Optimized modelFetch for Vercel AI Gateway, update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Improve codebase, closes [#9353](https://github.com/lobehub/lobe-chat/issues/9353) ([7dc000e](https://github.com/lobehub/lobe-chat/commit/7dc000e))
+
+#### Styles
+
+- **misc**: Extend custom provider runtime options, closes [#9278](https://github.com/lobehub/lobe-chat/issues/9278) ([a94e881](https://github.com/lobehub/lobe-chat/commit/a94e881))
+- **misc**: Optimized modelFetch for Vercel AI Gateway, closes [#9342](https://github.com/lobehub/lobe-chat/issues/9342) ([45b7a43](https://github.com/lobehub/lobe-chat/commit/45b7a43))
+- **misc**: Update i18n, closes [#9338](https://github.com/lobehub/lobe-chat/issues/9338) ([d2ff75c](https://github.com/lobehub/lobe-chat/commit/d2ff75c))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 1.131.0](https://github.com/lobehub/lobe-chat/compare/v1.130.1...v1.131.0)
+
+<sup>Released on **2025-09-19**</sup>
+
+#### ✨ Features
+
+- **misc**: Qwen provider add qwen-image-edit model support.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Qwen provider add qwen-image-edit model support, closes [#9311](https://github.com/lobehub/lobe-chat/issues/9311) ([a0074fc](https://github.com/lobehub/lobe-chat/commit/a0074fc))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.130.1](https://github.com/lobehub/lobe-chat/compare/v1.130.0...v1.130.1)
+
+<sup>Released on **2025-09-18**</sup>
 
 #### 🐛 Bug Fixes
 
 - **misc**: Fix oidc open direct issue.
 
-
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### What's improved
-
-* **misc**: Add scroll support for pinned assistants using ScrollShadow, closes [#9319](https://github.com/jaworldwideorg/OneJA-Bot/issues/9319) [#9316](https://github.com/jaworldwideorg/OneJA-Bot/issues/9316) ([54c0ac4](https://github.com/jaworldwideorg/OneJA-Bot/commit/54c0ac4))
-
-
-
 #### What's fixed
 
-* **misc**: Fix oidc open direct issue, closes [#9315](https://github.com/jaworldwideorg/OneJA-Bot/issues/9315) ([70f52a3](https://github.com/jaworldwideorg/OneJA-Bot/commit/70f52a3))
+- **misc**: Fix oidc open direct issue, closes [#9315](https://github.com/lobehub/lobe-chat/issues/9315) ([70f52a3](https://github.com/lobehub/lobe-chat/commit/70f52a3))
 
 </details>
-
 
 <div align="right">
 
@@ -161,30 +482,49 @@
 
 </div>
 
-### [Version&nbsp;1.127.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.127.0...v1.127.1)
+## [Version 1.130.0](https://github.com/lobehub/lobe-chat/compare/v1.129.4...v1.130.0)
+
 <sup>Released on **2025-09-18**</sup>
 
+#### ✨ Features
+
+- **misc**: Add scroll support for pinned assistants using ScrollShadow.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Add scroll support for pinned assistants using ScrollShadow, closes [#9319](https://github.com/lobehub/lobe-chat/issues/9319) [#9316](https://github.com/lobehub/lobe-chat/issues/9316) ([54c0ac4](https://github.com/lobehub/lobe-chat/commit/54c0ac4))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.129.4](https://github.com/lobehub/lobe-chat/compare/v1.129.3...v1.129.4)
+
+<sup>Released on **2025-09-18**</sup>
 
 #### 🐛 Bug Fixes
 
 - **misc**: Fix svg xss issue.
 
-
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
 #### What's fixed
 
-* **misc**: Fix svg xss issue, closes [#9313](https://github.com/jaworldwideorg/OneJA-Bot/issues/9313) ([9f044ed](https://github.com/jaworldwideorg/OneJA-Bot/commit/9f044ed))
+- **misc**: Fix svg xss issue, closes [#9313](https://github.com/lobehub/lobe-chat/issues/9313) ([9f044ed](https://github.com/lobehub/lobe-chat/commit/9f044ed))
 
 </details>
-
 
 <div align="right">
 
@@ -192,76 +532,115 @@
 
 </div>
 
-## [Version&nbsp;1.127.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.126.0...v1.127.0)
+### [Version 1.129.3](https://github.com/lobehub/lobe-chat/compare/v1.129.2...v1.129.3)
+
 <sup>Released on **2025-09-17**</sup>
 
+#### 🐛 Bug Fixes
+
+- **misc**: Add qwen provider support for image-edit model.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Add qwen provider support for image-edit model, closes [#9277](https://github.com/lobehub/lobe-chat/issues/9277) [#9184](https://github.com/lobehub/lobe-chat/issues/9184) ([e137b33](https://github.com/lobehub/lobe-chat/commit/e137b33))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.129.2](https://github.com/lobehub/lobe-chat/compare/v1.129.1...v1.129.2)
+
+<sup>Released on **2025-09-17**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Improve db migrations sql.
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Improve db migrations sql, closes [#9295](https://github.com/lobehub/lobe-chat/issues/9295) ([96ff5aa](https://github.com/lobehub/lobe-chat/commit/96ff5aa))
+
+#### Styles
+
+- **misc**: Update i18n, closes [#9294](https://github.com/lobehub/lobe-chat/issues/9294) ([c018f3d](https://github.com/lobehub/lobe-chat/commit/c018f3d))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.129.1](https://github.com/lobehub/lobe-chat/compare/v1.129.0...v1.129.1)
+
+<sup>Released on **2025-09-16**</sup>
 
 #### ♻ Code Refactoring
 
-- **misc**: Improve db sql performance, refactor message proccesser to the context engine.
+- **misc**: Improve db sql performance.
 
+#### 💄 Styles
+
+- **misc**: Update SiliconCloud reasoning models.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Improve db sql performance, closes [#9283](https://github.com/lobehub/lobe-chat/issues/9283) ([cee555a](https://github.com/lobehub/lobe-chat/commit/cee555a))
+
+#### Styles
+
+- **misc**: Update SiliconCloud reasoning models, closes [#9287](https://github.com/lobehub/lobe-chat/issues/9287) ([b47bb5b](https://github.com/lobehub/lobe-chat/commit/b47bb5b))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 1.129.0](https://github.com/lobehub/lobe-chat/compare/v1.128.10...v1.129.0)
+
+<sup>Released on **2025-09-16**</sup>
 
 #### ✨ Features
 
 - **misc**: Support Vercel AI Gateway provider.
 
-
-#### 🐛 Bug Fixes
-
-- **misc**: Add qwen provider support for image-edit model, fix azure ai runtime error, fix open chat page with float link modal, Google stream error unable to abort request, improve db migrations sql.
-
-
-#### 💄 Styles
-
-- **misc**: Enable toggling search on/off via search button click & historyCount button, fix discover plugin link, improve error handle with agent config, support `.doc` file parse, update i18n, update i18n, update i18n, Update model configs, update SiliconCloud reasoning models.
-
-
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### Code refactoring
-
-* **misc**: Improve db sql performance, closes [#9283](https://github.com/jaworldwideorg/OneJA-Bot/issues/9283) ([cee555a](https://github.com/jaworldwideorg/OneJA-Bot/commit/cee555a))
-* **misc**: Refactor message proccesser to the context engine, closes [#9230](https://github.com/jaworldwideorg/OneJA-Bot/issues/9230) ([dacfffd](https://github.com/jaworldwideorg/OneJA-Bot/commit/dacfffd))
-
-
-
 #### What's improved
 
-* **misc**: Support Vercel AI Gateway provider, closes [#8883](https://github.com/jaworldwideorg/OneJA-Bot/issues/8883) ([5a4b0fd](https://github.com/jaworldwideorg/OneJA-Bot/commit/5a4b0fd))
-
-
-
-#### What's fixed
-
-* **misc**: Add qwen provider support for image-edit model, closes [#9277](https://github.com/jaworldwideorg/OneJA-Bot/issues/9277) [#9184](https://github.com/jaworldwideorg/OneJA-Bot/issues/9184) ([e137b33](https://github.com/jaworldwideorg/OneJA-Bot/commit/e137b33))
-* **misc**: Fix azure ai runtime error, closes [#9276](https://github.com/jaworldwideorg/OneJA-Bot/issues/9276) ([c21c14e](https://github.com/jaworldwideorg/OneJA-Bot/commit/c21c14e))
-* **misc**: Fix open chat page with float link modal, closes [#9235](https://github.com/jaworldwideorg/OneJA-Bot/issues/9235) ([2c677e5](https://github.com/jaworldwideorg/OneJA-Bot/commit/2c677e5))
-* **misc**: Google stream error unable to abort request, closes [#9180](https://github.com/jaworldwideorg/OneJA-Bot/issues/9180) ([78eaead](https://github.com/jaworldwideorg/OneJA-Bot/commit/78eaead))
-* **misc**: Improve db migrations sql, closes [#9295](https://github.com/jaworldwideorg/OneJA-Bot/issues/9295) ([96ff5aa](https://github.com/jaworldwideorg/OneJA-Bot/commit/96ff5aa))
-
-
-
-#### Styles
-
-* **misc**: Enable toggling search on/off via search button click & historyCount button, closes [#9173](https://github.com/jaworldwideorg/OneJA-Bot/issues/9173) ([240c7b7](https://github.com/jaworldwideorg/OneJA-Bot/commit/240c7b7))
-* **misc**: Fix discover plugin link, closes [#9240](https://github.com/jaworldwideorg/OneJA-Bot/issues/9240) ([cfb2246](https://github.com/jaworldwideorg/OneJA-Bot/commit/cfb2246))
-* **misc**: Improve error handle with agent config, closes [#9263](https://github.com/jaworldwideorg/OneJA-Bot/issues/9263) ([6656217](https://github.com/jaworldwideorg/OneJA-Bot/commit/6656217))
-* **misc**: Support `.doc` file parse, closes [#8182](https://github.com/jaworldwideorg/OneJA-Bot/issues/8182) ([ed42753](https://github.com/jaworldwideorg/OneJA-Bot/commit/ed42753))
-* **misc**: Update i18n, closes [#9294](https://github.com/jaworldwideorg/OneJA-Bot/issues/9294) ([c018f3d](https://github.com/jaworldwideorg/OneJA-Bot/commit/c018f3d))
-* **misc**: Update i18n, closes [#9243](https://github.com/jaworldwideorg/OneJA-Bot/issues/9243) ([04764ad](https://github.com/jaworldwideorg/OneJA-Bot/commit/04764ad))
-* **misc**: Update i18n, closes [#9237](https://github.com/jaworldwideorg/OneJA-Bot/issues/9237) ([642dc3b](https://github.com/jaworldwideorg/OneJA-Bot/commit/642dc3b))
-* **misc**: Update model configs, closes [#9170](https://github.com/jaworldwideorg/OneJA-Bot/issues/9170) ([f89b730](https://github.com/jaworldwideorg/OneJA-Bot/commit/f89b730))
-* **misc**: Update SiliconCloud reasoning models, closes [#9287](https://github.com/jaworldwideorg/OneJA-Bot/issues/9287) ([b47bb5b](https://github.com/jaworldwideorg/OneJA-Bot/commit/b47bb5b))
+- **misc**: Support Vercel AI Gateway provider, closes [#8883](https://github.com/lobehub/lobe-chat/issues/8883) ([5a4b0fd](https://github.com/lobehub/lobe-chat/commit/5a4b0fd))
 
 </details>
-
 
 <div align="right">
 
@@ -269,41 +648,268 @@
 
 </div>
 
-## [Version&nbsp;1.126.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.125.1...v1.126.0)
+### [Version 1.128.10](https://github.com/lobehub/lobe-chat/compare/v1.128.9...v1.128.10)
+
+<sup>Released on **2025-09-16**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix azure ai runtime error.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Fix azure ai runtime error, closes [#9276](https://github.com/lobehub/lobe-chat/issues/9276) ([c21c14e](https://github.com/lobehub/lobe-chat/commit/c21c14e))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.9](https://github.com/lobehub/lobe-chat/compare/v1.128.8...v1.128.9)
+
+<sup>Released on **2025-09-15**</sup>
+
+#### 💄 Styles
+
+- **misc**: Improve error handle with agent config, support `.doc` file parse.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Improve error handle with agent config, closes [#9263](https://github.com/lobehub/lobe-chat/issues/9263) ([6656217](https://github.com/lobehub/lobe-chat/commit/6656217))
+- **misc**: Support `.doc` file parse, closes [#8182](https://github.com/lobehub/lobe-chat/issues/8182) ([ed42753](https://github.com/lobehub/lobe-chat/commit/ed42753))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.8](https://github.com/lobehub/lobe-chat/compare/v1.128.7...v1.128.8)
+
+<sup>Released on **2025-09-15**</sup>
+
+#### 💄 Styles
+
+- **misc**: Enable toggling search on/off via search button click & historyCount button.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Enable toggling search on/off via search button click & historyCount button, closes [#9173](https://github.com/lobehub/lobe-chat/issues/9173) ([240c7b7](https://github.com/lobehub/lobe-chat/commit/240c7b7))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.7](https://github.com/lobehub/lobe-chat/compare/v1.128.6...v1.128.7)
+
+<sup>Released on **2025-09-14**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.6](https://github.com/lobehub/lobe-chat/compare/v1.128.5...v1.128.6)
+
+<sup>Released on **2025-09-14**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#9243](https://github.com/lobehub/lobe-chat/issues/9243) ([04764ad](https://github.com/lobehub/lobe-chat/commit/04764ad))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.5](https://github.com/lobehub/lobe-chat/compare/v1.128.4...v1.128.5)
+
+<sup>Released on **2025-09-13**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Google stream error unable to abort request.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Google stream error unable to abort request, closes [#9180](https://github.com/lobehub/lobe-chat/issues/9180) ([78eaead](https://github.com/lobehub/lobe-chat/commit/78eaead))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.4](https://github.com/lobehub/lobe-chat/compare/v1.128.3...v1.128.4)
+
+<sup>Released on **2025-09-13**</sup>
+
+#### 💄 Styles
+
+- **misc**: Fix discover plugin link.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Fix discover plugin link, closes [#9240](https://github.com/lobehub/lobe-chat/issues/9240) ([cfb2246](https://github.com/lobehub/lobe-chat/commit/cfb2246))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.3](https://github.com/lobehub/lobe-chat/compare/v1.128.2...v1.128.3)
+
+<sup>Released on **2025-09-13**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix open chat page with float link modal.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Fix open chat page with float link modal, closes [#9235](https://github.com/lobehub/lobe-chat/issues/9235) ([2c677e5](https://github.com/lobehub/lobe-chat/commit/2c677e5))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.2](https://github.com/lobehub/lobe-chat/compare/v1.128.1...v1.128.2)
+
+<sup>Released on **2025-09-13**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n, Update model configs.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#9237](https://github.com/lobehub/lobe-chat/issues/9237) ([642dc3b](https://github.com/lobehub/lobe-chat/commit/642dc3b))
+- **misc**: Update model configs, closes [#9170](https://github.com/lobehub/lobe-chat/issues/9170) ([f89b730](https://github.com/lobehub/lobe-chat/commit/f89b730))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.128.1](https://github.com/lobehub/lobe-chat/compare/v1.128.0...v1.128.1)
+
 <sup>Released on **2025-09-12**</sup>
 
+#### ♻ Code Refactoring
+
+- **misc**: Refactor message proccesser to the context engine.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Refactor message proccesser to the context engine, closes [#9230](https://github.com/lobehub/lobe-chat/issues/9230) ([dacfffd](https://github.com/lobehub/lobe-chat/commit/dacfffd))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 1.128.0](https://github.com/lobehub/lobe-chat/compare/v1.127.4...v1.128.0)
+
+<sup>Released on **2025-09-12**</sup>
 
 #### ✨ Features
 
 - **misc**: ChatInput support resize.
 
-
-#### 🐛 Bug Fixes
-
-- **misc**: Improve OpenAIStream processing to emit usage data for chunks lacking choices.
-
-
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
 #### What's improved
 
-* **misc**: ChatInput support resize, closes [#9215](https://github.com/jaworldwideorg/OneJA-Bot/issues/9215) ([5e814e0](https://github.com/jaworldwideorg/OneJA-Bot/commit/5e814e0))
-
-
-
-#### What's fixed
-
-* **misc**: Improve OpenAIStream processing to emit usage data for chunks lacking choices, closes [#9220](https://github.com/jaworldwideorg/OneJA-Bot/issues/9220) ([8ba662c](https://github.com/jaworldwideorg/OneJA-Bot/commit/8ba662c))
+- **misc**: ChatInput support resize, closes [#9215](https://github.com/lobehub/lobe-chat/issues/9215) ([5e814e0](https://github.com/lobehub/lobe-chat/commit/5e814e0))
 
 </details>
-
 
 <div align="right">
 
@@ -311,54 +917,24 @@
 
 </div>
 
-### [Version&nbsp;1.125.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.125.0...v1.125.1)
+### [Version 1.127.4](https://github.com/lobehub/lobe-chat/compare/v1.127.3...v1.127.4)
+
 <sup>Released on **2025-09-11**</sup>
-
-
-#### ♻ Code Refactoring
-
-- **misc**: Refactor model runtime folder structure and add more tests.
-
 
 #### 🐛 Bug Fixes
 
-- **misc**: Delete files should delete chunks、embedings、fileChunk, fix not remove message with server mode.
-
-
-#### 💄 Styles
-
-- **misc**: Add hotkey tooltip to typobar actions, update i18n.
-
+- **misc**: Improve OpenAIStream processing to emit usage data for chunks lacking choices.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### Code refactoring
-
-* **misc**: Refactor model runtime folder structure and add more tests, closes [#9210](https://github.com/jaworldwideorg/OneJA-Bot/issues/9210) ([7fe17e4](https://github.com/jaworldwideorg/OneJA-Bot/commit/7fe17e4))
-
-
-
 #### What's fixed
 
-* **misc**: Delete files should delete chunks、embedings、fileChunk, closes [#9196](https://github.com/jaworldwideorg/OneJA-Bot/issues/9196) ([4ee1d29](https://github.com/jaworldwideorg/OneJA-Bot/commit/4ee1d29))
-* **misc**: Fix not remove message with server mode, closes [#9207](https://github.com/jaworldwideorg/OneJA-Bot/issues/9207) ([790af5f](https://github.com/jaworldwideorg/OneJA-Bot/commit/790af5f))
-
-
-
-#### Styles
-
-* **misc**: Add hotkey tooltip to typobar actions, closes [#9203](https://github.com/jaworldwideorg/OneJA-Bot/issues/9203) ([e372875](https://github.com/jaworldwideorg/OneJA-Bot/commit/e372875))
-* **misc**: Update i18n, closes [#9208](https://github.com/jaworldwideorg/OneJA-Bot/issues/9208) ([987fbf2](https://github.com/jaworldwideorg/OneJA-Bot/commit/987fbf2))
+- **misc**: Improve OpenAIStream processing to emit usage data for chunks lacking choices, closes [#9220](https://github.com/lobehub/lobe-chat/issues/9220) ([8ba662c](https://github.com/lobehub/lobe-chat/commit/8ba662c))
 
 </details>
-
 
 <div align="right">
 
