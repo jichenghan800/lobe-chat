@@ -2,6 +2,49 @@
 
 # Changelog
 
+### [Version&nbsp;1.129.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.129.1...v1.129.2)
+<sup>Released on **2025-09-25**</sup>
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Slove setting proxy page with style error.
+
+
+#### 💄 Styles
+
+- **misc**: Enhanced Nvidia NIM chat experience, OpenAI models in AiHubMix use Responses API.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's fixed
+
+* **misc**: Slove setting proxy page with style error, closes [#9417](https://github.com/jaworldwideorg/OneJA-Bot/issues/9417) ([6d3e5d1](https://github.com/jaworldwideorg/OneJA-Bot/commit/6d3e5d1))
+
+
+
+#### Styles
+
+* **misc**: Enhanced Nvidia NIM chat experience, closes [#9408](https://github.com/jaworldwideorg/OneJA-Bot/issues/9408) ([13e936f](https://github.com/jaworldwideorg/OneJA-Bot/commit/13e936f))
+* **misc**: OpenAI models in AiHubMix use Responses API, closes [#9251](https://github.com/jaworldwideorg/OneJA-Bot/issues/9251) ([8636fe4](https://github.com/jaworldwideorg/OneJA-Bot/commit/8636fe4))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version 1.132.13](https://github.com/lobehub/lobe-chat/compare/v1.132.12...v1.132.13)
 
 <sup>Released on **2025-09-25**</sup>
