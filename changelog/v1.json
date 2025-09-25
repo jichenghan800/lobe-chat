@@ -6,7 +6,9 @@
   },
   {
     "children": {
-      "fixes": ["Slove setting proxy page with style error."]
+      "fixes": [
+        "Slove setting proxy page with style error."
+      ]
     },
     "date": "2025-09-25",
     "version": "1.132.12"
@@ -19,6 +21,186 @@
     },
     "date": "2025-09-24",
     "version": "1.132.11"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Macos desktop sign."
+      ]
+    },
+    "date": "2025-09-24",
+    "version": "1.132.10"
+  },
+  {
+    "children": {},
+    "date": "2025-09-23",
+    "version": "1.132.9"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Refactor all @/types in model runtime to @lobechat/types."
+      ]
+    },
+    "date": "2025-09-23",
+    "version": "1.132.8"
+  },
+  {
+    "children": {},
+    "date": "2025-09-23",
+    "version": "1.132.7"
+  },
+  {
+    "children": {},
+    "date": "2025-09-23",
+    "version": "1.132.6"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Move the ModelProvider to model-bank."
+      ]
+    },
+    "date": "2025-09-22",
+    "version": "1.132.5"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Enable thinkingBudget control for Vertex Gemini 2.5 models, update i18n."
+      ]
+    },
+    "date": "2025-09-22",
+    "version": "1.132.4"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Added AUTH_MICROSOFT_ENTRA_ID_BASE_URL routing."
+      ]
+    },
+    "date": "2025-09-21",
+    "version": "1.132.3"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Fix non stream mode in OpenAI Response API."
+      ]
+    },
+    "date": "2025-09-21",
+    "version": "1.132.2"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Fix missing provider in server message."
+      ]
+    },
+    "date": "2025-09-21",
+    "version": "1.132.1"
+  },
+  {
+    "children": {
+      "features": [
+        "Support google video understanding."
+      ]
+    },
+    "date": "2025-09-21",
+    "version": "1.132.0"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Enhanced AkashChat experience."
+      ]
+    },
+    "date": "2025-09-21",
+    "version": "1.131.4"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Update Responses search tool to web_search."
+      ]
+    },
+    "date": "2025-09-21",
+    "version": "1.131.3"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Use ID as name if provider name is empty."
+      ]
+    },
+    "date": "2025-09-21",
+    "version": "1.131.2"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Extend custom provider runtime options, Optimized modelFetch for Vercel AI Gateway, update i18n."
+      ]
+    },
+    "date": "2025-09-21",
+    "version": "1.131.1"
+  },
+  {
+    "children": {
+      "features": [
+        "Qwen provider add qwen-image-edit model support."
+      ]
+    },
+    "date": "2025-09-19",
+    "version": "1.131.0"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Fix oidc open direct issue."
+      ]
+    },
+    "date": "2025-09-18",
+    "version": "1.130.1"
+  },
+  {
+    "children": {
+      "features": [
+        "Add scroll support for pinned assistants using ScrollShadow."
+      ]
+    },
+    "date": "2025-09-18",
+    "version": "1.130.0"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Fix svg xss issue."
+      ]
+    },
+    "date": "2025-09-18",
+    "version": "1.129.4"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Add qwen provider support for image-edit model."
+      ]
+    },
+    "date": "2025-09-17",
+    "version": "1.129.3"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Slove setting proxy page with style error."
+      ],
+      "improvements": [
+        "Enhanced Nvidia NIM chat experience, OpenAI models in AiHubMix use Responses API."
+      ]
+    },
+    "date": "2025-09-25",
+    "version": "1.129.2"
   },
   {
     "children": {
@@ -49,6 +231,92 @@
   },
   {
     "children": {
+      "fixes": [
+        "Fix azure ai runtime error."
+      ]
+    },
+    "date": "2025-09-16",
+    "version": "1.128.10"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Improve error handle with agent config, support .doc file parse."
+      ]
+    },
+    "date": "2025-09-15",
+    "version": "1.128.9"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Enable toggling search on/off via search button click & historyCount button."
+      ]
+    },
+    "date": "2025-09-15",
+    "version": "1.128.8"
+  },
+  {
+    "children": {},
+    "date": "2025-09-14",
+    "version": "1.128.7"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Update i18n."
+      ]
+    },
+    "date": "2025-09-14",
+    "version": "1.128.6"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Google stream error unable to abort request."
+      ]
+    },
+    "date": "2025-09-13",
+    "version": "1.128.5"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Fix discover plugin link."
+      ]
+    },
+    "date": "2025-09-13",
+    "version": "1.128.4"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Fix open chat page with float link modal."
+      ]
+    },
+    "date": "2025-09-13",
+    "version": "1.128.3"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Update i18n, Update model configs."
+      ]
+    },
+    "date": "2025-09-13",
+    "version": "1.128.2"
+  },
+  {
+    "children": {
+      "improvements": [
+        "Refactor message proccesser to the context engine."
+      ]
+    },
+    "date": "2025-09-12",
+    "version": "1.128.1"
+  },
+  {
+    "children": {
       "features": [
         "Add scroll support for pinned assistants using ScrollShadow."
       ],
@@ -58,6 +326,15 @@
     },
     "date": "2025-09-19",
     "version": "1.128.0"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Improve OpenAIStream processing to emit usage data for chunks lacking choices."
+      ]
+    },
+    "date": "2025-09-11",
+    "version": "1.127.4"
   },
   {
     "children": {
