@@ -1,4 +1,4 @@
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useSelectedLayoutSegments } from 'next/navigation';
 
 import { ProfileTabs, SettingsTabs, SidebarTabKey } from '@/store/global/initialState';
 
@@ -6,9 +6,15 @@ import { ProfileTabs, SettingsTabs, SidebarTabKey } from '@/store/global/initial
  * Returns the active tab key (chat/market/settings/...)
  */
 export const useActiveTabKey = () => {
-  const pathname = usePathname();
+  const segments = useSelectedLayoutSegments();
+  const segment = segments.find((item): item is string => Boolean(item));
 
-  return pathname.split('/').find(Boolean)! as SidebarTabKey;
+  if (segment) return segment as SidebarTabKey;
+
+  const pathname = usePathname();
+  const fallback = pathname.split('/').find(Boolean);
+
+  return (fallback ?? SidebarTabKey.Chat) as SidebarTabKey;
 };
 
 /**
