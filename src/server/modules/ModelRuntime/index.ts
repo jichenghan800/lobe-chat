@@ -124,13 +124,7 @@ const getParamsFromPayload = (provider: string, payload: ClientSecretPayload) =>
         process.env.VERTEXAI_PROJECT ||
         process.env.GOOGLE_CLOUD_PROJECT;
 
-      const normalizeLocation = (value?: string) => {
-        if (!value) return undefined;
-        if (value.toLowerCase() === 'global') return 'us-central1';
-        return value;
-      };
-
-      const useVertexEndpoint = process.env.VERTEXAI_USE_VERTEX_ENDPOINT === '1';
+      const useVertexEndpoint = process.env.VERTEXAI_USE_VERTEX_ENDPOINT !== '0';
 
       const params: Record<string, any> = {
         apiKey: credentialsSource && !googleAuthOptions ? credentialsSource : undefined,
@@ -140,10 +134,10 @@ const getParamsFromPayload = (provider: string, payload: ClientSecretPayload) =>
 
       if (useVertexEndpoint) {
         params.location =
-          normalizeLocation(process.env.VERTEXAI_LOCATION) ||
-          normalizeLocation(llmConfig.VERTEXAI_LOCATION) ||
-          normalizeLocation(process.env.GOOGLE_CLOUD_LOCATION) ||
-          'us-central1';
+          process.env.VERTEXAI_LOCATION ||
+          llmConfig.VERTEXAI_LOCATION ||
+          process.env.GOOGLE_CLOUD_LOCATION ||
+          'global';
         params.project = project;
       }
 

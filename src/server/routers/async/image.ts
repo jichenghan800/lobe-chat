@@ -10,6 +10,7 @@ import { GenerationModel } from '@/database/models/generation';
 import { asyncAuthedProcedure, asyncRouter as router } from '@/libs/trpc/async';
 import { initModelRuntimeWithUserPayload } from '@/server/modules/ModelRuntime';
 import { GenerationService } from '@/server/services/generation';
+import { FileService } from '@/server/services/file';
 
 const log = debug('lobe-image:async');
 
@@ -24,6 +25,7 @@ const imageProcedure = asyncAuthedProcedure.use(async (opts) => {
     ctx: {
       asyncTaskModel: new AsyncTaskModel(ctx.serverDB, ctx.userId),
       fileModel: new FileModel(ctx.serverDB, ctx.userId),
+      fileService: new FileService(ctx.serverDB, ctx.userId),
       generationModel: new GenerationModel(ctx.serverDB, ctx.userId),
       generationService: new GenerationService(ctx.serverDB, ctx.userId),
     },
@@ -139,10 +141,24 @@ export const imageRouter = router({
         // Check if operation has been cancelled
         checkAbortSignal(signal);
 
-        log('Agent runtime initialized, calling createImage');
+        log('Agent runtime initialized, preparing runtime parameters');
+        const runtimeParams = { ...params } as unknown as RuntimeImageGenParams;
+
+        if (runtimeParams.imageUrl) {
+          runtimeParams.imageUrl = await ctx.fileService.getFullFileUrl(runtimeParams.imageUrl);
+        }
+
+        if (runtimeParams.imageUrls?.length) {
+          const resolvedUrls = await Promise.all(
+            runtimeParams.imageUrls.map((url) => ctx.fileService.getFullFileUrl(url)),
+          );
+          runtimeParams.imageUrls = resolvedUrls;
+        }
+
+        log('Calling createImage with runtime params');
         const response = await agentRuntime.createImage({
           model,
-          params: params as unknown as RuntimeImageGenParams,
+          params: runtimeParams,
         });
 
         if (!response) {
