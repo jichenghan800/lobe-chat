@@ -28,6 +28,11 @@ export const getLLMConfig = () => {
       ENABLED_GOOGLE: z.boolean(),
       GOOGLE_API_KEY: z.string().optional(),
 
+      ENABLED_VERTEXAI: z.boolean(),
+      VERTEXAI_PROJECT: z.string().optional(),
+      VERTEXAI_LOCATION: z.string().optional(),
+      VERTEXAI_CREDENTIALS: z.string().optional(),
+
       ENABLED_MOONSHOT: z.boolean(),
       MOONSHOT_API_KEY: z.string().optional(),
 
@@ -220,6 +225,18 @@ export const getLLMConfig = () => {
 
       ENABLED_GOOGLE: !!process.env.GOOGLE_API_KEY,
       GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+
+      ENABLED_VERTEXAI: (() => {
+        const flag = process.env.ENABLED_VERTEXAI;
+        if (flag !== undefined) {
+          const normalized = flag.toLowerCase();
+          return normalized !== '0' && normalized !== 'false';
+        }
+        return !!process.env.VERTEXAI_CREDENTIALS;
+      })(),
+      VERTEXAI_PROJECT: process.env.VERTEXAI_PROJECT,
+      VERTEXAI_LOCATION: process.env.VERTEXAI_LOCATION,
+      VERTEXAI_CREDENTIALS: process.env.VERTEXAI_CREDENTIALS,
 
       ENABLED_VOLCENGINE: !!process.env.VOLCENGINE_API_KEY,
       VOLCENGINE_API_KEY: process.env.VOLCENGINE_API_KEY,
