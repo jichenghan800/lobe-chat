@@ -10,6 +10,7 @@ import { useFetchAiImageConfig } from '@/hooks/useFetchAiImageConfig';
 import { imageGenerationConfigSelectors } from '@/store/image/selectors';
 import { useDimensionControl } from '@/store/image/slices/generationConfig/hooks';
 import { useImageStore } from '@/store/image/store';
+import { DEFAULT_IMAGE_NUM } from '@/store/image/slices/generationConfig/initialState';
 
 import CfgSliderInput from './components/CfgSliderInput';
 import DimensionControlGroup from './components/DimensionControlGroup';
@@ -181,7 +182,12 @@ const ConfigPanel = memo(() => {
 
       <Flexbox padding="12px 0" style={stickyStyles}>
         <ConfigItemLayout label={t('config.imageNum.label')}>
-          <ImageNum />
+          <ImageNum
+            disabled
+            max={DEFAULT_IMAGE_NUM}
+            min={DEFAULT_IMAGE_NUM}
+            presetCounts={[DEFAULT_IMAGE_NUM]}
+          />
         </ConfigItemLayout>
       </Flexbox>
     </Flexbox>

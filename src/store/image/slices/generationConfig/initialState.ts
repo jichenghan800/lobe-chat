@@ -9,7 +9,7 @@ import {
 
 export const DEFAULT_AI_IMAGE_PROVIDER = ModelProvider.OpenAI;
 export const DEFAULT_AI_IMAGE_MODEL = 'gpt-image-1';
-export const DEFAULT_IMAGE_NUM = 4;
+export const DEFAULT_IMAGE_NUM = 1;
 
 export interface GenerationConfigState {
   parameters: RuntimeImageGenParams;

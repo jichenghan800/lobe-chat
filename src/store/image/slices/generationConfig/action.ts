@@ -306,7 +306,7 @@ export const createGenerationConfigSlice: StateCreator<
   },
 
   setImageNum: (imageNum) => {
-    set(() => ({ imageNum }), false, `setImageNum/${imageNum}`);
+    set(() => ({ imageNum: DEFAULT_IMAGE_NUM }), false, `setImageNum/${DEFAULT_IMAGE_NUM}`);
   },
 
   reuseSettings: (model: string, provider: string, settings: Partial<RuntimeImageGenParams>) => {
