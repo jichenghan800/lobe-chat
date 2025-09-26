@@ -130,18 +130,24 @@ const getParamsFromPayload = (provider: string, payload: ClientSecretPayload) =>
         return value;
       };
 
-      const location =
-        normalizeLocation(process.env.VERTEXAI_LOCATION) ||
-        normalizeLocation(llmConfig.VERTEXAI_LOCATION) ||
-        normalizeLocation(process.env.GOOGLE_CLOUD_LOCATION) ||
-        'us-central1';
+      const useVertexEndpoint = process.env.VERTEXAI_USE_VERTEX_ENDPOINT === '1';
 
-      return {
+      const params: Record<string, any> = {
         apiKey: credentialsSource && !googleAuthOptions ? credentialsSource : undefined,
         googleAuthOptions,
-        location,
-        project,
+        vertexai: useVertexEndpoint,
       };
+
+      if (useVertexEndpoint) {
+        params.location =
+          normalizeLocation(process.env.VERTEXAI_LOCATION) ||
+          normalizeLocation(llmConfig.VERTEXAI_LOCATION) ||
+          normalizeLocation(process.env.GOOGLE_CLOUD_LOCATION) ||
+          'us-central1';
+        params.project = project;
+      }
+
+      return params;
     }
   }
 };

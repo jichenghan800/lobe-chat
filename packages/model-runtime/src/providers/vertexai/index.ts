@@ -12,10 +12,14 @@ export class LobeVertexAI extends LobeGoogleAI {
       const client = new GoogleGenAI({
         ...params,
         location: params?.location ?? DEFAULT_VERTEXAI_LOCATION, // @google/genai 不传 location 会报错
-        vertexai: true,
+        vertexai: params?.vertexai ?? true,
       });
 
-      return new LobeGoogleAI({ apiKey: 'avoid-error', client, isVertexAi: true });
+      return new LobeGoogleAI({
+        apiKey: 'avoid-error',
+        client,
+        isVertexAi: params?.vertexai ?? true,
+      });
     } catch (e) {
       const err = e as Error;
 
