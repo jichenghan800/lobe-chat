@@ -3,6 +3,7 @@ import { ClientOptions } from 'openai';
 
 import { LobeBedrockAIParams } from '../providers/bedrock';
 import { LobeCloudflareParams } from '../providers/cloudflare';
+import { LobeVertexAI } from '../providers/vertexai';
 import { LobeOpenAI } from '../providers/openai';
 import { providerRuntimeMap } from '../runtimeMap';
 import {
@@ -115,6 +116,12 @@ export class ModelRuntime {
         LobeCloudflareParams & { apiKey?: string; apiVersion?: string; baseURL?: string }
     >,
   ) {
+    if (provider === 'vertexai') {
+      const runtimeModel = LobeVertexAI.initFromVertexAI(params as any);
+
+      return new ModelRuntime(runtimeModel);
+    }
+
     // @ts-expect-error runtime map not include vertex so it will be undefined
     const providerAI = providerRuntimeMap[provider] ?? LobeOpenAI;
 

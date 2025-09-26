@@ -105,6 +105,36 @@ const getParamsFromPayload = (provider: string, payload: ClientSecretPayload) =>
 
       return { apiKey };
     }
+
+    case ModelProvider.VertexAI: {
+      const credentialsSource = payload?.apiKey || llmConfig.VERTEXAI_CREDENTIALS;
+
+      let googleAuthOptions: { credentials: Record<string, any> } | undefined;
+      if (credentialsSource) {
+        try {
+          googleAuthOptions = { credentials: JSON.parse(credentialsSource) };
+        } catch (error) {
+          console.warn('[ModelRuntime] Failed to parse VertexAI credentials:', error);
+        }
+      }
+
+      const project =
+        llmConfig.VERTEXAI_PROJECT ||
+        process.env.VERTEXAI_PROJECT ||
+        process.env.GOOGLE_CLOUD_PROJECT;
+
+      const location =
+        process.env.VERTEXAI_LOCATION ||
+        llmConfig.VERTEXAI_LOCATION ||
+        process.env.GOOGLE_CLOUD_LOCATION ||
+        'us-central1';
+
+      return {
+        googleAuthOptions,
+        location,
+        project,
+      };
+    }
   }
 };
 

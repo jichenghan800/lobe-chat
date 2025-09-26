@@ -1,4 +1,5 @@
-import { AIChatModelCard } from '../types/aiModel';
+import { CHAT_MODEL_IMAGE_GENERATION_PARAMS } from '../standard-parameters';
+import { AIChatModelCard, AIImageModelCard } from '../types/aiModel';
 
 // ref: https://cloud.google.com/vertex-ai/generative-ai/docs/learn/models
 const vertexaiChatModels: AIChatModelCard[] = [
@@ -278,6 +279,26 @@ const vertexaiChatModels: AIChatModelCard[] = [
   },
 ];
 
-export const allModels = [...vertexaiChatModels];
+const vertexaiImageModels: AIImageModelCard[] = [
+  {
+    description:
+      'Nano Banana 是 Vertex AI 最新、最快、最高效的原生多模态模型，允许通过对话生成和编辑图像。',
+    displayName: 'Nano Banana',
+    enabled: true,
+    id: 'gemini-2.5-flash-image-preview:image',
+    parameters: CHAT_MODEL_IMAGE_GENERATION_PARAMS,
+    pricing: {
+      units: [
+        { name: 'textInput', rate: 0.3, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 2.5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageOutput', rate: 3, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    releasedAt: '2025-08-26',
+    type: 'image',
+  },
+];
+
+export const allModels = [...vertexaiChatModels, ...vertexaiImageModels];
 
 export default allModels;
