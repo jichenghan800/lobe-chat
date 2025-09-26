@@ -114,7 +114,8 @@ const getParamsFromPayload = (provider: string, payload: ClientSecretPayload) =>
         try {
           googleAuthOptions = { credentials: JSON.parse(credentialsSource) };
         } catch (error) {
-          console.warn('[ModelRuntime] Failed to parse VertexAI credentials:', error);
+          console.warn('[ModelRuntime] Failed to parse VertexAI credentials as JSON, treat as API key instead.');
+          // keep undefined so SDK can fall back to apiKey if available
         }
       }
 
@@ -123,13 +124,20 @@ const getParamsFromPayload = (provider: string, payload: ClientSecretPayload) =>
         process.env.VERTEXAI_PROJECT ||
         process.env.GOOGLE_CLOUD_PROJECT;
 
+      const normalizeLocation = (value?: string) => {
+        if (!value) return undefined;
+        if (value.toLowerCase() === 'global') return 'us-central1';
+        return value;
+      };
+
       const location =
-        process.env.VERTEXAI_LOCATION ||
-        llmConfig.VERTEXAI_LOCATION ||
-        process.env.GOOGLE_CLOUD_LOCATION ||
+        normalizeLocation(process.env.VERTEXAI_LOCATION) ||
+        normalizeLocation(llmConfig.VERTEXAI_LOCATION) ||
+        normalizeLocation(process.env.GOOGLE_CLOUD_LOCATION) ||
         'us-central1';
 
       return {
+        apiKey: credentialsSource && !googleAuthOptions ? credentialsSource : undefined,
         googleAuthOptions,
         location,
         project,
