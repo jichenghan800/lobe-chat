@@ -2,6 +2,52 @@
 
 # Changelog
 
+### [Version&nbsp;1.129.3](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.129.2...v1.129.3)
+<sup>Released on **2025-09-29**</sup>
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Add proxyUrl configuration for NEW API provider, fix input empty group name, refactor tools-engine and fix search token count, resolve qwen-image-edit imageUrls conversion issue.
+
+
+#### 💄 Styles
+
+- **misc**: Update i18n, update i18n.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's fixed
+
+* **misc**: Add proxyUrl configuration for NEW API provider, closes [#9426](https://github.com/jaworldwideorg/OneJA-Bot/issues/9426) [#9420](https://github.com/jaworldwideorg/OneJA-Bot/issues/9420) ([e35e378](https://github.com/jaworldwideorg/OneJA-Bot/commit/e35e378))
+* **misc**: Fix input empty group name, closes [#9441](https://github.com/jaworldwideorg/OneJA-Bot/issues/9441) ([f653ce1](https://github.com/jaworldwideorg/OneJA-Bot/commit/f653ce1))
+* **misc**: Refactor tools-engine and fix search token count, closes [#9448](https://github.com/jaworldwideorg/OneJA-Bot/issues/9448) ([e82d4b7](https://github.com/jaworldwideorg/OneJA-Bot/commit/e82d4b7))
+* **misc**: Resolve qwen-image-edit imageUrls conversion issue, closes [#9414](https://github.com/jaworldwideorg/OneJA-Bot/issues/9414) ([ec5af1b](https://github.com/jaworldwideorg/OneJA-Bot/commit/ec5af1b))
+
+
+
+#### Styles
+
+* **misc**: Update i18n, closes [#9449](https://github.com/jaworldwideorg/OneJA-Bot/issues/9449) ([b04a5d7](https://github.com/jaworldwideorg/OneJA-Bot/commit/b04a5d7))
+* **misc**: Update i18n, closes [#9413](https://github.com/jaworldwideorg/OneJA-Bot/issues/9413) ([4ea45b1](https://github.com/jaworldwideorg/OneJA-Bot/commit/4ea45b1))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.129.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.129.1...v1.129.2)
 <sup>Released on **2025-09-25**</sup>
 
