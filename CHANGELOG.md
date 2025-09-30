@@ -2,45 +2,24 @@
 
 # Changelog
 
-### [Version&nbsp;1.129.3](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.129.2...v1.129.3)
-<sup>Released on **2025-09-29**</sup>
+### [Version 1.133.2](https://github.com/lobehub/lobe-chat/compare/v1.133.1...v1.133.2)
 
-
-#### 🐛 Bug Fixes
-
-- **misc**: Add proxyUrl configuration for NEW API provider, fix input empty group name, refactor tools-engine and fix search token count, resolve qwen-image-edit imageUrls conversion issue.
-
+<sup>Released on **2025-09-30**</sup>
 
 #### 💄 Styles
 
-- **misc**: Update i18n, update i18n.
-
+- **misc**: Add minimap to chat list for quick navigation.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### What's fixed
-
-* **misc**: Add proxyUrl configuration for NEW API provider, closes [#9426](https://github.com/jaworldwideorg/OneJA-Bot/issues/9426) [#9420](https://github.com/jaworldwideorg/OneJA-Bot/issues/9420) ([e35e378](https://github.com/jaworldwideorg/OneJA-Bot/commit/e35e378))
-* **misc**: Fix input empty group name, closes [#9441](https://github.com/jaworldwideorg/OneJA-Bot/issues/9441) ([f653ce1](https://github.com/jaworldwideorg/OneJA-Bot/commit/f653ce1))
-* **misc**: Refactor tools-engine and fix search token count, closes [#9448](https://github.com/jaworldwideorg/OneJA-Bot/issues/9448) ([e82d4b7](https://github.com/jaworldwideorg/OneJA-Bot/commit/e82d4b7))
-* **misc**: Resolve qwen-image-edit imageUrls conversion issue, closes [#9414](https://github.com/jaworldwideorg/OneJA-Bot/issues/9414) ([ec5af1b](https://github.com/jaworldwideorg/OneJA-Bot/commit/ec5af1b))
-
-
-
 #### Styles
 
-* **misc**: Update i18n, closes [#9449](https://github.com/jaworldwideorg/OneJA-Bot/issues/9449) ([b04a5d7](https://github.com/jaworldwideorg/OneJA-Bot/commit/b04a5d7))
-* **misc**: Update i18n, closes [#9413](https://github.com/jaworldwideorg/OneJA-Bot/issues/9413) ([4ea45b1](https://github.com/jaworldwideorg/OneJA-Bot/commit/4ea45b1))
+- **misc**: Add minimap to chat list for quick navigation, closes [#9470](https://github.com/lobehub/lobe-chat/issues/9470) ([8db47eb](https://github.com/lobehub/lobe-chat/commit/8db47eb))
 
 </details>
-
 
 <div align="right">
 
@@ -48,42 +27,200 @@
 
 </div>
 
-### [Version&nbsp;1.129.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.129.1...v1.129.2)
-<sup>Released on **2025-09-25**</sup>
+### [Version 1.133.1](https://github.com/lobehub/lobe-chat/compare/v1.133.0...v1.133.1)
 
-
-#### 🐛 Bug Fixes
-
-- **misc**: Slove setting proxy page with style error.
-
+<sup>Released on **2025-09-30**</sup>
 
 #### 💄 Styles
 
-- **misc**: Enhanced Nvidia NIM chat experience, OpenAI models in AiHubMix use Responses API.
-
+- **misc**: Update i18n.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### What's fixed
-
-* **misc**: Slove setting proxy page with style error, closes [#9417](https://github.com/jaworldwideorg/OneJA-Bot/issues/9417) ([6d3e5d1](https://github.com/jaworldwideorg/OneJA-Bot/commit/6d3e5d1))
-
-
-
 #### Styles
 
-* **misc**: Enhanced Nvidia NIM chat experience, closes [#9408](https://github.com/jaworldwideorg/OneJA-Bot/issues/9408) ([13e936f](https://github.com/jaworldwideorg/OneJA-Bot/commit/13e936f))
-* **misc**: OpenAI models in AiHubMix use Responses API, closes [#9251](https://github.com/jaworldwideorg/OneJA-Bot/issues/9251) ([8636fe4](https://github.com/jaworldwideorg/OneJA-Bot/commit/8636fe4))
+- **misc**: Update i18n, closes [#9480](https://github.com/lobehub/lobe-chat/issues/9480) ([dfeb42c](https://github.com/lobehub/lobe-chat/commit/dfeb42c))
 
 </details>
 
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 1.133.0](https://github.com/lobehub/lobe-chat/compare/v1.132.19...v1.133.0)
+
+<sup>Released on **2025-09-29**</sup>
+
+#### ✨ Features
+
+- **misc**: Add builtin Python plugin, add Claude Sonnet 4.5 model to AI chat models.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Add builtin Python plugin, closes [#8873](https://github.com/lobehub/lobe-chat/issues/8873) ([fa6ef94](https://github.com/lobehub/lobe-chat/commit/fa6ef94))
+- **misc**: Add Claude Sonnet 4.5 model to AI chat models, closes [#9476](https://github.com/lobehub/lobe-chat/issues/9476) ([a30a65c](https://github.com/lobehub/lobe-chat/commit/a30a65c))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.19](https://github.com/lobehub/lobe-chat/compare/v1.132.18...v1.132.19)
+
+<sup>Released on **2025-09-29**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.18](https://github.com/lobehub/lobe-chat/compare/v1.132.17...v1.132.18)
+
+<sup>Released on **2025-09-28**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Refactor tools-engine and fix search token count.
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Refactor tools-engine and fix search token count, closes [#9448](https://github.com/lobehub/lobe-chat/issues/9448) ([e82d4b7](https://github.com/lobehub/lobe-chat/commit/e82d4b7))
+
+#### Styles
+
+- **misc**: Update i18n, closes [#9449](https://github.com/lobehub/lobe-chat/issues/9449) ([b04a5d7](https://github.com/lobehub/lobe-chat/commit/b04a5d7))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.17](https://github.com/lobehub/lobe-chat/compare/v1.132.16...v1.132.17)
+
+<sup>Released on **2025-09-27**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix input empty group name.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Fix input empty group name, closes [#9441](https://github.com/lobehub/lobe-chat/issues/9441) ([f653ce1](https://github.com/lobehub/lobe-chat/commit/f653ce1))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.16](https://github.com/lobehub/lobe-chat/compare/v1.132.15...v1.132.16)
+
+<sup>Released on **2025-09-26**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Resolve qwen-image-edit imageUrls conversion issue.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Resolve qwen-image-edit imageUrls conversion issue, closes [#9414](https://github.com/lobehub/lobe-chat/issues/9414) ([ec5af1b](https://github.com/lobehub/lobe-chat/commit/ec5af1b))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.15](https://github.com/lobehub/lobe-chat/compare/v1.132.14...v1.132.15)
+
+<sup>Released on **2025-09-25**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Add proxyUrl configuration for NEW API provider.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Add proxyUrl configuration for NEW API provider, closes [#9426](https://github.com/lobehub/lobe-chat/issues/9426) [#9420](https://github.com/lobehub/lobe-chat/issues/9420) ([e35e378](https://github.com/lobehub/lobe-chat/commit/e35e378))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.132.14](https://github.com/lobehub/lobe-chat/compare/v1.132.13...v1.132.14)
+
+<sup>Released on **2025-09-25**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#9413](https://github.com/lobehub/lobe-chat/issues/9413) ([4ea45b1](https://github.com/lobehub/lobe-chat/commit/4ea45b1))
+
+</details>
 
 <div align="right">
 
