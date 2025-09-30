@@ -1,21 +1,27 @@
 [
   {
     "children": {
-      "improvements": ["Add minimap to chat list for quick navigation."]
+      "improvements": [
+        "Add minimap to chat list for quick navigation."
+      ]
     },
     "date": "2025-09-30",
     "version": "1.133.2"
   },
   {
     "children": {
-      "improvements": ["Update i18n."]
+      "improvements": [
+        "Update i18n."
+      ]
     },
     "date": "2025-09-30",
     "version": "1.133.1"
   },
   {
     "children": {
-      "features": ["Add builtin Python plugin, add Claude Sonnet 4.5 model to AI chat models."]
+      "features": [
+        "Add builtin Python plugin, add Claude Sonnet 4.5 model to AI chat models."
+      ]
     },
     "date": "2025-09-29",
     "version": "1.133.0"
