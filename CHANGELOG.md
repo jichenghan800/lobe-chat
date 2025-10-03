@@ -2,43 +2,65 @@
 
 # Changelog
 
-## [Version&nbsp;1.130.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.129.3...v1.130.0)
-<sup>Released on **2025-09-30**</sup>
+### [Version 1.133.4](https://github.com/lobehub/lobe-chat/compare/v1.133.3...v1.133.4)
 
+<sup>Released on **2025-10-01**</sup>
 
-#### ✨ Features
+#### 🐛 Bug Fixes
 
-- **misc**: Add builtin Python plugin, add Claude Sonnet 4.5 model to AI chat models.
-
+- **misc**: OllamaCloud error.
 
 #### 💄 Styles
 
-- **misc**: Add minimap to chat list for quick navigation, update i18n.
-
+- **misc**: Fix chat minimap overflow.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
+#### What's fixed
 
-
-#### What's improved
-
-* **misc**: Add builtin Python plugin, closes [#8873](https://github.com/jaworldwideorg/OneJA-Bot/issues/8873) ([fa6ef94](https://github.com/jaworldwideorg/OneJA-Bot/commit/fa6ef94))
-* **misc**: Add Claude Sonnet 4.5 model to AI chat models, closes [#9476](https://github.com/jaworldwideorg/OneJA-Bot/issues/9476) ([a30a65c](https://github.com/jaworldwideorg/OneJA-Bot/commit/a30a65c))
-
-
+- **misc**: OllamaCloud error, closes [#9481](https://github.com/lobehub/lobe-chat/issues/9481) ([55c45a5](https://github.com/lobehub/lobe-chat/commit/55c45a5))
 
 #### Styles
 
-* **misc**: Add minimap to chat list for quick navigation, closes [#9470](https://github.com/jaworldwideorg/OneJA-Bot/issues/9470) ([8db47eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/8db47eb))
-* **misc**: Update i18n, closes [#9480](https://github.com/jaworldwideorg/OneJA-Bot/issues/9480) ([dfeb42c](https://github.com/jaworldwideorg/OneJA-Bot/commit/dfeb42c))
+- **misc**: Fix chat minimap overflow, closes [#9507](https://github.com/lobehub/lobe-chat/issues/9507) ([d835c33](https://github.com/lobehub/lobe-chat/commit/d835c33))
 
 </details>
 
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.133.3](https://github.com/lobehub/lobe-chat/compare/v1.133.2...v1.133.3)
+
+<sup>Released on **2025-10-01**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Refactor a `ssrf-safe-fetch` module.
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix frontend random API key config not work.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Refactor a `ssrf-safe-fetch` module, closes [#9474](https://github.com/lobehub/lobe-chat/issues/9474) ([92da716](https://github.com/lobehub/lobe-chat/commit/92da716))
+
+#### What's fixed
+
+- **misc**: Fix frontend random API key config not work, closes [#9477](https://github.com/lobehub/lobe-chat/issues/9477) [#9255](https://github.com/lobehub/lobe-chat/issues/9255) ([a194d48](https://github.com/lobehub/lobe-chat/commit/a194d48))
+
+</details>
 
 <div align="right">
 
