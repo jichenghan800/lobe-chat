@@ -2,6 +2,112 @@
 
 # Changelog
 
+## [Version&nbsp;1.131.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.130.1...v1.131.0)
+<sup>Released on **2025-10-13**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Refactor chat item.
+
+
+#### ✨ Features
+
+- **misc**: Add new provider Cerebras, add new setting for default image num, huanyuan text-to-image 3, support double-click to open multi agent window on the desktop.
+
+
+#### 🐛 Bug Fixes
+
+- **bedrock**: Add parameter conflict handling for Claude 4+ models.
+- **database**: Prevent empty array insertion in aiModel batch operations.
+- **desktop**: Macos26 small icon.
+- **plugin-store**: Fix search functionality for old plugin store.
+- **provider**: Add deepseek-v3.1-terminus to THINKING_MODELS.
+- **security**: Sanitize Azure provider error responses to prevent API key exposure.
+- **misc**: `type` not preserved when model is disabled or sorted, Add 'gemini-2.5-flash-image' to disabled models Thinking, Custom provider fails when client requests are enabled, disable rich text in markdown editor, fix input cannot send markdown, fix standalone plugin rerender issue, type not preserved when model is sorted.
+
+
+#### 💄 Styles
+
+- **image**: Optimize UX and fix fal pricing.
+- **misc**: Add capability inference for web search, image output and video recognition in model parsing and update UI form items to support search, imageOutput and video abilities, Add delete & regenerate hotkeys, Add GPT-5 pro model, add lab to support disable/enable rich text, add more AWS regions, add promptfoo to improve prompts quality, Allow switching model `type`, improve Korean translate, improve search experience, improve styles and fix tools calling condition, nano banana support `aspect_ratio`, Optimize OpenRouter modelFetch endpoint, Optimized `extendParams` UI, update i18n, update i18n, update i18n, update i18n, update i18n, update i18n, Update infini-ai models.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Refactor chat item, closes [#9599](https://github.com/jaworldwideorg/OneJA-Bot/issues/9599) ([1f36158](https://github.com/jaworldwideorg/OneJA-Bot/commit/1f36158))
+
+
+
+#### What's improved
+
+* **misc**: Add new provider Cerebras, closes [#9559](https://github.com/jaworldwideorg/OneJA-Bot/issues/9559) ([9cceaad](https://github.com/jaworldwideorg/OneJA-Bot/commit/9cceaad))
+* **misc**: Add new setting for default image num, closes [#9618](https://github.com/jaworldwideorg/OneJA-Bot/issues/9618) ([de7368b](https://github.com/jaworldwideorg/OneJA-Bot/commit/de7368b))
+* **misc**: Huanyuan text-to-image 3, closes [#9589](https://github.com/jaworldwideorg/OneJA-Bot/issues/9589) ([1dd0e5e](https://github.com/jaworldwideorg/OneJA-Bot/commit/1dd0e5e))
+* **misc**: Support double-click to open multi agent window on the desktop, closes [#9331](https://github.com/jaworldwideorg/OneJA-Bot/issues/9331) ([a060901](https://github.com/jaworldwideorg/OneJA-Bot/commit/a060901))
+
+
+
+#### What's fixed
+
+* **bedrock**: Add parameter conflict handling for Claude 4+ models, closes [#9627](https://github.com/jaworldwideorg/OneJA-Bot/issues/9627) [#9523](https://github.com/jaworldwideorg/OneJA-Bot/issues/9523) ([54b6217](https://github.com/jaworldwideorg/OneJA-Bot/commit/54b6217))
+* **database**: Prevent empty array insertion in aiModel batch operations, closes [#9491](https://github.com/jaworldwideorg/OneJA-Bot/issues/9491) [#9429](https://github.com/jaworldwideorg/OneJA-Bot/issues/9429) [#9429](https://github.com/jaworldwideorg/OneJA-Bot/issues/9429) ([eb50c8b](https://github.com/jaworldwideorg/OneJA-Bot/commit/eb50c8b))
+* **desktop**: Macos26 small icon, closes [#9421](https://github.com/jaworldwideorg/OneJA-Bot/issues/9421) ([ca03342](https://github.com/jaworldwideorg/OneJA-Bot/commit/ca03342))
+* **plugin-store**: Fix search functionality for old plugin store, closes [#9651](https://github.com/jaworldwideorg/OneJA-Bot/issues/9651) [#9645](https://github.com/jaworldwideorg/OneJA-Bot/issues/9645) ([522fc09](https://github.com/jaworldwideorg/OneJA-Bot/commit/522fc09))
+* **provider**: Add deepseek-v3.1-terminus to THINKING_MODELS, closes [#9653](https://github.com/jaworldwideorg/OneJA-Bot/issues/9653) [#9648](https://github.com/jaworldwideorg/OneJA-Bot/issues/9648) ([e9b5c69](https://github.com/jaworldwideorg/OneJA-Bot/commit/e9b5c69))
+* **security**: Sanitize Azure provider error responses to prevent API key exposure, closes [#9583](https://github.com/jaworldwideorg/OneJA-Bot/issues/9583) ([af59bfe](https://github.com/jaworldwideorg/OneJA-Bot/commit/af59bfe))
+* **misc**: `type` not preserved when model is disabled or sorted, closes [#9530](https://github.com/jaworldwideorg/OneJA-Bot/issues/9530) ([476b897](https://github.com/jaworldwideorg/OneJA-Bot/commit/476b897))
+* **misc**: Add 'gemini-2.5-flash-image' to disabled models Thinking, closes [#9633](https://github.com/jaworldwideorg/OneJA-Bot/issues/9633) ([771b585](https://github.com/jaworldwideorg/OneJA-Bot/commit/771b585))
+* **misc**: Custom provider fails when client requests are enabled, closes [#9534](https://github.com/jaworldwideorg/OneJA-Bot/issues/9534) ([8b12fdf](https://github.com/jaworldwideorg/OneJA-Bot/commit/8b12fdf))
+* **misc**: Disable rich text in markdown editor, closes [#9637](https://github.com/jaworldwideorg/OneJA-Bot/issues/9637) ([9349ce2](https://github.com/jaworldwideorg/OneJA-Bot/commit/9349ce2))
+* **misc**: Fix input cannot send markdown, closes [#9674](https://github.com/jaworldwideorg/OneJA-Bot/issues/9674) ([2518d7e](https://github.com/jaworldwideorg/OneJA-Bot/commit/2518d7e))
+* **misc**: Fix standalone plugin rerender issue, closes [#9611](https://github.com/jaworldwideorg/OneJA-Bot/issues/9611) [#9396](https://github.com/jaworldwideorg/OneJA-Bot/issues/9396) ([7ab30fc](https://github.com/jaworldwideorg/OneJA-Bot/commit/7ab30fc))
+* **misc**: Type not preserved when model is sorted, closes [#9561](https://github.com/jaworldwideorg/OneJA-Bot/issues/9561) ([5fe2518](https://github.com/jaworldwideorg/OneJA-Bot/commit/5fe2518))
+
+
+
+#### Styles
+
+* **image**: Optimize UX and fix fal pricing, closes [#9592](https://github.com/jaworldwideorg/OneJA-Bot/issues/9592) ([dddbfcd](https://github.com/jaworldwideorg/OneJA-Bot/commit/dddbfcd))
+* **misc**: Add capability inference for web search, image output and video recognition in model parsing and update UI form items to support search, imageOutput and video abilities, closes [#9022](https://github.com/jaworldwideorg/OneJA-Bot/issues/9022) ([4e44569](https://github.com/jaworldwideorg/OneJA-Bot/commit/4e44569))
+* **misc**: Add delete & regenerate hotkeys, closes [#9538](https://github.com/jaworldwideorg/OneJA-Bot/issues/9538) ([d948580](https://github.com/jaworldwideorg/OneJA-Bot/commit/d948580))
+* **misc**: Add GPT-5 pro model, closes [#9594](https://github.com/jaworldwideorg/OneJA-Bot/issues/9594) ([775f30b](https://github.com/jaworldwideorg/OneJA-Bot/commit/775f30b))
+* **misc**: Add lab to support disable/enable rich text, closes [#9652](https://github.com/jaworldwideorg/OneJA-Bot/issues/9652) ([658c294](https://github.com/jaworldwideorg/OneJA-Bot/commit/658c294))
+* **misc**: Add more AWS regions, closes [#9644](https://github.com/jaworldwideorg/OneJA-Bot/issues/9644) ([4a82daf](https://github.com/jaworldwideorg/OneJA-Bot/commit/4a82daf))
+* **misc**: Add promptfoo to improve prompts quality, closes [#9568](https://github.com/jaworldwideorg/OneJA-Bot/issues/9568) ([33874c2](https://github.com/jaworldwideorg/OneJA-Bot/commit/33874c2))
+* **misc**: Allow switching model `type`, closes [#9529](https://github.com/jaworldwideorg/OneJA-Bot/issues/9529) ([9b62685](https://github.com/jaworldwideorg/OneJA-Bot/commit/9b62685))
+* **misc**: Improve Korean translate, closes [#9597](https://github.com/jaworldwideorg/OneJA-Bot/issues/9597) ([319fbfb](https://github.com/jaworldwideorg/OneJA-Bot/commit/319fbfb))
+* **misc**: Improve search experience, closes [#9661](https://github.com/jaworldwideorg/OneJA-Bot/issues/9661) ([8624f84](https://github.com/jaworldwideorg/OneJA-Bot/commit/8624f84))
+* **misc**: Improve styles and fix tools calling condition, closes [#9591](https://github.com/jaworldwideorg/OneJA-Bot/issues/9591) ([1695f2f](https://github.com/jaworldwideorg/OneJA-Bot/commit/1695f2f))
+* **misc**: Nano banana support `aspect_ratio`, closes [#9528](https://github.com/jaworldwideorg/OneJA-Bot/issues/9528) ([ae3ed6e](https://github.com/jaworldwideorg/OneJA-Bot/commit/ae3ed6e))
+* **misc**: Optimize OpenRouter modelFetch endpoint, closes [#9671](https://github.com/jaworldwideorg/OneJA-Bot/issues/9671) ([0038a64](https://github.com/jaworldwideorg/OneJA-Bot/commit/0038a64))
+* **misc**: Optimized `extendParams` UI, closes [#9457](https://github.com/jaworldwideorg/OneJA-Bot/issues/9457) ([582f6d1](https://github.com/jaworldwideorg/OneJA-Bot/commit/582f6d1))
+* **misc**: Update i18n, closes [#9665](https://github.com/jaworldwideorg/OneJA-Bot/issues/9665) ([02096ea](https://github.com/jaworldwideorg/OneJA-Bot/commit/02096ea))
+* **misc**: Update i18n, closes [#9625](https://github.com/jaworldwideorg/OneJA-Bot/issues/9625) ([70d356d](https://github.com/jaworldwideorg/OneJA-Bot/commit/70d356d))
+* **misc**: Update i18n, closes [#9602](https://github.com/jaworldwideorg/OneJA-Bot/issues/9602) ([ed267a4](https://github.com/jaworldwideorg/OneJA-Bot/commit/ed267a4))
+* **misc**: Update i18n, closes [#9580](https://github.com/jaworldwideorg/OneJA-Bot/issues/9580) ([c0974ea](https://github.com/jaworldwideorg/OneJA-Bot/commit/c0974ea))
+* **misc**: Update i18n, closes [#9546](https://github.com/jaworldwideorg/OneJA-Bot/issues/9546) ([ed8174f](https://github.com/jaworldwideorg/OneJA-Bot/commit/ed8174f))
+* **misc**: Update i18n, closes [#9514](https://github.com/jaworldwideorg/OneJA-Bot/issues/9514) ([6430f57](https://github.com/jaworldwideorg/OneJA-Bot/commit/6430f57))
+* **misc**: Update infini-ai models, closes [#9646](https://github.com/jaworldwideorg/OneJA-Bot/issues/9646) ([5274225](https://github.com/jaworldwideorg/OneJA-Bot/commit/5274225))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.130.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.130.0...v1.130.1)
 <sup>Released on **2025-10-03**</sup>
 
