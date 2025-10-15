@@ -2,6 +2,54 @@
 
 # Changelog
 
+### [Version&nbsp;1.131.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.131.0...v1.131.1)
+<sup>Released on **2025-10-15**</sup>
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix mcp server connect issue and refactor web search implement, fix the Worker URL cross-origin issue, fix tools calling long name length >64 issue, prevent Vertex AI JSON credentials from being split by comma, update Claude workflows to use oauth token, vertext ai create image.
+
+
+#### 💄 Styles
+
+- **misc**: Add imagen model to vertex ai, change the user chatItem maxWidth should use flex 1.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's fixed
+
+* **misc**: Fix mcp server connect issue and refactor web search implement, closes [#9694](https://github.com/jaworldwideorg/OneJA-Bot/issues/9694) ([15ebcb4](https://github.com/jaworldwideorg/OneJA-Bot/commit/15ebcb4))
+* **misc**: Fix the Worker URL cross-origin issue, closes [#9624](https://github.com/jaworldwideorg/OneJA-Bot/issues/9624) ([d379112](https://github.com/jaworldwideorg/OneJA-Bot/commit/d379112))
+* **misc**: Fix tools calling long name length >64 issue, closes [#9697](https://github.com/jaworldwideorg/OneJA-Bot/issues/9697) ([cb98604](https://github.com/jaworldwideorg/OneJA-Bot/commit/cb98604))
+* **misc**: Prevent Vertex AI JSON credentials from being split by comma, closes [#9703](https://github.com/jaworldwideorg/OneJA-Bot/issues/9703) [#9477](https://github.com/jaworldwideorg/OneJA-Bot/issues/9477) ([189081d](https://github.com/jaworldwideorg/OneJA-Bot/commit/189081d))
+* **misc**: Update Claude workflows to use oauth token, closes [#9711](https://github.com/jaworldwideorg/OneJA-Bot/issues/9711) ([8dcb00e](https://github.com/jaworldwideorg/OneJA-Bot/commit/8dcb00e))
+* **misc**: Vertext ai create image, closes [#9710](https://github.com/jaworldwideorg/OneJA-Bot/issues/9710) ([790d8fd](https://github.com/jaworldwideorg/OneJA-Bot/commit/790d8fd))
+
+
+
+#### Styles
+
+* **misc**: Add imagen model to vertex ai, closes [#9699](https://github.com/jaworldwideorg/OneJA-Bot/issues/9699) ([3b2a2c1](https://github.com/jaworldwideorg/OneJA-Bot/commit/3b2a2c1))
+* **misc**: Change the user chatItem maxWidth should use flex 1, closes [#9689](https://github.com/jaworldwideorg/OneJA-Bot/issues/9689) ([cfd5221](https://github.com/jaworldwideorg/OneJA-Bot/commit/cfd5221))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.131.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.130.1...v1.131.0)
 <sup>Released on **2025-10-13**</sup>
 
