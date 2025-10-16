@@ -2,6 +2,50 @@
 
 # Changelog
 
+### [Version&nbsp;1.131.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.131.1...v1.131.2)
+<sup>Released on **2025-10-16**</sup>
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix duplicate tools id issue and fix link dialog issue.
+
+
+#### 💄 Styles
+
+- **misc**: Add region support for Vertex AI provider, improve update notification, Use different favicon.ico in dev mode.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's fixed
+
+* **misc**: Fix duplicate tools id issue and fix link dialog issue, closes [#9731](https://github.com/jaworldwideorg/OneJA-Bot/issues/9731) ([0a8c80d](https://github.com/jaworldwideorg/OneJA-Bot/commit/0a8c80d))
+
+
+
+#### Styles
+
+* **misc**: Add region support for Vertex AI provider, closes [#9720](https://github.com/jaworldwideorg/OneJA-Bot/issues/9720) ([d17b50c](https://github.com/jaworldwideorg/OneJA-Bot/commit/d17b50c))
+* **misc**: Improve update notification, closes [#9717](https://github.com/jaworldwideorg/OneJA-Bot/issues/9717) ([16de38a](https://github.com/jaworldwideorg/OneJA-Bot/commit/16de38a))
+* **misc**: Use different favicon.ico in dev mode, closes [#9723](https://github.com/jaworldwideorg/OneJA-Bot/issues/9723) ([2f7317b](https://github.com/jaworldwideorg/OneJA-Bot/commit/2f7317b))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.131.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.131.0...v1.131.1)
 <sup>Released on **2025-10-15**</sup>
 
