@@ -2,6 +2,60 @@
 
 # Changelog
 
+## [Version&nbsp;1.132.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.131.2...v1.132.0)
+<sup>Released on **2025-10-17**</sup>
+
+
+#### ✨ Features
+
+- **misc**: Support Group Chat, Mention, and Multi-Agent Orchestration with feature flag.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Automatic topic creation switch does not work.
+
+
+#### 💄 Styles
+
+- **misc**: Add Claude Haiku 4.5 model, improve welcome message.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's improved
+
+* **misc**: Support Group Chat, Mention, and Multi-Agent Orchestration with feature flag, closes [#8976](https://github.com/jaworldwideorg/OneJA-Bot/issues/8976) ([03c2838](https://github.com/jaworldwideorg/OneJA-Bot/commit/03c2838))
+
+
+
+#### What's fixed
+
+* **misc**: Automatic topic creation switch does not work, closes [#9693](https://github.com/jaworldwideorg/OneJA-Bot/issues/9693) ([a02b301](https://github.com/jaworldwideorg/OneJA-Bot/commit/a02b301))
+
+
+
+#### Styles
+
+* **misc**: Add Claude Haiku 4.5 model, closes [#9735](https://github.com/jaworldwideorg/OneJA-Bot/issues/9735) ([1cfbc87](https://github.com/jaworldwideorg/OneJA-Bot/commit/1cfbc87))
+* **misc**: Improve welcome message, closes [#9747](https://github.com/jaworldwideorg/OneJA-Bot/issues/9747) ([c83fe13](https://github.com/jaworldwideorg/OneJA-Bot/commit/c83fe13))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.131.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.131.1...v1.131.2)
 <sup>Released on **2025-10-16**</sup>
 
