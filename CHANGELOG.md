@@ -2,6 +2,79 @@
 
 # Changelog
 
+## [Version&nbsp;1.133.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.132.0...v1.133.0)
+<sup>Released on **2025-10-21**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **i18n**: Rm qa.
+- **misc**: Refactor upload router into lambda and decide to remove it in V2.
+
+
+#### ✨ Features
+
+- **misc**: Add ComfyUI integration Phase1(RFC-128), support image generation for siliconcloud.
+
+
+#### 🐛 Bug Fixes
+
+- **desktop**: Fix desktop open error in some edge cases.
+- **misc**: Fix response API tools calling issue, fix topic fetch not correct in custom agent, pass threadId to messages in sendMessageInServer.
+
+
+#### 💄 Styles
+
+- **misc**: Show message author in minimap, solve when desktop the sider agent list too long, update i18n.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **i18n**: Rm qa, closes [#9783](https://github.com/jaworldwideorg/OneJA-Bot/issues/9783) ([6d14dfe](https://github.com/jaworldwideorg/OneJA-Bot/commit/6d14dfe))
+* **misc**: Refactor upload router into lambda and decide to remove it in V2, closes [#9766](https://github.com/jaworldwideorg/OneJA-Bot/issues/9766) ([d1c7f41](https://github.com/jaworldwideorg/OneJA-Bot/commit/d1c7f41))
+
+
+
+#### What's improved
+
+* **misc**: Add ComfyUI integration Phase1(RFC-128), closes [#9043](https://github.com/jaworldwideorg/OneJA-Bot/issues/9043) ([15ffe28](https://github.com/jaworldwideorg/OneJA-Bot/commit/15ffe28))
+* **misc**: Support image generation for siliconcloud, closes [#9447](https://github.com/jaworldwideorg/OneJA-Bot/issues/9447) ([5ebcfa5](https://github.com/jaworldwideorg/OneJA-Bot/commit/5ebcfa5))
+
+
+
+#### What's fixed
+
+* **desktop**: Fix desktop open error in some edge cases, closes [#9813](https://github.com/jaworldwideorg/OneJA-Bot/issues/9813) ([6334f62](https://github.com/jaworldwideorg/OneJA-Bot/commit/6334f62))
+* **misc**: Fix response API tools calling issue, closes [#9760](https://github.com/jaworldwideorg/OneJA-Bot/issues/9760) ([0596692](https://github.com/jaworldwideorg/OneJA-Bot/commit/0596692))
+* **misc**: Fix topic fetch not correct in custom agent, closes [#9761](https://github.com/jaworldwideorg/OneJA-Bot/issues/9761) ([ceffce2](https://github.com/jaworldwideorg/OneJA-Bot/commit/ceffce2))
+* **misc**: Pass threadId to messages in sendMessageInServer, closes [#9808](https://github.com/jaworldwideorg/OneJA-Bot/issues/9808) ([d99a3a8](https://github.com/jaworldwideorg/OneJA-Bot/commit/d99a3a8))
+
+
+
+#### Styles
+
+* **misc**: Show message author in minimap, closes [#9797](https://github.com/jaworldwideorg/OneJA-Bot/issues/9797) ([f6daefb](https://github.com/jaworldwideorg/OneJA-Bot/commit/f6daefb))
+* **misc**: Solve when desktop the sider agent list too long, closes [#9792](https://github.com/jaworldwideorg/OneJA-Bot/issues/9792) ([778dea3](https://github.com/jaworldwideorg/OneJA-Bot/commit/778dea3))
+* **misc**: Update i18n, closes [#9787](https://github.com/jaworldwideorg/OneJA-Bot/issues/9787) ([b43d4b2](https://github.com/jaworldwideorg/OneJA-Bot/commit/b43d4b2))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.132.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.131.2...v1.132.0)
 <sup>Released on **2025-10-17**</sup>
 
