@@ -2,6 +2,76 @@
 
 # Changelog
 
+## [Version&nbsp;1.134.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.133.0...v1.134.0)
+<sup>Released on **2025-10-22**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Fix model runtime cost calculate with CNY, refactor context engine.
+
+
+#### ✨ Features
+
+- **misc**: Add PDF export functionality to share modal.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Ignore abort signal errors in TRPC client, slove when pwa user info have code cannot be viewed in full.
+
+
+#### 💄 Styles
+
+- **settings**: Broadcast locale changes and update switchLocale action.
+- **misc**: Add knowledge base mansory layout [LOB-496], improve rich text link display, update i18n.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Fix model runtime cost calculate with CNY, closes [#9834](https://github.com/jaworldwideorg/OneJA-Bot/issues/9834) ([2e911ea](https://github.com/jaworldwideorg/OneJA-Bot/commit/2e911ea))
+* **misc**: Refactor context engine, closes [#9821](https://github.com/jaworldwideorg/OneJA-Bot/issues/9821) ([e99f12f](https://github.com/jaworldwideorg/OneJA-Bot/commit/e99f12f))
+
+
+
+#### What's improved
+
+* **misc**: Add PDF export functionality to share modal, closes [#9300](https://github.com/jaworldwideorg/OneJA-Bot/issues/9300) [#9299](https://github.com/jaworldwideorg/OneJA-Bot/issues/9299) ([2b7761c](https://github.com/jaworldwideorg/OneJA-Bot/commit/2b7761c))
+
+
+
+#### What's fixed
+
+* **misc**: Ignore abort signal errors in TRPC client, closes [#9809](https://github.com/jaworldwideorg/OneJA-Bot/issues/9809) [#9401](https://github.com/jaworldwideorg/OneJA-Bot/issues/9401) ([7f7dcfb](https://github.com/jaworldwideorg/OneJA-Bot/commit/7f7dcfb))
+* **misc**: Slove when pwa user info have code cannot be viewed in full, closes [#9817](https://github.com/jaworldwideorg/OneJA-Bot/issues/9817) ([6734a47](https://github.com/jaworldwideorg/OneJA-Bot/commit/6734a47))
+
+
+
+#### Styles
+
+* **settings**: Broadcast locale changes and update switchLocale action, closes [#9620](https://github.com/jaworldwideorg/OneJA-Bot/issues/9620) ([0eb02ca](https://github.com/jaworldwideorg/OneJA-Bot/commit/0eb02ca))
+* **misc**: Add knowledge base mansory layout [LOB-496], closes [#9722](https://github.com/jaworldwideorg/OneJA-Bot/issues/9722) ([69f21da](https://github.com/jaworldwideorg/OneJA-Bot/commit/69f21da))
+* **misc**: Improve rich text link display, closes [#9816](https://github.com/jaworldwideorg/OneJA-Bot/issues/9816) ([af33543](https://github.com/jaworldwideorg/OneJA-Bot/commit/af33543))
+* **misc**: Update i18n, closes [#9832](https://github.com/jaworldwideorg/OneJA-Bot/issues/9832) ([80b0999](https://github.com/jaworldwideorg/OneJA-Bot/commit/80b0999))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.133.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.132.0...v1.133.0)
 <sup>Released on **2025-10-21**</sup>
 
