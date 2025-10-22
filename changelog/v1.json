@@ -1,6 +1,21 @@
 [
   {
     "children": {
+      "improvements": [
+        "Add knowledge base mansory layout [LOB-496], improve rich text link display, update i18n."
+      ],
+      "features": [
+        "Add PDF export functionality to share modal."
+      ],
+      "fixes": [
+        "Ignore abort signal errors in TRPC client, slove when pwa user info have code cannot be viewed in full."
+      ]
+    },
+    "date": "2025-10-22",
+    "version": "1.134.0"
+  },
+  {
+    "children": {
       "fixes": [
         "Fix oidc oauth callback pages 404."
       ],
