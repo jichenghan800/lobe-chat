@@ -2,6 +2,39 @@
 
 # Changelog
 
+### [Version&nbsp;1.135.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.135.0...v1.135.1)
+<sup>Released on **2025-10-28**</sup>
+
+
+#### 💄 Styles
+
+- **misc**: Add MiniMax-M2 model, Pre render ModelSwitchPanel, The error details of the connectivity check lead to a layout problem.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Styles
+
+* **misc**: Add MiniMax-M2 model, closes [#9897](https://github.com/jaworldwideorg/OneJA-Bot/issues/9897) ([d6fded2](https://github.com/jaworldwideorg/OneJA-Bot/commit/d6fded2))
+* **misc**: Pre render ModelSwitchPanel, closes [#9499](https://github.com/jaworldwideorg/OneJA-Bot/issues/9499) ([840382b](https://github.com/jaworldwideorg/OneJA-Bot/commit/840382b))
+* **misc**: The error details of the connectivity check lead to a layout problem, closes [#9872](https://github.com/jaworldwideorg/OneJA-Bot/issues/9872) ([ea42e60](https://github.com/jaworldwideorg/OneJA-Bot/commit/ea42e60))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version 1.142.6](https://github.com/lobehub/lobe-chat/compare/v1.142.5...v1.142.6)
 
 <sup>Released on **2025-10-28**</sup>
