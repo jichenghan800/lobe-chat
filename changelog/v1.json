@@ -6,7 +6,9 @@
   },
   {
     "children": {
-      "improvements": ["Add MiniMax-M2 model."]
+      "improvements": [
+        "Add MiniMax-M2 model."
+      ]
     },
     "date": "2025-10-27",
     "version": "1.142.5"
