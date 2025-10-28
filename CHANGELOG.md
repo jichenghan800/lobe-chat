@@ -2,69 +2,67 @@
 
 # Changelog
 
-## [Version&nbsp;1.135.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.134.0...v1.135.0)
-<sup>Released on **2025-10-27**</sup>
+### [Version 1.142.6](https://github.com/lobehub/lobe-chat/compare/v1.142.5...v1.142.6)
 
-
-#### ♻ Code Refactoring
-
-- **misc**: Change discover page from RSC to SPA to improve performance.
-
-
-#### ✨ Features
-
-- **misc**: Use env to control clerk allow origin feature.
-
-
-#### 🐛 Bug Fixes
-
-- **misc**: Loadmore not work & navbar not show in pwa.
-
-
-#### 💄 Styles
-
-- **misc**: Adjust modal setting form styles for improved layout and responsiveness, Allow removal of `top_p` and similar request parameters, improve local system tools render, improve provider modal height when creating custom provider, Improvement for Agent Team After Alpha Launch [LOB-517], Unzip file when uploading in knowledge base [LOB-500], update i18n.
-
+<sup>Released on **2025-10-28**</sup>
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
+</details>
 
+<div align="right">
 
-#### Code refactoring
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
 
-* **misc**: Change discover page from RSC to SPA to improve performance, closes [#9828](https://github.com/jaworldwideorg/OneJA-Bot/issues/9828) ([b59ee0a](https://github.com/jaworldwideorg/OneJA-Bot/commit/b59ee0a))
+</div>
 
+### [Version 1.142.5](https://github.com/lobehub/lobe-chat/compare/v1.142.4...v1.142.5)
 
+<sup>Released on **2025-10-27**</sup>
 
-#### What's improved
+#### 💄 Styles
 
-* **misc**: Use env to control clerk allow origin feature, closes [#9863](https://github.com/jaworldwideorg/OneJA-Bot/issues/9863) ([490fee0](https://github.com/jaworldwideorg/OneJA-Bot/commit/490fee0))
+- **misc**: Add MiniMax-M2 model.
 
+<br/>
 
-
-#### What's fixed
-
-* **misc**: Loadmore not work & navbar not show in pwa, closes [#9855](https://github.com/jaworldwideorg/OneJA-Bot/issues/9855) ([411f875](https://github.com/jaworldwideorg/OneJA-Bot/commit/411f875))
-
-
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
 
 #### Styles
 
-* **misc**: Adjust modal setting form styles for improved layout and responsiveness, closes [#9890](https://github.com/jaworldwideorg/OneJA-Bot/issues/9890) ([1997ec5](https://github.com/jaworldwideorg/OneJA-Bot/commit/1997ec5))
-* **misc**: Allow removal of `top_p` and similar request parameters, closes [#9498](https://github.com/jaworldwideorg/OneJA-Bot/issues/9498) ([4c313ce](https://github.com/jaworldwideorg/OneJA-Bot/commit/4c313ce))
-* **misc**: Improve local system tools render, closes [#9853](https://github.com/jaworldwideorg/OneJA-Bot/issues/9853) ([295e8fc](https://github.com/jaworldwideorg/OneJA-Bot/commit/295e8fc))
-* **misc**: Improve provider modal height when creating custom provider, closes [#9870](https://github.com/jaworldwideorg/OneJA-Bot/issues/9870) ([55d92c0](https://github.com/jaworldwideorg/OneJA-Bot/commit/55d92c0))
-* **misc**: Improvement for Agent Team After Alpha Launch [LOB-517], closes [#9748](https://github.com/jaworldwideorg/OneJA-Bot/issues/9748) ([28245be](https://github.com/jaworldwideorg/OneJA-Bot/commit/28245be))
-* **misc**: Unzip file when uploading in knowledge base [LOB-500], closes [#9854](https://github.com/jaworldwideorg/OneJA-Bot/issues/9854) ([e568ce6](https://github.com/jaworldwideorg/OneJA-Bot/commit/e568ce6))
-* **misc**: Update i18n, closes [#9862](https://github.com/jaworldwideorg/OneJA-Bot/issues/9862) ([8d3bc91](https://github.com/jaworldwideorg/OneJA-Bot/commit/8d3bc91))
+- **misc**: Add MiniMax-M2 model, closes [#9897](https://github.com/lobehub/lobe-chat/issues/9897) ([d6fded2](https://github.com/lobehub/lobe-chat/commit/d6fded2))
 
 </details>
 
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.142.4](https://github.com/lobehub/lobe-chat/compare/v1.142.3...v1.142.4)
+
+<sup>Released on **2025-10-27**</sup>
+
+#### 💄 Styles
+
+- **misc**: Pre render ModelSwitchPanel, The error details of the connectivity check lead to a layout problem.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Pre render ModelSwitchPanel, closes [#9499](https://github.com/lobehub/lobe-chat/issues/9499) ([840382b](https://github.com/lobehub/lobe-chat/commit/840382b))
+- **misc**: The error details of the connectivity check lead to a layout problem, closes [#9872](https://github.com/lobehub/lobe-chat/issues/9872) ([ea42e60](https://github.com/lobehub/lobe-chat/commit/ea42e60))
+
+</details>
 
 <div align="right">
 
