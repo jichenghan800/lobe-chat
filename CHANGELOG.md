@@ -2,6 +2,50 @@
 
 # Changelog
 
+### [Version&nbsp;1.135.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.135.1...v1.135.2)
+<sup>Released on **2025-10-29**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Change files page from RSC to SPA mode to improve performance.
+
+
+#### 💄 Styles
+
+- **aihubmix**: Update extendParams to include urlContext.
+- **misc**: Update i18n.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Change files page from RSC to SPA mode to improve performance, closes [#9846](https://github.com/jaworldwideorg/OneJA-Bot/issues/9846) ([f46cc50](https://github.com/jaworldwideorg/OneJA-Bot/commit/f46cc50))
+
+
+
+#### Styles
+
+* **aihubmix**: Update extendParams to include urlContext, closes [#9914](https://github.com/jaworldwideorg/OneJA-Bot/issues/9914) ([5a8fd85](https://github.com/jaworldwideorg/OneJA-Bot/commit/5a8fd85))
+* **misc**: Update i18n, closes [#9907](https://github.com/jaworldwideorg/OneJA-Bot/issues/9907) ([d149c4d](https://github.com/jaworldwideorg/OneJA-Bot/commit/d149c4d))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.135.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.135.0...v1.135.1)
 <sup>Released on **2025-10-28**</sup>
 
