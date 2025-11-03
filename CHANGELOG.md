@@ -2,6 +2,37 @@
 
 # Changelog
 
+### [Version&nbsp;1.135.3](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.135.2...v1.135.3)
+<sup>Released on **2025-11-03**</sup>
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: OIDC error when connecting to self-host instance.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's fixed
+
+* **misc**: OIDC error when connecting to self-host instance, closes [#9916](https://github.com/jaworldwideorg/OneJA-Bot/issues/9916) ([2e2b9c4](https://github.com/jaworldwideorg/OneJA-Bot/commit/2e2b9c4))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version 1.142.9](https://github.com/lobehub/lobe-chat/compare/v1.142.8...v1.142.9)
 
 <sup>Released on **2025-11-02**</sup>
