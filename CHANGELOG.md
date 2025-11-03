@@ -2,43 +2,24 @@
 
 # Changelog
 
-### [Version&nbsp;1.135.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.135.1...v1.135.2)
-<sup>Released on **2025-10-29**</sup>
+### [Version 1.142.9](https://github.com/lobehub/lobe-chat/compare/v1.142.8...v1.142.9)
 
+<sup>Released on **2025-11-02**</sup>
 
-#### ♻ Code Refactoring
+#### 🐛 Bug Fixes
 
-- **misc**: Change files page from RSC to SPA mode to improve performance.
-
-
-#### 💄 Styles
-
-- **aihubmix**: Update extendParams to include urlContext.
-- **misc**: Update i18n.
-
+- **misc**: OIDC error when connecting to self-host instance.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
+#### What's fixed
 
-
-#### Code refactoring
-
-* **misc**: Change files page from RSC to SPA mode to improve performance, closes [#9846](https://github.com/jaworldwideorg/OneJA-Bot/issues/9846) ([f46cc50](https://github.com/jaworldwideorg/OneJA-Bot/commit/f46cc50))
-
-
-
-#### Styles
-
-* **aihubmix**: Update extendParams to include urlContext, closes [#9914](https://github.com/jaworldwideorg/OneJA-Bot/issues/9914) ([5a8fd85](https://github.com/jaworldwideorg/OneJA-Bot/commit/5a8fd85))
-* **misc**: Update i18n, closes [#9907](https://github.com/jaworldwideorg/OneJA-Bot/issues/9907) ([d149c4d](https://github.com/jaworldwideorg/OneJA-Bot/commit/d149c4d))
+- **misc**: OIDC error when connecting to self-host instance, closes [#9916](https://github.com/lobehub/lobe-chat/issues/9916) ([2e2b9c4](https://github.com/lobehub/lobe-chat/commit/2e2b9c4))
 
 </details>
-
 
 <div align="right">
 
@@ -46,32 +27,51 @@
 
 </div>
 
-### [Version&nbsp;1.135.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.135.0...v1.135.1)
-<sup>Released on **2025-10-28**</sup>
+### [Version 1.142.8](https://github.com/lobehub/lobe-chat/compare/v1.142.7...v1.142.8)
 
-
-#### 💄 Styles
-
-- **misc**: Add MiniMax-M2 model, Pre render ModelSwitchPanel, The error details of the connectivity check lead to a layout problem.
-
+<sup>Released on **2025-10-30**</sup>
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
+</details>
 
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 1.142.7](https://github.com/lobehub/lobe-chat/compare/v1.142.6...v1.142.7)
+
+<sup>Released on **2025-10-28**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Change files page from RSC to SPA mode to improve performance.
+
+#### 💄 Styles
+
+- **aihubmix**: Update extendParams to include urlContext.
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Change files page from RSC to SPA mode to improve performance, closes [#9846](https://github.com/lobehub/lobe-chat/issues/9846) ([f46cc50](https://github.com/lobehub/lobe-chat/commit/f46cc50))
 
 #### Styles
 
-* **misc**: Add MiniMax-M2 model, closes [#9897](https://github.com/jaworldwideorg/OneJA-Bot/issues/9897) ([d6fded2](https://github.com/jaworldwideorg/OneJA-Bot/commit/d6fded2))
-* **misc**: Pre render ModelSwitchPanel, closes [#9499](https://github.com/jaworldwideorg/OneJA-Bot/issues/9499) ([840382b](https://github.com/jaworldwideorg/OneJA-Bot/commit/840382b))
-* **misc**: The error details of the connectivity check lead to a layout problem, closes [#9872](https://github.com/jaworldwideorg/OneJA-Bot/issues/9872) ([ea42e60](https://github.com/jaworldwideorg/OneJA-Bot/commit/ea42e60))
+- **aihubmix**: Update extendParams to include urlContext, closes [#9914](https://github.com/lobehub/lobe-chat/issues/9914) ([5a8fd85](https://github.com/lobehub/lobe-chat/commit/5a8fd85))
+- **misc**: Update i18n, closes [#9907](https://github.com/lobehub/lobe-chat/issues/9907) ([d149c4d](https://github.com/lobehub/lobe-chat/commit/d149c4d))
 
 </details>
-
 
 <div align="right">
 
