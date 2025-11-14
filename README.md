@@ -244,9 +244,13 @@ In this way, LobeChat can more flexibly adapt to the needs of different users, w
 
 We have implemented support for the following model service providers:
 
-<!-- PROVIDER LIST -->
+<!-- PROVIDER LIST --> 
+
+
 
 <details><summary><kbd>See more providers (+-10)</kbd></summary>
+
+
 
 </details>
 
@@ -343,7 +347,7 @@ In addition, these plugins are not limited to news aggregation, but can also ext
 >
 > Learn more about [📘 Plugin Usage][docs-usage-plugin] by checking it out.
 
-<!-- PLUGIN LIST -->
+<!-- PLUGIN LIST --> 
 
 | Recent Submits                                                                                                             | Description                                                                                                                               |
 | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -382,7 +386,7 @@ Our marketplace is not just a showcase platform but also a collaborative space. 
 > We welcome all users to join this growing ecosystem and participate in the iteration and optimization of agents.
 > Together, we can create more interesting, practical, and innovative agents, further enriching the diversity and practicality of the agent offerings.
 
-<!-- AGENT LIST -->
+<!-- AGENT LIST --> 
 
 | Recent Submits                                                                                                                                                                 | Description                                                                                                                                                                                                              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
