@@ -25,8 +25,22 @@ export class FileModel {
     this.db = db;
   }
 
+  /**
+   * Get file by ID without userId filter (public access)
+   * Use this for scenarios like file proxy where file should be accessible by ID alone
+   *
+   * @param db - Database instance
+   * @param id - File ID
+   * @returns File record or undefined
+   */
+  static async getFileById(db: LobeChatDatabase, id: string): Promise<FileItem | undefined> {
+    return db.query.files.findFirst({
+      where: eq(files.id, id),
+    });
+  }
+
   create = async (
-    params: Omit<NewFile, 'id' | 'userId'> & { knowledgeBaseId?: string },
+    params: Omit<NewFile, 'id' | 'userId'> & { id?: string; knowledgeBaseId?: string },
     insertToGlobalFiles?: boolean,
     trx?: Transaction,
   ) => {
@@ -197,9 +211,17 @@ export class FileModel {
       q ? ilike(files.name, `%${q}%`) : undefined,
       eq(files.userId, this.userId),
     );
-    if (category && category !== FilesTabs.All) {
+    if (category && category !== FilesTabs.All && category !== FilesTabs.Home) {
       const fileTypePrefix = this.getFileTypePrefix(category as FilesTabs);
-      whereClause = and(whereClause, ilike(files.fileType, `${fileTypePrefix}%`));
+      if (Array.isArray(fileTypePrefix)) {
+        // For multiple file types (e.g., Documents includes 'application' and 'custom')
+        whereClause = and(
+          whereClause,
+          or(...fileTypePrefix.map((prefix) => ilike(files.fileType, `${prefix}%`))),
+        );
+      } else {
+        whereClause = and(whereClause, ilike(files.fileType, `${fileTypePrefix}%`));
+      }
     }
 
     // 2. order part
@@ -294,19 +316,22 @@ export class FileModel {
   /**
    * get the corresponding file type prefix according to FilesTabs
    */
-  private getFileTypePrefix = (category: FilesTabs): string => {
+  private getFileTypePrefix = (category: FilesTabs): string | string[] => {
     switch (category) {
       case FilesTabs.Audios: {
         return 'audio';
       }
       case FilesTabs.Documents: {
-        return 'application';
+        return ['application', 'custom'];
       }
       case FilesTabs.Images: {
         return 'image';
       }
       case FilesTabs.Videos: {
         return 'video';
+      }
+      case FilesTabs.Websites: {
+        return 'text/html';
       }
       default: {
         return '';

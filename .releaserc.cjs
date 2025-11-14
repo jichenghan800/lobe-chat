@@ -5,6 +5,14 @@ const config = require('@lobehub/lint').semanticRelease;
 config.plugins = config.plugins.filter((plugin) => plugin !== '@semantic-release/npm');
 
 // Add GitHub only if required
+config.branches = [
+  'main',
+  {
+    name: 'next',
+    prerelease: true,
+  },
+];
+
 config.plugins.push([
   '@semantic-release/exec',
   {

@@ -5,8 +5,16 @@ import { encodeAsync } from '@/utils/tokenizer';
 export const getMessagesTokenCount = async (messages: OpenAIChatMessage[]) =>
   encodeAsync(messages.map((m) => m.content).join(''));
 
-export const getMessageById = (messages: UIChatMessage[], id: string) =>
-  messages.find((m) => m.id === id);
+export const getMessageById = (
+  messages: UIChatMessage[],
+  id: string,
+): UIChatMessage | undefined => {
+  // First try to find in top-level messages
+  const directMatch = messages.find((m) => m.id === id);
+  if (directMatch) return directMatch;
+
+  return undefined;
+};
 
 const getSlicedMessages = (
   messages: UIChatMessage[],

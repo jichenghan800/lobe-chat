@@ -1,5 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix  */
-import { GroundingSearch, ModelReasoning } from '@lobechat/types';
+import { GroundingSearch, ModelReasoning, ToolIntervention } from '@lobechat/types';
 import {
   boolean,
   index,
@@ -11,7 +11,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { createInsertSchema } from 'drizzle-zod';
 
 import { idGenerator } from '../utils/idGenerator';
 import { timestamps, varchar255 } from './_helpers';
@@ -62,7 +62,10 @@ export const messageGroups = pgTable(
 
     ...timestamps,
   },
-  (t) => [uniqueIndex('message_groups_client_id_user_id_unique').on(t.clientId, t.userId)],
+  (t) => [
+    uniqueIndex('message_groups_client_id_user_id_unique').on(t.clientId, t.userId),
+    index('message_groups_topic_id_idx').on(t.topicId),
+  ],
 );
 
 export const insertMessageGroupSchema = createInsertSchema(messageGroups);
@@ -130,6 +133,7 @@ export const messages = pgTable(
     index('messages_user_id_idx').on(table.userId),
     index('messages_session_id_idx').on(table.sessionId),
     index('messages_thread_id_idx').on(table.threadId),
+    index('messages_agent_id_idx').on(table.agentId),
   ],
 );
 
@@ -142,10 +146,10 @@ export const messagePlugins = pgTable(
       .primaryKey(),
 
     toolCallId: text('tool_call_id'),
-    type: text('type', {
-      enum: ['default', 'markdown', 'standalone', 'builtin'],
-    }).default('default'),
+    type: text('type').default('default'),
 
+    // Human intervention fields
+    intervention: jsonb('intervention').$type<ToolIntervention>(),
     apiName: text('api_name'),
     arguments: text('arguments'),
     identifier: text('identifier'),
@@ -163,9 +167,6 @@ export const messagePlugins = pgTable(
     ),
   }),
 );
-
-export type MessagePluginItem = typeof messagePlugins.$inferSelect;
-export const updateMessagePluginSchema = createSelectSchema(messagePlugins);
 
 export const messageTTS = pgTable(
   'message_tts',

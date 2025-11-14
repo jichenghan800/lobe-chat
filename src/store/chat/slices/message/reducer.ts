@@ -3,6 +3,7 @@ import {
   ChatPluginPayload,
   ChatToolPayload,
   CreateMessageParams,
+  MessagePluginItem,
   UIChatMessage,
 } from '@lobechat/types';
 import isEqual from 'fast-deep-equal';
@@ -47,7 +48,7 @@ interface UpdatePluginState {
 interface UpdateMessagePlugin {
   id: string;
   type: 'updateMessagePlugin';
-  value: Partial<ChatPluginPayload>;
+  value: Partial<MessagePluginItem>;
 }
 
 interface UpdateMessageTools {
@@ -75,12 +76,19 @@ interface UpdateMessageExtra {
   value: any;
 }
 
+interface UpdateMessageMetadata {
+  id: string;
+  type: 'updateMessageMetadata';
+  value: Partial<UIChatMessage['metadata']>;
+}
+
 export type MessageDispatch =
   | CreateMessage
   | UpdateMessage
   | UpdateMessages
   | UpdatePluginState
   | UpdateMessageExtra
+  | UpdateMessageMetadata
   | DeleteMessage
   | UpdateMessagePlugin
   | UpdateMessageTools
@@ -96,10 +104,11 @@ export const messagesReducer = (
     case 'updateMessage': {
       return produce(state, (draftState) => {
         const { id, value } = payload;
-        const index = draftState.findIndex((i) => i.id === id);
-        if (index < 0) return;
 
-        draftState[index] = merge(draftState[index], { ...value, updatedAt: Date.now() });
+        const index = draftState.findIndex((i) => i.id === id);
+        if (index >= 0) {
+          draftState[index] = merge(draftState[index], { ...value, updatedAt: Date.now() });
+        }
       });
     }
 
@@ -115,6 +124,17 @@ export const messagesReducer = (
           message.extra[key as keyof ChatMessageExtra] = value;
         }
 
+        message.updatedAt = Date.now();
+      });
+    }
+
+    case 'updateMessageMetadata': {
+      return produce(state, (draftState) => {
+        const { id, value } = payload;
+        const message = draftState.find((i) => i.id === id);
+        if (!message) return;
+
+        message.metadata = merge(message.metadata, value);
         message.updatedAt = Date.now();
       });
     }
@@ -226,6 +246,7 @@ export const messagesReducer = (
         });
       });
     }
+
     default: {
       throw new Error('暂未实现的 type，请检查 reducer');
     }

@@ -8,12 +8,23 @@ import {
   ModelReasoning,
   ModelUsage,
 } from '../common';
-import { ChatPluginPayload, ChatToolPayload, ChatToolPayloadWithResult } from '../common/tools';
+import {
+  ChatPluginPayload,
+  ChatToolPayload,
+  ChatToolPayloadWithResult,
+  ToolIntervention,
+} from '../common/tools';
 import { ChatMessageExtra } from './extra';
 import { ChatFileChunk } from './rag';
 import { ChatVideoItem } from './video';
 
-export type UIMessageRoleType = 'user' | 'system' | 'assistant' | 'tool' | 'supervisor' | 'group';
+export type UIMessageRoleType =
+  | 'user'
+  | 'system'
+  | 'assistant'
+  | 'tool'
+  | 'supervisor'
+  | 'assistantGroup';
 
 export interface ChatFileItem {
   content?: string;
@@ -26,17 +37,28 @@ export interface ChatFileItem {
 
 export interface AssistantContentBlock {
   content: string;
-  fileList?: ChatFileItem[];
+  error?: ChatMessageError | null;
   id: string;
   imageList?: ChatImageItem[];
   performance?: ModelPerformance;
+  reasoning?: ModelReasoning;
   tools?: ChatToolPayloadWithResult[];
   usage?: ModelUsage;
+}
+interface UIMessageBranch {
+  /** Index of the active branch (0-based) */
+  activeBranchIndex: number;
+  /** Total number of branches */
+  count: number;
 }
 
 export interface UIChatMessage {
   // Group chat fields (alphabetically before other fields)
   agentId?: string | 'supervisor';
+  /**
+   * Branch information for user messages with multiple children
+   */
+  branch?: UIMessageBranch;
   /**
    * children messages for grouped display
    * Used to group tool messages under their parent assistant message
@@ -62,6 +84,7 @@ export interface UIChatMessage {
   imageList?: ChatImageItem[];
   meta: MetaData;
   metadata?: MessageMetadata | null;
+  model?: string | null;
   /**
    * observation id
    */
@@ -77,7 +100,9 @@ export interface UIChatMessage {
   performance?: ModelPerformance;
   plugin?: ChatPluginPayload;
   pluginError?: any;
+  pluginIntervention?: ToolIntervention;
   pluginState?: any;
+  provider?: string | null;
   /**
    * quoted other message's id
    */
