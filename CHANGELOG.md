@@ -2,6 +2,139 @@
 
 # Changelog
 
+## [Version&nbsp;1.136.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.135.3...v1.136.0)
+<sup>Released on **2025-11-14**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Add settings (jsonb) column to `ai_models` table, edge to node runtime, enhance message router with service layer and comprehensive tests, fix thread display, Migrating Firecrawl to v2, refactor chat message model to speed up, refactor message create name, refactor services to a more clean structure, refactor trpc request to use zod schema, remove `NEXT_PUBLIC_SERVICE_MODE` env and use server by default, remove azure-ad auth provider, remove client service, remove dalle builtin plugin, remove deperated code, remove llm page, use react-router-dom change /chat page to spa mode.
+
+
+#### ✨ Features
+
+- **image**: Image model show price.
+- **misc**: 2.0 next baseline, 2.0 next init, Add folder creation UI and clean up debug code, Add GPT-5.1 models, Create Pages in Knowledge Base, display assistant message in group, refactor to use agent runtime as the generation core and support branch mode, support install sreamable http mcp server on web, support tool invention, try 2.0 next, upgrade to Next 16.
+
+
+#### 🐛 Bug Fixes
+
+- **AssistantStore**: Add missing identifier parameter.
+- **database**: Fix deleteMessagesBySession incorrectly deleting all messages.
+- **TokenUsage**: Prevent animation when toggling between token and credit display.
+- **misc**: Abnormal animation of tokens, don't include runtimeProvider in JWT for non-image operations, filter out reasoning fields from messages in ChatCompletion API, fix image prompt form, fix mcp server return image error, fix missing messages when finish runtime, fix oidc accountId mismatch, fix oidc auth timeout issue on the desktop, fix reasoning issue with claude and Response API thinking, fix regex ReDoS, fix send message, Hide marketplace link from Plugin List when market disabled, model name display in the assistant panel disappears, OIDC error when connecting to self-host instance, only include input_fidelity parameter for gpt-image-1., should install new version after quit this instance, update lost i18n files.
+
+
+#### 💄 Styles
+
+- **misc**: Add new bedrock model support, add padding to TopicList component, add pricing info for Azure GPT-5 series models, add sorting functionality for disabled models and model providers with tooltip support, fix approving render and improve Conversation style, improve built-in client OIDC user flow, improve lab style, improve oidc layout style, refactor and support move locale file intervention, smoothed model descriptions in ko-KR locales, Update ERNIE-5.0-Thinking-Preview model, update i18n, update i18n, update i18n, update i18n.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Add settings (jsonb) column to `ai_models` table, closes [#10042](https://github.com/jaworldwideorg/OneJA-Bot/issues/10042) ([7e1dd02](https://github.com/jaworldwideorg/OneJA-Bot/commit/7e1dd02))
+* **misc**: Edge to node runtime, closes [#10149](https://github.com/jaworldwideorg/OneJA-Bot/issues/10149) ([2f4c25d](https://github.com/jaworldwideorg/OneJA-Bot/commit/2f4c25d))
+* **misc**: Enhance message router with service layer and comprehensive tests, closes [#10056](https://github.com/jaworldwideorg/OneJA-Bot/issues/10056) ([62110e0](https://github.com/jaworldwideorg/OneJA-Bot/commit/62110e0))
+* **misc**: Fix thread display, closes [#10153](https://github.com/jaworldwideorg/OneJA-Bot/issues/10153) ([8fda83e](https://github.com/jaworldwideorg/OneJA-Bot/commit/8fda83e))
+* **misc**: Migrating Firecrawl to v2, closes [#9850](https://github.com/jaworldwideorg/OneJA-Bot/issues/9850) ([efb4c22](https://github.com/jaworldwideorg/OneJA-Bot/commit/efb4c22))
+* **misc**: Refactor chat message model to speed up, closes [#10053](https://github.com/jaworldwideorg/OneJA-Bot/issues/10053) ([035994f](https://github.com/jaworldwideorg/OneJA-Bot/commit/035994f))
+* **misc**: Refactor message create name, closes [#10074](https://github.com/jaworldwideorg/OneJA-Bot/issues/10074) ([08ec29f](https://github.com/jaworldwideorg/OneJA-Bot/commit/08ec29f))
+* **misc**: Refactor services to a more clean structure, closes [#10050](https://github.com/jaworldwideorg/OneJA-Bot/issues/10050) ([de61dfa](https://github.com/jaworldwideorg/OneJA-Bot/commit/de61dfa))
+* **misc**: Refactor trpc request to use zod schema, closes [#10016](https://github.com/jaworldwideorg/OneJA-Bot/issues/10016) ([1a84f2c](https://github.com/jaworldwideorg/OneJA-Bot/commit/1a84f2c))
+* **misc**: Remove `NEXT_PUBLIC_SERVICE_MODE` env and use server by default, closes [#10017](https://github.com/jaworldwideorg/OneJA-Bot/issues/10017) ([f2ab2fc](https://github.com/jaworldwideorg/OneJA-Bot/commit/f2ab2fc))
+* **misc**: Remove azure-ad auth provider, closes [#9942](https://github.com/jaworldwideorg/OneJA-Bot/issues/9942) ([103c4d7](https://github.com/jaworldwideorg/OneJA-Bot/commit/103c4d7))
+* **misc**: Remove client service, closes [#9991](https://github.com/jaworldwideorg/OneJA-Bot/issues/9991) ([9137dba](https://github.com/jaworldwideorg/OneJA-Bot/commit/9137dba))
+* **misc**: Remove dalle builtin plugin, closes [#9952](https://github.com/jaworldwideorg/OneJA-Bot/issues/9952) ([2d4d70a](https://github.com/jaworldwideorg/OneJA-Bot/commit/2d4d70a))
+* **misc**: Remove deperated code, closes [#10001](https://github.com/jaworldwideorg/OneJA-Bot/issues/10001) ([4ee4590](https://github.com/jaworldwideorg/OneJA-Bot/commit/4ee4590))
+* **misc**: Remove llm page, closes [#9940](https://github.com/jaworldwideorg/OneJA-Bot/issues/9940) ([6ec01a3](https://github.com/jaworldwideorg/OneJA-Bot/commit/6ec01a3))
+* **misc**: Use react-router-dom change /chat page to spa mode, closes [#10077](https://github.com/jaworldwideorg/OneJA-Bot/issues/10077) ([9154606](https://github.com/jaworldwideorg/OneJA-Bot/commit/9154606))
+
+
+
+#### What's improved
+
+* **image**: Image model show price, closes [#10198](https://github.com/jaworldwideorg/OneJA-Bot/issues/10198) ([b87e0e4](https://github.com/jaworldwideorg/OneJA-Bot/commit/b87e0e4))
+* **misc**: 2.0 next baseline ([8c57dfd](https://github.com/jaworldwideorg/OneJA-Bot/commit/8c57dfd))
+* **misc**: 2.0 next init ([26daac5](https://github.com/jaworldwideorg/OneJA-Bot/commit/26daac5))
+* **misc**: Add folder creation UI and clean up debug code ([d5ecd0a](https://github.com/jaworldwideorg/OneJA-Bot/commit/d5ecd0a))
+* **misc**: Add GPT-5.1 models, closes [#10206](https://github.com/jaworldwideorg/OneJA-Bot/issues/10206) ([afd3a47](https://github.com/jaworldwideorg/OneJA-Bot/commit/afd3a47))
+* **misc**: Create Pages in Knowledge Base, closes [#9895](https://github.com/jaworldwideorg/OneJA-Bot/issues/9895) ([f46edeb](https://github.com/jaworldwideorg/OneJA-Bot/commit/f46edeb))
+* **misc**: Display assistant message in group, closes [#9941](https://github.com/jaworldwideorg/OneJA-Bot/issues/9941) ([59b6ac3](https://github.com/jaworldwideorg/OneJA-Bot/commit/59b6ac3))
+* **misc**: Refactor to use agent runtime as the generation core and support branch mode, closes [#10080](https://github.com/jaworldwideorg/OneJA-Bot/issues/10080) ([b95e741](https://github.com/jaworldwideorg/OneJA-Bot/commit/b95e741))
+* **misc**: Support install sreamable http mcp server on web, closes [#10044](https://github.com/jaworldwideorg/OneJA-Bot/issues/10044) [#9916](https://github.com/jaworldwideorg/OneJA-Bot/issues/9916) ([85454c5](https://github.com/jaworldwideorg/OneJA-Bot/commit/85454c5))
+* **misc**: Support tool invention, closes [#10182](https://github.com/jaworldwideorg/OneJA-Bot/issues/10182) ([4dca708](https://github.com/jaworldwideorg/OneJA-Bot/commit/4dca708))
+* **misc**: Try 2.0 next ([e0af4e6](https://github.com/jaworldwideorg/OneJA-Bot/commit/e0af4e6))
+* **misc**: Upgrade to Next 16, closes [#9851](https://github.com/jaworldwideorg/OneJA-Bot/issues/9851) ([abb71ec](https://github.com/jaworldwideorg/OneJA-Bot/commit/abb71ec))
+
+
+
+#### What's fixed
+
+* **AssistantStore**: Add missing identifier parameter, closes [#9948](https://github.com/jaworldwideorg/OneJA-Bot/issues/9948) ([2e40855](https://github.com/jaworldwideorg/OneJA-Bot/commit/2e40855))
+* **database**: Fix deleteMessagesBySession incorrectly deleting all messages, closes [#10110](https://github.com/jaworldwideorg/OneJA-Bot/issues/10110) ([1d7f67d](https://github.com/jaworldwideorg/OneJA-Bot/commit/1d7f67d))
+* **TokenUsage**: Prevent animation when toggling between token and credit display, closes [#10098](https://github.com/jaworldwideorg/OneJA-Bot/issues/10098) ([f20a910](https://github.com/jaworldwideorg/OneJA-Bot/commit/f20a910))
+* **misc**: Abnormal animation of tokens, closes [#10106](https://github.com/jaworldwideorg/OneJA-Bot/issues/10106) ([129df7b](https://github.com/jaworldwideorg/OneJA-Bot/commit/129df7b))
+* **misc**: Don't include runtimeProvider in JWT for non-image operations, closes [#9959](https://github.com/jaworldwideorg/OneJA-Bot/issues/9959) [#9569](https://github.com/jaworldwideorg/OneJA-Bot/issues/9569) ([b8f25de](https://github.com/jaworldwideorg/OneJA-Bot/commit/b8f25de))
+* **misc**: Filter out reasoning fields from messages in ChatCompletion API, closes [#10203](https://github.com/jaworldwideorg/OneJA-Bot/issues/10203) [#10193](https://github.com/jaworldwideorg/OneJA-Bot/issues/10193) ([5f28b2c](https://github.com/jaworldwideorg/OneJA-Bot/commit/5f28b2c))
+* **misc**: Fix image prompt form, closes [#9995](https://github.com/jaworldwideorg/OneJA-Bot/issues/9995) ([799e6fd](https://github.com/jaworldwideorg/OneJA-Bot/commit/799e6fd))
+* **misc**: Fix mcp server return image error, closes [#10113](https://github.com/jaworldwideorg/OneJA-Bot/issues/10113) ([e5640d4](https://github.com/jaworldwideorg/OneJA-Bot/commit/e5640d4))
+* **misc**: Fix missing messages when finish runtime, closes [#10138](https://github.com/jaworldwideorg/OneJA-Bot/issues/10138) ([b94d477](https://github.com/jaworldwideorg/OneJA-Bot/commit/b94d477))
+* **misc**: Fix oidc accountId mismatch, closes [#10058](https://github.com/jaworldwideorg/OneJA-Bot/issues/10058) ([0692ba7](https://github.com/jaworldwideorg/OneJA-Bot/commit/0692ba7))
+* **misc**: Fix oidc auth timeout issue on the desktop, closes [#10025](https://github.com/jaworldwideorg/OneJA-Bot/issues/10025) ([20666db](https://github.com/jaworldwideorg/OneJA-Bot/commit/20666db))
+* **misc**: Fix reasoning issue with claude and Response API thinking, closes [#10147](https://github.com/jaworldwideorg/OneJA-Bot/issues/10147) ([cf6bd53](https://github.com/jaworldwideorg/OneJA-Bot/commit/cf6bd53))
+* **misc**: Fix regex ReDoS, closes [#10012](https://github.com/jaworldwideorg/OneJA-Bot/issues/10012) ([1d8d5cd](https://github.com/jaworldwideorg/OneJA-Bot/commit/1d8d5cd))
+* **misc**: Fix send message, closes [#10041](https://github.com/jaworldwideorg/OneJA-Bot/issues/10041) [#9984](https://github.com/jaworldwideorg/OneJA-Bot/issues/9984) ([7cca60f](https://github.com/jaworldwideorg/OneJA-Bot/commit/7cca60f))
+* **misc**: Hide marketplace link from Plugin List when market disabled, closes [#9929](https://github.com/jaworldwideorg/OneJA-Bot/issues/9929) ([e303979](https://github.com/jaworldwideorg/OneJA-Bot/commit/e303979))
+* **misc**: Model name display in the assistant panel disappears, closes [#9830](https://github.com/jaworldwideorg/OneJA-Bot/issues/9830) ([54f4e18](https://github.com/jaworldwideorg/OneJA-Bot/commit/54f4e18))
+* **misc**: OIDC error when connecting to self-host instance, closes [#9916](https://github.com/jaworldwideorg/OneJA-Bot/issues/9916) ([7a2ca19](https://github.com/jaworldwideorg/OneJA-Bot/commit/7a2ca19))
+* **misc**: Only include input_fidelity parameter for gpt-image-1., closes [#9920](https://github.com/jaworldwideorg/OneJA-Bot/issues/9920) ([65dbc63](https://github.com/jaworldwideorg/OneJA-Bot/commit/65dbc63))
+* **misc**: Should install new version after quit this instance, closes [#10064](https://github.com/jaworldwideorg/OneJA-Bot/issues/10064) ([9ab77b2](https://github.com/jaworldwideorg/OneJA-Bot/commit/9ab77b2))
+* **misc**: Update lost i18n files, closes [#10179](https://github.com/jaworldwideorg/OneJA-Bot/issues/10179) ([b69c7ff](https://github.com/jaworldwideorg/OneJA-Bot/commit/b69c7ff))
+
+
+
+#### Styles
+
+* **misc**: Add new bedrock model support, closes [#9826](https://github.com/jaworldwideorg/OneJA-Bot/issues/9826) ([1b8a981](https://github.com/jaworldwideorg/OneJA-Bot/commit/1b8a981))
+* **misc**: Add padding to TopicList component, closes [#9994](https://github.com/jaworldwideorg/OneJA-Bot/issues/9994) ([c1e7381](https://github.com/jaworldwideorg/OneJA-Bot/commit/c1e7381))
+* **misc**: Add pricing info for Azure GPT-5 series models, closes [#9833](https://github.com/jaworldwideorg/OneJA-Bot/issues/9833) ([39a80c5](https://github.com/jaworldwideorg/OneJA-Bot/commit/39a80c5))
+* **misc**: Add sorting functionality for disabled models and model providers with tooltip support, closes [#10000](https://github.com/jaworldwideorg/OneJA-Bot/issues/10000) ([68e98b1](https://github.com/jaworldwideorg/OneJA-Bot/commit/68e98b1))
+* **misc**: Fix approving render and improve Conversation style, closes [#10210](https://github.com/jaworldwideorg/OneJA-Bot/issues/10210) ([841b7f1](https://github.com/jaworldwideorg/OneJA-Bot/commit/841b7f1))
+* **misc**: Improve built-in client OIDC user flow, closes [#10020](https://github.com/jaworldwideorg/OneJA-Bot/issues/10020) ([80202ed](https://github.com/jaworldwideorg/OneJA-Bot/commit/80202ed))
+* **misc**: Improve lab style, closes [#10040](https://github.com/jaworldwideorg/OneJA-Bot/issues/10040) ([bbf1c0b](https://github.com/jaworldwideorg/OneJA-Bot/commit/bbf1c0b))
+* **misc**: Improve oidc layout style, closes [#10023](https://github.com/jaworldwideorg/OneJA-Bot/issues/10023) ([5008be7](https://github.com/jaworldwideorg/OneJA-Bot/commit/5008be7))
+* **misc**: Refactor and support move locale file intervention, closes [#10213](https://github.com/jaworldwideorg/OneJA-Bot/issues/10213) ([63cac81](https://github.com/jaworldwideorg/OneJA-Bot/commit/63cac81))
+* **misc**: Smoothed model descriptions in ko-KR locales, closes [#9998](https://github.com/jaworldwideorg/OneJA-Bot/issues/9998) ([fde1d8b](https://github.com/jaworldwideorg/OneJA-Bot/commit/fde1d8b))
+* **misc**: Update ERNIE-5.0-Thinking-Preview model, closes [#10196](https://github.com/jaworldwideorg/OneJA-Bot/issues/10196) ([89f3eed](https://github.com/jaworldwideorg/OneJA-Bot/commit/89f3eed))
+* **misc**: Update i18n, closes [#10116](https://github.com/jaworldwideorg/OneJA-Bot/issues/10116) ([766772e](https://github.com/jaworldwideorg/OneJA-Bot/commit/766772e))
+* **misc**: Update i18n, closes [#10100](https://github.com/jaworldwideorg/OneJA-Bot/issues/10100) ([deb6b5e](https://github.com/jaworldwideorg/OneJA-Bot/commit/deb6b5e))
+* **misc**: Update i18n, closes [#9958](https://github.com/jaworldwideorg/OneJA-Bot/issues/9958) ([f49996c](https://github.com/jaworldwideorg/OneJA-Bot/commit/f49996c))
+* **misc**: Update i18n, closes [#9944](https://github.com/jaworldwideorg/OneJA-Bot/issues/9944) ([3a6468f](https://github.com/jaworldwideorg/OneJA-Bot/commit/3a6468f))
+
+</details>
+
+
+#### 💥 BREAKING CHANGES
+
+* **misc**: starting V2
+* **misc**: starting V2
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.56](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.55...v2.0.0-next.56)
 
 <sup>Released on **2025-11-14**</sup>
