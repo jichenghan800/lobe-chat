@@ -2,132 +2,600 @@
 
 # Changelog
 
-## [Version&nbsp;1.136.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.135.3...v1.136.0)
-<sup>Released on **2025-11-14**</sup>
+## [Version 2.0.0-next.81](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.80...v2.0.0-next.81)
 
-
-#### ♻ Code Refactoring
-
-- **misc**: Add settings (jsonb) column to `ai_models` table, edge to node runtime, enhance message router with service layer and comprehensive tests, fix thread display, Migrating Firecrawl to v2, refactor chat message model to speed up, refactor message create name, refactor services to a more clean structure, refactor trpc request to use zod schema, remove `NEXT_PUBLIC_SERVICE_MODE` env and use server by default, remove azure-ad auth provider, remove client service, remove dalle builtin plugin, remove deperated code, remove llm page, use react-router-dom change /chat page to spa mode.
-
-
-#### ✨ Features
-
-- **image**: Image model show price.
-- **misc**: 2.0 next baseline, 2.0 next init, Add folder creation UI and clean up debug code, Add GPT-5.1 models, Create Pages in Knowledge Base, display assistant message in group, refactor to use agent runtime as the generation core and support branch mode, support install sreamable http mcp server on web, support tool invention, try 2.0 next, upgrade to Next 16.
-
+<sup>Released on **2025-11-18**</sup>
 
 #### 🐛 Bug Fixes
 
-- **AssistantStore**: Add missing identifier parameter.
-- **database**: Fix deleteMessagesBySession incorrectly deleting all messages.
-- **TokenUsage**: Prevent animation when toggling between token and credit display.
-- **misc**: Abnormal animation of tokens, don't include runtimeProvider in JWT for non-image operations, filter out reasoning fields from messages in ChatCompletion API, fix image prompt form, fix mcp server return image error, fix missing messages when finish runtime, fix oidc accountId mismatch, fix oidc auth timeout issue on the desktop, fix reasoning issue with claude and Response API thinking, fix regex ReDoS, fix send message, Hide marketplace link from Plugin List when market disabled, model name display in the assistant panel disappears, OIDC error when connecting to self-host instance, only include input_fidelity parameter for gpt-image-1., should install new version after quit this instance, update lost i18n files.
-
-
-#### 💄 Styles
-
-- **misc**: Add new bedrock model support, add padding to TopicList component, add pricing info for Azure GPT-5 series models, add sorting functionality for disabled models and model providers with tooltip support, fix approving render and improve Conversation style, improve built-in client OIDC user flow, improve lab style, improve oidc layout style, refactor and support move locale file intervention, smoothed model descriptions in ko-KR locales, Update ERNIE-5.0-Thinking-Preview model, update i18n, update i18n, update i18n, update i18n.
-
+- **misc**: Slove when logout always show loading.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### Code refactoring
-
-* **misc**: Add settings (jsonb) column to `ai_models` table, closes [#10042](https://github.com/jaworldwideorg/OneJA-Bot/issues/10042) ([7e1dd02](https://github.com/jaworldwideorg/OneJA-Bot/commit/7e1dd02))
-* **misc**: Edge to node runtime, closes [#10149](https://github.com/jaworldwideorg/OneJA-Bot/issues/10149) ([2f4c25d](https://github.com/jaworldwideorg/OneJA-Bot/commit/2f4c25d))
-* **misc**: Enhance message router with service layer and comprehensive tests, closes [#10056](https://github.com/jaworldwideorg/OneJA-Bot/issues/10056) ([62110e0](https://github.com/jaworldwideorg/OneJA-Bot/commit/62110e0))
-* **misc**: Fix thread display, closes [#10153](https://github.com/jaworldwideorg/OneJA-Bot/issues/10153) ([8fda83e](https://github.com/jaworldwideorg/OneJA-Bot/commit/8fda83e))
-* **misc**: Migrating Firecrawl to v2, closes [#9850](https://github.com/jaworldwideorg/OneJA-Bot/issues/9850) ([efb4c22](https://github.com/jaworldwideorg/OneJA-Bot/commit/efb4c22))
-* **misc**: Refactor chat message model to speed up, closes [#10053](https://github.com/jaworldwideorg/OneJA-Bot/issues/10053) ([035994f](https://github.com/jaworldwideorg/OneJA-Bot/commit/035994f))
-* **misc**: Refactor message create name, closes [#10074](https://github.com/jaworldwideorg/OneJA-Bot/issues/10074) ([08ec29f](https://github.com/jaworldwideorg/OneJA-Bot/commit/08ec29f))
-* **misc**: Refactor services to a more clean structure, closes [#10050](https://github.com/jaworldwideorg/OneJA-Bot/issues/10050) ([de61dfa](https://github.com/jaworldwideorg/OneJA-Bot/commit/de61dfa))
-* **misc**: Refactor trpc request to use zod schema, closes [#10016](https://github.com/jaworldwideorg/OneJA-Bot/issues/10016) ([1a84f2c](https://github.com/jaworldwideorg/OneJA-Bot/commit/1a84f2c))
-* **misc**: Remove `NEXT_PUBLIC_SERVICE_MODE` env and use server by default, closes [#10017](https://github.com/jaworldwideorg/OneJA-Bot/issues/10017) ([f2ab2fc](https://github.com/jaworldwideorg/OneJA-Bot/commit/f2ab2fc))
-* **misc**: Remove azure-ad auth provider, closes [#9942](https://github.com/jaworldwideorg/OneJA-Bot/issues/9942) ([103c4d7](https://github.com/jaworldwideorg/OneJA-Bot/commit/103c4d7))
-* **misc**: Remove client service, closes [#9991](https://github.com/jaworldwideorg/OneJA-Bot/issues/9991) ([9137dba](https://github.com/jaworldwideorg/OneJA-Bot/commit/9137dba))
-* **misc**: Remove dalle builtin plugin, closes [#9952](https://github.com/jaworldwideorg/OneJA-Bot/issues/9952) ([2d4d70a](https://github.com/jaworldwideorg/OneJA-Bot/commit/2d4d70a))
-* **misc**: Remove deperated code, closes [#10001](https://github.com/jaworldwideorg/OneJA-Bot/issues/10001) ([4ee4590](https://github.com/jaworldwideorg/OneJA-Bot/commit/4ee4590))
-* **misc**: Remove llm page, closes [#9940](https://github.com/jaworldwideorg/OneJA-Bot/issues/9940) ([6ec01a3](https://github.com/jaworldwideorg/OneJA-Bot/commit/6ec01a3))
-* **misc**: Use react-router-dom change /chat page to spa mode, closes [#10077](https://github.com/jaworldwideorg/OneJA-Bot/issues/10077) ([9154606](https://github.com/jaworldwideorg/OneJA-Bot/commit/9154606))
-
-
-
-#### What's improved
-
-* **image**: Image model show price, closes [#10198](https://github.com/jaworldwideorg/OneJA-Bot/issues/10198) ([b87e0e4](https://github.com/jaworldwideorg/OneJA-Bot/commit/b87e0e4))
-* **misc**: 2.0 next baseline ([8c57dfd](https://github.com/jaworldwideorg/OneJA-Bot/commit/8c57dfd))
-* **misc**: 2.0 next init ([26daac5](https://github.com/jaworldwideorg/OneJA-Bot/commit/26daac5))
-* **misc**: Add folder creation UI and clean up debug code ([d5ecd0a](https://github.com/jaworldwideorg/OneJA-Bot/commit/d5ecd0a))
-* **misc**: Add GPT-5.1 models, closes [#10206](https://github.com/jaworldwideorg/OneJA-Bot/issues/10206) ([afd3a47](https://github.com/jaworldwideorg/OneJA-Bot/commit/afd3a47))
-* **misc**: Create Pages in Knowledge Base, closes [#9895](https://github.com/jaworldwideorg/OneJA-Bot/issues/9895) ([f46edeb](https://github.com/jaworldwideorg/OneJA-Bot/commit/f46edeb))
-* **misc**: Display assistant message in group, closes [#9941](https://github.com/jaworldwideorg/OneJA-Bot/issues/9941) ([59b6ac3](https://github.com/jaworldwideorg/OneJA-Bot/commit/59b6ac3))
-* **misc**: Refactor to use agent runtime as the generation core and support branch mode, closes [#10080](https://github.com/jaworldwideorg/OneJA-Bot/issues/10080) ([b95e741](https://github.com/jaworldwideorg/OneJA-Bot/commit/b95e741))
-* **misc**: Support install sreamable http mcp server on web, closes [#10044](https://github.com/jaworldwideorg/OneJA-Bot/issues/10044) [#9916](https://github.com/jaworldwideorg/OneJA-Bot/issues/9916) ([85454c5](https://github.com/jaworldwideorg/OneJA-Bot/commit/85454c5))
-* **misc**: Support tool invention, closes [#10182](https://github.com/jaworldwideorg/OneJA-Bot/issues/10182) ([4dca708](https://github.com/jaworldwideorg/OneJA-Bot/commit/4dca708))
-* **misc**: Try 2.0 next ([e0af4e6](https://github.com/jaworldwideorg/OneJA-Bot/commit/e0af4e6))
-* **misc**: Upgrade to Next 16, closes [#9851](https://github.com/jaworldwideorg/OneJA-Bot/issues/9851) ([abb71ec](https://github.com/jaworldwideorg/OneJA-Bot/commit/abb71ec))
-
-
-
 #### What's fixed
 
-* **AssistantStore**: Add missing identifier parameter, closes [#9948](https://github.com/jaworldwideorg/OneJA-Bot/issues/9948) ([2e40855](https://github.com/jaworldwideorg/OneJA-Bot/commit/2e40855))
-* **database**: Fix deleteMessagesBySession incorrectly deleting all messages, closes [#10110](https://github.com/jaworldwideorg/OneJA-Bot/issues/10110) ([1d7f67d](https://github.com/jaworldwideorg/OneJA-Bot/commit/1d7f67d))
-* **TokenUsage**: Prevent animation when toggling between token and credit display, closes [#10098](https://github.com/jaworldwideorg/OneJA-Bot/issues/10098) ([f20a910](https://github.com/jaworldwideorg/OneJA-Bot/commit/f20a910))
-* **misc**: Abnormal animation of tokens, closes [#10106](https://github.com/jaworldwideorg/OneJA-Bot/issues/10106) ([129df7b](https://github.com/jaworldwideorg/OneJA-Bot/commit/129df7b))
-* **misc**: Don't include runtimeProvider in JWT for non-image operations, closes [#9959](https://github.com/jaworldwideorg/OneJA-Bot/issues/9959) [#9569](https://github.com/jaworldwideorg/OneJA-Bot/issues/9569) ([b8f25de](https://github.com/jaworldwideorg/OneJA-Bot/commit/b8f25de))
-* **misc**: Filter out reasoning fields from messages in ChatCompletion API, closes [#10203](https://github.com/jaworldwideorg/OneJA-Bot/issues/10203) [#10193](https://github.com/jaworldwideorg/OneJA-Bot/issues/10193) ([5f28b2c](https://github.com/jaworldwideorg/OneJA-Bot/commit/5f28b2c))
-* **misc**: Fix image prompt form, closes [#9995](https://github.com/jaworldwideorg/OneJA-Bot/issues/9995) ([799e6fd](https://github.com/jaworldwideorg/OneJA-Bot/commit/799e6fd))
-* **misc**: Fix mcp server return image error, closes [#10113](https://github.com/jaworldwideorg/OneJA-Bot/issues/10113) ([e5640d4](https://github.com/jaworldwideorg/OneJA-Bot/commit/e5640d4))
-* **misc**: Fix missing messages when finish runtime, closes [#10138](https://github.com/jaworldwideorg/OneJA-Bot/issues/10138) ([b94d477](https://github.com/jaworldwideorg/OneJA-Bot/commit/b94d477))
-* **misc**: Fix oidc accountId mismatch, closes [#10058](https://github.com/jaworldwideorg/OneJA-Bot/issues/10058) ([0692ba7](https://github.com/jaworldwideorg/OneJA-Bot/commit/0692ba7))
-* **misc**: Fix oidc auth timeout issue on the desktop, closes [#10025](https://github.com/jaworldwideorg/OneJA-Bot/issues/10025) ([20666db](https://github.com/jaworldwideorg/OneJA-Bot/commit/20666db))
-* **misc**: Fix reasoning issue with claude and Response API thinking, closes [#10147](https://github.com/jaworldwideorg/OneJA-Bot/issues/10147) ([cf6bd53](https://github.com/jaworldwideorg/OneJA-Bot/commit/cf6bd53))
-* **misc**: Fix regex ReDoS, closes [#10012](https://github.com/jaworldwideorg/OneJA-Bot/issues/10012) ([1d8d5cd](https://github.com/jaworldwideorg/OneJA-Bot/commit/1d8d5cd))
-* **misc**: Fix send message, closes [#10041](https://github.com/jaworldwideorg/OneJA-Bot/issues/10041) [#9984](https://github.com/jaworldwideorg/OneJA-Bot/issues/9984) ([7cca60f](https://github.com/jaworldwideorg/OneJA-Bot/commit/7cca60f))
-* **misc**: Hide marketplace link from Plugin List when market disabled, closes [#9929](https://github.com/jaworldwideorg/OneJA-Bot/issues/9929) ([e303979](https://github.com/jaworldwideorg/OneJA-Bot/commit/e303979))
-* **misc**: Model name display in the assistant panel disappears, closes [#9830](https://github.com/jaworldwideorg/OneJA-Bot/issues/9830) ([54f4e18](https://github.com/jaworldwideorg/OneJA-Bot/commit/54f4e18))
-* **misc**: OIDC error when connecting to self-host instance, closes [#9916](https://github.com/jaworldwideorg/OneJA-Bot/issues/9916) ([7a2ca19](https://github.com/jaworldwideorg/OneJA-Bot/commit/7a2ca19))
-* **misc**: Only include input_fidelity parameter for gpt-image-1., closes [#9920](https://github.com/jaworldwideorg/OneJA-Bot/issues/9920) ([65dbc63](https://github.com/jaworldwideorg/OneJA-Bot/commit/65dbc63))
-* **misc**: Should install new version after quit this instance, closes [#10064](https://github.com/jaworldwideorg/OneJA-Bot/issues/10064) ([9ab77b2](https://github.com/jaworldwideorg/OneJA-Bot/commit/9ab77b2))
-* **misc**: Update lost i18n files, closes [#10179](https://github.com/jaworldwideorg/OneJA-Bot/issues/10179) ([b69c7ff](https://github.com/jaworldwideorg/OneJA-Bot/commit/b69c7ff))
-
-
-
-#### Styles
-
-* **misc**: Add new bedrock model support, closes [#9826](https://github.com/jaworldwideorg/OneJA-Bot/issues/9826) ([1b8a981](https://github.com/jaworldwideorg/OneJA-Bot/commit/1b8a981))
-* **misc**: Add padding to TopicList component, closes [#9994](https://github.com/jaworldwideorg/OneJA-Bot/issues/9994) ([c1e7381](https://github.com/jaworldwideorg/OneJA-Bot/commit/c1e7381))
-* **misc**: Add pricing info for Azure GPT-5 series models, closes [#9833](https://github.com/jaworldwideorg/OneJA-Bot/issues/9833) ([39a80c5](https://github.com/jaworldwideorg/OneJA-Bot/commit/39a80c5))
-* **misc**: Add sorting functionality for disabled models and model providers with tooltip support, closes [#10000](https://github.com/jaworldwideorg/OneJA-Bot/issues/10000) ([68e98b1](https://github.com/jaworldwideorg/OneJA-Bot/commit/68e98b1))
-* **misc**: Fix approving render and improve Conversation style, closes [#10210](https://github.com/jaworldwideorg/OneJA-Bot/issues/10210) ([841b7f1](https://github.com/jaworldwideorg/OneJA-Bot/commit/841b7f1))
-* **misc**: Improve built-in client OIDC user flow, closes [#10020](https://github.com/jaworldwideorg/OneJA-Bot/issues/10020) ([80202ed](https://github.com/jaworldwideorg/OneJA-Bot/commit/80202ed))
-* **misc**: Improve lab style, closes [#10040](https://github.com/jaworldwideorg/OneJA-Bot/issues/10040) ([bbf1c0b](https://github.com/jaworldwideorg/OneJA-Bot/commit/bbf1c0b))
-* **misc**: Improve oidc layout style, closes [#10023](https://github.com/jaworldwideorg/OneJA-Bot/issues/10023) ([5008be7](https://github.com/jaworldwideorg/OneJA-Bot/commit/5008be7))
-* **misc**: Refactor and support move locale file intervention, closes [#10213](https://github.com/jaworldwideorg/OneJA-Bot/issues/10213) ([63cac81](https://github.com/jaworldwideorg/OneJA-Bot/commit/63cac81))
-* **misc**: Smoothed model descriptions in ko-KR locales, closes [#9998](https://github.com/jaworldwideorg/OneJA-Bot/issues/9998) ([fde1d8b](https://github.com/jaworldwideorg/OneJA-Bot/commit/fde1d8b))
-* **misc**: Update ERNIE-5.0-Thinking-Preview model, closes [#10196](https://github.com/jaworldwideorg/OneJA-Bot/issues/10196) ([89f3eed](https://github.com/jaworldwideorg/OneJA-Bot/commit/89f3eed))
-* **misc**: Update i18n, closes [#10116](https://github.com/jaworldwideorg/OneJA-Bot/issues/10116) ([766772e](https://github.com/jaworldwideorg/OneJA-Bot/commit/766772e))
-* **misc**: Update i18n, closes [#10100](https://github.com/jaworldwideorg/OneJA-Bot/issues/10100) ([deb6b5e](https://github.com/jaworldwideorg/OneJA-Bot/commit/deb6b5e))
-* **misc**: Update i18n, closes [#9958](https://github.com/jaworldwideorg/OneJA-Bot/issues/9958) ([f49996c](https://github.com/jaworldwideorg/OneJA-Bot/commit/f49996c))
-* **misc**: Update i18n, closes [#9944](https://github.com/jaworldwideorg/OneJA-Bot/issues/9944) ([3a6468f](https://github.com/jaworldwideorg/OneJA-Bot/commit/3a6468f))
+- **misc**: Slove when logout always show loading, closes [#10284](https://github.com/lobehub/lobe-chat/issues/10284) ([d91fb73](https://github.com/lobehub/lobe-chat/commit/d91fb73))
 
 </details>
 
+<div align="right">
 
-#### 💥 BREAKING CHANGES
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
 
-* **misc**: starting V2
-* **misc**: starting V2
+</div>
 
+## [Version 2.0.0-next.80](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.79...v2.0.0-next.80)
+
+<sup>Released on **2025-11-18**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.79](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.78...v2.0.0-next.79)
+
+<sup>Released on **2025-11-18**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fixed the discover page categray sider link error.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Fixed the discover page categray sider link error, closes [#10282](https://github.com/lobehub/lobe-chat/issues/10282) ([39e8819](https://github.com/lobehub/lobe-chat/commit/39e8819))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.78](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.77...v2.0.0-next.78)
+
+<sup>Released on **2025-11-18**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.77](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.76...v2.0.0-next.77)
+
+<sup>Released on **2025-11-18**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Delete /settings/newapi pages in nextjs build.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Delete /settings/newapi pages in nextjs build, closes [#10278](https://github.com/lobehub/lobe-chat/issues/10278) ([9d06753](https://github.com/lobehub/lobe-chat/commit/9d06753))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.76](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.75...v2.0.0-next.76)
+
+<sup>Released on **2025-11-18**</sup>
+
+#### ✨ Features
+
+- **misc**: Support Interleaved thinking in MiniMax.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Support Interleaved thinking in MiniMax, closes [#10255](https://github.com/lobehub/lobe-chat/issues/10255) ([13ca8e1](https://github.com/lobehub/lobe-chat/commit/13ca8e1))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.75](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.74...v2.0.0-next.75)
+
+<sup>Released on **2025-11-18**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#10277](https://github.com/lobehub/lobe-chat/issues/10277) ([7563b62](https://github.com/lobehub/lobe-chat/commit/7563b62))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.74](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.73...v2.0.0-next.74)
+
+<sup>Released on **2025-11-17**</sup>
+
+#### ✨ Features
+
+- **misc**: Edit local file render & intervention.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Edit local file render & intervention, closes [#10269](https://github.com/lobehub/lobe-chat/issues/10269) ([3785a71](https://github.com/lobehub/lobe-chat/commit/3785a71))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.73](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.72...v2.0.0-next.73)
+
+<sup>Released on **2025-11-17**</sup>
+
+#### ✨ Features
+
+- **misc**: Support parallel topic agent runtime.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Support parallel topic agent runtime, closes [#10273](https://github.com/lobehub/lobe-chat/issues/10273) ([02eba3c](https://github.com/lobehub/lobe-chat/commit/02eba3c))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.72](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.71...v2.0.0-next.72)
+
+<sup>Released on **2025-11-17**</sup>
+
+#### 💄 Styles
+
+- **misc**: Add model information for the Qiniu provider.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Add model information for the Qiniu provider, closes [#10270](https://github.com/lobehub/lobe-chat/issues/10270) ([06af793](https://github.com/lobehub/lobe-chat/commit/06af793))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.71](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.70...v2.0.0-next.71)
+
+<sup>Released on **2025-11-17**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix desktop user panel.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Fix desktop user panel, closes [#10272](https://github.com/lobehub/lobe-chat/issues/10272) ([6a374d2](https://github.com/lobehub/lobe-chat/commit/6a374d2))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.70](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.69...v2.0.0-next.70)
+
+<sup>Released on **2025-11-17**</sup>
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.69](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.68...v2.0.0-next.69)
+
+<sup>Released on **2025-11-17**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Remove `language_model_settings` and remove isDeprecatedEdition.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Remove `language_model_settings` and remove isDeprecatedEdition, closes [#10264](https://github.com/lobehub/lobe-chat/issues/10264) ([ae613c7](https://github.com/lobehub/lobe-chat/commit/ae613c7))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.68](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.67...v2.0.0-next.68)
+
+<sup>Released on **2025-11-16**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: The tool to fail execution on ollama when a message contains b….
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: The tool to fail execution on ollama when a message contains b…, closes [#10259](https://github.com/lobehub/lobe-chat/issues/10259) ([1ad8080](https://github.com/lobehub/lobe-chat/commit/1ad8080))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.67](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.66...v2.0.0-next.67)
+
+<sup>Released on **2025-11-16**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Refactor to virtua.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Refactor to virtua, closes [#10151](https://github.com/lobehub/lobe-chat/issues/10151) ([9ffb689](https://github.com/lobehub/lobe-chat/commit/9ffb689))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.66](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.65...v2.0.0-next.66)
+
+<sup>Released on **2025-11-16**</sup>
+
+#### ✨ Features
+
+- **misc**: Support to collapse message.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Support to collapse message, closes [#10234](https://github.com/lobehub/lobe-chat/issues/10234) ([4cd6347](https://github.com/lobehub/lobe-chat/commit/4cd6347))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.65](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.64...v2.0.0-next.65)
+
+<sup>Released on **2025-11-16**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#10235](https://github.com/lobehub/lobe-chat/issues/10235) ([a52c9e5](https://github.com/lobehub/lobe-chat/commit/a52c9e5))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.64](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.63...v2.0.0-next.64)
+
+<sup>Released on **2025-11-15**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Refactor package types.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Refactor package types, closes [#10233](https://github.com/lobehub/lobe-chat/issues/10233) ([9872409](https://github.com/lobehub/lobe-chat/commit/9872409))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.63](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.62...v2.0.0-next.63)
+
+<sup>Released on **2025-11-15**</sup>
+
+#### ✨ Features
+
+- **misc**: Show orphaned tool message and support delete tool message.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Show orphaned tool message and support delete tool message, closes [#10232](https://github.com/lobehub/lobe-chat/issues/10232) ([38cfd26](https://github.com/lobehub/lobe-chat/commit/38cfd26))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.62](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.61...v2.0.0-next.62)
+
+<sup>Released on **2025-11-15**</sup>
+
+#### 🐛 Bug Fixes
+
+- **next16**: Resolve 'Response body object should not be disturbed or locked' error.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **next16**: Resolve 'Response body object should not be disturbed or locked' error, closes [#10226](https://github.com/lobehub/lobe-chat/issues/10226) ([caa9c78](https://github.com/lobehub/lobe-chat/commit/caa9c78))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.61](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.60...v2.0.0-next.61)
+
+<sup>Released on **2025-11-15**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#10224](https://github.com/lobehub/lobe-chat/issues/10224) ([ca7551f](https://github.com/lobehub/lobe-chat/commit/ca7551f))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.60](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.59...v2.0.0-next.60)
+
+<sup>Released on **2025-11-14**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Reduce threshold.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Reduce threshold, closes [#10222](https://github.com/lobehub/lobe-chat/issues/10222) ([abdfd06](https://github.com/lobehub/lobe-chat/commit/abdfd06))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.59](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.58...v2.0.0-next.59)
+
+<sup>Released on **2025-11-14**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#10205](https://github.com/lobehub/lobe-chat/issues/10205) ([fc57d2a](https://github.com/lobehub/lobe-chat/commit/fc57d2a))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.58](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.57...v2.0.0-next.58)
+
+<sup>Released on **2025-11-14**</sup>
+
+#### ✨ Features
+
+- **misc**: Support DeepSeek Interleaved thinking.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Support DeepSeek Interleaved thinking, closes [#10219](https://github.com/lobehub/lobe-chat/issues/10219) ([3736a85](https://github.com/lobehub/lobe-chat/commit/3736a85))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.57](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.56...v2.0.0-next.57)
+
+<sup>Released on **2025-11-14**</sup>
+
+#### 💄 Styles
+
+- **misc**: Revert background style.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Revert background style, closes [#10218](https://github.com/lobehub/lobe-chat/issues/10218) ([97b0413](https://github.com/lobehub/lobe-chat/commit/97b0413))
+
+</details>
 
 <div align="right">
 
