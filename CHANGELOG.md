@@ -2,6 +2,89 @@
 
 # Changelog
 
+## [Version&nbsp;1.137.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.136.0...v1.137.0)
+<sup>Released on **2025-11-18**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Delete /settings/newapi pages in nextjs build, refactor package types, refactor to virtua, remove `language_model_settings` and remove isDeprecatedEdition.
+
+
+#### ✨ Features
+
+- **misc**: Edit local file render & intervention, show orphaned tool message and support delete tool message, support DeepSeek Interleaved thinking, Support Interleaved thinking in MiniMax, support parallel topic agent runtime, support to collapse message.
+
+
+#### 🐛 Bug Fixes
+
+- **next16**: Resolve 'Response body object should not be disturbed or locked' error.
+- **misc**: Fix desktop user panel, fixed the discover page categray sider link error, Reduce threshold, slove when logout always show loading, the tool to fail execution on ollama when a message contains b….
+
+
+#### 💄 Styles
+
+- **misc**: Add model information for the Qiniu provider, revert background style, update i18n, update i18n, update i18n, update i18n.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Delete /settings/newapi pages in nextjs build, closes [#10278](https://github.com/jaworldwideorg/OneJA-Bot/issues/10278) ([9d06753](https://github.com/jaworldwideorg/OneJA-Bot/commit/9d06753))
+* **misc**: Refactor package types, closes [#10233](https://github.com/jaworldwideorg/OneJA-Bot/issues/10233) ([9872409](https://github.com/jaworldwideorg/OneJA-Bot/commit/9872409))
+* **misc**: Refactor to virtua, closes [#10151](https://github.com/jaworldwideorg/OneJA-Bot/issues/10151) ([9ffb689](https://github.com/jaworldwideorg/OneJA-Bot/commit/9ffb689))
+* **misc**: Remove `language_model_settings` and remove isDeprecatedEdition, closes [#10264](https://github.com/jaworldwideorg/OneJA-Bot/issues/10264) ([ae613c7](https://github.com/jaworldwideorg/OneJA-Bot/commit/ae613c7))
+
+
+
+#### What's improved
+
+* **misc**: Edit local file render & intervention, closes [#10269](https://github.com/jaworldwideorg/OneJA-Bot/issues/10269) ([3785a71](https://github.com/jaworldwideorg/OneJA-Bot/commit/3785a71))
+* **misc**: Show orphaned tool message and support delete tool message, closes [#10232](https://github.com/jaworldwideorg/OneJA-Bot/issues/10232) ([38cfd26](https://github.com/jaworldwideorg/OneJA-Bot/commit/38cfd26))
+* **misc**: Support DeepSeek Interleaved thinking, closes [#10219](https://github.com/jaworldwideorg/OneJA-Bot/issues/10219) ([3736a85](https://github.com/jaworldwideorg/OneJA-Bot/commit/3736a85))
+* **misc**: Support Interleaved thinking in MiniMax, closes [#10255](https://github.com/jaworldwideorg/OneJA-Bot/issues/10255) ([13ca8e1](https://github.com/jaworldwideorg/OneJA-Bot/commit/13ca8e1))
+* **misc**: Support parallel topic agent runtime, closes [#10273](https://github.com/jaworldwideorg/OneJA-Bot/issues/10273) ([02eba3c](https://github.com/jaworldwideorg/OneJA-Bot/commit/02eba3c))
+* **misc**: Support to collapse message, closes [#10234](https://github.com/jaworldwideorg/OneJA-Bot/issues/10234) ([4cd6347](https://github.com/jaworldwideorg/OneJA-Bot/commit/4cd6347))
+
+
+
+#### What's fixed
+
+* **next16**: Resolve 'Response body object should not be disturbed or locked' error, closes [#10226](https://github.com/jaworldwideorg/OneJA-Bot/issues/10226) ([caa9c78](https://github.com/jaworldwideorg/OneJA-Bot/commit/caa9c78))
+* **misc**: Fix desktop user panel, closes [#10272](https://github.com/jaworldwideorg/OneJA-Bot/issues/10272) ([6a374d2](https://github.com/jaworldwideorg/OneJA-Bot/commit/6a374d2))
+* **misc**: Fixed the discover page categray sider link error, closes [#10282](https://github.com/jaworldwideorg/OneJA-Bot/issues/10282) ([39e8819](https://github.com/jaworldwideorg/OneJA-Bot/commit/39e8819))
+* **misc**: Reduce threshold, closes [#10222](https://github.com/jaworldwideorg/OneJA-Bot/issues/10222) ([abdfd06](https://github.com/jaworldwideorg/OneJA-Bot/commit/abdfd06))
+* **misc**: Slove when logout always show loading, closes [#10284](https://github.com/jaworldwideorg/OneJA-Bot/issues/10284) ([d91fb73](https://github.com/jaworldwideorg/OneJA-Bot/commit/d91fb73))
+* **misc**: The tool to fail execution on ollama when a message contains b…, closes [#10259](https://github.com/jaworldwideorg/OneJA-Bot/issues/10259) ([1ad8080](https://github.com/jaworldwideorg/OneJA-Bot/commit/1ad8080))
+
+
+
+#### Styles
+
+* **misc**: Add model information for the Qiniu provider, closes [#10270](https://github.com/jaworldwideorg/OneJA-Bot/issues/10270) ([06af793](https://github.com/jaworldwideorg/OneJA-Bot/commit/06af793))
+* **misc**: Revert background style, closes [#10218](https://github.com/jaworldwideorg/OneJA-Bot/issues/10218) ([97b0413](https://github.com/jaworldwideorg/OneJA-Bot/commit/97b0413))
+* **misc**: Update i18n, closes [#10277](https://github.com/jaworldwideorg/OneJA-Bot/issues/10277) ([7563b62](https://github.com/jaworldwideorg/OneJA-Bot/commit/7563b62))
+* **misc**: Update i18n, closes [#10235](https://github.com/jaworldwideorg/OneJA-Bot/issues/10235) ([a52c9e5](https://github.com/jaworldwideorg/OneJA-Bot/commit/a52c9e5))
+* **misc**: Update i18n, closes [#10224](https://github.com/jaworldwideorg/OneJA-Bot/issues/10224) ([ca7551f](https://github.com/jaworldwideorg/OneJA-Bot/commit/ca7551f))
+* **misc**: Update i18n, closes [#10205](https://github.com/jaworldwideorg/OneJA-Bot/issues/10205) ([fc57d2a](https://github.com/jaworldwideorg/OneJA-Bot/commit/fc57d2a))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.81](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.80...v2.0.0-next.81)
 
 <sup>Released on **2025-11-18**</sup>
