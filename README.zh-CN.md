@@ -244,9 +244,13 @@ LobeChat 支持文件上传与知识库功能，你可以上传文件、图片�
 
 我们已经实现了对以下模型服务商的支持：
 
-<!-- PROVIDER LIST -->
+<!-- PROVIDER LIST --> 
+
+
 
 <details><summary><kbd>See more providers (+-10)</kbd></summary>
+
+
 
 </details>
 
@@ -336,14 +340,14 @@ LobeChat 的插件生态系统是其核心功能的重要扩展，它极大地�
 
 > 通过文档了解更多 [📘 插件使用][docs-usage-plugin]
 
-<!-- PLUGIN LIST -->
+<!-- PLUGIN LIST --> 
 
-| 最近新增                                                                                                                   | 描述                                                                                                               |
-| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| [SEO](https://lobechat.com/discover/plugin/SEO)<br/><sup>By **orrenprunckun** on **2025-11-14**</sup>                      | 输入任何 URL 和关键词，获取页面 SEO 分析和见解！<br/>`seo`                                                         |
-| [购物工具](https://lobechat.com/discover/plugin/ShoppingTools)<br/><sup>By **shoppingtools** on **2025-10-27**</sup>       | 在 eBay 和 AliExpress 上搜索产品，查找 eBay 活动和优惠券。获取快速示例。<br/>`购物` `e-bay` `ali-express` `优惠券` |
-| [网页](https://lobechat.com/discover/plugin/web)<br/><sup>By **Proghit** on **2025-01-24**</sup>                           | 智能网页搜索，读取和分析页面，以提供来自 Google 结果的全面答案。<br/>`网页` `搜索`                                 |
-| [必应网页搜索](https://lobechat.com/discover/plugin/Bingsearch-identifier)<br/><sup>By **FineHow** on **2024-12-22**</sup> | 通过 BingApi 搜索互联网上的信息<br/>`bingsearch`                                                                   |
+| 最近新增                                                                                                                 | 描述                                                                                    |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [SEO](https://lobechat.com/discover/plugin/SEO)<br/><sup>By **orrenprunckun** on **2025-11-14**</sup>                | 输入任何URL和关键词，获取页面SEO分析和见解！<br/>`seo`                                                   |
+| [购物工具](https://lobechat.com/discover/plugin/ShoppingTools)<br/><sup>By **shoppingtools** on **2025-10-27**</sup>     | 在 eBay 和 AliExpress 上搜索产品，查找 eBay 活动和优惠券。获取快速示例。<br/>`购物` `e-bay` `ali-express` `优惠券` |
+| [网页](https://lobechat.com/discover/plugin/web)<br/><sup>By **Proghit** on **2025-01-24**</sup>                       | 智能网页搜索，读取和分析页面，以提供来自Google结果的全面答案。<br/>`网页` `搜索`                                      |
+| [必应网页搜索](https://lobechat.com/discover/plugin/Bingsearch-identifier)<br/><sup>By **FineHow** on **2024-12-22**</sup> | 通过BingApi搜索互联网上的信息<br/>`bingsearch`                                                   |
 
 > 📊 Total plugins: [<kbd>**41**</kbd>](https://lobechat.com/discover/plugins)
 
@@ -371,14 +375,14 @@ LobeChat 的插件生态系统是其核心功能的重要扩展，它极大地�
 >
 > 我欢迎所有用户加入这个不断成长的生态系统，共同参与到助手的迭代与优化中来。共同创造出更多有趣、实用且具有创新性的助手，进一步丰富助手的多样性和实用性。
 
-<!-- AGENT LIST -->
+<!-- AGENT LIST --> 
 
-| 最近新增                                                                                                                                                         | 描述                                                                                                              |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 最近新增                                                                                                                                                       | 描述                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | [海龟汤主持人](https://lobechat.com/discover/assistant/lateral-thinking-puzzle)<br/><sup>By **[CSY2022](https://github.com/CSY2022)** on **2025-06-19**</sup>    | 一个海龟汤主持人，需要自己提供汤面，汤底与关键点（猜中的判定条件）。<br/>`海龟汤` `推理` `互动` `谜题` `角色扮演` |
-| [美食评论员🍟](https://lobechat.com/discover/assistant/food-reviewer)<br/><sup>By **[renhai-lab](https://github.com/renhai-lab)** on **2025-06-17**</sup>        | 美食评价专家<br/>`美食` `评价` `写作`                                                                             |
-| [学术写作助手](https://lobechat.com/discover/assistant/academic-writing-assistant)<br/><sup>By **[swarfte](https://github.com/swarfte)** on **2025-06-17**</sup> | 专业的学术研究论文写作和正式文档编写专家<br/>`学术写作` `研究` `正式风格`                                         |
-| [Minecraft 资深开发者](https://lobechat.com/discover/assistant/java-development)<br/><sup>By **[iamyuuk](https://github.com/iamyuuk)** on **2025-06-17**</sup>   | 擅长高级 Java 开发及 Minecraft 开发<br/>`开发` `编程` `minecraft` `java`                                          |
+| [美食评论员🍟](https://lobechat.com/discover/assistant/food-reviewer)<br/><sup>By **[renhai-lab](https://github.com/renhai-lab)** on **2025-06-17**</sup>       | 美食评价专家<br/>`美食` `评价` `写作`                                          |
+| [学术写作助手](https://lobechat.com/discover/assistant/academic-writing-assistant)<br/><sup>By **[swarfte](https://github.com/swarfte)** on **2025-06-17**</sup> | 专业的学术研究论文写作和正式文档编写专家<br/>`学术写作` `研究` `正式风格`                        |
+| [Minecraft资深开发者](https://lobechat.com/discover/assistant/java-development)<br/><sup>By **[iamyuuk](https://github.com/iamyuuk)** on **2025-06-17**</sup>   | 擅长高级 Java 开发及 Minecraft 开发<br/>`开发` `编程` `minecraft` `java`        |
 
 > 📊 Total agents: [<kbd>**505**</kbd> ](https://lobechat.com/discover/assistants)
 
