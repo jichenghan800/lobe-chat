@@ -2,101 +2,225 @@
 
 # Changelog
 
-## [Version&nbsp;1.138.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.137.0...v1.138.0)
-<sup>Released on **2025-11-25**</sup>
+## [Version 2.0.0-next.124](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.123...v2.0.0-next.124)
 
-
-#### ♻ Code Refactoring
-
-- **misc**: Optimize files schema definition, refactor chat selectors, refactor Conversation to ChatList.
-
-
-#### ✨ Features
-
-- **misc**: Add Claude Opus 4.5 model, Add nano-banana-pro model support and optimization, Add new provider ZenMux & Gemini 3 Pro Image Preview, add Security Blacklist for agent runtime, New API support switch Responses API mode, refactor to use kb search tool, support bedrok prompt cache and usage compute, support Command Menu (CMD + J), support gemini 3.0 tools calling, support user abort in the agent runtime.
-
+<sup>Released on **2025-11-27**</sup>
 
 #### 🐛 Bug Fixes
 
-- **operation**: Isolate loading state to current active topic.
-- **misc**: Fix db migration snapshot not align with db schema, fix noisy error notification, fixed  changelog pages and open again, fixed the hydrated false problem, fixed the knowledge files cant open error, fixed the pinned session not work, fixed the topic link dropdown error, fixed when desktop userId was change manytimes the aimodel not right, Gemini 3 Pro does not display thought summaries, hide ai image config item in settings category, provider settings button unable to redirect, Separate agent file injection from knowledge base RAG search, slove discover pagination router.
-
-
-#### 💄 Styles
-
-- **misc**: Add Gemini 3.0 Pro Preview to Google Provider, Add hyperlink to each topic & pinned agent, add Kimi K2 Thinking to Qwen Provider, extract StatusIndicator component and improve tools display, Fix some translations, Fully support Gemini 3.0 model, optimize nana banana pro error message, remove debug console logs and add loading state, support ContextMenu on ChatItem, update i18n, update i18n, update i18n, update i18n, update i18n.
-
+- **misc**: Fixed the agent settings plugins pages error problem, improve topic item interaction and editing behavior.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### Code refactoring
-
-* **misc**: Optimize files schema definition, closes [#10403](https://github.com/jaworldwideorg/OneJA-Bot/issues/10403) ([cf28c87](https://github.com/jaworldwideorg/OneJA-Bot/commit/cf28c87))
-* **misc**: Refactor chat selectors, closes [#10274](https://github.com/jaworldwideorg/OneJA-Bot/issues/10274) ([0a056f3](https://github.com/jaworldwideorg/OneJA-Bot/commit/0a056f3))
-* **misc**: Refactor Conversation to ChatList, closes [#10330](https://github.com/jaworldwideorg/OneJA-Bot/issues/10330) ([bca70e2](https://github.com/jaworldwideorg/OneJA-Bot/commit/bca70e2))
-
-
-
-#### What's improved
-
-* **misc**: Add Claude Opus 4.5 model, closes [#10406](https://github.com/jaworldwideorg/OneJA-Bot/issues/10406) ([042005a](https://github.com/jaworldwideorg/OneJA-Bot/commit/042005a))
-* **misc**: Add nano-banana-pro model support and optimization, closes [#10376](https://github.com/jaworldwideorg/OneJA-Bot/issues/10376) ([5349bdc](https://github.com/jaworldwideorg/OneJA-Bot/commit/5349bdc))
-* **misc**: Add new provider ZenMux & Gemini 3 Pro Image Preview, closes [#10310](https://github.com/jaworldwideorg/OneJA-Bot/issues/10310) ([f2291e4](https://github.com/jaworldwideorg/OneJA-Bot/commit/f2291e4))
-* **misc**: Add Security Blacklist for agent runtime, closes [#10325](https://github.com/jaworldwideorg/OneJA-Bot/issues/10325) ([deab4d0](https://github.com/jaworldwideorg/OneJA-Bot/commit/deab4d0))
-* **misc**: New API support switch Responses API mode, closes [#9776](https://github.com/jaworldwideorg/OneJA-Bot/issues/9776) [#9916](https://github.com/jaworldwideorg/OneJA-Bot/issues/9916) [#9997](https://github.com/jaworldwideorg/OneJA-Bot/issues/9997) [#9916](https://github.com/jaworldwideorg/OneJA-Bot/issues/9916) ([d0ee3df](https://github.com/jaworldwideorg/OneJA-Bot/commit/d0ee3df))
-* **misc**: Refactor to use kb search tool, closes [#10340](https://github.com/jaworldwideorg/OneJA-Bot/issues/10340) ([291ff3c](https://github.com/jaworldwideorg/OneJA-Bot/commit/291ff3c))
-* **misc**: Support bedrok prompt cache and usage compute, closes [#10337](https://github.com/jaworldwideorg/OneJA-Bot/issues/10337) ([beb9471](https://github.com/jaworldwideorg/OneJA-Bot/commit/beb9471))
-* **misc**: Support Command Menu (CMD + J), closes [#10271](https://github.com/jaworldwideorg/OneJA-Bot/issues/10271) ([a9aed0b](https://github.com/jaworldwideorg/OneJA-Bot/commit/a9aed0b))
-* **misc**: Support gemini 3.0 tools calling, closes [#10301](https://github.com/jaworldwideorg/OneJA-Bot/issues/10301) ([7114fc1](https://github.com/jaworldwideorg/OneJA-Bot/commit/7114fc1))
-* **misc**: Support user abort in the agent runtime, closes [#10289](https://github.com/jaworldwideorg/OneJA-Bot/issues/10289) ([0925069](https://github.com/jaworldwideorg/OneJA-Bot/commit/0925069))
-
-
-
 #### What's fixed
 
-* **operation**: Isolate loading state to current active topic, closes [#10360](https://github.com/jaworldwideorg/OneJA-Bot/issues/10360) ([c568369](https://github.com/jaworldwideorg/OneJA-Bot/commit/c568369))
-* **misc**: Fix db migration snapshot not align with db schema, closes [#10399](https://github.com/jaworldwideorg/OneJA-Bot/issues/10399) ([760105a](https://github.com/jaworldwideorg/OneJA-Bot/commit/760105a))
-* **misc**: Fix noisy error notification, closes [#10286](https://github.com/jaworldwideorg/OneJA-Bot/issues/10286) ([9ea680c](https://github.com/jaworldwideorg/OneJA-Bot/commit/9ea680c))
-* **misc**: Fixed  changelog pages and open again, closes [#10285](https://github.com/jaworldwideorg/OneJA-Bot/issues/10285) ([871d141](https://github.com/jaworldwideorg/OneJA-Bot/commit/871d141))
-* **misc**: Fixed the hydrated false problem, closes [#10308](https://github.com/jaworldwideorg/OneJA-Bot/issues/10308) ([340aa2a](https://github.com/jaworldwideorg/OneJA-Bot/commit/340aa2a))
-* **misc**: Fixed the knowledge files cant open error, closes [#10386](https://github.com/jaworldwideorg/OneJA-Bot/issues/10386) ([8104c77](https://github.com/jaworldwideorg/OneJA-Bot/commit/8104c77))
-* **misc**: Fixed the pinned session not work, closes [#10323](https://github.com/jaworldwideorg/OneJA-Bot/issues/10323) ([224f999](https://github.com/jaworldwideorg/OneJA-Bot/commit/224f999))
-* **misc**: Fixed the topic link dropdown error, closes [#10408](https://github.com/jaworldwideorg/OneJA-Bot/issues/10408) ([864e3d5](https://github.com/jaworldwideorg/OneJA-Bot/commit/864e3d5))
-* **misc**: Fixed when desktop userId was change manytimes the aimodel not right, closes [#10389](https://github.com/jaworldwideorg/OneJA-Bot/issues/10389) ([3ed8153](https://github.com/jaworldwideorg/OneJA-Bot/commit/3ed8153))
-* **misc**: Gemini 3 Pro does not display thought summaries, closes [#10345](https://github.com/jaworldwideorg/OneJA-Bot/issues/10345) ([89e296a](https://github.com/jaworldwideorg/OneJA-Bot/commit/89e296a))
-* **misc**: Hide ai image config item in settings category, closes [#10066](https://github.com/jaworldwideorg/OneJA-Bot/issues/10066) ([90354eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/90354eb))
-* **misc**: Provider settings button unable to redirect, closes [#10319](https://github.com/jaworldwideorg/OneJA-Bot/issues/10319) ([e025fec](https://github.com/jaworldwideorg/OneJA-Bot/commit/e025fec))
-* **misc**: Separate agent file injection from knowledge base RAG search, closes [#10398](https://github.com/jaworldwideorg/OneJA-Bot/issues/10398) ([e1c813a](https://github.com/jaworldwideorg/OneJA-Bot/commit/e1c813a))
-* **misc**: Slove discover pagination router, closes [#10294](https://github.com/jaworldwideorg/OneJA-Bot/issues/10294) ([fcda0b5](https://github.com/jaworldwideorg/OneJA-Bot/commit/fcda0b5))
-
-
-
-#### Styles
-
-* **misc**: Add Gemini 3.0 Pro Preview to Google Provider, closes [#10290](https://github.com/jaworldwideorg/OneJA-Bot/issues/10290) ([25c4358](https://github.com/jaworldwideorg/OneJA-Bot/commit/25c4358))
-* **misc**: Add hyperlink to each topic & pinned agent, closes [#10367](https://github.com/jaworldwideorg/OneJA-Bot/issues/10367) ([63e4b3d](https://github.com/jaworldwideorg/OneJA-Bot/commit/63e4b3d))
-* **misc**: Add Kimi K2 Thinking to Qwen Provider, closes [#10287](https://github.com/jaworldwideorg/OneJA-Bot/issues/10287) ([bd2e838](https://github.com/jaworldwideorg/OneJA-Bot/commit/bd2e838))
-* **misc**: Extract StatusIndicator component and improve tools display, closes [#10311](https://github.com/jaworldwideorg/OneJA-Bot/issues/10311) ([b5ae53a](https://github.com/jaworldwideorg/OneJA-Bot/commit/b5ae53a))
-* **misc**: Fix some translations, closes [#10343](https://github.com/jaworldwideorg/OneJA-Bot/issues/10343) ([ed193e0](https://github.com/jaworldwideorg/OneJA-Bot/commit/ed193e0))
-* **misc**: Fully support Gemini 3.0 model, closes [#10292](https://github.com/jaworldwideorg/OneJA-Bot/issues/10292) ([6545ef8](https://github.com/jaworldwideorg/OneJA-Bot/commit/6545ef8))
-* **misc**: Optimize nana banana pro error message, closes [#10378](https://github.com/jaworldwideorg/OneJA-Bot/issues/10378) ([cb34757](https://github.com/jaworldwideorg/OneJA-Bot/commit/cb34757))
-* **misc**: Remove debug console logs and add loading state, closes [#10314](https://github.com/jaworldwideorg/OneJA-Bot/issues/10314) ([094cdff](https://github.com/jaworldwideorg/OneJA-Bot/commit/094cdff))
-* **misc**: Support ContextMenu on ChatItem, closes [#9034](https://github.com/jaworldwideorg/OneJA-Bot/issues/9034) ([27c1154](https://github.com/jaworldwideorg/OneJA-Bot/commit/27c1154))
-* **misc**: Update i18n, closes [#10368](https://github.com/jaworldwideorg/OneJA-Bot/issues/10368) ([ed707af](https://github.com/jaworldwideorg/OneJA-Bot/commit/ed707af))
-* **misc**: Update i18n, closes [#10349](https://github.com/jaworldwideorg/OneJA-Bot/issues/10349) ([3482d38](https://github.com/jaworldwideorg/OneJA-Bot/commit/3482d38))
-* **misc**: Update i18n, closes [#10338](https://github.com/jaworldwideorg/OneJA-Bot/issues/10338) ([9c8cf81](https://github.com/jaworldwideorg/OneJA-Bot/commit/9c8cf81))
-* **misc**: Update i18n, closes [#10317](https://github.com/jaworldwideorg/OneJA-Bot/issues/10317) ([8fb9890](https://github.com/jaworldwideorg/OneJA-Bot/commit/8fb9890))
-* **misc**: Update i18n, closes [#10291](https://github.com/jaworldwideorg/OneJA-Bot/issues/10291) ([1c9f0d9](https://github.com/jaworldwideorg/OneJA-Bot/commit/1c9f0d9))
+- **misc**: Fixed the agent settings plugins pages error problem, closes [#10437](https://github.com/lobehub/lobe-chat/issues/10437) ([c58f37a](https://github.com/lobehub/lobe-chat/commit/c58f37a))
+- **misc**: Improve topic item interaction and editing behavior, closes [#10409](https://github.com/lobehub/lobe-chat/issues/10409) ([85b45cb](https://github.com/lobehub/lobe-chat/commit/85b45cb))
 
 </details>
 
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.123](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.122...v2.0.0-next.123)
+
+<sup>Released on **2025-11-27**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#10445](https://github.com/lobehub/lobe-chat/issues/10445) ([4942bc9](https://github.com/lobehub/lobe-chat/commit/4942bc9))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.122](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.121...v2.0.0-next.122)
+
+<sup>Released on **2025-11-26**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Slove the publish to market the agent config error.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Slove the publish to market the agent config error, closes [#10440](https://github.com/lobehub/lobe-chat/issues/10440) ([fda8119](https://github.com/lobehub/lobe-chat/commit/fda8119))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.121](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.120...v2.0.0-next.121)
+
+<sup>Released on **2025-11-26**</sup>
+
+#### 💄 Styles
+
+- **misc**: Add image aspect ratio and resolution settings for Nano Banana Pro.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Add image aspect ratio and resolution settings for Nano Banana Pro, closes [#10430](https://github.com/lobehub/lobe-chat/issues/10430) ([a197b4b](https://github.com/lobehub/lobe-chat/commit/a197b4b))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.120](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.119...v2.0.0-next.120)
+
+<sup>Released on **2025-11-26**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Try to fix “TypeError: Response body object should not be disturbed or locked”.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Try to fix “TypeError: Response body object should not be disturbed or locked”, closes [#10321](https://github.com/lobehub/lobe-chat/issues/10321) ([a547e9e](https://github.com/lobehub/lobe-chat/commit/a547e9e))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.119](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.118...v2.0.0-next.119)
+
+<sup>Released on **2025-11-26**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#10405](https://github.com/lobehub/lobe-chat/issues/10405) ([fb8f977](https://github.com/lobehub/lobe-chat/commit/fb8f977))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.118](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.117...v2.0.0-next.118)
+
+<sup>Released on **2025-11-26**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Showing compatibility with both new and old versions of Plugins.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Showing compatibility with both new and old versions of Plugins, closes [#10418](https://github.com/lobehub/lobe-chat/issues/10418) ([64af7b1](https://github.com/lobehub/lobe-chat/commit/64af7b1))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.117](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.116...v2.0.0-next.117)
+
+<sup>Released on **2025-11-25**</sup>
+
+#### ✨ Features
+
+- **misc**: Bedrock claude model thinking support.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Bedrock claude model thinking support, closes [#10422](https://github.com/lobehub/lobe-chat/issues/10422) ([8b41638](https://github.com/lobehub/lobe-chat/commit/8b41638))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.116](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.115...v2.0.0-next.116)
+
+<sup>Released on **2025-11-25**</sup>
+
+#### ✨ Features
+
+- **misc**: Support nano banana pro.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Support nano banana pro, closes [#10413](https://github.com/lobehub/lobe-chat/issues/10413) ([a93cfcd](https://github.com/lobehub/lobe-chat/commit/a93cfcd))
+
+</details>
 
 <div align="right">
 
