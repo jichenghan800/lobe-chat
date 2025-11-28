@@ -2,59 +2,174 @@
 
 # Changelog
 
-## [Version&nbsp;1.139.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.138.0...v1.139.0)
-<sup>Released on **2025-11-27**</sup>
+## [Version 2.0.0-next.131](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.130...v2.0.0-next.131)
 
-
-#### ✨ Features
-
-- **misc**: Bedrock claude model thinking support, support nano banana pro.
-
+<sup>Released on **2025-11-28**</sup>
 
 #### 🐛 Bug Fixes
 
-- **misc**: Fixed the agent settings plugins pages error problem, improve topic item interaction and editing behavior, Showing compatibility with both new and old versions of Plugins, slove the publish to market the agent config error, try to fix “TypeError: Response body object should not be disturbed or locked”.
-
-
-#### 💄 Styles
-
-- **misc**: Add image aspect ratio and resolution settings for Nano Banana Pro, update i18n, update i18n.
-
+- **misc**: Implement uniform callback URL for SSO providers.
 
 <br/>
-
-
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-
-
-#### What's improved
-
-* **misc**: Bedrock claude model thinking support, closes [#10422](https://github.com/jaworldwideorg/OneJA-Bot/issues/10422) ([8b41638](https://github.com/jaworldwideorg/OneJA-Bot/commit/8b41638))
-* **misc**: Support nano banana pro, closes [#10413](https://github.com/jaworldwideorg/OneJA-Bot/issues/10413) ([a93cfcd](https://github.com/jaworldwideorg/OneJA-Bot/commit/a93cfcd))
-
-
-
 #### What's fixed
 
-* **misc**: Fixed the agent settings plugins pages error problem, closes [#10437](https://github.com/jaworldwideorg/OneJA-Bot/issues/10437) ([c58f37a](https://github.com/jaworldwideorg/OneJA-Bot/commit/c58f37a))
-* **misc**: Improve topic item interaction and editing behavior, closes [#10409](https://github.com/jaworldwideorg/OneJA-Bot/issues/10409) ([85b45cb](https://github.com/jaworldwideorg/OneJA-Bot/commit/85b45cb))
-* **misc**: Showing compatibility with both new and old versions of Plugins, closes [#10418](https://github.com/jaworldwideorg/OneJA-Bot/issues/10418) ([64af7b1](https://github.com/jaworldwideorg/OneJA-Bot/commit/64af7b1))
-* **misc**: Slove the publish to market the agent config error, closes [#10440](https://github.com/jaworldwideorg/OneJA-Bot/issues/10440) ([fda8119](https://github.com/jaworldwideorg/OneJA-Bot/commit/fda8119))
-* **misc**: Try to fix “TypeError: Response body object should not be disturbed or locked”, closes [#10321](https://github.com/jaworldwideorg/OneJA-Bot/issues/10321) ([a547e9e](https://github.com/jaworldwideorg/OneJA-Bot/commit/a547e9e))
-
-
-
-#### Styles
-
-* **misc**: Add image aspect ratio and resolution settings for Nano Banana Pro, closes [#10430](https://github.com/jaworldwideorg/OneJA-Bot/issues/10430) ([a197b4b](https://github.com/jaworldwideorg/OneJA-Bot/commit/a197b4b))
-* **misc**: Update i18n, closes [#10445](https://github.com/jaworldwideorg/OneJA-Bot/issues/10445) ([4942bc9](https://github.com/jaworldwideorg/OneJA-Bot/commit/4942bc9))
-* **misc**: Update i18n, closes [#10405](https://github.com/jaworldwideorg/OneJA-Bot/issues/10405) ([fb8f977](https://github.com/jaworldwideorg/OneJA-Bot/commit/fb8f977))
+- **misc**: Implement uniform callback URL for SSO providers, closes [#10479](https://github.com/lobehub/lobe-chat/issues/10479) ([74554c6](https://github.com/lobehub/lobe-chat/commit/74554c6))
 
 </details>
 
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.130](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.129...v2.0.0-next.130)
+
+<sup>Released on **2025-11-28**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Add handling for `content_part` and `reasoning_part` events in fetchSSE.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Add handling for `content_part` and `reasoning_part` events in fetchSSE, closes [#10470](https://github.com/lobehub/lobe-chat/issues/10470) ([8aff3ab](https://github.com/lobehub/lobe-chat/commit/8aff3ab))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.129](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.128...v2.0.0-next.129)
+
+<sup>Released on **2025-11-28**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Filter out file with `sourceType` = `file`.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Filter out file with `sourceType` = `file`, closes [#10474](https://github.com/lobehub/lobe-chat/issues/10474) ([e1c99a0](https://github.com/lobehub/lobe-chat/commit/e1c99a0))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.128](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.127...v2.0.0-next.128)
+
+<sup>Released on **2025-11-28**</sup>
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Update i18n, closes [#10466](https://github.com/lobehub/lobe-chat/issues/10466) ([37bd67a](https://github.com/lobehub/lobe-chat/commit/37bd67a))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.127](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.126...v2.0.0-next.127)
+
+<sup>Released on **2025-11-27**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Better-auth fallback next-auth providers env.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Better-auth fallback next-auth providers env, closes [#10459](https://github.com/lobehub/lobe-chat/issues/10459) ([e167075](https://github.com/lobehub/lobe-chat/commit/e167075))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.126](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.125...v2.0.0-next.126)
+
+<sup>Released on **2025-11-27**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Align docker auth defaults and better-auth docs.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Align docker auth defaults and better-auth docs, closes [#10457](https://github.com/lobehub/lobe-chat/issues/10457) ([1375314](https://github.com/lobehub/lobe-chat/commit/1375314))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.125](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.124...v2.0.0-next.125)
+
+<sup>Released on **2025-11-27**</sup>
+
+#### ✨ Features
+
+- **misc**: Support better-auth.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Support better-auth, closes [#10215](https://github.com/lobehub/lobe-chat/issues/10215) ([dc62cc9](https://github.com/lobehub/lobe-chat/commit/dc62cc9))
+
+</details>
 
 <div align="right">
 
