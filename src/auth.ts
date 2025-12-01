@@ -1,8 +1,8 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix, typescript-sort-keys/interface */
-import { serverDB } from '@lobechat/database';
+import { createNanoId, idGenerator, serverDB } from '@lobechat/database';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { genericOAuth, magicLink } from 'better-auth/plugins';
+import { admin, genericOAuth, magicLink } from 'better-auth/plugins';
 
 import { authEnv } from '@/envs/auth';
 import {
@@ -11,6 +11,7 @@ import {
   getVerificationEmailTemplate,
 } from '@/libs/better-auth/email-templates';
 import { initBetterAuthSSOProviders } from '@/libs/better-auth/sso';
+import { parseSSOProviders } from '@/libs/better-auth/utils/server';
 import { EmailService } from '@/server/services/email';
 
 // Email verification link expiration time (in seconds)
@@ -21,21 +22,56 @@ const enableMagicLink = authEnv.NEXT_PUBLIC_ENABLE_MAGIC_LINK;
 
 const { socialProviders, genericOAuthProviders } = initBetterAuthSSOProviders();
 
+/**
+ * Normalize a URL-like string to an origin with https fallback.
+ */
+const normalizeOrigin = (url?: string) => {
+  if (!url) return undefined;
+
+  try {
+    const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
+
+    return new URL(normalizedUrl).origin;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Build trusted origins with env override and Vercel-aware defaults.
+ */
+const getTrustedOrigins = () => {
+  if (authEnv.AUTH_TRUSTED_ORIGINS) {
+    const originsFromEnv = authEnv.AUTH_TRUSTED_ORIGINS.split(',')
+      .map((item) => normalizeOrigin(item.trim()))
+      .filter(Boolean) as string[];
+
+    if (originsFromEnv.length > 0) return Array.from(new Set(originsFromEnv));
+  }
+
+  const defaults = [
+    authEnv.NEXT_PUBLIC_AUTH_URL,
+    normalizeOrigin(process.env.APP_URL),
+    normalizeOrigin(process.env.VERCEL_BRANCH_URL),
+    normalizeOrigin(process.env.VERCEL_URL),
+  ].filter(Boolean) as string[];
+
+  return defaults.length > 0 ? Array.from(new Set(defaults)) : undefined;
+};
+
 export const auth = betterAuth({
   account: {
     accountLinking: {
       allowDifferentEmails: true,
       enabled: true,
+      trustedProviders: parseSSOProviders(authEnv.AUTH_SSO_PROVIDERS),
     },
   },
 
   // Use renamed env vars (fallback to next-auth vars is handled in src/envs/auth.ts)
   baseURL: authEnv.NEXT_PUBLIC_AUTH_URL,
   secret: authEnv.AUTH_SECRET,
-
-  database: drizzleAdapter(serverDB, {
-    provider: 'pg',
-  }),
+  trustedOrigins: getTrustedOrigins(),
 
   emailAndPassword: {
     autoSignIn: true,
@@ -72,7 +108,44 @@ export const auth = betterAuth({
     },
   },
 
+  database: drizzleAdapter(serverDB, {
+    provider: 'pg',
+  }),
+  user: {
+    additionalFields: {
+      username: {
+        required: false,
+        type: 'string',
+      },
+    },
+    fields: {
+      image: 'avatar',
+      // NOTE: use drizzle filed instead of db field, so use fullName instead of full_name
+      name: 'fullName',
+    },
+    modelName: 'users',
+  },
+
+  socialProviders,
+  advanced: {
+    database: {
+      /**
+       * Align Better Auth user IDs with our shared idGenerator for consistency.
+       * Other models use the shared nanoid generator (12 chars) to keep IDs consistent project-wide.
+       */
+      generateId: ({ model }) => {
+        // Better Auth passes the model name; handle both singular and plural for safety.
+        if (model === 'user' || model === 'users') {
+          return idGenerator('user', 12);
+        }
+
+        // Other models: use shared nanoid generator (12 chars) to keep consistency.
+        return createNanoId(12)();
+      },
+    },
+  },
   plugins: [
+    admin(),
     ...(genericOAuthProviders.length > 0
       ? [
           genericOAuth({
@@ -100,19 +173,4 @@ export const auth = betterAuth({
         ]
       : []),
   ],
-  socialProviders,
-
-  user: {
-    additionalFields: {
-      fullName: {
-        required: false,
-        type: 'string',
-      },
-    },
-    fields: {
-      image: 'avatar',
-      name: 'username',
-    },
-    modelName: 'users',
-  },
 });
