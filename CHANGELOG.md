@@ -2,6 +2,67 @@
 
 # Changelog
 
+## [Version&nbsp;1.141.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.140.0...v1.141.0)
+<sup>Released on **2025-12-01**</sup>
+
+
+#### ✨ Features
+
+- **misc**: Integrate better-auth admin plugin.
+
+
+#### 🐛 Bug Fixes
+
+- **conversation-flow**: Support optimistic update for activeBranchIndex.
+- **misc**: Betterauth name should mapped to fullName, betterauth public url auto detect from VERCEL_URL, drop user.phoneNumber and reuse user.phone, fix BetterAuth `Unable to link account - untrusted provider`, refresh custom AI provider on selection, Unable to switch to default topic, update apiMode handling in ChatService to prioritize user preferences.
+
+
+#### 💄 Styles
+
+- **misc**: Update i18n.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's improved
+
+* **misc**: Integrate better-auth admin plugin, closes [#10512](https://github.com/jaworldwideorg/OneJA-Bot/issues/10512) ([3be78f0](https://github.com/jaworldwideorg/OneJA-Bot/commit/3be78f0))
+
+
+
+#### What's fixed
+
+* **conversation-flow**: Support optimistic update for activeBranchIndex, closes [#10517](https://github.com/jaworldwideorg/OneJA-Bot/issues/10517) ([9b5b234](https://github.com/jaworldwideorg/OneJA-Bot/commit/9b5b234))
+* **misc**: Betterauth name should mapped to fullName, closes [#10490](https://github.com/jaworldwideorg/OneJA-Bot/issues/10490) ([7babdc1](https://github.com/jaworldwideorg/OneJA-Bot/commit/7babdc1))
+* **misc**: Betterauth public url auto detect from VERCEL_URL, closes [#10493](https://github.com/jaworldwideorg/OneJA-Bot/issues/10493) ([b5bf8ad](https://github.com/jaworldwideorg/OneJA-Bot/commit/b5bf8ad))
+* **misc**: Drop user.phoneNumber and reuse user.phone, closes [#10531](https://github.com/jaworldwideorg/OneJA-Bot/issues/10531) ([2ab88c5](https://github.com/jaworldwideorg/OneJA-Bot/commit/2ab88c5))
+* **misc**: Fix BetterAuth `Unable to link account - untrusted provider`, closes [#10505](https://github.com/jaworldwideorg/OneJA-Bot/issues/10505) ([d845451](https://github.com/jaworldwideorg/OneJA-Bot/commit/d845451))
+* **misc**: Refresh custom AI provider on selection, closes [#10506](https://github.com/jaworldwideorg/OneJA-Bot/issues/10506) ([d7db99e](https://github.com/jaworldwideorg/OneJA-Bot/commit/d7db99e))
+* **misc**: Unable to switch to default topic, closes [#10472](https://github.com/jaworldwideorg/OneJA-Bot/issues/10472) ([d181f71](https://github.com/jaworldwideorg/OneJA-Bot/commit/d181f71))
+* **misc**: Update apiMode handling in ChatService to prioritize user preferences, closes [#10487](https://github.com/jaworldwideorg/OneJA-Bot/issues/10487) ([5483d91](https://github.com/jaworldwideorg/OneJA-Bot/commit/5483d91))
+
+
+
+#### Styles
+
+* **misc**: Update i18n, closes [#10519](https://github.com/jaworldwideorg/OneJA-Bot/issues/10519) ([bd9a38c](https://github.com/jaworldwideorg/OneJA-Bot/commit/bd9a38c))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.140.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.139.0...v1.140.0)
 <sup>Released on **2025-11-28**</sup>
 
