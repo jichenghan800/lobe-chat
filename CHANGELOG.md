@@ -2,6 +2,62 @@
 
 # Changelog
 
+## [Version&nbsp;1.142.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.141.0...v1.142.0)
+<sup>Released on **2025-12-02**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Refactor agent slug schema.
+
+
+#### ✨ Features
+
+- **misc**: Email provider support resend, support apple sso auth, support market cloud endpoint mcp.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Remove internal apiMode param from chat completion API requests, user email unique migration error.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Refactor agent slug schema, closes [#10561](https://github.com/jaworldwideorg/OneJA-Bot/issues/10561) ([0d609d1](https://github.com/jaworldwideorg/OneJA-Bot/commit/0d609d1))
+
+
+
+#### What's improved
+
+* **misc**: Email provider support resend, closes [#10557](https://github.com/jaworldwideorg/OneJA-Bot/issues/10557) ([7449b29](https://github.com/jaworldwideorg/OneJA-Bot/commit/7449b29))
+* **misc**: Support apple sso auth, closes [#10563](https://github.com/jaworldwideorg/OneJA-Bot/issues/10563) ([2e50313](https://github.com/jaworldwideorg/OneJA-Bot/commit/2e50313))
+* **misc**: Support market cloud endpoint mcp, closes [#10484](https://github.com/jaworldwideorg/OneJA-Bot/issues/10484) ([9c7ce44](https://github.com/jaworldwideorg/OneJA-Bot/commit/9c7ce44))
+
+
+
+#### What's fixed
+
+* **misc**: Remove internal apiMode param from chat completion API requests, closes [#10539](https://github.com/jaworldwideorg/OneJA-Bot/issues/10539) ([9498cc6](https://github.com/jaworldwideorg/OneJA-Bot/commit/9498cc6))
+* **misc**: User email unique migration error, closes [#10548](https://github.com/jaworldwideorg/OneJA-Bot/issues/10548) ([ca2a1a2](https://github.com/jaworldwideorg/OneJA-Bot/commit/ca2a1a2))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.141.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.140.0...v1.141.0)
 <sup>Released on **2025-12-01**</sup>
 
