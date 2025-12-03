@@ -2,6 +2,67 @@
 
 # Changelog
 
+## [Version&nbsp;1.143.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.142.0...v1.143.0)
+<sup>Released on **2025-12-03**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **misc**: Unify retry logic to async-retry.
+
+
+#### ✨ Features
+
+- **misc**: Optimize betterauth UX.
+
+
+#### 🐛 Bug Fixes
+
+- **desktop**: Add token refresh retry mechanism.
+- **security**: Prevent prompt injection in Claude workflows.
+- **misc**: Better-auth add apple sso icon and label, missing init user after user creation, remove apiMode param from Azure and Cloudflare provider requests, udpate discover detail tools get & more link, when desktop use contextMenu not work.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **misc**: Unify retry logic to async-retry, closes [#10579](https://github.com/jaworldwideorg/OneJA-Bot/issues/10579) ([95f31bc](https://github.com/jaworldwideorg/OneJA-Bot/commit/95f31bc))
+
+
+
+#### What's improved
+
+* **misc**: Optimize betterauth UX, closes [#10582](https://github.com/jaworldwideorg/OneJA-Bot/issues/10582) ([01a6a89](https://github.com/jaworldwideorg/OneJA-Bot/commit/01a6a89))
+
+
+
+#### What's fixed
+
+* **desktop**: Add token refresh retry mechanism, closes [#10575](https://github.com/jaworldwideorg/OneJA-Bot/issues/10575) ([83fc2e8](https://github.com/jaworldwideorg/OneJA-Bot/commit/83fc2e8))
+* **security**: Prevent prompt injection in Claude workflows, closes [#10585](https://github.com/jaworldwideorg/OneJA-Bot/issues/10585) ([87f748f](https://github.com/jaworldwideorg/OneJA-Bot/commit/87f748f))
+* **misc**: Better-auth add apple sso icon and label, closes [#10570](https://github.com/jaworldwideorg/OneJA-Bot/issues/10570) ([17facd5](https://github.com/jaworldwideorg/OneJA-Bot/commit/17facd5))
+* **misc**: Missing init user after user creation, closes [#10587](https://github.com/jaworldwideorg/OneJA-Bot/issues/10587) ([0e97a42](https://github.com/jaworldwideorg/OneJA-Bot/commit/0e97a42))
+* **misc**: Remove apiMode param from Azure and Cloudflare provider requests, closes [#10571](https://github.com/jaworldwideorg/OneJA-Bot/issues/10571) ([7e44faa](https://github.com/jaworldwideorg/OneJA-Bot/commit/7e44faa))
+* **misc**: Udpate discover detail tools get & more link, closes [#10586](https://github.com/jaworldwideorg/OneJA-Bot/issues/10586) ([8ace3f0](https://github.com/jaworldwideorg/OneJA-Bot/commit/8ace3f0))
+* **misc**: When desktop use contextMenu not work, closes [#10545](https://github.com/jaworldwideorg/OneJA-Bot/issues/10545) ([43c4db7](https://github.com/jaworldwideorg/OneJA-Bot/commit/43c4db7))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.142.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.141.0...v1.142.0)
 <sup>Released on **2025-12-02**</sup>
 
