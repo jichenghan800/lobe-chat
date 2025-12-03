@@ -1149,6 +1149,21 @@
   },
   {
     "children": {
+      "improvements": [
+        "Unify retry logic to async-retry."
+      ],
+      "features": [
+        "Optimize betterauth UX."
+      ],
+      "fixes": [
+        "Better-auth add apple sso icon and label, missing init user after user creation, remove apiMode param from Azure and Cloudflare provider requests, udpate discover detail tools get & more link, when desktop use contextMenu not work."
+      ]
+    },
+    "date": "2025-12-03",
+    "version": "1.143.0"
+  },
+  {
+    "children": {
       "features": [
         "2.0 next init."
       ]
