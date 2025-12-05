@@ -2,6 +2,61 @@
 
 # Changelog
 
+## [Version&nbsp;1.144.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.143.0...v1.144.0)
+<sup>Released on **2025-12-05**</sup>
+
+
+#### ✨ Features
+
+- **misc**: Betterauth username signin, support klavis mcp connector.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix React CVE issue, limit check-user response surface.
+
+
+#### 💄 Styles
+
+- **misc**: Update Spark X1.5 model.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's improved
+
+* **misc**: Betterauth username signin, closes [#10607](https://github.com/jaworldwideorg/OneJA-Bot/issues/10607) ([f72a5e6](https://github.com/jaworldwideorg/OneJA-Bot/commit/f72a5e6))
+* **misc**: Support klavis mcp connector, closes [#10584](https://github.com/jaworldwideorg/OneJA-Bot/issues/10584) ([e3ec79e](https://github.com/jaworldwideorg/OneJA-Bot/commit/e3ec79e))
+
+
+
+#### What's fixed
+
+* **misc**: Fix React CVE issue, closes [#10593](https://github.com/jaworldwideorg/OneJA-Bot/issues/10593) ([abd850f](https://github.com/jaworldwideorg/OneJA-Bot/commit/abd850f))
+* **misc**: Limit check-user response surface, closes [#10609](https://github.com/jaworldwideorg/OneJA-Bot/issues/10609) ([2f6d3f0](https://github.com/jaworldwideorg/OneJA-Bot/commit/2f6d3f0))
+
+
+
+#### Styles
+
+* **misc**: Update Spark X1.5 model, closes [#10103](https://github.com/jaworldwideorg/OneJA-Bot/issues/10103) ([d1aca26](https://github.com/jaworldwideorg/OneJA-Bot/commit/d1aca26))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.143.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.142.0...v1.143.0)
 <sup>Released on **2025-12-03**</sup>
 
