@@ -6,7 +6,9 @@
   },
   {
     "children": {
-      "features": ["Support klavis mcp connector."]
+      "features": [
+        "Support klavis mcp connector."
+      ]
     },
     "date": "2025-12-05",
     "version": "2.0.0-next.161"
@@ -18,35 +20,45 @@
   },
   {
     "children": {
-      "features": ["Betterauth username signin."]
+      "features": [
+        "Betterauth username signin."
+      ]
     },
     "date": "2025-12-04",
     "version": "2.0.0-next.159"
   },
   {
     "children": {
-      "fixes": ["Limit check-user response surface."]
+      "fixes": [
+        "Limit check-user response surface."
+      ]
     },
     "date": "2025-12-04",
     "version": "2.0.0-next.158"
   },
   {
     "children": {
-      "improvements": ["Update Spark X1.5 model."]
+      "improvements": [
+        "Update Spark X1.5 model."
+      ]
     },
     "date": "2025-12-04",
     "version": "2.0.0-next.157"
   },
   {
     "children": {
-      "fixes": ["Fix React CVE issue."]
+      "fixes": [
+        "Fix React CVE issue."
+      ]
     },
     "date": "2025-12-04",
     "version": "2.0.0-next.156"
   },
   {
     "children": {
-      "fixes": ["Missing init user after user creation."]
+      "fixes": [
+        "Missing init user after user creation."
+      ]
     },
     "date": "2025-12-03",
     "version": "2.0.0-next.155"
@@ -1198,6 +1210,21 @@
     },
     "date": "2025-10-30",
     "version": "2.0.0-next.1"
+  },
+  {
+    "children": {
+      "features": [
+        "Betterauth username signin, support klavis mcp connector."
+      ],
+      "fixes": [
+        "Fix React CVE issue, limit check-user response surface."
+      ],
+      "improvements": [
+        "Update Spark X1.5 model."
+      ]
+    },
+    "date": "2025-12-05",
+    "version": "1.144.0"
   },
   {
     "children": {
