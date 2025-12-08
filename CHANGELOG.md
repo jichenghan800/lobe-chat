@@ -2,6 +2,50 @@
 
 # Changelog
 
+### [Version&nbsp;1.144.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.144.0...v1.144.1)
+<sup>Released on **2025-12-08**</sup>
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Add smooth scroll to top on 'More' button click in Title component.
+
+
+#### 💄 Styles
+
+- **profile**: Add mobile responsive layout and signup improvements.
+- **misc**: Update link handling in PlanTag component to use react-router-dom.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's fixed
+
+* **misc**: Add smooth scroll to top on 'More' button click in Title component, closes [#10178](https://github.com/jaworldwideorg/OneJA-Bot/issues/10178) ([5ad4f0c](https://github.com/jaworldwideorg/OneJA-Bot/commit/5ad4f0c))
+
+
+
+#### Styles
+
+* **profile**: Add mobile responsive layout and signup improvements, closes [#10669](https://github.com/jaworldwideorg/OneJA-Bot/issues/10669) ([1afd471](https://github.com/jaworldwideorg/OneJA-Bot/commit/1afd471))
+* **misc**: Update link handling in PlanTag component to use react-router-dom, closes [#10673](https://github.com/jaworldwideorg/OneJA-Bot/issues/10673) ([3aceeb6](https://github.com/jaworldwideorg/OneJA-Bot/commit/3aceeb6))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.144.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.143.0...v1.144.0)
 <sup>Released on **2025-12-05**</sup>
 
