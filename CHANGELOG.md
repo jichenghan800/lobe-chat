@@ -2,6 +2,48 @@
 
 # Changelog
 
+### [Version&nbsp;1.144.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.144.1...v1.144.2)
+<sup>Released on **2025-12-09**</sup>
+
+
+#### ♻ Code Refactoring
+
+- **electron-main**: Client ipc decorate.
+
+
+#### 🐛 Bug Fixes
+
+- **Dockerfile**: Electron main typing pkg.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### Code refactoring
+
+* **electron-main**: Client ipc decorate, closes [#10679](https://github.com/jaworldwideorg/OneJA-Bot/issues/10679) ([f74befa](https://github.com/jaworldwideorg/OneJA-Bot/commit/f74befa))
+
+
+
+#### What's fixed
+
+* **Dockerfile**: Electron main typing pkg, closes [#10693](https://github.com/jaworldwideorg/OneJA-Bot/issues/10693) ([f3357b0](https://github.com/jaworldwideorg/OneJA-Bot/commit/f3357b0))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.144.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.144.0...v1.144.1)
 <sup>Released on **2025-12-08**</sup>
 
