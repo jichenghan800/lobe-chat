@@ -11,7 +11,9 @@
   },
   {
     "children": {
-      "improvements": ["Update link handling in PlanTag component to use react-router-dom."]
+      "improvements": [
+        "Update link handling in PlanTag component to use react-router-dom."
+      ]
     },
     "date": "2025-12-08",
     "version": "2.0.0-next.164"
@@ -1236,6 +1238,11 @@
     },
     "date": "2025-10-30",
     "version": "2.0.0-next.1"
+  },
+  {
+    "children": {},
+    "date": "2025-12-09",
+    "version": "1.144.2"
   },
   {
     "children": {
