@@ -2,6 +2,49 @@
 
 # Changelog
 
+## [Version&nbsp;1.145.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.144.2...v1.145.0)
+<sup>Released on **2025-12-12**</sup>
+
+
+#### ✨ Features
+
+- **misc**: Add Replicate image provider.
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix CVE errors, slove market oidc error.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's improved
+
+* **misc**: Add Replicate image provider ([542f4d9](https://github.com/jaworldwideorg/OneJA-Bot/commit/542f4d9))
+
+
+
+#### What's fixed
+
+* **misc**: Fix CVE errors, closes [#10748](https://github.com/jaworldwideorg/OneJA-Bot/issues/10748) ([6591f3c](https://github.com/jaworldwideorg/OneJA-Bot/commit/6591f3c))
+* **misc**: Slove market oidc error, closes [#10715](https://github.com/jaworldwideorg/OneJA-Bot/issues/10715) ([108d2a7](https://github.com/jaworldwideorg/OneJA-Bot/commit/108d2a7))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version&nbsp;1.144.2](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.144.1...v1.144.2)
 <sup>Released on **2025-12-09**</sup>
 
