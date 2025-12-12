@@ -2,4 +2,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npm run type-check || echo "Type check failed, please fix issues!"
+npm run typecheck || echo "Type check failed, please fix issues!"
