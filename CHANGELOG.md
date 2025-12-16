@@ -2,6 +2,49 @@
 
 # Changelog
 
+### [Version&nbsp;1.145.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.145.0...v1.145.1)
+<sup>Released on **2025-12-16**</sup>
+
+
+#### 🐛 Bug Fixes
+
+- **misc**: Request to gpt5 series should not with `top_p`, temperature when reasoning effort  is not none.
+
+
+#### 💄 Styles
+
+- **misc**: Update GPT-5.2 models, update i18n.
+
+
+<br/>
+
+
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+
+
+#### What's fixed
+
+* **misc**: Request to gpt5 series should not with `top_p`, temperature when reasoning effort  is not none, closes [#10800](https://github.com/jaworldwideorg/OneJA-Bot/issues/10800) ([b4ad470](https://github.com/jaworldwideorg/OneJA-Bot/commit/b4ad470))
+
+
+
+#### Styles
+
+* **misc**: Update GPT-5.2 models, closes [#10749](https://github.com/jaworldwideorg/OneJA-Bot/issues/10749) ([0446127](https://github.com/jaworldwideorg/OneJA-Bot/commit/0446127))
+* **misc**: Update i18n, closes [#10759](https://github.com/jaworldwideorg/OneJA-Bot/issues/10759) ([24cae77](https://github.com/jaworldwideorg/OneJA-Bot/commit/24cae77))
+
+</details>
+
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version&nbsp;1.145.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.144.2...v1.145.0)
 <sup>Released on **2025-12-12**</sup>
 
