@@ -10,14 +10,18 @@
   },
   {
     "children": {
-      "improvements": ["Update i18n."]
+      "improvements": [
+        "Update i18n."
+      ]
     },
     "date": "2025-12-15",
     "version": "2.0.0-next.172"
   },
   {
     "children": {
-      "improvements": ["Update GPT-5.2 models."]
+      "improvements": [
+        "Update GPT-5.2 models."
+      ]
     },
     "date": "2025-12-14",
     "version": "2.0.0-next.171"
@@ -1293,6 +1297,18 @@
     },
     "date": "2025-10-30",
     "version": "2.0.0-next.1"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Request to gpt5 series should not with top_p, temperature when reasoning effort  is not none."
+      ],
+      "improvements": [
+        "Update GPT-5.2 models, update i18n."
+      ]
+    },
+    "date": "2025-12-16",
+    "version": "1.145.1"
   },
   {
     "children": {
