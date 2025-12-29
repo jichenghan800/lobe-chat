@@ -2,6 +2,52 @@
 
 # Changelog
 
+## [Version 1.146.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.145.1...v1.146.0)
+
+<sup>Released on **2025-12-29**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Refactor database schema.
+
+#### ✨ Features
+
+- **ci**: Add bundle analyzer workflow.
+- **misc**: Mobile native better auth support.
+
+#### 🐛 Bug Fixes
+
+- **ci**: Always continue build to upload bundle analyzer report, skip backend routes in bundle analyzer build.
+- **scripts**: Fix syntax error in prebuild.mts.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Refactor database schema, closes [#10860](https://github.com/jaworldwideorg/OneJA-Bot/issues/10860) ([5c489bc](https://github.com/jaworldwideorg/OneJA-Bot/commit/5c489bc))
+
+#### What's improved
+
+- **ci**: Add bundle analyzer workflow, closes [#10932](https://github.com/jaworldwideorg/OneJA-Bot/issues/10932) ([c470cfb](https://github.com/jaworldwideorg/OneJA-Bot/commit/c470cfb))
+- **misc**: Mobile native better auth support, closes [#10871](https://github.com/jaworldwideorg/OneJA-Bot/issues/10871) ([8c42a93](https://github.com/jaworldwideorg/OneJA-Bot/commit/8c42a93))
+
+#### What's fixed
+
+- **ci**: Always continue build to upload bundle analyzer report, closes [#10946](https://github.com/jaworldwideorg/OneJA-Bot/issues/10946) ([8d37811](https://github.com/jaworldwideorg/OneJA-Bot/commit/8d37811))
+- **ci**: Skip backend routes in bundle analyzer build, closes [#10944](https://github.com/jaworldwideorg/OneJA-Bot/issues/10944) ([0276b87](https://github.com/jaworldwideorg/OneJA-Bot/commit/0276b87))
+- **scripts**: Fix syntax error in prebuild.mts, closes [#10952](https://github.com/jaworldwideorg/OneJA-Bot/issues/10952) ([3d46c13](https://github.com/jaworldwideorg/OneJA-Bot/commit/3d46c13))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.180](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.179...v2.0.0-next.180)
 
 <sup>Released on **2025-12-26**</sup>
