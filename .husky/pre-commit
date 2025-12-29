@@ -2,4 +2,5 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npm run typecheck || echo "Type check failed, please fix issues!"
+npm run type-check || echo "Type check failed, please fix issues!"
+npx --no-install lint-staged

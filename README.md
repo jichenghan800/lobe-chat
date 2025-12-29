@@ -244,13 +244,9 @@ In this way, LobeChat can more flexibly adapt to the needs of different users, w
 
 We have implemented support for the following model service providers:
 
-<!-- PROVIDER LIST --> 
-
-
+<!-- PROVIDER LIST -->
 
 <details><summary><kbd>See more providers (+-10)</kbd></summary>
-
-
 
 </details>
 
@@ -347,16 +343,16 @@ In addition, these plugins are not limited to news aggregation, but can also ext
 >
 > Learn more about [📘 Plugin Usage][docs-usage-plugin] by checking it out.
 
-<!-- PLUGIN LIST --> 
+<!-- PLUGIN LIST -->
 
-| Recent Submits                                                                                                          | Description                                                                                                                                        |
-| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Video Captions](https://lobechat.com/discover/plugin/VideoCaptions)<br/><sup>By **maila** on **2025-12-13**</sup>      | Convert Youtube links into transcribed text, enable asking questions, create chapters, and summarize its content.<br/>`video-to-text` `youtube`    |
-| [WeatherGPT](https://lobechat.com/discover/plugin/WeatherGPT)<br/><sup>By **steven-tey** on **2025-12-13**</sup>        | Get current weather information for a specific location.<br/>`weather`                                                                             |
-| [Git OSS Stats](https://lobechat.com/discover/plugin/gitUserRepoStats)<br/><sup>By **yunwei37** on **2025-12-13**</sup> | Dynamically generate and analyze stats and history for OSS repos and developers.<br/>`github` `oss`                                                |
-| [Questmate Forms](https://lobechat.com/discover/plugin/questmate)<br/><sup>By **questmate** on **2025-12-13**</sup>     | Create forms, checklists and workflows (we call 'em Quests!) that you can assign, schedule or make public.<br/>`forms` `checklists` `productivity` |
+| Recent Submits                                                                                                             | Description                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Shopping tools](https://lobechat.com/discover/plugin/ShoppingTools)<br/><sup>By **shoppingtools** on **2025-12-17**</sup> | Search for products on eBay & AliExpress, find eBay events & coupons. Get prompt examples.<br/>`shopping` `e-bay` `ali-express` `coupons`       |
+| [SEO Assistant](https://lobechat.com/discover/plugin/seo_assistant)<br/><sup>By **webfx** on **2025-12-17**</sup>          | The SEO Assistant can generate search engine keyword information in order to aid the creation of content.<br/>`seo` `keyword`                   |
+| [Video Captions](https://lobechat.com/discover/plugin/VideoCaptions)<br/><sup>By **maila** on **2025-12-13**</sup>         | Convert Youtube links into transcribed text, enable asking questions, create chapters, and summarize its content.<br/>`video-to-text` `youtube` |
+| [WeatherGPT](https://lobechat.com/discover/plugin/WeatherGPT)<br/><sup>By **steven-tey** on **2025-12-13**</sup>           | Get current weather information for a specific location.<br/>`weather`                                                                          |
 
-> 📊 Total plugins: [<kbd>**39**</kbd>](https://lobechat.com/discover/plugins)
+> 📊 Total plugins: [<kbd>**40**</kbd>](https://lobechat.com/discover/plugins)
 
  <!-- PLUGIN LIST -->
 
@@ -386,7 +382,7 @@ Our marketplace is not just a showcase platform but also a collaborative space. 
 > We welcome all users to join this growing ecosystem and participate in the iteration and optimization of agents.
 > Together, we can create more interesting, practical, and innovative agents, further enriching the diversity and practicality of the agent offerings.
 
-<!-- AGENT LIST --> 
+<!-- AGENT LIST -->
 
 | Recent Submits                                                                                                                                                                 | Description                                                                                                                                                                                                              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
