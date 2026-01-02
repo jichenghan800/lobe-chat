@@ -2,6 +2,252 @@
 
 # Changelog
 
+## [Version 1.147.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.146.0...v1.147.0)
+
+<sup>Released on **2026-01-02**</sup>
+
+#### ♻ Code Refactoring
+
+- **userMemories**: Added `benchmark_locomo` as source unify use the of source type.
+- **misc**: Add builtin tools, clean code, clean desktop relative code, clean page editor, flatten i18n keys and extract hardcoded strings in desktop, i18n formatting optimization, improve modal handling with createRawModal, migrate to new DropdownMenuV2 and showContextMenu API, move code-interpreter to single packages, refactor builtin-tool implement, refactor hooks, refactor implement, refactor implement for desktop, refactor local-system, refactor oidc env to auth env, refactor service, refactor static style, refactor to remove meta in message, refactor to use better underline style, refactor to use better underline style, refactor tool prompt injection, refactor ui and layout, refactor with editor runtime, refactor with electron, refactor with es-toolkit, remove desktop-specific upload logic, rename browser identifier from 'chat' to 'app', tools ui, use /f/:fid as file mode, use supervisor role for agent group supervisor.
+
+#### ✨ Features
+
+- **auth**: Add confirm password field and integrate business signup logic, add useBusinessSignup hook for business signup functionality, enhance BetterAuthSignUpForm with businessElement and update useSignUp hook for improved signup process, integrate business sign-in features and update social sign-in logic, update useBusinessSignin to include getAdditionalData function for enhanced sign-in process.
+- **desktop**: MacOS About menu should navigate to Settings About tab.
+- **layout**: Integrate BusinessGlobalProvider for conditional rendering based on business features.
+- **memory-user-memory**: Added LoCoMo dataset loader & converter & exporter, support to extract memories from LoCoMo dataset, support to load in memory, and extract from in-memory memory sources.
+- **model**: Improve model list UI and add disabled models management.
+- **referral**: Add backfill referral code i18n keys.
+- **userMemories**: Apply userMemories.enable from settings for injecting, use capturedAt for time of memory entries, use honorific title for identity memory.
+- **misc**: Add a white waitlist in edge config env, add always show tools render in createPlan & createDoc tools, add batch tasks ui, add Bundle Analyzer workflow for detailed bundle size analysis, add business features support with new components and hooks, add business settings features with dynamic loading for Plans, Funds, Usage, Billing, and Referral tabs, add db and schema feature, add home page create group builder button, Add i18n UI locales and improve tool types, add like action in community detail, add memory implement, add subscription settings group with dynamic loading for Plans, Funds, Usage, Billing, and Referral tabs, add the market auth auto generate way, Add turbopack configuration support to CustomNextConfig, add user memory, agent builder, agent builder, agent builder and group builder, app ui page, brand new 2.0 ui for next, brand new 2.0 ui for next, buildin some tools should save into docs, code-interpreter tool, code-interpreter tool, code-interpreter tool, desktop feature, enhance desktop onboarding with sign out and localization, enhance macOS desktop permissions and onboarding, enhance onboarding process by removing mode selection step and adding export functionality in advanced settings, file search feature, gtd create plan support streaming render, implement agent builder, implement builtin agents packages, implement memories package, implement Redis caching for presigned URLs in file proxy service, implement server data feature, include Subscription settings group in the Accordion component, Integrate bcryptjs for password verification in BetterAuth, integrate BrandingProviderCard and update Provider components for branding support, onboarding ui, page and knowledge base, rebranding total UI of app, refactor authentication handler to support dynamic loading of better-auth and next-auth, refactor desktop implement with brand new 2.0, rename codeinterpreter into lobe sandbox, server implement, support CMD K, support exec async sub agent task, support export and import topic JSON, support files upload in chat input, support notebook tool, support swr local cache, topic message swr cache, translate AI model descriptions to English, update agent builder ui, update create group chat use builder, update gtd tools( use editor & update metadata ), update user memory embedding model selection based on business features, user memory, user memory, user onboarding, when use usesend to create agent/group, the model should override by lobeAi, wrap ConversationArea and ModelSwitchPanel in TooltipGroup for enhanced UI.
+
+#### 🐛 Bug Fixes
+
+- **ci**: Skip backend routes in bundle analyzer build.
+- **database**: Add userId authorization check in removeFilesFromKnowledgeBase.
+- **desktop**: prevent window resize when onboarding, add safe top edge for message container.
+- **i18n**: Translate plugin.ts locale to English.
+- **image-generation**: Update chargeBeforeGenerate to return ChargeResult and include configForDatabase in parameters.
+- **memory-user-memory**: Should pre-process date & time.
+- **observability-otel**: Typo in package name.
+- **prebuild**: Correct syntax in partialBuildPages array.
+- **store**: Clear new key data when switchTopic to new state.
+- **translation**: Add fallback for all English locale variants.
+- **userMemories**: 404/405 issue due to incorrectly used workflow name and mounted catch-all route, missing base memory as part of context, must assign workflow id, should use `context.invoke` for workflow instead of `context.run`, skip to handle WorkflowAbort, use date & time for building context, workflow id build issue.
+- **misc**: Agent profiles update, agent tools config set, editor placeholder, bump charts 3.0.4 to fix import es path, fix anthropic thinking budget, fix async task and improve tool style, fix default waitlist bug, fix delete agent group bug, Fix desktop test cases and refactor translations, Fix desktop test cases and refactor translations, fix gemini 3 model thinking issue, fix gemini 3 pro parallel tool use, fix gemini 3 thinking params, fix identity memory not working, fix model edit icon missing, fix supervisor flag, fix thread not working issue, fix when use branch topic,the branch index error problem, fixed the welcome card the create button not work, handle session invalidation on 401 error by logging out signed-in users, improve test infrastructure and mock configurations, locale resolve bug with ESM module loading, page agent editor, prevent redundant login redirect when already on auth pages, redis read json object, remove openapi pkg patch file, slove input editor on pause emit, slove swr mutate not work in Cache Provider, slove the group add member checkbox not work, slove the model select null problem, slove the mutate not work problem, slove when click agentbuilder should clean topic, slove when first call thread, not show ai chat message, support retry error message and fix continueGenerationMessage, update contextMenu in group tools message, update OFFICIAL_URL to app.lobehub.com, update PlanTag link paths for subscription settings, update test snapshots for model description changes, when use agentbuilder the topic id should use new & clear topic….
+
+#### 💄 Styles
+
+- **misc**: Add Gemini 3 Flash & Doubao Seed 1.8 models, improve ExecTask and task message UI, improve gtd tool inspector and todo list, improve loading and local-system render, improve page document tool inspector UI, improve RunCommand Inspector, improve tools UI and fix Google schema compatibility, rebranding chat ui, refactor UI in features, rerun i18n, setting style, support streaming and display ui for group mode, support tool streaming and title custom render, update i18n, update i18n, update i18n, Update i18n microcopy, update ui.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **userMemories**: Added `benchmark_locomo` as source unify use the of source type, closes [#10922](https://github.com/jaworldwideorg/OneJA-Bot/issues/10922) ([03342a7](https://github.com/jaworldwideorg/OneJA-Bot/commit/03342a7))
+- **misc**: Add builtin tools ([26e73cc](https://github.com/jaworldwideorg/OneJA-Bot/commit/26e73cc))
+- **misc**: Clean code ([4ddb491](https://github.com/jaworldwideorg/OneJA-Bot/commit/4ddb491))
+- **misc**: Clean desktop relative code ([ffd7d23](https://github.com/jaworldwideorg/OneJA-Bot/commit/ffd7d23))
+- **misc**: Clean page editor, closes [#10966](https://github.com/jaworldwideorg/OneJA-Bot/issues/10966) ([15410d1](https://github.com/jaworldwideorg/OneJA-Bot/commit/15410d1))
+- **misc**: Flatten i18n keys and extract hardcoded strings in desktop, closes [#10939](https://github.com/jaworldwideorg/OneJA-Bot/issues/10939) ([e5f3a58](https://github.com/jaworldwideorg/OneJA-Bot/commit/e5f3a58))
+- **misc**: I18n formatting optimization, closes [#10929](https://github.com/jaworldwideorg/OneJA-Bot/issues/10929) [#10933](https://github.com/jaworldwideorg/OneJA-Bot/issues/10933) ([d692a37](https://github.com/jaworldwideorg/OneJA-Bot/commit/d692a37))
+- **misc**: Improve modal handling with createRawModal, closes [#11071](https://github.com/jaworldwideorg/OneJA-Bot/issues/11071) ([f5314c5](https://github.com/jaworldwideorg/OneJA-Bot/commit/f5314c5))
+- **misc**: Migrate to new DropdownMenuV2 and showContextMenu API, closes [#11079](https://github.com/jaworldwideorg/OneJA-Bot/issues/11079) ([04cfc0e](https://github.com/jaworldwideorg/OneJA-Bot/commit/04cfc0e))
+- **misc**: Move code-interpreter to single packages ([1fa4357](https://github.com/jaworldwideorg/OneJA-Bot/commit/1fa4357))
+- **misc**: Refactor builtin-tool implement ([9ede8e7](https://github.com/jaworldwideorg/OneJA-Bot/commit/9ede8e7))
+- **misc**: Refactor hooks ([e3fa62e](https://github.com/jaworldwideorg/OneJA-Bot/commit/e3fa62e))
+- **misc**: Refactor implement ([34d059f](https://github.com/jaworldwideorg/OneJA-Bot/commit/34d059f))
+- **misc**: Refactor implement for desktop ([27f101f](https://github.com/jaworldwideorg/OneJA-Bot/commit/27f101f))
+- **misc**: Refactor local-system ([a69221f](https://github.com/jaworldwideorg/OneJA-Bot/commit/a69221f))
+- **misc**: Refactor oidc env to auth env, closes [#11095](https://github.com/jaworldwideorg/OneJA-Bot/issues/11095) ([6e8d4ff](https://github.com/jaworldwideorg/OneJA-Bot/commit/6e8d4ff))
+- **misc**: Refactor service ([91bbbf5](https://github.com/jaworldwideorg/OneJA-Bot/commit/91bbbf5))
+- **misc**: Refactor static style, closes [#11010](https://github.com/jaworldwideorg/OneJA-Bot/issues/11010) ([d865e27](https://github.com/jaworldwideorg/OneJA-Bot/commit/d865e27))
+- **misc**: Refactor to remove meta in message, closes [#11103](https://github.com/jaworldwideorg/OneJA-Bot/issues/11103) ([527c1cd](https://github.com/jaworldwideorg/OneJA-Bot/commit/527c1cd))
+- **misc**: Refactor to use better underline style ([784bb58](https://github.com/jaworldwideorg/OneJA-Bot/commit/784bb58))
+- **misc**: Refactor to use better underline style ([5e10ac8](https://github.com/jaworldwideorg/OneJA-Bot/commit/5e10ac8))
+- **misc**: Refactor tool prompt injection ([6099ac3](https://github.com/jaworldwideorg/OneJA-Bot/commit/6099ac3))
+- **misc**: Refactor ui and layout ([436d9e5](https://github.com/jaworldwideorg/OneJA-Bot/commit/436d9e5))
+- **misc**: Refactor with editor runtime ([be2b41c](https://github.com/jaworldwideorg/OneJA-Bot/commit/be2b41c))
+- **misc**: Refactor with electron ([849ee3d](https://github.com/jaworldwideorg/OneJA-Bot/commit/849ee3d))
+- **misc**: Refactor with es-toolkit ([1848d27](https://github.com/jaworldwideorg/OneJA-Bot/commit/1848d27))
+- **misc**: Remove desktop-specific upload logic, closes [#11070](https://github.com/jaworldwideorg/OneJA-Bot/issues/11070) ([475065e](https://github.com/jaworldwideorg/OneJA-Bot/commit/475065e))
+- **misc**: Rename browser identifier from 'chat' to 'app', closes [#10940](https://github.com/jaworldwideorg/OneJA-Bot/issues/10940) ([dc870c7](https://github.com/jaworldwideorg/OneJA-Bot/commit/dc870c7))
+- **misc**: Tools ui ([6bf4546](https://github.com/jaworldwideorg/OneJA-Bot/commit/6bf4546))
+- **misc**: Use /f/:fid as file mode ([3b01174](https://github.com/jaworldwideorg/OneJA-Bot/commit/3b01174))
+- **misc**: Use supervisor role for agent group supervisor ([0ca823f](https://github.com/jaworldwideorg/OneJA-Bot/commit/0ca823f))
+
+#### What's improved
+
+- **auth**: Add confirm password field and integrate business signup logic ([2ccd5c7](https://github.com/jaworldwideorg/OneJA-Bot/commit/2ccd5c7))
+- **auth**: Add useBusinessSignup hook for business signup functionality ([3efb6cc](https://github.com/jaworldwideorg/OneJA-Bot/commit/3efb6cc))
+- **auth**: Enhance BetterAuthSignUpForm with businessElement and update useSignUp hook for improved signup process ([991d8c1](https://github.com/jaworldwideorg/OneJA-Bot/commit/991d8c1))
+- **auth**: Integrate business sign-in features and update social sign-in logic ([6dc7916](https://github.com/jaworldwideorg/OneJA-Bot/commit/6dc7916))
+- **auth**: Update useBusinessSignin to include getAdditionalData function for enhanced sign-in process ([c8e3bc9](https://github.com/jaworldwideorg/OneJA-Bot/commit/c8e3bc9))
+- **desktop**: MacOS About menu should navigate to Settings About tab, closes [#10942](https://github.com/jaworldwideorg/OneJA-Bot/issues/10942) ([1a4f456](https://github.com/jaworldwideorg/OneJA-Bot/commit/1a4f456))
+- **layout**: Integrate BusinessGlobalProvider for conditional rendering based on business features ([52c7a49](https://github.com/jaworldwideorg/OneJA-Bot/commit/52c7a49))
+- **memory-user-memory**: Added LoCoMo dataset loader & converter & exporter, closes [#10923](https://github.com/jaworldwideorg/OneJA-Bot/issues/10923) ([a5dd785](https://github.com/jaworldwideorg/OneJA-Bot/commit/a5dd785))
+- **memory-user-memory**: Support to extract memories from LoCoMo dataset, closes [#10925](https://github.com/jaworldwideorg/OneJA-Bot/issues/10925) ([c7c7d6f](https://github.com/jaworldwideorg/OneJA-Bot/commit/c7c7d6f))
+- **memory-user-memory**: Support to load in memory, and extract from in-memory memory sources, closes [#10924](https://github.com/jaworldwideorg/OneJA-Bot/issues/10924) ([9ac3ce7](https://github.com/jaworldwideorg/OneJA-Bot/commit/9ac3ce7))
+- **model**: Improve model list UI and add disabled models management, closes [#11036](https://github.com/jaworldwideorg/OneJA-Bot/issues/11036) ([4faa65c](https://github.com/jaworldwideorg/OneJA-Bot/commit/4faa65c))
+- **referral**: Add backfill referral code i18n keys ([bbf62ce](https://github.com/jaworldwideorg/OneJA-Bot/commit/bbf62ce))
+- **userMemories**: Apply userMemories.enable from settings for injecting, closes [#11038](https://github.com/jaworldwideorg/OneJA-Bot/issues/11038) ([1cc0e8c](https://github.com/jaworldwideorg/OneJA-Bot/commit/1cc0e8c))
+- **userMemories**: Use capturedAt for time of memory entries, closes [#11037](https://github.com/jaworldwideorg/OneJA-Bot/issues/11037) ([5615d20](https://github.com/jaworldwideorg/OneJA-Bot/commit/5615d20))
+- **userMemories**: Use honorific title for identity memory, closes [#11039](https://github.com/jaworldwideorg/OneJA-Bot/issues/11039) ([ab61c69](https://github.com/jaworldwideorg/OneJA-Bot/commit/ab61c69))
+- **misc**: Add a white waitlist in edge config env, closes [#11009](https://github.com/jaworldwideorg/OneJA-Bot/issues/11009) ([88f22f4](https://github.com/jaworldwideorg/OneJA-Bot/commit/88f22f4))
+- **misc**: Add always show tools render in createPlan & createDoc tools, closes [#10937](https://github.com/jaworldwideorg/OneJA-Bot/issues/10937) ([c224951](https://github.com/jaworldwideorg/OneJA-Bot/commit/c224951))
+- **misc**: Add batch tasks ui ([80587ae](https://github.com/jaworldwideorg/OneJA-Bot/commit/80587ae))
+- **misc**: Add Bundle Analyzer workflow for detailed bundle size analysis ([596e489](https://github.com/jaworldwideorg/OneJA-Bot/commit/596e489))
+- **misc**: Add business features support with new components and hooks ([1dccc04](https://github.com/jaworldwideorg/OneJA-Bot/commit/1dccc04))
+- **misc**: Add business settings features with dynamic loading for Plans, Funds, Usage, Billing, and Referral tabs ([35c6ad9](https://github.com/jaworldwideorg/OneJA-Bot/commit/35c6ad9))
+- **misc**: Add db and schema feature ([9e47c33](https://github.com/jaworldwideorg/OneJA-Bot/commit/9e47c33))
+- **misc**: Add home page create group builder button, closes [#10904](https://github.com/jaworldwideorg/OneJA-Bot/issues/10904) ([3183189](https://github.com/jaworldwideorg/OneJA-Bot/commit/3183189))
+- **misc**: Add i18n UI locales and improve tool types, closes [#10964](https://github.com/jaworldwideorg/OneJA-Bot/issues/10964) ([0e89ce5](https://github.com/jaworldwideorg/OneJA-Bot/commit/0e89ce5))
+- **misc**: Add like action in community detail, closes [#10971](https://github.com/jaworldwideorg/OneJA-Bot/issues/10971) ([c11d802](https://github.com/jaworldwideorg/OneJA-Bot/commit/c11d802))
+- **misc**: Add memory implement ([fdae83c](https://github.com/jaworldwideorg/OneJA-Bot/commit/fdae83c))
+- **misc**: Add subscription settings group with dynamic loading for Plans, Funds, Usage, Billing, and Referral tabs ([2ddc876](https://github.com/jaworldwideorg/OneJA-Bot/commit/2ddc876))
+- **misc**: Add the market auth auto generate way, closes [#10993](https://github.com/jaworldwideorg/OneJA-Bot/issues/10993) ([849ac73](https://github.com/jaworldwideorg/OneJA-Bot/commit/849ac73))
+- **misc**: Add turbopack configuration support to CustomNextConfig ([2e7076a](https://github.com/jaworldwideorg/OneJA-Bot/commit/2e7076a))
+- **misc**: Add user memory ([c305889](https://github.com/jaworldwideorg/OneJA-Bot/commit/c305889))
+- **misc**: Agent builder ([ede0ed6](https://github.com/jaworldwideorg/OneJA-Bot/commit/ede0ed6))
+- **misc**: Agent builder ([e3c9454](https://github.com/jaworldwideorg/OneJA-Bot/commit/e3c9454))
+- **misc**: Agent builder and group builder ([d735e2c](https://github.com/jaworldwideorg/OneJA-Bot/commit/d735e2c))
+- **misc**: App ui page ([78d07c0](https://github.com/jaworldwideorg/OneJA-Bot/commit/78d07c0))
+- **misc**: Brand new 2.0 ui for next ([e5d6d3d](https://github.com/jaworldwideorg/OneJA-Bot/commit/e5d6d3d))
+- **misc**: Brand new 2.0 ui for next ([f7d724f](https://github.com/jaworldwideorg/OneJA-Bot/commit/f7d724f))
+- **misc**: Buildin some tools should save into docs, closes [#10935](https://github.com/jaworldwideorg/OneJA-Bot/issues/10935) ([be4c17d](https://github.com/jaworldwideorg/OneJA-Bot/commit/be4c17d))
+- **misc**: Code-interpreter tool ([1940914](https://github.com/jaworldwideorg/OneJA-Bot/commit/1940914))
+- **misc**: Code-interpreter tool ([c931909](https://github.com/jaworldwideorg/OneJA-Bot/commit/c931909))
+- **misc**: Code-interpreter tool ([baa29c8](https://github.com/jaworldwideorg/OneJA-Bot/commit/baa29c8))
+- **misc**: Desktop feature ([ac93637](https://github.com/jaworldwideorg/OneJA-Bot/commit/ac93637))
+- **misc**: Enhance desktop onboarding with sign out and localization, closes [#11033](https://github.com/jaworldwideorg/OneJA-Bot/issues/11033) ([34a6312](https://github.com/jaworldwideorg/OneJA-Bot/commit/34a6312))
+- **misc**: Enhance macOS desktop permissions and onboarding, closes [#11016](https://github.com/jaworldwideorg/OneJA-Bot/issues/11016) ([9db8da8](https://github.com/jaworldwideorg/OneJA-Bot/commit/9db8da8))
+- **misc**: Enhance onboarding process by removing mode selection step and adding export functionality in advanced settings ([8b6c30e](https://github.com/jaworldwideorg/OneJA-Bot/commit/8b6c30e))
+- **misc**: File search feature ([9786d64](https://github.com/jaworldwideorg/OneJA-Bot/commit/9786d64))
+- **misc**: Gtd create plan support streaming render, closes [#11034](https://github.com/jaworldwideorg/OneJA-Bot/issues/11034) ([74d3555](https://github.com/jaworldwideorg/OneJA-Bot/commit/74d3555))
+- **misc**: Implement agent builder ([f638b97](https://github.com/jaworldwideorg/OneJA-Bot/commit/f638b97))
+- **misc**: Implement builtin agents packages ([2255a7c](https://github.com/jaworldwideorg/OneJA-Bot/commit/2255a7c))
+- **misc**: Implement memories package ([7f94ef1](https://github.com/jaworldwideorg/OneJA-Bot/commit/7f94ef1))
+- **misc**: Implement Redis caching for presigned URLs in file proxy service ([15722f1](https://github.com/jaworldwideorg/OneJA-Bot/commit/15722f1))
+- **misc**: Implement server data feature ([9c46c6e](https://github.com/jaworldwideorg/OneJA-Bot/commit/9c46c6e))
+- **misc**: Include Subscription settings group in the Accordion component ([8f2d57d](https://github.com/jaworldwideorg/OneJA-Bot/commit/8f2d57d))
+- **misc**: Integrate bcryptjs for password verification in BetterAuth ([180ebfd](https://github.com/jaworldwideorg/OneJA-Bot/commit/180ebfd))
+- **misc**: Integrate BrandingProviderCard and update Provider components for branding support ([6b5ce79](https://github.com/jaworldwideorg/OneJA-Bot/commit/6b5ce79))
+- **misc**: Onboarding ui ([81d33a6](https://github.com/jaworldwideorg/OneJA-Bot/commit/81d33a6))
+- **misc**: Page and knowledge base ([492d3cc](https://github.com/jaworldwideorg/OneJA-Bot/commit/492d3cc))
+- **misc**: Rebranding total UI of app ([13ca81b](https://github.com/jaworldwideorg/OneJA-Bot/commit/13ca81b))
+- **misc**: Refactor authentication handler to support dynamic loading of better-auth and next-auth ([d6419e4](https://github.com/jaworldwideorg/OneJA-Bot/commit/d6419e4))
+- **misc**: Refactor desktop implement with brand new 2.0 ([10e048c](https://github.com/jaworldwideorg/OneJA-Bot/commit/10e048c))
+- **misc**: Rename codeinterpreter into lobe sandbox, closes [#11076](https://github.com/jaworldwideorg/OneJA-Bot/issues/11076) ([2a631b4](https://github.com/jaworldwideorg/OneJA-Bot/commit/2a631b4))
+- **misc**: Server implement ([685a6cd](https://github.com/jaworldwideorg/OneJA-Bot/commit/685a6cd))
+- **misc**: Support CMD K ([d2bd8a6](https://github.com/jaworldwideorg/OneJA-Bot/commit/d2bd8a6))
+- **misc**: Support exec async sub agent task ([dba1acf](https://github.com/jaworldwideorg/OneJA-Bot/commit/dba1acf))
+- **misc**: Support export and import topic JSON, closes [#10885](https://github.com/jaworldwideorg/OneJA-Bot/issues/10885) ([0c5a41f](https://github.com/jaworldwideorg/OneJA-Bot/commit/0c5a41f))
+- **misc**: Support files upload in chat input, closes [#10967](https://github.com/jaworldwideorg/OneJA-Bot/issues/10967) ([60eba45](https://github.com/jaworldwideorg/OneJA-Bot/commit/60eba45))
+- **misc**: Support notebook tool, closes [#10902](https://github.com/jaworldwideorg/OneJA-Bot/issues/10902) ([e05375f](https://github.com/jaworldwideorg/OneJA-Bot/commit/e05375f))
+- **misc**: Support swr local cache, closes [#10884](https://github.com/jaworldwideorg/OneJA-Bot/issues/10884) ([bc3f3e2](https://github.com/jaworldwideorg/OneJA-Bot/commit/bc3f3e2))
+- **misc**: Topic message swr cache, closes [#10886](https://github.com/jaworldwideorg/OneJA-Bot/issues/10886) ([613a404](https://github.com/jaworldwideorg/OneJA-Bot/commit/613a404))
+- **misc**: Translate AI model descriptions to English, closes [#10989](https://github.com/jaworldwideorg/OneJA-Bot/issues/10989) ([36ea258](https://github.com/jaworldwideorg/OneJA-Bot/commit/36ea258))
+- **misc**: Update agent builder ui, closes [#10996](https://github.com/jaworldwideorg/OneJA-Bot/issues/10996) ([704ef7f](https://github.com/jaworldwideorg/OneJA-Bot/commit/704ef7f))
+- **misc**: Update create group chat use builder, closes [#11030](https://github.com/jaworldwideorg/OneJA-Bot/issues/11030) ([7ae24c2](https://github.com/jaworldwideorg/OneJA-Bot/commit/7ae24c2))
+- **misc**: Update gtd tools( use editor & update metadata ), closes [#11029](https://github.com/jaworldwideorg/OneJA-Bot/issues/11029) ([4a47ea0](https://github.com/jaworldwideorg/OneJA-Bot/commit/4a47ea0))
+- **misc**: Update user memory embedding model selection based on business features ([c026117](https://github.com/jaworldwideorg/OneJA-Bot/commit/c026117))
+- **misc**: User memory ([d5ce144](https://github.com/jaworldwideorg/OneJA-Bot/commit/d5ce144))
+- **misc**: User memory ([49ffcb5](https://github.com/jaworldwideorg/OneJA-Bot/commit/49ffcb5))
+- **misc**: User onboarding ([5e59388](https://github.com/jaworldwideorg/OneJA-Bot/commit/5e59388))
+- **misc**: When use usesend to create agent/group, the model should override by lobeAi, closes [#11048](https://github.com/jaworldwideorg/OneJA-Bot/issues/11048) ([754ffe1](https://github.com/jaworldwideorg/OneJA-Bot/commit/754ffe1))
+- **misc**: Wrap ConversationArea and ModelSwitchPanel in TooltipGroup for enhanced UI ([672bcf7](https://github.com/jaworldwideorg/OneJA-Bot/commit/672bcf7))
+
+#### What's fixed
+
+- **ci**: Skip backend routes in bundle analyzer build, closes [#10944](https://github.com/jaworldwideorg/OneJA-Bot/issues/10944) ([2fc3b42](https://github.com/jaworldwideorg/OneJA-Bot/commit/2fc3b42))
+- **database**: Add userId authorization check in removeFilesFromKnowledgeBase, closes [#11108](https://github.com/jaworldwideorg/OneJA-Bot/issues/11108) ([2c1762b](https://github.com/jaworldwideorg/OneJA-Bot/commit/2c1762b))
+- **desktop**: prevent window resize when onboarding, closes [#10887](https://github.com/jaworldwideorg/OneJA-Bot/issues/10887) ([c29c02b](https://github.com/jaworldwideorg/OneJA-Bot/commit/c29c02b))
+- **desktop**: Add safe top edge for message container, closes [#10908](https://github.com/jaworldwideorg/OneJA-Bot/issues/10908) ([2558b47](https://github.com/jaworldwideorg/OneJA-Bot/commit/2558b47))
+- **i18n**: Translate plugin.ts locale to English, closes [#10972](https://github.com/jaworldwideorg/OneJA-Bot/issues/10972) ([89f89c7](https://github.com/jaworldwideorg/OneJA-Bot/commit/89f89c7))
+- **image-generation**: Update chargeBeforeGenerate to return ChargeResult and include configForDatabase in parameters ([4f2a683](https://github.com/jaworldwideorg/OneJA-Bot/commit/4f2a683))
+- **memory-user-memory**: Should pre-process date & time, closes [#10979](https://github.com/jaworldwideorg/OneJA-Bot/issues/10979) ([c2bcf73](https://github.com/jaworldwideorg/OneJA-Bot/commit/c2bcf73))
+- **observability-otel**: Typo in package name, closes [#11025](https://github.com/jaworldwideorg/OneJA-Bot/issues/11025) ([63224dd](https://github.com/jaworldwideorg/OneJA-Bot/commit/63224dd))
+- **prebuild**: Correct syntax in partialBuildPages array ([9580672](https://github.com/jaworldwideorg/OneJA-Bot/commit/9580672))
+- **store**: Clear new key data when switchTopic to new state, closes [#11078](https://github.com/jaworldwideorg/OneJA-Bot/issues/11078) ([180ea14](https://github.com/jaworldwideorg/OneJA-Bot/commit/180ea14))
+- **translation**: Add fallback for all English locale variants, closes [#10984](https://github.com/jaworldwideorg/OneJA-Bot/issues/10984) ([ce46996](https://github.com/jaworldwideorg/OneJA-Bot/commit/ce46996))
+- **userMemories**: 404/405 issue due to incorrectly used workflow name and mounted catch-all route, closes [#10995](https://github.com/jaworldwideorg/OneJA-Bot/issues/10995) ([45996c6](https://github.com/jaworldwideorg/OneJA-Bot/commit/45996c6))
+- **userMemories**: Missing base memory as part of context, closes [#11040](https://github.com/jaworldwideorg/OneJA-Bot/issues/11040) ([3c9bafe](https://github.com/jaworldwideorg/OneJA-Bot/commit/3c9bafe))
+- **userMemories**: Must assign workflow id, closes [#11021](https://github.com/jaworldwideorg/OneJA-Bot/issues/11021) ([78b0c7b](https://github.com/jaworldwideorg/OneJA-Bot/commit/78b0c7b))
+- **userMemories**: Should use `context.invoke` for workflow instead of `context.run`, closes [#10994](https://github.com/jaworldwideorg/OneJA-Bot/issues/10994) ([6592d10](https://github.com/jaworldwideorg/OneJA-Bot/commit/6592d10))
+- **userMemories**: Skip to handle WorkflowAbort, closes [#11031](https://github.com/jaworldwideorg/OneJA-Bot/issues/11031) ([17124a8](https://github.com/jaworldwideorg/OneJA-Bot/commit/17124a8))
+- **userMemories**: Use date & time for building context, closes [#10978](https://github.com/jaworldwideorg/OneJA-Bot/issues/10978) ([15bc6bc](https://github.com/jaworldwideorg/OneJA-Bot/commit/15bc6bc))
+- **userMemories**: Workflow id build issue, closes [#10998](https://github.com/jaworldwideorg/OneJA-Bot/issues/10998) ([0b110b6](https://github.com/jaworldwideorg/OneJA-Bot/commit/0b110b6))
+- **misc**: Agent profiles update, agent tools config set, editor placeholder, closes [#11074](https://github.com/jaworldwideorg/OneJA-Bot/issues/11074) ([f7cbfe4](https://github.com/jaworldwideorg/OneJA-Bot/commit/f7cbfe4))
+- **misc**: Bump charts 3.0.4 to fix import es path, closes [#10898](https://github.com/jaworldwideorg/OneJA-Bot/issues/10898) ([6d7dce7](https://github.com/jaworldwideorg/OneJA-Bot/commit/6d7dce7))
+- **misc**: Fix anthropic thinking budget ([6e19bd3](https://github.com/jaworldwideorg/OneJA-Bot/commit/6e19bd3))
+- **misc**: Fix async task and improve tool style ([1aa1c04](https://github.com/jaworldwideorg/OneJA-Bot/commit/1aa1c04))
+- **misc**: Fix default waitlist bug ([de62035](https://github.com/jaworldwideorg/OneJA-Bot/commit/de62035))
+- **misc**: Fix delete agent group bug ([0fe0d6f](https://github.com/jaworldwideorg/OneJA-Bot/commit/0fe0d6f))
+- **misc**: Fix desktop test cases and refactor translations, closes [#10956](https://github.com/jaworldwideorg/OneJA-Bot/issues/10956) ([568235c](https://github.com/jaworldwideorg/OneJA-Bot/commit/568235c))
+- **misc**: Fix desktop test cases and refactor translations, closes [#10955](https://github.com/jaworldwideorg/OneJA-Bot/issues/10955) ([b3520a2](https://github.com/jaworldwideorg/OneJA-Bot/commit/b3520a2))
+- **misc**: Fix gemini 3 model thinking issue ([69f4cf3](https://github.com/jaworldwideorg/OneJA-Bot/commit/69f4cf3))
+- **misc**: Fix gemini 3 pro parallel tool use ([a0cc9c3](https://github.com/jaworldwideorg/OneJA-Bot/commit/a0cc9c3))
+- **misc**: Fix gemini 3 thinking params ([89363b2](https://github.com/jaworldwideorg/OneJA-Bot/commit/89363b2))
+- **misc**: Fix identity memory not working, closes [#10916](https://github.com/jaworldwideorg/OneJA-Bot/issues/10916) ([fbd0b66](https://github.com/jaworldwideorg/OneJA-Bot/commit/fbd0b66))
+- **misc**: Fix model edit icon missing, closes [#11105](https://github.com/jaworldwideorg/OneJA-Bot/issues/11105) ([0f88995](https://github.com/jaworldwideorg/OneJA-Bot/commit/0f88995))
+- **misc**: Fix supervisor flag ([fc20dbc](https://github.com/jaworldwideorg/OneJA-Bot/commit/fc20dbc))
+- **misc**: Fix thread not working issue ([7dd30eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/7dd30eb))
+- **misc**: Fix when use branch topic,the branch index error problem, closes [#11049](https://github.com/jaworldwideorg/OneJA-Bot/issues/11049) ([34b5a32](https://github.com/jaworldwideorg/OneJA-Bot/commit/34b5a32))
+- **misc**: Fixed the welcome card the create button not work, closes [#11055](https://github.com/jaworldwideorg/OneJA-Bot/issues/11055) ([00e81f1](https://github.com/jaworldwideorg/OneJA-Bot/commit/00e81f1))
+- **misc**: Handle session invalidation on 401 error by logging out signed-in users ([499bd4a](https://github.com/jaworldwideorg/OneJA-Bot/commit/499bd4a))
+- **misc**: Improve test infrastructure and mock configurations, closes [#11028](https://github.com/jaworldwideorg/OneJA-Bot/issues/11028) ([da4eb9c](https://github.com/jaworldwideorg/OneJA-Bot/commit/da4eb9c))
+- **misc**: Locale resolve bug with ESM module loading, closes [#11018](https://github.com/jaworldwideorg/OneJA-Bot/issues/11018) ([770c872](https://github.com/jaworldwideorg/OneJA-Bot/commit/770c872))
+- **misc**: Page agent editor, closes [#10953](https://github.com/jaworldwideorg/OneJA-Bot/issues/10953) ([61b3031](https://github.com/jaworldwideorg/OneJA-Bot/commit/61b3031))
+- **misc**: Prevent redundant login redirect when already on auth pages ([1a5049c](https://github.com/jaworldwideorg/OneJA-Bot/commit/1a5049c))
+- **misc**: Redis read json object ([1718fa3](https://github.com/jaworldwideorg/OneJA-Bot/commit/1718fa3))
+- **misc**: Remove openapi pkg patch file, closes [#10910](https://github.com/jaworldwideorg/OneJA-Bot/issues/10910) ([a34c111](https://github.com/jaworldwideorg/OneJA-Bot/commit/a34c111))
+- **misc**: Slove input editor on pause emit, closes [#11051](https://github.com/jaworldwideorg/OneJA-Bot/issues/11051) ([d102d47](https://github.com/jaworldwideorg/OneJA-Bot/commit/d102d47))
+- **misc**: Slove swr mutate not work in Cache Provider, closes [#10895](https://github.com/jaworldwideorg/OneJA-Bot/issues/10895) ([b3fbffe](https://github.com/jaworldwideorg/OneJA-Bot/commit/b3fbffe))
+- **misc**: Slove the group add member checkbox not work, closes [#11045](https://github.com/jaworldwideorg/OneJA-Bot/issues/11045) [#11042](https://github.com/jaworldwideorg/OneJA-Bot/issues/11042) ([91d3f74](https://github.com/jaworldwideorg/OneJA-Bot/commit/91d3f74))
+- **misc**: Slove the model select null problem, closes [#10988](https://github.com/jaworldwideorg/OneJA-Bot/issues/10988) ([50aa304](https://github.com/jaworldwideorg/OneJA-Bot/commit/50aa304))
+- **misc**: Slove the mutate not work problem, closes [#10947](https://github.com/jaworldwideorg/OneJA-Bot/issues/10947) ([78ca5eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/78ca5eb))
+- **misc**: Slove when click agentbuilder should clean topic, closes [#11068](https://github.com/jaworldwideorg/OneJA-Bot/issues/11068) ([048bd66](https://github.com/jaworldwideorg/OneJA-Bot/commit/048bd66))
+- **misc**: Slove when first call thread, not show ai chat message, closes [#10878](https://github.com/jaworldwideorg/OneJA-Bot/issues/10878) ([5a79cb9](https://github.com/jaworldwideorg/OneJA-Bot/commit/5a79cb9))
+- **misc**: Support retry error message and fix continueGenerationMessage ([8bf85fb](https://github.com/jaworldwideorg/OneJA-Bot/commit/8bf85fb))
+- **misc**: Update contextMenu in group tools message, closes [#11056](https://github.com/jaworldwideorg/OneJA-Bot/issues/11056) ([8b49414](https://github.com/jaworldwideorg/OneJA-Bot/commit/8b49414))
+- **misc**: Update OFFICIAL_URL to app.lobehub.com, closes [#11015](https://github.com/jaworldwideorg/OneJA-Bot/issues/11015) ([f9e11d0](https://github.com/jaworldwideorg/OneJA-Bot/commit/f9e11d0))
+- **misc**: Update PlanTag link paths for subscription settings ([ada71d3](https://github.com/jaworldwideorg/OneJA-Bot/commit/ada71d3))
+- **misc**: Update test snapshots for model description changes, closes [#11008](https://github.com/jaworldwideorg/OneJA-Bot/issues/11008) ([626e808](https://github.com/jaworldwideorg/OneJA-Bot/commit/626e808))
+- **misc**: When use agentbuilder the topic id should use new & clear topic…, closes [#10983](https://github.com/jaworldwideorg/OneJA-Bot/issues/10983) ([0b2b096](https://github.com/jaworldwideorg/OneJA-Bot/commit/0b2b096))
+
+#### Styles
+
+- **misc**: Add Gemini 3 Flash & Doubao Seed 1.8 models, closes [#10832](https://github.com/jaworldwideorg/OneJA-Bot/issues/10832) ([cb35935](https://github.com/jaworldwideorg/OneJA-Bot/commit/cb35935))
+- **misc**: Improve ExecTask and task message UI ([977a700](https://github.com/jaworldwideorg/OneJA-Bot/commit/977a700))
+- **misc**: Improve gtd tool inspector and todo list ([0664563](https://github.com/jaworldwideorg/OneJA-Bot/commit/0664563))
+- **misc**: Improve loading and local-system render, closes [#11087](https://github.com/jaworldwideorg/OneJA-Bot/issues/11087) ([44630bc](https://github.com/jaworldwideorg/OneJA-Bot/commit/44630bc))
+- **misc**: Improve page document tool inspector UI, closes [#10977](https://github.com/jaworldwideorg/OneJA-Bot/issues/10977) ([7f69cb1](https://github.com/jaworldwideorg/OneJA-Bot/commit/7f69cb1))
+- **misc**: Improve RunCommand Inspector ([0751fa4](https://github.com/jaworldwideorg/OneJA-Bot/commit/0751fa4))
+- **misc**: Improve tools UI and fix Google schema compatibility, closes [#11096](https://github.com/jaworldwideorg/OneJA-Bot/issues/11096) ([70a9cff](https://github.com/jaworldwideorg/OneJA-Bot/commit/70a9cff))
+- **misc**: Rebranding chat ui ([ad14222](https://github.com/jaworldwideorg/OneJA-Bot/commit/ad14222))
+- **misc**: Refactor UI in features ([83e689f](https://github.com/jaworldwideorg/OneJA-Bot/commit/83e689f))
+- **misc**: Rerun i18n ([80f511c](https://github.com/jaworldwideorg/OneJA-Bot/commit/80f511c))
+- **misc**: Setting style ([e8c755f](https://github.com/jaworldwideorg/OneJA-Bot/commit/e8c755f))
+- **misc**: Support streaming and display ui for group mode ([f708cdb](https://github.com/jaworldwideorg/OneJA-Bot/commit/f708cdb))
+- **misc**: Support tool streaming and title custom render, closes [#10976](https://github.com/jaworldwideorg/OneJA-Bot/issues/10976) ([576ccd6](https://github.com/jaworldwideorg/OneJA-Bot/commit/576ccd6))
+- **misc**: Update i18n, closes [#11100](https://github.com/jaworldwideorg/OneJA-Bot/issues/11100) ([bb4571b](https://github.com/jaworldwideorg/OneJA-Bot/commit/bb4571b))
+- **misc**: Update i18n, closes [#11085](https://github.com/jaworldwideorg/OneJA-Bot/issues/11085) ([0941a52](https://github.com/jaworldwideorg/OneJA-Bot/commit/0941a52))
+- **misc**: Update i18n ([2e6fd07](https://github.com/jaworldwideorg/OneJA-Bot/commit/2e6fd07))
+- **misc**: Update i18n microcopy, closes [#10905](https://github.com/jaworldwideorg/OneJA-Bot/issues/10905) ([024aeb2](https://github.com/jaworldwideorg/OneJA-Bot/commit/024aeb2))
+- **misc**: Update ui ([1693fc5](https://github.com/jaworldwideorg/OneJA-Bot/commit/1693fc5))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.193](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.192...v2.0.0-next.193)
 
 <sup>Released on **2026-01-02**</sup>
