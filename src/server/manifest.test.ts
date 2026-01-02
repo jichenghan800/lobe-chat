@@ -6,6 +6,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { Manifest, manifestModule } from './manifest';
 
 // Mock external dependencies
+vi.mock('@lobechat/business-const', () => ({
+  BRANDING_LOGO_URL: undefined,
+}));
+
 vi.mock('@/const/branding', () => ({
   BRANDING_LOGO_URL: 'https://example.com/logo.png',
 }));
