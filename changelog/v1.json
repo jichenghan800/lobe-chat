@@ -88,6 +88,19 @@
   },
   {
     "children": {
+      "improvements": ["Update i18n, update i18n, update i18n."],
+      "features": [
+        "Add new provider Xiaomi MiMo, add work path for local system, update the sandbox export files & save files way."
+      ],
+      "fixes": [
+        "Add lost like button in discover detail page, Auto jump to group, filter empty assistant messages for Anthropic API, fix data inconsistency in ai provider config, fix editor modal when Markdown rendering off, fix file upload issue, fix tool call message content missing, restore window position safely, restore window resizable before hard reload in desktop onboarding, slove the old agents open profiles error problem, support thoughtSignature for openrouter, update CI bun version to v1.2.4, use configured embedding provider instead of hardcoded OpenAI, when the document filetype is agent/plan, not show the saveinto docs button."
+      ]
+    },
+    "date": "2026-01-05",
+    "version": "1.148.0"
+  },
+  {
+    "children": {
       "improvements": [
         "Unify retry logic to async-retry."
       ],
