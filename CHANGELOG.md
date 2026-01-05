@@ -2,6 +2,86 @@
 
 # Changelog
 
+## [Version 1.148.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.147.0...v1.148.0)
+
+<sup>Released on **2026-01-05**</sup>
+
+#### ♻ Code Refactoring
+
+- **redis**: Disable automatic deserialization in upstash provider.
+- **utils**: Remove unused geo server utilities.
+- **misc**: Refactor and fix model runtime initialize, refactor to remove access code, remove client db and refactor test.
+
+#### ✨ Features
+
+- **misc**: Add new provider Xiaomi MiMo, add work path for local system, update the sandbox export files & save files way.
+
+#### 🐛 Bug Fixes
+
+- **electron**: Correct next config codemod pattern matching.
+- **gtd**: Fix frozen object mutation in updateTodos.
+- **model-runtime**: Handle array content in anthropic assistant messages, handle incremental tool call chunks in Qwen stream, handle Qwen tool_calls without initial arguments.
+- **misc**: Add lost like button in discover detail page, Auto jump to group, filter empty assistant messages for Anthropic API, fix data inconsistency in ai provider config, fix editor modal when Markdown rendering off, fix file upload issue, fix tool call message content missing, restore window position safely, restore window resizable before hard reload in desktop onboarding, slove the old agents open profiles error problem, support thoughtSignature for openrouter, update CI bun version to v1.2.4, use configured embedding provider instead of hardcoded OpenAI, when the document filetype is agent/plan, not show the saveinto docs button.
+
+#### 💄 Styles
+
+- **misc**: Update i18n, update i18n, update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **redis**: Disable automatic deserialization in upstash provider, closes [#11210](https://github.com/jaworldwideorg/OneJA-Bot/issues/11210) ([eb5c76c](https://github.com/jaworldwideorg/OneJA-Bot/commit/eb5c76c))
+- **utils**: Remove unused geo server utilities, closes [#11243](https://github.com/jaworldwideorg/OneJA-Bot/issues/11243) ([ee474cc](https://github.com/jaworldwideorg/OneJA-Bot/commit/ee474cc))
+- **misc**: Refactor and fix model runtime initialize, closes [#11134](https://github.com/jaworldwideorg/OneJA-Bot/issues/11134) ([8078cb9](https://github.com/jaworldwideorg/OneJA-Bot/commit/8078cb9))
+- **misc**: Refactor to remove access code, closes [#11120](https://github.com/jaworldwideorg/OneJA-Bot/issues/11120) ([0e9f98c](https://github.com/jaworldwideorg/OneJA-Bot/commit/0e9f98c))
+- **misc**: Remove client db and refactor test, closes [#11123](https://github.com/jaworldwideorg/OneJA-Bot/issues/11123) ([bb2799d](https://github.com/jaworldwideorg/OneJA-Bot/commit/bb2799d))
+
+#### What's improved
+
+- **misc**: Add new provider Xiaomi MiMo, closes [#10834](https://github.com/jaworldwideorg/OneJA-Bot/issues/10834) ([62f7858](https://github.com/jaworldwideorg/OneJA-Bot/commit/62f7858))
+- **misc**: Add work path for local system, closes [#11128](https://github.com/jaworldwideorg/OneJA-Bot/issues/11128) ([d8deadd](https://github.com/jaworldwideorg/OneJA-Bot/commit/d8deadd))
+- **misc**: Update the sandbox export files & save files way, closes [#11249](https://github.com/jaworldwideorg/OneJA-Bot/issues/11249) ([039b0a1](https://github.com/jaworldwideorg/OneJA-Bot/commit/039b0a1))
+
+#### What's fixed
+
+- **electron**: Correct next config codemod pattern matching, closes [#11228](https://github.com/jaworldwideorg/OneJA-Bot/issues/11228) ([06cb019](https://github.com/jaworldwideorg/OneJA-Bot/commit/06cb019))
+- **gtd**: Fix frozen object mutation in updateTodos, closes [#11184](https://github.com/jaworldwideorg/OneJA-Bot/issues/11184) ([4970794](https://github.com/jaworldwideorg/OneJA-Bot/commit/4970794))
+- **model-runtime**: Handle array content in anthropic assistant messages, closes [#11206](https://github.com/jaworldwideorg/OneJA-Bot/issues/11206) ([b03845d](https://github.com/jaworldwideorg/OneJA-Bot/commit/b03845d))
+- **model-runtime**: Handle incremental tool call chunks in Qwen stream, closes [#11219](https://github.com/jaworldwideorg/OneJA-Bot/issues/11219) ([03b9407](https://github.com/jaworldwideorg/OneJA-Bot/commit/03b9407))
+- **model-runtime**: Handle Qwen tool_calls without initial arguments, closes [#11211](https://github.com/jaworldwideorg/OneJA-Bot/issues/11211) ([5321d91](https://github.com/jaworldwideorg/OneJA-Bot/commit/5321d91))
+- **misc**: Add lost like button in discover detail page, closes [#11182](https://github.com/jaworldwideorg/OneJA-Bot/issues/11182) ([41215d4](https://github.com/jaworldwideorg/OneJA-Bot/commit/41215d4))
+- **misc**: Auto jump to group, closes [#11187](https://github.com/jaworldwideorg/OneJA-Bot/issues/11187) ([e43578a](https://github.com/jaworldwideorg/OneJA-Bot/commit/e43578a))
+- **misc**: Filter empty assistant messages for Anthropic API, closes [#11129](https://github.com/jaworldwideorg/OneJA-Bot/issues/11129) ([7af750b](https://github.com/jaworldwideorg/OneJA-Bot/commit/7af750b))
+- **misc**: Fix data inconsistency in ai provider config, closes [#11198](https://github.com/jaworldwideorg/OneJA-Bot/issues/11198) ([f8346f2](https://github.com/jaworldwideorg/OneJA-Bot/commit/f8346f2))
+- **misc**: Fix editor modal when Markdown rendering off, closes [#11251](https://github.com/jaworldwideorg/OneJA-Bot/issues/11251) ([eb86d3b](https://github.com/jaworldwideorg/OneJA-Bot/commit/eb86d3b))
+- **misc**: Fix file upload issue, closes [#11122](https://github.com/jaworldwideorg/OneJA-Bot/issues/11122) ([1ae327a](https://github.com/jaworldwideorg/OneJA-Bot/commit/1ae327a))
+- **misc**: Fix tool call message content missing, closes [#11116](https://github.com/jaworldwideorg/OneJA-Bot/issues/11116) ([885964e](https://github.com/jaworldwideorg/OneJA-Bot/commit/885964e))
+- **misc**: Restore window position safely ([e0b555e](https://github.com/jaworldwideorg/OneJA-Bot/commit/e0b555e))
+- **misc**: Restore window resizable before hard reload in desktop onboarding, closes [#11144](https://github.com/jaworldwideorg/OneJA-Bot/issues/11144) ([2516874](https://github.com/jaworldwideorg/OneJA-Bot/commit/2516874))
+- **misc**: Slove the old agents open profiles error problem, closes [#11204](https://github.com/jaworldwideorg/OneJA-Bot/issues/11204) ([7d650b6](https://github.com/jaworldwideorg/OneJA-Bot/commit/7d650b6))
+- **misc**: Support thoughtSignature for openrouter, closes [#11117](https://github.com/jaworldwideorg/OneJA-Bot/issues/11117) ([bf5d41e](https://github.com/jaworldwideorg/OneJA-Bot/commit/bf5d41e))
+- **misc**: Update CI bun version to v1.2.4, closes [#11232](https://github.com/jaworldwideorg/OneJA-Bot/issues/11232) ([dd022d5](https://github.com/jaworldwideorg/OneJA-Bot/commit/dd022d5))
+- **misc**: Use configured embedding provider instead of hardcoded OpenAI, closes [#11133](https://github.com/jaworldwideorg/OneJA-Bot/issues/11133) ([503c3eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/503c3eb))
+- **misc**: When the document filetype is agent/plan, not show the saveinto docs button, closes [#11227](https://github.com/jaworldwideorg/OneJA-Bot/issues/11227) ([3a22f32](https://github.com/jaworldwideorg/OneJA-Bot/commit/3a22f32))
+
+#### Styles
+
+- **misc**: Update i18n, closes [#11213](https://github.com/jaworldwideorg/OneJA-Bot/issues/11213) ([00e0980](https://github.com/jaworldwideorg/OneJA-Bot/commit/00e0980))
+- **misc**: Update i18n, closes [#11145](https://github.com/jaworldwideorg/OneJA-Bot/issues/11145) ([fdadef2](https://github.com/jaworldwideorg/OneJA-Bot/commit/fdadef2))
+- **misc**: Update i18n, closes [#11115](https://github.com/jaworldwideorg/OneJA-Bot/issues/11115) ([072e0dd](https://github.com/jaworldwideorg/OneJA-Bot/commit/072e0dd))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.217](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.216...v2.0.0-next.217)
 
 <sup>Released on **2026-01-05**</sup>
