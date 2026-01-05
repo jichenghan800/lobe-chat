@@ -53,9 +53,16 @@ const { mockBrowserWindow, mockNativeTheme, mockIpcMain, mockScreen, MockBrowser
         off: vi.fn(),
         on: vi.fn(),
         shouldUseDarkColors: false,
+        themeSource: 'system',
       },
       mockScreen: {
+        getDisplayMatching: vi.fn().mockReturnValue({
+          workArea: { height: 1080, width: 1920, x: 0, y: 0 },
+        }),
         getDisplayNearestPoint: vi.fn().mockReturnValue({
+          workArea: { height: 1080, width: 1920, x: 0, y: 0 },
+        }),
+        getPrimaryDisplay: vi.fn().mockReturnValue({
           workArea: { height: 1080, width: 1920, x: 0, y: 0 },
         }),
       },
@@ -239,6 +246,47 @@ describe('Browser', () => {
       );
     });
 
+    it('should restore window position from store and clamp within display', () => {
+      mockStoreManagerGet.mockImplementation((key: string) => {
+        if (key === 'windowSize_test-window') {
+          return { height: 700, width: 900, x: 1800, y: 900 };
+        }
+        return undefined;
+      });
+
+      new Browser(defaultOptions, mockApp);
+
+      expect(MockBrowserWindow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          height: 700,
+          width: 900,
+          x: 1020,
+          y: 380,
+        }),
+      );
+    });
+
+    it('should clamp saved size when it exceeds current display bounds', () => {
+      mockScreen.getDisplayMatching.mockReturnValueOnce({
+        workArea: { height: 800, width: 1200, x: 0, y: 0 },
+      });
+      mockStoreManagerGet.mockImplementation((key: string) => {
+        if (key === 'windowSize_test-window') {
+          return { height: 1200, width: 2000, x: 0, y: 0 };
+        }
+        return undefined;
+      });
+
+      new Browser(defaultOptions, mockApp);
+
+      expect(MockBrowserWindow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          height: 800,
+          width: 1200,
+        }),
+      );
+    });
+
     it('should use default size when no saved state', () => {
       mockStoreManagerGet.mockReturnValue(undefined);
 
@@ -272,7 +320,7 @@ describe('Browser', () => {
 
   describe('theme management', () => {
     describe('getPlatformThemeConfig', () => {
-      it('should return Windows dark theme config', () => {
+      it('should return Windows dark theme config when shouldUseDarkColors is true', () => {
         mockNativeTheme.shouldUseDarkColors = true;
 
         // Create browser with dark mode
@@ -289,7 +337,7 @@ describe('Browser', () => {
         );
       });
 
-      it('should return Windows light theme config', () => {
+      it('should return Windows light theme config when shouldUseDarkColors is false', () => {
         mockNativeTheme.shouldUseDarkColors = false;
 
         expect(MockBrowserWindow).toHaveBeenCalledWith(
@@ -334,11 +382,8 @@ describe('Browser', () => {
     });
 
     describe('isDarkMode', () => {
-      it('should return true when themeMode is dark', () => {
-        mockStoreManagerGet.mockImplementation((key: string) => {
-          if (key === 'themeMode') return 'dark';
-          return undefined;
-        });
+      it('should return true when shouldUseDarkColors is true', () => {
+        mockNativeTheme.shouldUseDarkColors = true;
 
         const darkBrowser = new Browser(defaultOptions, mockApp);
         // Access private getter through handleAppThemeChange which uses isDarkMode
@@ -348,18 +393,14 @@ describe('Browser', () => {
         expect(mockBrowserWindow.setBackgroundColor).toHaveBeenCalledWith('#1a1a1a');
       });
 
-      it('should use system theme when themeMode is auto', () => {
-        mockStoreManagerGet.mockImplementation((key: string) => {
-          if (key === 'themeMode') return 'auto';
-          return undefined;
-        });
-        mockNativeTheme.shouldUseDarkColors = true;
+      it('should return false when shouldUseDarkColors is false', () => {
+        mockNativeTheme.shouldUseDarkColors = false;
 
-        const autoBrowser = new Browser(defaultOptions, mockApp);
-        autoBrowser.handleAppThemeChange();
+        const lightBrowser = new Browser(defaultOptions, mockApp);
+        lightBrowser.handleAppThemeChange();
         vi.advanceTimersByTime(0);
 
-        expect(mockBrowserWindow.setBackgroundColor).toHaveBeenCalledWith('#1a1a1a');
+        expect(mockBrowserWindow.setBackgroundColor).toHaveBeenCalledWith('#ffffff');
       });
     });
   });
@@ -547,6 +588,8 @@ describe('Browser', () => {
       expect(mockStoreManagerSet).toHaveBeenCalledWith('windowSize_test-window', {
         height: 600,
         width: 800,
+        x: 0,
+        y: 0,
       });
       expect(mockEvent.preventDefault).not.toHaveBeenCalled();
     });
@@ -578,6 +621,8 @@ describe('Browser', () => {
       expect(mockStoreManagerSet).toHaveBeenCalledWith('windowSize_test-window', {
         height: 600,
         width: 800,
+        x: 0,
+        y: 0,
       });
     });
   });
