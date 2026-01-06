@@ -1549,6 +1549,18 @@
   },
   {
     "children": {
+      "improvements": [
+        "Change all market routes & api call into lambda trpc client call, Convert glossary from JSON to Markdown table format."
+      ],
+      "fixes": [
+        "Allow zero-byte files and add business hooks for error handling, fix callback url error during signin period, fix editor modal and refactor ModelSwitchPanel, resolve BaseUI dropdown compatibility issue, resolve desktop upload CORS issue, restore getBounds mock in Browser test beforeEach."
+      ]
+    },
+    "date": "2026-01-06",
+    "version": "1.149.0"
+  },
+  {
+    "children": {
       "improvements": ["Update i18n, update i18n, update i18n."],
       "features": [
         "Add new provider Xiaomi MiMo, add work path for local system, update the sandbox export files & save files way."
