@@ -2,30 +2,13 @@
 
 # Changelog
 
-## [Version 1.148.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.147.0...v1.148.0)
+## [Version 2.0.0-next.226](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.225...v2.0.0-next.226)
 
-<sup>Released on **2026-01-05**</sup>
+<sup>Released on **2026-01-06**</sup>
 
 #### ♻ Code Refactoring
 
-- **redis**: Disable automatic deserialization in upstash provider.
-- **utils**: Remove unused geo server utilities.
-- **misc**: Refactor and fix model runtime initialize, refactor to remove access code, remove client db and refactor test.
-
-#### ✨ Features
-
-- **misc**: Add new provider Xiaomi MiMo, add work path for local system, update the sandbox export files & save files way.
-
-#### 🐛 Bug Fixes
-
-- **electron**: Correct next config codemod pattern matching.
-- **gtd**: Fix frozen object mutation in updateTodos.
-- **model-runtime**: Handle array content in anthropic assistant messages, handle incremental tool call chunks in Qwen stream, handle Qwen tool_calls without initial arguments.
-- **misc**: Add lost like button in discover detail page, Auto jump to group, filter empty assistant messages for Anthropic API, fix data inconsistency in ai provider config, fix editor modal when Markdown rendering off, fix file upload issue, fix tool call message content missing, restore window position safely, restore window resizable before hard reload in desktop onboarding, slove the old agents open profiles error problem, support thoughtSignature for openrouter, update CI bun version to v1.2.4, use configured embedding provider instead of hardcoded OpenAI, when the document filetype is agent/plan, not show the saveinto docs button.
-
-#### 💄 Styles
-
-- **misc**: Update i18n, update i18n, update i18n.
+- **misc**: Change all market routes & api call into lambda trpc client call.
 
 <br/>
 
@@ -34,45 +17,231 @@
 
 #### Code refactoring
 
-- **redis**: Disable automatic deserialization in upstash provider, closes [#11210](https://github.com/jaworldwideorg/OneJA-Bot/issues/11210) ([eb5c76c](https://github.com/jaworldwideorg/OneJA-Bot/commit/eb5c76c))
-- **utils**: Remove unused geo server utilities, closes [#11243](https://github.com/jaworldwideorg/OneJA-Bot/issues/11243) ([ee474cc](https://github.com/jaworldwideorg/OneJA-Bot/commit/ee474cc))
-- **misc**: Refactor and fix model runtime initialize, closes [#11134](https://github.com/jaworldwideorg/OneJA-Bot/issues/11134) ([8078cb9](https://github.com/jaworldwideorg/OneJA-Bot/commit/8078cb9))
-- **misc**: Refactor to remove access code, closes [#11120](https://github.com/jaworldwideorg/OneJA-Bot/issues/11120) ([0e9f98c](https://github.com/jaworldwideorg/OneJA-Bot/commit/0e9f98c))
-- **misc**: Remove client db and refactor test, closes [#11123](https://github.com/jaworldwideorg/OneJA-Bot/issues/11123) ([bb2799d](https://github.com/jaworldwideorg/OneJA-Bot/commit/bb2799d))
+- **misc**: Change all market routes & api call into lambda trpc client call, closes [#11256](https://github.com/lobehub/lobe-chat/issues/11256) ([8f7e378](https://github.com/lobehub/lobe-chat/commit/8f7e378))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.225](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.224...v2.0.0-next.225)
+
+<sup>Released on **2026-01-06**</sup>
+
+#### ✨ Features
+
+- **ModelSwitchPanel**: Add provider preference storage in By Model view.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
 
 #### What's improved
 
-- **misc**: Add new provider Xiaomi MiMo, closes [#10834](https://github.com/jaworldwideorg/OneJA-Bot/issues/10834) ([62f7858](https://github.com/jaworldwideorg/OneJA-Bot/commit/62f7858))
-- **misc**: Add work path for local system, closes [#11128](https://github.com/jaworldwideorg/OneJA-Bot/issues/11128) ([d8deadd](https://github.com/jaworldwideorg/OneJA-Bot/commit/d8deadd))
-- **misc**: Update the sandbox export files & save files way, closes [#11249](https://github.com/jaworldwideorg/OneJA-Bot/issues/11249) ([039b0a1](https://github.com/jaworldwideorg/OneJA-Bot/commit/039b0a1))
+- **ModelSwitchPanel**: Add provider preference storage in By Model view, closes [#11246](https://github.com/lobehub/lobe-chat/issues/11246) ([d778093](https://github.com/lobehub/lobe-chat/commit/d778093))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.224](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.223...v2.0.0-next.224)
+
+<sup>Released on **2026-01-06**</sup>
+
+#### ♻ Code Refactoring
+
+- **router**: Replace client-side rendering with dynamic import for DesktopClientRouter.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **router**: Replace client-side rendering with dynamic import for DesktopClientRouter, closes [#11276](https://github.com/lobehub/lobe-chat/issues/11276) ([f50305b](https://github.com/lobehub/lobe-chat/commit/f50305b))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.223](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.222...v2.0.0-next.223)
+
+<sup>Released on **2026-01-06**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix callback url error during signin period.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
 
 #### What's fixed
 
-- **electron**: Correct next config codemod pattern matching, closes [#11228](https://github.com/jaworldwideorg/OneJA-Bot/issues/11228) ([06cb019](https://github.com/jaworldwideorg/OneJA-Bot/commit/06cb019))
-- **gtd**: Fix frozen object mutation in updateTodos, closes [#11184](https://github.com/jaworldwideorg/OneJA-Bot/issues/11184) ([4970794](https://github.com/jaworldwideorg/OneJA-Bot/commit/4970794))
-- **model-runtime**: Handle array content in anthropic assistant messages, closes [#11206](https://github.com/jaworldwideorg/OneJA-Bot/issues/11206) ([b03845d](https://github.com/jaworldwideorg/OneJA-Bot/commit/b03845d))
-- **model-runtime**: Handle incremental tool call chunks in Qwen stream, closes [#11219](https://github.com/jaworldwideorg/OneJA-Bot/issues/11219) ([03b9407](https://github.com/jaworldwideorg/OneJA-Bot/commit/03b9407))
-- **model-runtime**: Handle Qwen tool_calls without initial arguments, closes [#11211](https://github.com/jaworldwideorg/OneJA-Bot/issues/11211) ([5321d91](https://github.com/jaworldwideorg/OneJA-Bot/commit/5321d91))
-- **misc**: Add lost like button in discover detail page, closes [#11182](https://github.com/jaworldwideorg/OneJA-Bot/issues/11182) ([41215d4](https://github.com/jaworldwideorg/OneJA-Bot/commit/41215d4))
-- **misc**: Auto jump to group, closes [#11187](https://github.com/jaworldwideorg/OneJA-Bot/issues/11187) ([e43578a](https://github.com/jaworldwideorg/OneJA-Bot/commit/e43578a))
-- **misc**: Filter empty assistant messages for Anthropic API, closes [#11129](https://github.com/jaworldwideorg/OneJA-Bot/issues/11129) ([7af750b](https://github.com/jaworldwideorg/OneJA-Bot/commit/7af750b))
-- **misc**: Fix data inconsistency in ai provider config, closes [#11198](https://github.com/jaworldwideorg/OneJA-Bot/issues/11198) ([f8346f2](https://github.com/jaworldwideorg/OneJA-Bot/commit/f8346f2))
-- **misc**: Fix editor modal when Markdown rendering off, closes [#11251](https://github.com/jaworldwideorg/OneJA-Bot/issues/11251) ([eb86d3b](https://github.com/jaworldwideorg/OneJA-Bot/commit/eb86d3b))
-- **misc**: Fix file upload issue, closes [#11122](https://github.com/jaworldwideorg/OneJA-Bot/issues/11122) ([1ae327a](https://github.com/jaworldwideorg/OneJA-Bot/commit/1ae327a))
-- **misc**: Fix tool call message content missing, closes [#11116](https://github.com/jaworldwideorg/OneJA-Bot/issues/11116) ([885964e](https://github.com/jaworldwideorg/OneJA-Bot/commit/885964e))
-- **misc**: Restore window position safely ([e0b555e](https://github.com/jaworldwideorg/OneJA-Bot/commit/e0b555e))
-- **misc**: Restore window resizable before hard reload in desktop onboarding, closes [#11144](https://github.com/jaworldwideorg/OneJA-Bot/issues/11144) ([2516874](https://github.com/jaworldwideorg/OneJA-Bot/commit/2516874))
-- **misc**: Slove the old agents open profiles error problem, closes [#11204](https://github.com/jaworldwideorg/OneJA-Bot/issues/11204) ([7d650b6](https://github.com/jaworldwideorg/OneJA-Bot/commit/7d650b6))
-- **misc**: Support thoughtSignature for openrouter, closes [#11117](https://github.com/jaworldwideorg/OneJA-Bot/issues/11117) ([bf5d41e](https://github.com/jaworldwideorg/OneJA-Bot/commit/bf5d41e))
-- **misc**: Update CI bun version to v1.2.4, closes [#11232](https://github.com/jaworldwideorg/OneJA-Bot/issues/11232) ([dd022d5](https://github.com/jaworldwideorg/OneJA-Bot/commit/dd022d5))
-- **misc**: Use configured embedding provider instead of hardcoded OpenAI, closes [#11133](https://github.com/jaworldwideorg/OneJA-Bot/issues/11133) ([503c3eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/503c3eb))
-- **misc**: When the document filetype is agent/plan, not show the saveinto docs button, closes [#11227](https://github.com/jaworldwideorg/OneJA-Bot/issues/11227) ([3a22f32](https://github.com/jaworldwideorg/OneJA-Bot/commit/3a22f32))
+- **misc**: Fix callback url error during signin period, closes [#11139](https://github.com/lobehub/lobe-chat/issues/11139) ([3fc69c5](https://github.com/lobehub/lobe-chat/commit/3fc69c5))
 
-#### Styles
+</details>
 
-- **misc**: Update i18n, closes [#11213](https://github.com/jaworldwideorg/OneJA-Bot/issues/11213) ([00e0980](https://github.com/jaworldwideorg/OneJA-Bot/commit/00e0980))
-- **misc**: Update i18n, closes [#11145](https://github.com/jaworldwideorg/OneJA-Bot/issues/11145) ([fdadef2](https://github.com/jaworldwideorg/OneJA-Bot/commit/fdadef2))
-- **misc**: Update i18n, closes [#11115](https://github.com/jaworldwideorg/OneJA-Bot/issues/11115) ([072e0dd](https://github.com/jaworldwideorg/OneJA-Bot/commit/072e0dd))
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.222](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.221...v2.0.0-next.222)
+
+<sup>Released on **2026-01-06**</sup>
+
+#### ♻ Code Refactoring
+
+- **auth**: Improve auth configuration for better Docker runtime support.
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix editor modal and refactor ModelSwitchPanel.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **auth**: Improve auth configuration for better Docker runtime support, closes [#11253](https://github.com/lobehub/lobe-chat/issues/11253) ([5277650](https://github.com/lobehub/lobe-chat/commit/5277650))
+
+#### What's fixed
+
+- **misc**: Fix editor modal and refactor ModelSwitchPanel, closes [#11273](https://github.com/lobehub/lobe-chat/issues/11273) ([0c57ec4](https://github.com/lobehub/lobe-chat/commit/0c57ec4))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.221](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.220...v2.0.0-next.221)
+
+<sup>Released on **2026-01-05**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Convert glossary from JSON to Markdown table format.
+
+#### 🐛 Bug Fixes
+
+- **misc**: Resolve desktop upload CORS issue.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Convert glossary from JSON to Markdown table format, closes [#11237](https://github.com/lobehub/lobe-chat/issues/11237) ([46a58a8](https://github.com/lobehub/lobe-chat/commit/46a58a8))
+
+#### What's fixed
+
+- **misc**: Resolve desktop upload CORS issue, closes [#11255](https://github.com/lobehub/lobe-chat/issues/11255) ([49ec5ed](https://github.com/lobehub/lobe-chat/commit/49ec5ed))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.220](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.219...v2.0.0-next.220)
+
+<sup>Released on **2026-01-05**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Restore getBounds mock in Browser test beforeEach.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Restore getBounds mock in Browser test beforeEach, closes [#11254](https://github.com/lobehub/lobe-chat/issues/11254) ([56fe3d3](https://github.com/lobehub/lobe-chat/commit/56fe3d3))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.219](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.218...v2.0.0-next.219)
+
+<sup>Released on **2026-01-05**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Resolve BaseUI dropdown compatibility issue.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Resolve BaseUI dropdown compatibility issue, closes [#11248](https://github.com/lobehub/lobe-chat/issues/11248) ([065bfec](https://github.com/lobehub/lobe-chat/commit/065bfec))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.218](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.217...v2.0.0-next.218)
+
+<sup>Released on **2026-01-05**</sup>
+
+#### ✨ Features
+
+- **misc**: Update the sandbox export files & save files way.
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix editor modal when Markdown rendering off.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Update the sandbox export files & save files way, closes [#11249](https://github.com/lobehub/lobe-chat/issues/11249) ([039b0a1](https://github.com/lobehub/lobe-chat/commit/039b0a1))
+
+#### What's fixed
+
+- **misc**: Fix editor modal when Markdown rendering off, closes [#11251](https://github.com/lobehub/lobe-chat/issues/11251) ([eb86d3b](https://github.com/lobehub/lobe-chat/commit/eb86d3b))
 
 </details>
 

@@ -1,5 +1,5 @@
+import { ssrfSafeFetch } from '@lobechat/ssrf-safe-fetch';
 import { NextResponse } from 'next/server';
-import { ssrfSafeFetch } from 'ssrf-safe-fetch';
 
 /**
  * just for a proxy
