@@ -2,6 +2,57 @@
 
 # Changelog
 
+## [Version 1.149.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.148.0...v1.149.0)
+
+<sup>Released on **2026-01-06**</sup>
+
+#### ♻ Code Refactoring
+
+- **auth**: Improve auth configuration for better Docker runtime support.
+- **router**: Replace client-side rendering with dynamic import for DesktopClientRouter.
+- **misc**: Change all market routes & api call into lambda trpc client call, Convert glossary from JSON to Markdown table format.
+
+#### ✨ Features
+
+- **ModelSwitchPanel**: Add provider preference storage in By Model view.
+
+#### 🐛 Bug Fixes
+
+- **misc**: Allow zero-byte files and add business hooks for error handling, fix callback url error during signin period, fix editor modal and refactor ModelSwitchPanel, resolve BaseUI dropdown compatibility issue, resolve desktop upload CORS issue, restore getBounds mock in Browser test beforeEach.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **auth**: Improve auth configuration for better Docker runtime support, closes [#11253](https://github.com/jaworldwideorg/OneJA-Bot/issues/11253) ([5277650](https://github.com/jaworldwideorg/OneJA-Bot/commit/5277650))
+- **router**: Replace client-side rendering with dynamic import for DesktopClientRouter, closes [#11276](https://github.com/jaworldwideorg/OneJA-Bot/issues/11276) ([f50305b](https://github.com/jaworldwideorg/OneJA-Bot/commit/f50305b))
+- **misc**: Change all market routes & api call into lambda trpc client call, closes [#11256](https://github.com/jaworldwideorg/OneJA-Bot/issues/11256) ([8f7e378](https://github.com/jaworldwideorg/OneJA-Bot/commit/8f7e378))
+- **misc**: Convert glossary from JSON to Markdown table format, closes [#11237](https://github.com/jaworldwideorg/OneJA-Bot/issues/11237) ([46a58a8](https://github.com/jaworldwideorg/OneJA-Bot/commit/46a58a8))
+
+#### What's improved
+
+- **ModelSwitchPanel**: Add provider preference storage in By Model view, closes [#11246](https://github.com/jaworldwideorg/OneJA-Bot/issues/11246) ([d778093](https://github.com/jaworldwideorg/OneJA-Bot/commit/d778093))
+
+#### What's fixed
+
+- **misc**: Allow zero-byte files and add business hooks for error handling, closes [#11283](https://github.com/jaworldwideorg/OneJA-Bot/issues/11283) ([38f5b78](https://github.com/jaworldwideorg/OneJA-Bot/commit/38f5b78))
+- **misc**: Fix callback url error during signin period, closes [#11139](https://github.com/jaworldwideorg/OneJA-Bot/issues/11139) ([3fc69c5](https://github.com/jaworldwideorg/OneJA-Bot/commit/3fc69c5))
+- **misc**: Fix editor modal and refactor ModelSwitchPanel, closes [#11273](https://github.com/jaworldwideorg/OneJA-Bot/issues/11273) ([0c57ec4](https://github.com/jaworldwideorg/OneJA-Bot/commit/0c57ec4))
+- **misc**: Resolve BaseUI dropdown compatibility issue, closes [#11248](https://github.com/jaworldwideorg/OneJA-Bot/issues/11248) ([065bfec](https://github.com/jaworldwideorg/OneJA-Bot/commit/065bfec))
+- **misc**: Resolve desktop upload CORS issue, closes [#11255](https://github.com/jaworldwideorg/OneJA-Bot/issues/11255) ([49ec5ed](https://github.com/jaworldwideorg/OneJA-Bot/commit/49ec5ed))
+- **misc**: Restore getBounds mock in Browser test beforeEach, closes [#11254](https://github.com/jaworldwideorg/OneJA-Bot/issues/11254) ([56fe3d3](https://github.com/jaworldwideorg/OneJA-Bot/commit/56fe3d3))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.226](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.225...v2.0.0-next.226)
 
 <sup>Released on **2026-01-06**</sup>
