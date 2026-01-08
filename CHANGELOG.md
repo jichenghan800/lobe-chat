@@ -2,66 +2,47 @@
 
 # Changelog
 
-## [Version 1.150.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.149.0...v1.150.0)
+## [Version 2.0.0-next.242](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.241...v2.0.0-next.242)
 
 <sup>Released on **2026-01-08**</sup>
 
-#### ♻ Code Refactoring
-
-- **memory-user-memory**: Migrated to use typescript module for prompts.
-
-#### ✨ Features
-
-- **image**: Improve image generation with new models and bug fixes.
-- **notebook**: Add i18n, Inspector and Streaming components.
-- **ui**: Move new topic button to navigation panel.
-- **misc**: Add browser compatibility detection and fallback page, add the lobehub market tools servers, add the twitter lobehub skill, change the klavis Linear to LobeHub oauth Linear.
-
 #### 🐛 Bug Fixes
 
-- **editor**: Fix slash command codeblock not working.
-- **onboarding**: Prevent step overflow and misc improvements.
-- **provider-config**: Update isFetchOnClient Switch component.
-- **misc**: Add separate border-radius for bottom-right corner on macOS 26 Chrome, correct BrandTextLoading position after removing SSG CSS-in-JS injection, fix edit rich render codeblock, topic renaming input focus issue in context menu, update desktop onboarding privacy description, update mobile topicRouter import path to lambda directory.
-
-#### 💄 Styles
-
-- **misc**: Update i18n.
+- **desktop**: Update macOS beta icon size for macOS 26.
 
 <br/>
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-#### Code refactoring
+#### What's fixed
 
-- **memory-user-memory**: Migrated to use typescript module for prompts, closes [#11344](https://github.com/jaworldwideorg/OneJA-Bot/issues/11344) ([902cfe5](https://github.com/jaworldwideorg/OneJA-Bot/commit/902cfe5))
+- **desktop**: Update macOS beta icon size for macOS 26, closes [#11348](https://github.com/lobehub/lobe-chat/issues/11348) ([0d1eedf](https://github.com/lobehub/lobe-chat/commit/0d1eedf))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.241](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.240...v2.0.0-next.241)
+
+<sup>Released on **2026-01-08**</sup>
+
+#### ✨ Features
+
+- **desktop**: Implement history navigation stack.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
 
 #### What's improved
 
-- **image**: Improve image generation with new models and bug fixes, closes [#11311](https://github.com/jaworldwideorg/OneJA-Bot/issues/11311) ([4fc03bb](https://github.com/jaworldwideorg/OneJA-Bot/commit/4fc03bb))
-- **notebook**: Add i18n, Inspector and Streaming components, closes [#11212](https://github.com/jaworldwideorg/OneJA-Bot/issues/11212) ([f7dc54f](https://github.com/jaworldwideorg/OneJA-Bot/commit/f7dc54f))
-- **ui**: Move new topic button to navigation panel, closes [#11325](https://github.com/jaworldwideorg/OneJA-Bot/issues/11325) ([3d6b399](https://github.com/jaworldwideorg/OneJA-Bot/commit/3d6b399))
-- **misc**: Add browser compatibility detection and fallback page, closes [#11309](https://github.com/jaworldwideorg/OneJA-Bot/issues/11309) ([8be32c2](https://github.com/jaworldwideorg/OneJA-Bot/commit/8be32c2))
-- **misc**: Add the lobehub market tools servers, closes [#11315](https://github.com/jaworldwideorg/OneJA-Bot/issues/11315) ([a4003a3](https://github.com/jaworldwideorg/OneJA-Bot/commit/a4003a3))
-- **misc**: Add the twitter lobehub skill, closes [#11342](https://github.com/jaworldwideorg/OneJA-Bot/issues/11342) ([503acb3](https://github.com/jaworldwideorg/OneJA-Bot/commit/503acb3))
-- **misc**: Change the klavis Linear to LobeHub oauth Linear, closes [#11339](https://github.com/jaworldwideorg/OneJA-Bot/issues/11339) ([ec8ff26](https://github.com/jaworldwideorg/OneJA-Bot/commit/ec8ff26))
-
-#### What's fixed
-
-- **editor**: Fix slash command codeblock not working, closes [#11321](https://github.com/jaworldwideorg/OneJA-Bot/issues/11321) ([f9a35eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/f9a35eb))
-- **onboarding**: Prevent step overflow and misc improvements, closes [#11322](https://github.com/jaworldwideorg/OneJA-Bot/issues/11322) ([8586fd4](https://github.com/jaworldwideorg/OneJA-Bot/commit/8586fd4))
-- **provider-config**: Update isFetchOnClient Switch component, closes [#11215](https://github.com/jaworldwideorg/OneJA-Bot/issues/11215) ([5bb038b](https://github.com/jaworldwideorg/OneJA-Bot/commit/5bb038b))
-- **misc**: Add separate border-radius for bottom-right corner on macOS 26 Chrome, closes [#11287](https://github.com/jaworldwideorg/OneJA-Bot/issues/11287) ([544931a](https://github.com/jaworldwideorg/OneJA-Bot/commit/544931a))
-- **misc**: Correct BrandTextLoading position after removing SSG CSS-in-JS injection, closes [#11312](https://github.com/jaworldwideorg/OneJA-Bot/issues/11312) ([0de4eb8](https://github.com/jaworldwideorg/OneJA-Bot/commit/0de4eb8))
-- **misc**: Fix edit rich render codeblock, closes [#11303](https://github.com/jaworldwideorg/OneJA-Bot/issues/11303) ([5338170](https://github.com/jaworldwideorg/OneJA-Bot/commit/5338170))
-- **misc**: Topic renaming input focus issue in context menu, closes [#11323](https://github.com/jaworldwideorg/OneJA-Bot/issues/11323) ([dd065fc](https://github.com/jaworldwideorg/OneJA-Bot/commit/dd065fc))
-- **misc**: Update desktop onboarding privacy description, closes [#11307](https://github.com/jaworldwideorg/OneJA-Bot/issues/11307) [#11308](https://github.com/jaworldwideorg/OneJA-Bot/issues/11308) ([58b10a2](https://github.com/jaworldwideorg/OneJA-Bot/commit/58b10a2))
-- **misc**: Update mobile topicRouter import path to lambda directory, closes [#11261](https://github.com/jaworldwideorg/OneJA-Bot/issues/11261) ([f591b77](https://github.com/jaworldwideorg/OneJA-Bot/commit/f591b77))
-
-#### Styles
-
-- **misc**: Update i18n, closes [#11297](https://github.com/jaworldwideorg/OneJA-Bot/issues/11297) ([4705abf](https://github.com/jaworldwideorg/OneJA-Bot/commit/4705abf))
+- **desktop**: Implement history navigation stack, closes [#11341](https://github.com/lobehub/lobe-chat/issues/11341) ([db270d5](https://github.com/lobehub/lobe-chat/commit/db270d5))
 
 </details>
 
