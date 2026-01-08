@@ -2,27 +2,27 @@
 // if you want to use it in the commercial usage
 // please contact us for more information: hello@lobehub.com
 
-export const LOBE_CHAT_CLOUD = 'OneAI';
+export const LOBE_CHAT_CLOUD = 'LobeHub Cloud';
 
-export const BRANDING_NAME = 'OneAI';
-export const BRANDING_LOGO_URL = '/icons/icon-512x512.png';
+export const BRANDING_NAME = 'LobeHub';
+export const BRANDING_LOGO_URL = '';
 
-export const ORG_NAME = 'JA Worldwide';
+export const ORG_NAME = 'LobeHub';
 
 export const BRANDING_URL = {
-  help: 'mailto:support@jaworldwide.org',
-  privacy: 'https://www.jaworldwide.org/terms',
+  help: undefined,
+  privacy: undefined,
   subscription: undefined,
   support: undefined,
-  terms: 'https://www.jaworldwide.org/terms',
+  terms: undefined,
 };
 
 export const SOCIAL_URL = {
-  discord: 'https://discord.gg/',
-  github: 'https://github.com/jaworldwideorg',
-  medium: 'https://medium.com/',
-  x: 'https://x.com/jaworldwide',
-  youtube: 'https://www.youtube.com/@jaworldwide',
+  discord: 'https://discord.gg/AYFPHvv2jT',
+  github: 'https://github.com/lobehub',
+  medium: 'https://medium.com/@lobehub',
+  x: 'https://x.com/lobehub',
+  youtube: 'https://www.youtube.com/@lobehub',
 };
 
 export const FILE_URL = {
@@ -30,10 +30,10 @@ export const FILE_URL = {
 };
 
 export const BRANDING_EMAIL = {
-  business: 'contact@jaworldwide.org',
-  support: 'support@jaworldwide.org',
+  business: 'hello@lobehub.com',
+  support: 'support@lobehub.com',
 };
 
-export const BRANDING_PROVIDER = 'jaworldwideorg';
+export const BRANDING_PROVIDER = 'lobehub';
 
 export const COPYRIGHT = `© ${new Date().getFullYear()} ${ORG_NAME}`;
