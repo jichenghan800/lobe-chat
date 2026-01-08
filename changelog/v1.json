@@ -1642,6 +1642,19 @@
   },
   {
     "children": {
+      "improvements": ["Update i18n."],
+      "features": [
+        "Add browser compatibility detection and fallback page, add the lobehub market tools servers, add the twitter lobehub skill, change the klavis Linear to LobeHub oauth Linear."
+      ],
+      "fixes": [
+        "Add separate border-radius for bottom-right corner on macOS 26 Chrome, correct BrandTextLoading position after removing SSG CSS-in-JS injection, fix edit rich render codeblock, topic renaming input focus issue in context menu, update desktop onboarding privacy description, update mobile topicRouter import path to lambda directory."
+      ]
+    },
+    "date": "2026-01-08",
+    "version": "1.150.0"
+  },
+  {
+    "children": {
       "features": ["2.0 next init."]
     },
     "date": "2025-10-30",
