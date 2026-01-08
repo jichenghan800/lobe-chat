@@ -421,6 +421,17 @@ lobe-chat      | [auth][error] TypeError: fetch failed
 
 - 一个直接的排查方式，你可以在 LobeChat 容器的终端中，使用 `curl` 命令访问你的鉴权服务 `https://auth.example.com/.well-known/openid-configuration`，如果返回了 JSON 格式的数据，则说明你的鉴权服务正常运行。
 
+#### 反向代理下 OAuth 令牌交换失败
+
+如果在反向代理后使用 Docker 时 OAuth 认证在令牌交换阶段失败，这通常是由默认的 `MIDDLEWARE_REWRITE_THROUGH_LOCAL=1` 设置引起的，该设置会将 URL 重写为 `127.0.0.1:3210`。
+
+**解决方案**: 在 `.env` 文件中设置 `MIDDLEWARE_REWRITE_THROUGH_LOCAL=0` 并重启 Docker 容器：
+
+```bash
+docker compose down
+docker compose up -d
+```
+
 ## 拓展配置
 
 为了完善你的 LobeChat 服务，你可以根据你的需求进行以下拓展配置。
@@ -654,7 +665,7 @@ docker compose up -d # 重新启动
 #### 使用 `INTERNAL_APP_URL` 配置内部服务器通信
 
 <Callout type="info">
-  如果你在 CDN（如 Cloudflare）或反向代理后部署 LobeChat，你可以配置内部服务器到服务器通信以绕过 CDN/代理层，以获得更好的性能。
+  如果你在 CDN（如 Cloudflare）或反向代理后部署 LobeChat，你可以配置内部服务器到服务器通信以绕过 CDN / 代理层，以获得更好的性能。
 </Callout>
 
 你可以配置 `INTERNAL_APP_URL` 环境变量：
@@ -666,12 +677,14 @@ environment:
 ```
 
 **工作原理：**
-- `APP_URL`：用于浏览器/客户端访问、OAuth 回调、webhook 等（通过 CDN/代理）
-- `INTERNAL_APP_URL`：用于内部服务器到服务器通信（绕过 CDN/代理）
+
+- `APP_URL`：用于浏览器 / 客户端访问、OAuth 回调、webhook 等（通过 CDN / 代理）
+- `INTERNAL_APP_URL`：用于内部服务器到服务器通信（绕过 CDN / 代理）
 
 如果未设置 `INTERNAL_APP_URL`，它将默认为 `APP_URL`。
 
 **配置选项：**
+
 - `http://localhost:3210` - 如果使用 Docker 主机网络模式
 - `http://lobe:3210` - 如果使用 Docker 网络与服务名称
 - `http://127.0.0.1:3210` - 备用本地主机地址
