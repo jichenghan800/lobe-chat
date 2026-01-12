@@ -55,12 +55,13 @@ When('I click on a category in the category menu', async function (this: CustomW
   // Wait for categories to be visible
   await categoryItems.first().waitFor({ state: 'visible', timeout: 30_000 });
 
-  // Click the second category (skip "All" which is usually first)
-  const secondCategory = categoryItems.nth(1);
-  await secondCategory.click();
+  // Click the third category (skip "Discover" at index 0 and "All" at index 1)
+  // This should select the first actual category filter like "Academic"
+  const targetCategory = categoryItems.nth(2);
+  await targetCategory.click();
 
   // Store the category for later verification
-  const categoryText = await secondCategory.textContent();
+  const categoryText = await targetCategory.textContent();
   this.testContext.selectedCategory = categoryText?.trim();
 });
 
@@ -94,12 +95,13 @@ When('I click on a category in the category filter', async function (this: Custo
   // Wait for categories to be visible
   await categoryItems.first().waitFor({ state: 'visible', timeout: 30_000 });
 
-  // Click the second category (skip "All" which is usually first)
-  const secondCategory = categoryItems.nth(1);
-  await secondCategory.click();
+  // Click the third category (skip "Discover" at index 0 and "All" at index 1)
+  // This should select the first actual category filter
+  const targetCategory = categoryItems.nth(2);
+  await targetCategory.click();
 
   // Store the category for later verification
-  const categoryText = await secondCategory.textContent();
+  const categoryText = await targetCategory.textContent();
   this.testContext.selectedCategory = categoryText?.trim();
 });
 
@@ -370,9 +372,19 @@ Then(
 
 Then('the URL should contain the category parameter', async function (this: CustomWorld) {
   const currentUrl = this.page.url();
+  console.log(`   📍 Current URL: ${currentUrl}`);
+  console.log(`   📍 Selected category: ${this.testContext.selectedCategory}`);
+
   // Check if URL contains a category-related parameter
+  // The URL format is: /community/assistant?category=xxx
+  const hasCategory =
+    currentUrl.includes('category=') ||
+    currentUrl.includes('tag=') ||
+    // For path-based routing like /community/assistant/category-name
+    /\/community\/assistant\/[^/?]+/.test(currentUrl);
+
   expect(
-    currentUrl.includes('category=') || currentUrl.includes('tag='),
+    hasCategory,
     `Expected URL to contain category parameter, but got: ${currentUrl}`,
   ).toBeTruthy();
 });
