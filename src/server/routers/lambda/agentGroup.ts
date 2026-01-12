@@ -1,3 +1,4 @@
+import { InsertChatGroupSchema } from '@lobechat/types';
 import { z } from 'zod';
 
 import { AgentModel } from '@/database/models/agent';
@@ -5,7 +6,6 @@ import { ChatGroupModel } from '@/database/models/chatGroup';
 import { UserModel } from '@/database/models/user';
 import { AgentGroupRepository } from '@/database/repositories/agentGroup';
 import { insertAgentSchema } from '@/database/schemas';
-import { insertChatGroupSchema } from '@/database/schemas/chatGroup';
 import { type ChatGroupConfig } from '@/database/types/chatGroup';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
@@ -57,16 +57,14 @@ export const agentGroupRouter = router({
    * The supervisor agent is automatically created as a virtual agent.
    * Returns the groupId and supervisorAgentId.
    */
-  createGroup: agentGroupProcedure
-    .input(insertChatGroupSchema.omit({ userId: true }))
-    .mutation(async ({ input, ctx }) => {
-      const { group, supervisorAgentId } = await ctx.agentGroupRepo.createGroupWithSupervisor({
-        ...input,
-        config: ctx.agentGroupService.normalizeGroupConfig(input.config as ChatGroupConfig | null),
-      });
+  createGroup: agentGroupProcedure.input(InsertChatGroupSchema).mutation(async ({ input, ctx }) => {
+    const { group, supervisorAgentId } = await ctx.agentGroupRepo.createGroupWithSupervisor({
+      ...input,
+      config: ctx.agentGroupService.normalizeGroupConfig(input.config as ChatGroupConfig | null),
+    });
 
-      return { group, supervisorAgentId };
-    }),
+    return { group, supervisorAgentId };
+  }),
 
   /**
    * Create a group with virtual member agents in one request.
@@ -80,7 +78,7 @@ export const agentGroupRouter = router({
   createGroupWithMembers: agentGroupProcedure
     .input(
       z.object({
-        groupConfig: insertChatGroupSchema.omit({ userId: true }),
+        groupConfig: InsertChatGroupSchema,
         members: z.array(
           insertAgentSchema
             .omit({
@@ -124,6 +122,22 @@ export const agentGroupRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       return ctx.agentGroupService.deleteGroup(input.id);
+    }),
+
+  /**
+   * Duplicate a chat group with all its members.
+   * Creates a new group with the same config, a new supervisor, and copies of virtual members.
+   * Non-virtual members are referenced (not copied).
+   */
+  duplicateGroup: agentGroupProcedure
+    .input(
+      z.object({
+        groupId: z.string(),
+        newTitle: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      return ctx.agentGroupRepo.duplicate(input.groupId, input.newTitle);
     }),
 
   getGroup: agentGroupProcedure
@@ -211,7 +225,7 @@ export const agentGroupRouter = router({
     .input(
       z.object({
         id: z.string(),
-        value: insertChatGroupSchema.partial(),
+        value: InsertChatGroupSchema.partial(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
