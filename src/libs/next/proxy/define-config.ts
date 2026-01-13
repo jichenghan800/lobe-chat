@@ -107,6 +107,7 @@ export function defineConfig() {
       '/me',
       '/desktop-onboarding',
       '/onboarding',
+      '/share',
     ];
     const isSpaRoute = spaRoutes.some((route) => url.pathname.startsWith(route));
 
@@ -184,6 +185,8 @@ export function defineConfig() {
     '/oidc/token',
     // market
     '/market-auth-callback',
+    // public share pages
+    '/share(.*)',
   ]);
 
   const isProtectedRoute = createRouteMatcher([
