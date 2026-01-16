@@ -2004,6 +2004,21 @@
   },
   {
     "children": {
+      "improvements": [
+        "Add MiniMax-M2.1 and GLM-4.7 for Qiniu provider, fix UI issues with tooltip wrapping and dropdown type, force gpt-5.2 use response api, improve agent loading state, improve cron jobs style, improve todo list, modelParse support to get model settings params & Customize extendParams UI, remember page agent panel width, update i18n, update i18n, update readFile content."
+      ],
+      "features": [
+        "Add the agent cron job, generate agent_cron_jobs in agents, improve baseline alignment for tool items, improve group profile builder, improve group prompt context engine and fix group supervisor response issue, improve PageEditor header UX with DropdownMenu and i18n support, update model definitions and sync i18n, update the agent profiles tools check & agentbuilder tools & publish to market button, update the community user layout action button, update the cron job visiual way, update the cron patterns fields values."
+      ],
+      "fixes": [
+        "Click lobe ai topic trigger create new agent, fix auto add group member crash, fix duplicate agent and group, fix group ux and memory retriever, fix internal editor onTextChange issue and add test case, fix memory search context, fix new topic flick issue, fix page content mismatch when switch quickly, fix thread portal not open correctly, Fix Windows desktop build error with macOS native module, force plain text paste in ChatInput editor, handle will-prevent-unload event to allow app quit, prevent auto navigation to profile when clicking topic, refresh sidebar after sendAsGroup and add E2E tests, slove the settings/profile change but not refresh the profiles."
+      ]
+    },
+    "date": "2026-01-16",
+    "version": "1.151.0"
+  },
+  {
+    "children": {
       "features": ["2.0 next init."]
     },
     "date": "2025-10-30",
