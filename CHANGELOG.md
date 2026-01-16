@@ -2,6 +2,142 @@
 
 # Changelog
 
+## [Version 1.151.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.150.0...v1.151.0)
+
+<sup>Released on **2026-01-16**</sup>
+
+#### ♻ Code Refactoring
+
+- **agentGroup**: Simplify LobeChatGroupChatConfig schema.
+- **database**: Renamed to userMemories/index.ts.
+- **desktop**: Unify TITLE_BAR_HEIGHT constant to desktop-bridge.
+- **misc**: Improve Tools popover component structure and fix UI consistency, migrate Next.js navigation APIs to React Router for SPA, refactor page and notebook document usage, remove the old lobehub plugins, rename chat folder to agent, use fallbackData to prevent useActionSWR auto-fetch.
+
+#### ✨ Features
+
+- **community**: Recommendation for agent & Discover tab, recommended for home & added discover tab, support to report for agent & mcp plugin interaction for recommendation.
+- **conversation**: Use native context menu when selection is within current ChatItem.
+- **desktop**: Add desktop release service and API endpoint, add local update testing scripts and stable channel API version check, implement history navigation stack, improve macOS permission requests and Full Disk Access detection.
+- **electron**: Add custom titlebar for Electron windows.
+- **share**: Add topic sharing functionality.
+- **userMemories**: Support to assign for extra headers when invoking upstash workflows, support to use customized Qstash client with extra header for workflows.
+- **misc**: Add the agent cron job, generate `agent_cron_jobs` in agents, improve baseline alignment for tool items, improve group profile builder, improve group prompt context engine and fix group supervisor response issue, improve PageEditor header UX with DropdownMenu and i18n support, update model definitions and sync i18n, update the agent profiles tools check & agentbuilder tools & publish to market button, update the community user layout action button, update the cron job visiual way, update the cron patterns fields values.
+
+#### 🐛 Bug Fixes
+
+- **@upstash/qstash**: Should properly extract Error message from thrown one.
+- **api**: Fix the issue where custom AI Providers cannot use custom APIs.
+- **ChatInput**: Add missing MaxTokens setting to params popover.
+- **chat**: Reset activeTopicId when switching agent/group.
+- **controls**: Update checkbox toggle behavior and pass value to ParamControlWrapper.
+- **database**: Remove content validation limits for agent cron jobs.
+- **desktop**: Prevent duplicate CORS headers in response, return OFFICIAL_URL in cloud mode for remoteServerUrl selector, update macOS beta icon size for macOS 26.
+- **InputEditor**: Ensure lexical placeholder reactively updates on locale change.
+- **mcp**: Fix installation check hanging issue in desktop app.
+- **settings**: Add instant UI feedback for provider config switches.
+- **misc**: Click lobe ai topic trigger create new agent, fix auto add group member crash, fix duplicate agent and group, fix group ux and memory retriever, fix internal editor onTextChange issue and add test case, fix memory search context, fix new topic flick issue, fix page content mismatch when switch quickly, fix thread portal not open correctly, Fix Windows desktop build error with macOS native module, force plain text paste in ChatInput editor, handle will-prevent-unload event to allow app quit, prevent auto navigation to profile when clicking topic, refresh sidebar after sendAsGroup and add E2E tests, slove the settings/profile change but not refresh the profiles.
+
+#### 💄 Styles
+
+- **desktop**: Update macOS beta icon assets.
+- **misc**: Add MiniMax-M2.1 and GLM-4.7 for Qiniu provider, fix UI issues with tooltip wrapping and dropdown type, force gpt-5.2 use response api, improve agent loading state, improve cron jobs style, improve todo list, modelParse support to get model settings params & Customize extendParams UI, remember page agent panel width, update i18n, update i18n, update readFile content.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **agentGroup**: Simplify LobeChatGroupChatConfig schema, closes [#11431](https://github.com/jaworldwideorg/OneJA-Bot/issues/11431) ([a8c6b2c](https://github.com/jaworldwideorg/OneJA-Bot/commit/a8c6b2c))
+- **database**: Renamed to userMemories/index.ts, closes [#11359](https://github.com/jaworldwideorg/OneJA-Bot/issues/11359) ([9dae5ff](https://github.com/jaworldwideorg/OneJA-Bot/commit/9dae5ff))
+- **desktop**: Unify TITLE_BAR_HEIGHT constant to desktop-bridge, closes [#11496](https://github.com/jaworldwideorg/OneJA-Bot/issues/11496) ([e7739e5](https://github.com/jaworldwideorg/OneJA-Bot/commit/e7739e5))
+- **misc**: Improve Tools popover component structure and fix UI consistency, closes [#11356](https://github.com/jaworldwideorg/OneJA-Bot/issues/11356) ([f46837a](https://github.com/jaworldwideorg/OneJA-Bot/commit/f46837a))
+- **misc**: Migrate Next.js navigation APIs to React Router for SPA, closes [#11394](https://github.com/jaworldwideorg/OneJA-Bot/issues/11394) ([2253d46](https://github.com/jaworldwideorg/OneJA-Bot/commit/2253d46))
+- **misc**: Refactor page and notebook document usage, closes [#11345](https://github.com/jaworldwideorg/OneJA-Bot/issues/11345) ([88721eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/88721eb))
+- **misc**: Remove the old lobehub plugins, closes [#11498](https://github.com/jaworldwideorg/OneJA-Bot/issues/11498) ([e5b47df](https://github.com/jaworldwideorg/OneJA-Bot/commit/e5b47df))
+- **misc**: Rename chat folder to agent, closes [#11409](https://github.com/jaworldwideorg/OneJA-Bot/issues/11409) ([7cfb1a3](https://github.com/jaworldwideorg/OneJA-Bot/commit/7cfb1a3))
+- **misc**: Use fallbackData to prevent useActionSWR auto-fetch, closes [#11514](https://github.com/jaworldwideorg/OneJA-Bot/issues/11514) ([d446163](https://github.com/jaworldwideorg/OneJA-Bot/commit/d446163))
+
+#### What's improved
+
+- **community**: Recommendation for agent & Discover tab, closes [#11445](https://github.com/jaworldwideorg/OneJA-Bot/issues/11445) ([5c102b5](https://github.com/jaworldwideorg/OneJA-Bot/commit/5c102b5))
+- **community**: Recommended for home & added discover tab, closes [#11290](https://github.com/jaworldwideorg/OneJA-Bot/issues/11290) ([8db248c](https://github.com/jaworldwideorg/OneJA-Bot/commit/8db248c))
+- **community**: Support to report for agent & mcp plugin interaction for recommendation, closes [#11289](https://github.com/jaworldwideorg/OneJA-Bot/issues/11289) ([6f98792](https://github.com/jaworldwideorg/OneJA-Bot/commit/6f98792))
+- **conversation**: Use native context menu when selection is within current ChatItem, closes [#11400](https://github.com/jaworldwideorg/OneJA-Bot/issues/11400) ([9778dce](https://github.com/jaworldwideorg/OneJA-Bot/commit/9778dce))
+- **desktop**: Add desktop release service and API endpoint, closes [#11520](https://github.com/jaworldwideorg/OneJA-Bot/issues/11520) ([e3dc5be](https://github.com/jaworldwideorg/OneJA-Bot/commit/e3dc5be))
+- **desktop**: Add local update testing scripts and stable channel API version check, closes [#11474](https://github.com/jaworldwideorg/OneJA-Bot/issues/11474) [#11513](https://github.com/jaworldwideorg/OneJA-Bot/issues/11513) ([959c210](https://github.com/jaworldwideorg/OneJA-Bot/commit/959c210))
+- **desktop**: Implement history navigation stack, closes [#11341](https://github.com/jaworldwideorg/OneJA-Bot/issues/11341) ([db270d5](https://github.com/jaworldwideorg/OneJA-Bot/commit/db270d5))
+- **desktop**: Improve macOS permission requests and Full Disk Access detection, closes [#11380](https://github.com/jaworldwideorg/OneJA-Bot/issues/11380) ([2d5868f](https://github.com/jaworldwideorg/OneJA-Bot/commit/2d5868f))
+- **electron**: Add custom titlebar for Electron windows, closes [#11438](https://github.com/jaworldwideorg/OneJA-Bot/issues/11438) ([08f6ee3](https://github.com/jaworldwideorg/OneJA-Bot/commit/08f6ee3))
+- **share**: Add topic sharing functionality, closes [#11448](https://github.com/jaworldwideorg/OneJA-Bot/issues/11448) ([ddca165](https://github.com/jaworldwideorg/OneJA-Bot/commit/ddca165))
+- **userMemories**: Support to assign for extra headers when invoking upstash workflows, closes [#11374](https://github.com/jaworldwideorg/OneJA-Bot/issues/11374) ([895e15e](https://github.com/jaworldwideorg/OneJA-Bot/commit/895e15e))
+- **userMemories**: Support to use customized Qstash client with extra header for workflows, closes [#11378](https://github.com/jaworldwideorg/OneJA-Bot/issues/11378) ([3417af4](https://github.com/jaworldwideorg/OneJA-Bot/commit/3417af4))
+- **misc**: Add the agent cron job, closes [#11370](https://github.com/jaworldwideorg/OneJA-Bot/issues/11370) ([10e47d9](https://github.com/jaworldwideorg/OneJA-Bot/commit/10e47d9))
+- **misc**: Generate `agent_cron_jobs` in agents, closes [#11349](https://github.com/jaworldwideorg/OneJA-Bot/issues/11349) ([eefb6cb](https://github.com/jaworldwideorg/OneJA-Bot/commit/eefb6cb))
+- **misc**: Improve baseline alignment for tool items, closes [#11447](https://github.com/jaworldwideorg/OneJA-Bot/issues/11447) ([be8dddd](https://github.com/jaworldwideorg/OneJA-Bot/commit/be8dddd))
+- **misc**: Improve group profile builder, closes [#11452](https://github.com/jaworldwideorg/OneJA-Bot/issues/11452) ([9012b40](https://github.com/jaworldwideorg/OneJA-Bot/commit/9012b40))
+- **misc**: Improve group prompt context engine and fix group supervisor response issue, closes [#11490](https://github.com/jaworldwideorg/OneJA-Bot/issues/11490) ([7d066eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/7d066eb))
+- **misc**: Improve PageEditor header UX with DropdownMenu and i18n support, closes [#11462](https://github.com/jaworldwideorg/OneJA-Bot/issues/11462) ([ae499c9](https://github.com/jaworldwideorg/OneJA-Bot/commit/ae499c9))
+- **misc**: Update model definitions and sync i18n, closes [#11468](https://github.com/jaworldwideorg/OneJA-Bot/issues/11468) ([484ffb3](https://github.com/jaworldwideorg/OneJA-Bot/commit/484ffb3))
+- **misc**: Update the agent profiles tools check & agentbuilder tools & publish to market button, closes [#11501](https://github.com/jaworldwideorg/OneJA-Bot/issues/11501) ([85277fa](https://github.com/jaworldwideorg/OneJA-Bot/commit/85277fa))
+- **misc**: Update the community user layout action button, closes [#11472](https://github.com/jaworldwideorg/OneJA-Bot/issues/11472) ([2dd6d42](https://github.com/jaworldwideorg/OneJA-Bot/commit/2dd6d42))
+- **misc**: Update the cron job visiual way, closes [#11466](https://github.com/jaworldwideorg/OneJA-Bot/issues/11466) ([63d81de](https://github.com/jaworldwideorg/OneJA-Bot/commit/63d81de))
+- **misc**: Update the cron patterns fields values, closes [#11399](https://github.com/jaworldwideorg/OneJA-Bot/issues/11399) ([7632cef](https://github.com/jaworldwideorg/OneJA-Bot/commit/7632cef))
+
+#### What's fixed
+
+- **@upstash/qstash**: Should properly extract Error message from thrown one, closes [#11465](https://github.com/jaworldwideorg/OneJA-Bot/issues/11465) ([a8142b4](https://github.com/jaworldwideorg/OneJA-Bot/commit/a8142b4))
+- **api**: Fix the issue where custom AI Providers cannot use custom APIs, closes [#11335](https://github.com/jaworldwideorg/OneJA-Bot/issues/11335) ([2c666b8](https://github.com/jaworldwideorg/OneJA-Bot/commit/2c666b8))
+- **ChatInput**: Add missing MaxTokens setting to params popover, closes [#11412](https://github.com/jaworldwideorg/OneJA-Bot/issues/11412) [#11375](https://github.com/jaworldwideorg/OneJA-Bot/issues/11375) ([3db4389](https://github.com/jaworldwideorg/OneJA-Bot/commit/3db4389))
+- **chat**: Reset activeTopicId when switching agent/group, closes [#11523](https://github.com/jaworldwideorg/OneJA-Bot/issues/11523) ([fde54b0](https://github.com/jaworldwideorg/OneJA-Bot/commit/fde54b0))
+- **controls**: Update checkbox toggle behavior and pass value to ParamControlWrapper, closes [#11363](https://github.com/jaworldwideorg/OneJA-Bot/issues/11363) ([1f1ef94](https://github.com/jaworldwideorg/OneJA-Bot/commit/1f1ef94))
+- **database**: Remove content validation limits for agent cron jobs, closes [#11444](https://github.com/jaworldwideorg/OneJA-Bot/issues/11444) ([04a28d3](https://github.com/jaworldwideorg/OneJA-Bot/commit/04a28d3))
+- **desktop**: Prevent duplicate CORS headers in response, closes [#11350](https://github.com/jaworldwideorg/OneJA-Bot/issues/11350) ([57e725c](https://github.com/jaworldwideorg/OneJA-Bot/commit/57e725c))
+- **desktop**: Return OFFICIAL_URL in cloud mode for remoteServerUrl selector, closes [#11502](https://github.com/jaworldwideorg/OneJA-Bot/issues/11502) ([1d11fac](https://github.com/jaworldwideorg/OneJA-Bot/commit/1d11fac))
+- **desktop**: Update macOS beta icon size for macOS 26, closes [#11348](https://github.com/jaworldwideorg/OneJA-Bot/issues/11348) ([0d1eedf](https://github.com/jaworldwideorg/OneJA-Bot/commit/0d1eedf))
+- **InputEditor**: Ensure lexical placeholder reactively updates on locale change, closes [#11352](https://github.com/jaworldwideorg/OneJA-Bot/issues/11352) ([72e796b](https://github.com/jaworldwideorg/OneJA-Bot/commit/72e796b))
+- **mcp**: Fix installation check hanging issue in desktop app, closes [#11524](https://github.com/jaworldwideorg/OneJA-Bot/issues/11524) ([b9341c3](https://github.com/jaworldwideorg/OneJA-Bot/commit/b9341c3))
+- **settings**: Add instant UI feedback for provider config switches, closes [#11362](https://github.com/jaworldwideorg/OneJA-Bot/issues/11362) ([a758d01](https://github.com/jaworldwideorg/OneJA-Bot/commit/a758d01))
+- **misc**: Click lobe ai topic trigger create new agent, closes [#11508](https://github.com/jaworldwideorg/OneJA-Bot/issues/11508) ([2443189](https://github.com/jaworldwideorg/OneJA-Bot/commit/2443189))
+- **misc**: Fix auto add group member crash, closes [#11387](https://github.com/jaworldwideorg/OneJA-Bot/issues/11387) ([fe4ff91](https://github.com/jaworldwideorg/OneJA-Bot/commit/fe4ff91))
+- **misc**: Fix duplicate agent and group, closes [#11411](https://github.com/jaworldwideorg/OneJA-Bot/issues/11411) ([bc8aea4](https://github.com/jaworldwideorg/OneJA-Bot/commit/bc8aea4))
+- **misc**: Fix group ux and memory retriever, closes [#11481](https://github.com/jaworldwideorg/OneJA-Bot/issues/11481) ([033ca92](https://github.com/jaworldwideorg/OneJA-Bot/commit/033ca92))
+- **misc**: Fix internal editor onTextChange issue and add test case, closes [#11509](https://github.com/jaworldwideorg/OneJA-Bot/issues/11509) ([e5eb03e](https://github.com/jaworldwideorg/OneJA-Bot/commit/e5eb03e))
+- **misc**: Fix memory search context, closes [#11393](https://github.com/jaworldwideorg/OneJA-Bot/issues/11393) ([9f51a4c](https://github.com/jaworldwideorg/OneJA-Bot/commit/9f51a4c))
+- **misc**: Fix new topic flick issue, closes [#11473](https://github.com/jaworldwideorg/OneJA-Bot/issues/11473) ([c53d372](https://github.com/jaworldwideorg/OneJA-Bot/commit/c53d372))
+- **misc**: Fix page content mismatch when switch quickly, closes [#11505](https://github.com/jaworldwideorg/OneJA-Bot/issues/11505) ([0cb1374](https://github.com/jaworldwideorg/OneJA-Bot/commit/0cb1374))
+- **misc**: Fix thread portal not open correctly, closes [#11475](https://github.com/jaworldwideorg/OneJA-Bot/issues/11475) ([e6ff90b](https://github.com/jaworldwideorg/OneJA-Bot/commit/e6ff90b))
+- **misc**: Fix Windows desktop build error with macOS native module, closes [#11417](https://github.com/jaworldwideorg/OneJA-Bot/issues/11417) ([67a8114](https://github.com/jaworldwideorg/OneJA-Bot/commit/67a8114))
+- **misc**: Force plain text paste in ChatInput editor, closes [#11414](https://github.com/jaworldwideorg/OneJA-Bot/issues/11414) ([70daf13](https://github.com/jaworldwideorg/OneJA-Bot/commit/70daf13))
+- **misc**: Handle will-prevent-unload event to allow app quit, closes [#11406](https://github.com/jaworldwideorg/OneJA-Bot/issues/11406) ([cbeb013](https://github.com/jaworldwideorg/OneJA-Bot/commit/cbeb013))
+- **misc**: Prevent auto navigation to profile when clicking topic, closes [#11500](https://github.com/jaworldwideorg/OneJA-Bot/issues/11500) ([1e03005](https://github.com/jaworldwideorg/OneJA-Bot/commit/1e03005))
+- **misc**: Refresh sidebar after sendAsGroup and add E2E tests, closes [#11450](https://github.com/jaworldwideorg/OneJA-Bot/issues/11450) ([8376a80](https://github.com/jaworldwideorg/OneJA-Bot/commit/8376a80))
+- **misc**: Slove the settings/profile change but not refresh the profiles, closes [#11497](https://github.com/jaworldwideorg/OneJA-Bot/issues/11497) ([f1e2111](https://github.com/jaworldwideorg/OneJA-Bot/commit/f1e2111))
+
+#### Styles
+
+- **desktop**: Update macOS beta icon assets, closes [#11368](https://github.com/jaworldwideorg/OneJA-Bot/issues/11368) ([3623e58](https://github.com/jaworldwideorg/OneJA-Bot/commit/3623e58))
+- **misc**: Add MiniMax-M2.1 and GLM-4.7 for Qiniu provider, closes [#10982](https://github.com/jaworldwideorg/OneJA-Bot/issues/10982) ([695784d](https://github.com/jaworldwideorg/OneJA-Bot/commit/695784d))
+- **misc**: Fix UI issues with tooltip wrapping and dropdown type, closes [#11495](https://github.com/jaworldwideorg/OneJA-Bot/issues/11495) ([9d90eba](https://github.com/jaworldwideorg/OneJA-Bot/commit/9d90eba))
+- **misc**: Force gpt-5.2 use response api, closes [#11373](https://github.com/jaworldwideorg/OneJA-Bot/issues/11373) ([f7f3631](https://github.com/jaworldwideorg/OneJA-Bot/commit/f7f3631))
+- **misc**: Improve agent loading state, closes [#11511](https://github.com/jaworldwideorg/OneJA-Bot/issues/11511) ([3bb7f33](https://github.com/jaworldwideorg/OneJA-Bot/commit/3bb7f33))
+- **misc**: Improve cron jobs style, closes [#11420](https://github.com/jaworldwideorg/OneJA-Bot/issues/11420) ([d1602f6](https://github.com/jaworldwideorg/OneJA-Bot/commit/d1602f6))
+- **misc**: Improve todo list, closes [#11533](https://github.com/jaworldwideorg/OneJA-Bot/issues/11533) ([a4b71e9](https://github.com/jaworldwideorg/OneJA-Bot/commit/a4b71e9))
+- **misc**: ModelParse support to get model settings params & Customize extendParams UI, closes [#11185](https://github.com/jaworldwideorg/OneJA-Bot/issues/11185) ([94e985a](https://github.com/jaworldwideorg/OneJA-Bot/commit/94e985a))
+- **misc**: Remember page agent panel width, closes [#11389](https://github.com/jaworldwideorg/OneJA-Bot/issues/11389) ([801b624](https://github.com/jaworldwideorg/OneJA-Bot/commit/801b624))
+- **misc**: Update i18n, closes [#11425](https://github.com/jaworldwideorg/OneJA-Bot/issues/11425) ([87fbed2](https://github.com/jaworldwideorg/OneJA-Bot/commit/87fbed2))
+- **misc**: Update i18n, closes [#11360](https://github.com/jaworldwideorg/OneJA-Bot/issues/11360) ([da09825](https://github.com/jaworldwideorg/OneJA-Bot/commit/da09825))
+- **misc**: Update readFile content, closes [#11485](https://github.com/jaworldwideorg/OneJA-Bot/issues/11485) ([050499b](https://github.com/jaworldwideorg/OneJA-Bot/commit/050499b))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.296](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.295...v2.0.0-next.296)
 
 <sup>Released on **2026-01-16**</sup>
