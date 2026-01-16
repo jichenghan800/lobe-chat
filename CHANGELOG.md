@@ -2,6 +2,151 @@
 
 # Changelog
 
+## [Version 2.0.0-next.295](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.294...v2.0.0-next.295)
+
+<sup>Released on **2026-01-15**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Migrate Next.js navigation APIs to React Router for SPA.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Migrate Next.js navigation APIs to React Router for SPA, closes [#11394](https://github.com/lobehub/lobe-chat/issues/11394) ([2253d46](https://github.com/lobehub/lobe-chat/commit/2253d46))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.294](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.293...v2.0.0-next.294)
+
+<sup>Released on **2026-01-15**</sup>
+
+#### 🐛 Bug Fixes
+
+- **chat**: Reset activeTopicId when switching agent/group.
+- **mcp**: Fix installation check hanging issue in desktop app.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **chat**: Reset activeTopicId when switching agent/group, closes [#11523](https://github.com/lobehub/lobe-chat/issues/11523) ([fde54b0](https://github.com/lobehub/lobe-chat/commit/fde54b0))
+- **mcp**: Fix installation check hanging issue in desktop app, closes [#11524](https://github.com/lobehub/lobe-chat/issues/11524) ([b9341c3](https://github.com/lobehub/lobe-chat/commit/b9341c3))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.293](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.292...v2.0.0-next.293)
+
+<sup>Released on **2026-01-15**</sup>
+
+#### ✨ Features
+
+- **desktop**: Add desktop release service and API endpoint.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **desktop**: Add desktop release service and API endpoint, closes [#11520](https://github.com/lobehub/lobe-chat/issues/11520) ([e3dc5be](https://github.com/lobehub/lobe-chat/commit/e3dc5be))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.292](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.291...v2.0.0-next.292)
+
+<sup>Released on **2026-01-15**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Use fallbackData to prevent useActionSWR auto-fetch.
+
+#### ✨ Features
+
+- **desktop**: Add local update testing scripts and stable channel API version check.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Use fallbackData to prevent useActionSWR auto-fetch, closes [#11514](https://github.com/lobehub/lobe-chat/issues/11514) ([d446163](https://github.com/lobehub/lobe-chat/commit/d446163))
+
+#### What's improved
+
+- **desktop**: Add local update testing scripts and stable channel API version check, closes [#11474](https://github.com/lobehub/lobe-chat/issues/11474) [#11513](https://github.com/lobehub/lobe-chat/issues/11513) ([959c210](https://github.com/lobehub/lobe-chat/commit/959c210))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.291](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.290...v2.0.0-next.291)
+
+<sup>Released on **2026-01-15**</sup>
+
+#### 🐛 Bug Fixes
+
+- **settings**: Add instant UI feedback for provider config switches.
+- **misc**: Click lobe ai topic trigger create new agent.
+
+#### 💄 Styles
+
+- **misc**: Improve agent loading state.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **settings**: Add instant UI feedback for provider config switches, closes [#11362](https://github.com/lobehub/lobe-chat/issues/11362) ([a758d01](https://github.com/lobehub/lobe-chat/commit/a758d01))
+- **misc**: Click lobe ai topic trigger create new agent, closes [#11508](https://github.com/lobehub/lobe-chat/issues/11508) ([2443189](https://github.com/lobehub/lobe-chat/commit/2443189))
+
+#### Styles
+
+- **misc**: Improve agent loading state, closes [#11511](https://github.com/lobehub/lobe-chat/issues/11511) ([3bb7f33](https://github.com/lobehub/lobe-chat/commit/3bb7f33))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.290](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.289...v2.0.0-next.290)
 
 <sup>Released on **2026-01-15**</sup>
