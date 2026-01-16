@@ -7,11 +7,6 @@ import { getCanonicalUrl } from '@/server/utils/url';
 
 import { Manifest, manifestModule } from './manifest';
 
-// Mock external dependencies
-vi.mock('@/const/branding', () => ({
-  BRANDING_LOGO_URL: 'https://example.com/logo.png',
-}));
-
 vi.mock('@/server/utils/url', () => ({
   getCanonicalUrl: vi.fn().mockReturnValue('https://example.com/manifest.webmanifest'),
 }));
@@ -109,9 +104,12 @@ describe('Manifest', () => {
       expect(result).toMatchObject({
         purpose: 'maskable',
         sizes: '64x64',
+        src: qs.stringifyUrl({
+          query: { v: 3 },
+          url: BRANDING_LOGO_URL || icon.url,
+        }),
         type: 'image/png',
       });
-      expect(result.src).toContain('v=3');
     });
   });
 
@@ -129,9 +127,12 @@ describe('Manifest', () => {
       expect(result).toMatchObject({
         form_factor: 'wide',
         sizes: '1280x676',
+        src: qs.stringifyUrl({
+          query: { v: 4 },
+          url: BRANDING_LOGO_URL || screenshot.url,
+        }),
         type: 'image/png',
       });
-      expect(result.src).toContain('v=4');
     });
 
     it('should return correct screenshot object for narrow form factor', () => {
@@ -149,8 +150,11 @@ describe('Manifest', () => {
         form_factor: 'narrow',
         immutable: 'true',
         max_age: 31536000,
-        sizes: '1280x676',
-        src: 'https://example.com/screenshot.png?v=1',
+        sizes: '320x569',
+        src: qs.stringifyUrl({
+          query: { v: 1 },
+          url: BRANDING_LOGO_URL || screenshot.url,
+        }),
         type: 'image/png',
       });
     });
