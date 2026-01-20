@@ -2,6 +2,100 @@
 
 # Changelog
 
+## [Version 1.152.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.151.0...v1.152.0)
+
+<sup>Released on **2026-01-20**</sup>
+
+#### ♻ Code Refactoring
+
+- **ui**: Migrate from Dropdown to DropdownMenu/ContextMenuTrigger components.
+- **misc**: Change the /community/assistant to /agent routes, optimize lobehub models and default configuration, refactor market sdk into market servers.
+
+#### ✨ Features
+
+- **memory-user-memory**: Support to configure preferred model.
+- **misc**: Add agent group publish into market & use market group agents in lobehub, add the agents and agents group fork feature, add the cloudEndpoint & Klavis Tools Call in Excuation Task, improve desktop onboarding window management and footer actions, improve the agentbuilder systemRole.
+
+#### 🐛 Bug Fixes
+
+- **desktop**: Add auth required modal and improve error handling, ensure allowPrerelease is set correctly for updater, resolve onboarding navigation issues after logout.
+- **memory-user-memory**: Should fallback to server configured provider & model.
+- **model-runtime**: Fix Qwen parallel tool calls arguments incorrectly merged.
+- **ShareModal**: Wrap ShareMessageModal with Provider in context menu.
+- **topic**: Correct topic item href route for agent and group pages.
+- **upload**: Resolve file upload button unresponsive issue.
+- **misc**: Fix group sub task execution, fix group subagent task issue, fix parallel tools calling race issue, fix server agent task run with headless, fix supervisor group prompt, fix supervisor id issue, fix switch skill in home, fix Topic component causing stack overflow and freezing the app, fix topic messages display error when switch topic quickly, fixed the createGroupWithSupervisor function test, internlm provider base url and homepage, simplify updater config logic, slove commnuity user avatarUrl is wrong, should update others in profile, slove the nuqs error in commnuity agent group page, slove when use copy & install group from market, the member system Role is lost, try to fix group supervisor id not sync successful, when use trpc client should include the credentials cookies.
+
+#### 💄 Styles
+
+- **misc**: Fix left panel on group page, improve auto scroll and loading hint, improve operation hint and fix scroll issue, optimize profile settings skeleton screen, update i18n, update i18n.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **ui**: Migrate from Dropdown to DropdownMenu/ContextMenuTrigger components, closes [#11539](https://github.com/jaworldwideorg/OneJA-Bot/issues/11539) ([9c9d4b1](https://github.com/jaworldwideorg/OneJA-Bot/commit/9c9d4b1))
+- **misc**: Change the /community/assistant to /agent routes, closes [#11606](https://github.com/jaworldwideorg/OneJA-Bot/issues/11606) ([7f004c5](https://github.com/jaworldwideorg/OneJA-Bot/commit/7f004c5))
+- **misc**: Optimize lobehub models and default configuration, closes [#11621](https://github.com/jaworldwideorg/OneJA-Bot/issues/11621) ([5074fbe](https://github.com/jaworldwideorg/OneJA-Bot/commit/5074fbe))
+- **misc**: Refactor market sdk into market servers, closes [#11604](https://github.com/jaworldwideorg/OneJA-Bot/issues/11604) ([858cc20](https://github.com/jaworldwideorg/OneJA-Bot/commit/858cc20))
+
+#### What's improved
+
+- **memory-user-memory**: Support to configure preferred model, closes [#11637](https://github.com/jaworldwideorg/OneJA-Bot/issues/11637) ([49374da](https://github.com/jaworldwideorg/OneJA-Bot/commit/49374da))
+- **misc**: Add agent group publish into market & use market group agents in lobehub, closes [#11535](https://github.com/jaworldwideorg/OneJA-Bot/issues/11535) ([02b9e76](https://github.com/jaworldwideorg/OneJA-Bot/commit/02b9e76))
+- **misc**: Add the agents and agents group fork feature, closes [#11652](https://github.com/jaworldwideorg/OneJA-Bot/issues/11652) ([b1c3b83](https://github.com/jaworldwideorg/OneJA-Bot/commit/b1c3b83))
+- **misc**: Add the cloudEndpoint & Klavis Tools Call in Excuation Task, closes [#11627](https://github.com/jaworldwideorg/OneJA-Bot/issues/11627) ([0ffe6c4](https://github.com/jaworldwideorg/OneJA-Bot/commit/0ffe6c4))
+- **misc**: Improve desktop onboarding window management and footer actions, closes [#11619](https://github.com/jaworldwideorg/OneJA-Bot/issues/11619) ([6ed280e](https://github.com/jaworldwideorg/OneJA-Bot/commit/6ed280e))
+- **misc**: Improve the agentbuilder systemRole, closes [#11608](https://github.com/jaworldwideorg/OneJA-Bot/issues/11608) ([2f032d4](https://github.com/jaworldwideorg/OneJA-Bot/commit/2f032d4))
+
+#### What's fixed
+
+- **desktop**: Add auth required modal and improve error handling, closes [#11574](https://github.com/jaworldwideorg/OneJA-Bot/issues/11574) ([4e5a516](https://github.com/jaworldwideorg/OneJA-Bot/commit/4e5a516))
+- **desktop**: Ensure allowPrerelease is set correctly for updater, closes [#11566](https://github.com/jaworldwideorg/OneJA-Bot/issues/11566) ([9383c6b](https://github.com/jaworldwideorg/OneJA-Bot/commit/9383c6b))
+- **desktop**: Resolve onboarding navigation issues after logout, closes [#11628](https://github.com/jaworldwideorg/OneJA-Bot/issues/11628) ([05a0873](https://github.com/jaworldwideorg/OneJA-Bot/commit/05a0873))
+- **memory-user-memory**: Should fallback to server configured provider & model, closes [#11643](https://github.com/jaworldwideorg/OneJA-Bot/issues/11643) ([af446d9](https://github.com/jaworldwideorg/OneJA-Bot/commit/af446d9))
+- **model-runtime**: Fix Qwen parallel tool calls arguments incorrectly merged, closes [#11649](https://github.com/jaworldwideorg/OneJA-Bot/issues/11649) ([ddbe661](https://github.com/jaworldwideorg/OneJA-Bot/commit/ddbe661))
+- **ShareModal**: Wrap ShareMessageModal with Provider in context menu, closes [#11434](https://github.com/jaworldwideorg/OneJA-Bot/issues/11434) [#11382](https://github.com/jaworldwideorg/OneJA-Bot/issues/11382) ([0d30e5f](https://github.com/jaworldwideorg/OneJA-Bot/commit/0d30e5f))
+- **topic**: Correct topic item href route for agent and group pages, closes [#11607](https://github.com/jaworldwideorg/OneJA-Bot/issues/11607) ([2fffe8b](https://github.com/jaworldwideorg/OneJA-Bot/commit/2fffe8b))
+- **upload**: Resolve file upload button unresponsive issue, closes [#11588](https://github.com/jaworldwideorg/OneJA-Bot/issues/11588) ([76fd478](https://github.com/jaworldwideorg/OneJA-Bot/commit/76fd478))
+- **misc**: Fix group sub task execution, closes [#11595](https://github.com/jaworldwideorg/OneJA-Bot/issues/11595) ([32be2b2](https://github.com/jaworldwideorg/OneJA-Bot/commit/32be2b2))
+- **misc**: Fix group subagent task issue, closes [#11589](https://github.com/jaworldwideorg/OneJA-Bot/issues/11589) ([9ad468b](https://github.com/jaworldwideorg/OneJA-Bot/commit/9ad468b))
+- **misc**: Fix parallel tools calling race issue, closes [#11626](https://github.com/jaworldwideorg/OneJA-Bot/issues/11626) ([34bdcd4](https://github.com/jaworldwideorg/OneJA-Bot/commit/34bdcd4))
+- **misc**: Fix server agent task run with headless, closes [#11600](https://github.com/jaworldwideorg/OneJA-Bot/issues/11600) ([435eede](https://github.com/jaworldwideorg/OneJA-Bot/commit/435eede))
+- **misc**: Fix supervisor group prompt, closes [#11543](https://github.com/jaworldwideorg/OneJA-Bot/issues/11543) ([3a6efbc](https://github.com/jaworldwideorg/OneJA-Bot/commit/3a6efbc))
+- **misc**: Fix supervisor id issue, closes [#11584](https://github.com/jaworldwideorg/OneJA-Bot/issues/11584) ([c097584](https://github.com/jaworldwideorg/OneJA-Bot/commit/c097584))
+- **misc**: Fix switch skill in home, closes [#11537](https://github.com/jaworldwideorg/OneJA-Bot/issues/11537) ([d5561f3](https://github.com/jaworldwideorg/OneJA-Bot/commit/d5561f3))
+- **misc**: Fix Topic component causing stack overflow and freezing the app, closes [#11609](https://github.com/jaworldwideorg/OneJA-Bot/issues/11609) ([600cb85](https://github.com/jaworldwideorg/OneJA-Bot/commit/600cb85))
+- **misc**: Fix topic messages display error when switch topic quickly, closes [#11542](https://github.com/jaworldwideorg/OneJA-Bot/issues/11542) ([371d91e](https://github.com/jaworldwideorg/OneJA-Bot/commit/371d91e))
+- **misc**: Fixed the createGroupWithSupervisor function test, closes [#11590](https://github.com/jaworldwideorg/OneJA-Bot/issues/11590) ([83bb343](https://github.com/jaworldwideorg/OneJA-Bot/commit/83bb343))
+- **misc**: Internlm provider base url and homepage, closes [#11612](https://github.com/jaworldwideorg/OneJA-Bot/issues/11612) ([38725da](https://github.com/jaworldwideorg/OneJA-Bot/commit/38725da))
+- **misc**: Simplify updater config logic, closes [#11636](https://github.com/jaworldwideorg/OneJA-Bot/issues/11636) ([5c645f0](https://github.com/jaworldwideorg/OneJA-Bot/commit/5c645f0))
+- **misc**: Slove commnuity user avatarUrl is wrong, should update others in profile, closes [#11634](https://github.com/jaworldwideorg/OneJA-Bot/issues/11634) ([04465c8](https://github.com/jaworldwideorg/OneJA-Bot/commit/04465c8))
+- **misc**: Slove the nuqs error in commnuity agent group page, closes [#11651](https://github.com/jaworldwideorg/OneJA-Bot/issues/11651) ([1c29bca](https://github.com/jaworldwideorg/OneJA-Bot/commit/1c29bca))
+- **misc**: Slove when use copy & install group from market, the member system Role is lost, closes [#11585](https://github.com/jaworldwideorg/OneJA-Bot/issues/11585) ([9b73ad7](https://github.com/jaworldwideorg/OneJA-Bot/commit/9b73ad7))
+- **misc**: Try to fix group supervisor id not sync successful, closes [#11570](https://github.com/jaworldwideorg/OneJA-Bot/issues/11570) ([ef51c17](https://github.com/jaworldwideorg/OneJA-Bot/commit/ef51c17))
+- **misc**: When use trpc client should include the credentials cookies, closes [#11629](https://github.com/jaworldwideorg/OneJA-Bot/issues/11629) ([8ece553](https://github.com/jaworldwideorg/OneJA-Bot/commit/8ece553))
+
+#### Styles
+
+- **misc**: Fix left panel on group page, closes [#11571](https://github.com/jaworldwideorg/OneJA-Bot/issues/11571) ([de81a42](https://github.com/jaworldwideorg/OneJA-Bot/commit/de81a42))
+- **misc**: Improve auto scroll and loading hint, closes [#11579](https://github.com/jaworldwideorg/OneJA-Bot/issues/11579) ([277b42d](https://github.com/jaworldwideorg/OneJA-Bot/commit/277b42d))
+- **misc**: Improve operation hint and fix scroll issue, closes [#11573](https://github.com/jaworldwideorg/OneJA-Bot/issues/11573) ([8505d14](https://github.com/jaworldwideorg/OneJA-Bot/commit/8505d14))
+- **misc**: Optimize profile settings skeleton screen, closes [#11656](https://github.com/jaworldwideorg/OneJA-Bot/issues/11656) ([e61ae85](https://github.com/jaworldwideorg/OneJA-Bot/commit/e61ae85))
+- **misc**: Update i18n, closes [#11596](https://github.com/jaworldwideorg/OneJA-Bot/issues/11596) ([b02d26c](https://github.com/jaworldwideorg/OneJA-Bot/commit/b02d26c))
+- **misc**: Update i18n, closes [#11482](https://github.com/jaworldwideorg/OneJA-Bot/issues/11482) ([676611e](https://github.com/jaworldwideorg/OneJA-Bot/commit/676611e))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.322](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.321...v2.0.0-next.322)
 
 <sup>Released on **2026-01-20**</sup>
