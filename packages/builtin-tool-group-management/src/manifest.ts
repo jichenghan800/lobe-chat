@@ -8,23 +8,6 @@ export const GroupManagementIdentifier = 'lobe-group-management';
 export const GroupManagementManifest: BuiltinToolManifest = {
   /* eslint-disable sort-keys-fix/sort-keys-fix */
   api: [
-    // ==================== Agent Info ====================
-    {
-      description:
-        'Get detailed information about a specific agent, including their capabilities, available tools, and configuration. Use this to check if an agent has tools before deciding between speak vs executeAgentTask.',
-      name: GroupManagementApiName.getAgentInfo,
-      parameters: {
-        properties: {
-          agentId: {
-            description: 'The ID of the agent to get information about.',
-            type: 'string',
-          },
-        },
-        required: ['agentId'],
-        type: 'object',
-      },
-    },
-
     // ==================== Communication Coordination ====================
     {
       description:
@@ -112,6 +95,10 @@ export const GroupManagementManifest: BuiltinToolManifest = {
             description: 'The ID of the agent to execute the task.',
             type: 'string',
           },
+          title: {
+            description: 'Brief title describing what this task does (shown in UI).',
+            type: 'string',
+          },
           task: {
             description:
               'Clear description of the task to perform. Be specific about expected deliverables.',
@@ -130,7 +117,7 @@ export const GroupManagementManifest: BuiltinToolManifest = {
             type: 'boolean',
           },
         },
-        required: ['agentId', 'task'],
+        required: ['agentId', 'title', 'task'],
         type: 'object',
       },
     },

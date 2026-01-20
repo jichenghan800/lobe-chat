@@ -271,18 +271,6 @@ describe('GroupManagementExecutor', () => {
     });
   });
 
-  describe('getAgentInfo', () => {
-    it('should return error when no groupId in context', async () => {
-      const ctx = createMockContext();
-
-      const result = await groupManagementExecutor.getAgentInfo({ agentId: 'agent-1' }, ctx);
-
-      // No groupId means we can't get agent info
-      expect(result.success).toBe(false);
-      expect(result.stop).toBeUndefined();
-    });
-  });
-
   describe('executeAgentTask', () => {
     beforeEach(() => {
       vi.clearAllMocks();
@@ -292,7 +280,7 @@ describe('GroupManagementExecutor', () => {
       const ctx = createMockContext();
 
       const result = await groupManagementExecutor.executeAgentTask(
-        { agentId: 'agent-1', task: 'Do something' },
+        { agentId: 'agent-1', task: 'Do something', title: 'Test Task' },
         ctx,
       );
 
@@ -303,6 +291,7 @@ describe('GroupManagementExecutor', () => {
         agentId: 'agent-1',
         task: 'Do something',
         timeout: undefined,
+        title: 'Test Task',
         type: 'executeAgentTask',
       });
     });
@@ -326,7 +315,7 @@ describe('GroupManagementExecutor', () => {
       );
 
       await groupManagementExecutor.executeAgentTask(
-        { agentId: 'agent-1', task: 'Do something', timeout: 30000 },
+        { agentId: 'agent-1', task: 'Do something', timeout: 30000, title: 'Test Task' },
         ctx,
       );
 
@@ -351,7 +340,7 @@ describe('GroupManagementExecutor', () => {
       const ctx = createMockContext();
 
       const result = await groupManagementExecutor.executeAgentTask(
-        { agentId: 'agent-1', task: 'Do something' },
+        { agentId: 'agent-1', task: 'Do something', title: 'Test Task' },
         ctx,
       );
 
@@ -363,7 +352,7 @@ describe('GroupManagementExecutor', () => {
       const ctx = createMockContext();
 
       const result = await groupManagementExecutor.executeAgentTask(
-        { agentId: 'agent-1', task: 'Do something', timeout: 60000 },
+        { agentId: 'agent-1', task: 'Do something', timeout: 60000, title: 'Test Task' },
         ctx,
       );
 
@@ -372,6 +361,7 @@ describe('GroupManagementExecutor', () => {
         agentId: 'agent-1',
         task: 'Do something',
         timeout: 60000,
+        title: 'Test Task',
         type: 'executeAgentTask',
       });
     });

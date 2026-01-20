@@ -62,10 +62,11 @@ import { cloneDeep, countBy, isString, merge, uniq, uniqBy } from 'es-toolkit/co
 import matter from 'gray-matter';
 import urlJoin from 'url-join';
 
-import { type TrustedClientUserInfo, generateTrustedClientToken } from '@/libs/trusted-client';
+import { type TrustedClientUserInfo } from '@/libs/trusted-client';
 import { normalizeLocale } from '@/locales/resources';
 import { AssistantStore } from '@/server/modules/AssistantStore';
 import { PluginStore } from '@/server/modules/PluginStore';
+import { MarketService } from '@/server/services/market';
 
 const log = debug('lobe-server:discover');
 
@@ -84,18 +85,14 @@ export class DiscoverService {
   constructor(options: DiscoverServiceOptions = {}) {
     const { accessToken, userInfo } = options;
 
-    // Generate trusted client token if user info is available
-    const trustedClientToken = userInfo ? generateTrustedClientToken(userInfo) : undefined;
+    // Use MarketService to initialize MarketSDK
+    const marketService = new MarketService({ accessToken, userInfo });
+    this.market = marketService.market;
 
-    this.market = new MarketSDK({
-      accessToken,
-      baseURL: process.env.NEXT_PUBLIC_MARKET_BASE_URL,
-      trustedClientToken,
-    });
     log(
-      'DiscoverService initialized with market baseURL: %s, hasTrustedToken: %s, userId: %s',
+      'DiscoverService initialized with market baseURL: %s, hasAuth: %s, userId: %s',
       process.env.NEXT_PUBLIC_MARKET_BASE_URL,
-      !!trustedClientToken,
+      !!(accessToken || userInfo),
       userInfo?.userId,
     );
   }
@@ -135,14 +132,12 @@ export class DiscoverService {
   }
 
   async fetchM2MToken(params: { clientId: string; clientSecret: string }) {
-    // 使用传入的客户端凭证创建新的 MarketSDK 实例
-    const tokenMarket = new MarketSDK({
-      baseURL: process.env.NEXT_PUBLIC_MARKET_BASE_URL,
-      clientId: params.clientId,
-      clientSecret: params.clientSecret,
+    // Use MarketService with M2M credentials
+    const marketService = new MarketService({
+      clientCredentials: params,
     });
 
-    const tokenInfo = await tokenMarket.fetchM2MToken();
+    const tokenInfo = await marketService.fetchM2MToken();
 
     return {
       accessToken: tokenInfo.accessToken,
@@ -1741,6 +1736,8 @@ export class DiscoverService {
         locale,
       })) as UserInfoResponse & {
         agentGroups?: any[];
+        forkedAgentGroups?: any[];
+        forkedAgents?: any[];
       };
 
       if (!response?.user) {
@@ -1748,7 +1745,7 @@ export class DiscoverService {
         return undefined;
       }
 
-      const { user, agents, agentGroups } = response;
+      const { user, agents, agentGroups, forkedAgents, forkedAgentGroups } = response;
 
       // Transform agents to DiscoverAssistantItem format
       const transformedAgents: DiscoverAssistantItem[] = (agents || []).map((agent: any) => ({
@@ -1788,9 +1785,55 @@ export class DiscoverService {
         updatedAt: group.updatedAt,
       }));
 
+      // Transform forkedAgents to DiscoverAssistantItem format
+      const transformedForkedAgents: DiscoverAssistantItem[] = (forkedAgents || []).map(
+        (agent: any) => ({
+          author: user.displayName || user.userName || user.namespace || '',
+          avatar: agent.avatar || '',
+          category: agent.category as any,
+          config: {} as any,
+          createdAt: agent.createdAt,
+          description: agent.description || '',
+          forkCount: agent.forkCount || 0,
+          forkedFromAgentId: agent.forkedFromAgentId || null,
+          homepage: `https://lobehub.com/discover/assistant/${agent.identifier}`,
+          identifier: agent.identifier,
+          installCount: agent.installCount,
+          knowledgeCount: agent.knowledgeCount || 0,
+          pluginCount: agent.pluginCount || 0,
+          schemaVersion: 1,
+          tags: agent.tags || [],
+          title: agent.name || agent.identifier,
+          tokenUsage: agent.tokenUsage || 0,
+        }),
+      );
+
+      // Transform forkedAgentGroups to DiscoverGroupAgentItem format
+      const transformedForkedAgentGroups = (forkedAgentGroups || []).map((group: any) => ({
+        author: user.displayName || user.userName || user.namespace || '',
+        avatar: group.avatar || '👥',
+        category: group.category as any,
+        createdAt: group.createdAt,
+        description: group.description || '',
+        forkCount: group.forkCount || 0,
+        forkedFromGroupId: group.forkedFromGroupId || null,
+        homepage: `https://lobehub.com/discover/group_agent/${group.identifier}`,
+        identifier: group.identifier,
+        installCount: group.installCount || 0,
+        isFeatured: group.isFeatured || false,
+        isOfficial: group.isOfficial || false,
+        memberCount: 0, // Will be populated from memberAgents in detail view
+        schemaVersion: 1,
+        tags: group.tags || [],
+        title: group.name || group.identifier,
+        updatedAt: group.updatedAt,
+      }));
+
       const result: DiscoverUserProfile = {
         agentGroups: transformedAgentGroups,
         agents: transformedAgents,
+        forkedAgentGroups: transformedForkedAgentGroups,
+        forkedAgents: transformedForkedAgents,
         user: {
           avatarUrl: user.avatarUrl || null,
           bannerUrl: user.meta?.bannerUrl || null,
@@ -1808,9 +1851,11 @@ export class DiscoverService {
       };
 
       log(
-        'getUserInfo: returning user profile with %d agents and %d groups',
+        'getUserInfo: returning user profile with %d agents, %d groups, %d forked agents, %d forked groups',
         result.agents.length,
         result.agentGroups?.length || 0,
+        result.forkedAgents?.length || 0,
+        result.forkedAgentGroups?.length || 0,
       );
       return result;
     } catch (error) {

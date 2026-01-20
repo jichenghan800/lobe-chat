@@ -1,5 +1,180 @@
 [
   {
+    "children": {},
+    "date": "2026-01-20",
+    "version": "2.0.0-next.322"
+  },
+  {
+    "children": {},
+    "date": "2026-01-20",
+    "version": "2.0.0-next.321"
+  },
+  {
+    "children": {},
+    "date": "2026-01-20",
+    "version": "2.0.0-next.320"
+  },
+  {
+    "children": {
+      "fixes": ["Slove commnuity user avatarUrl is wrong, should update others in profile."]
+    },
+    "date": "2026-01-20",
+    "version": "2.0.0-next.319"
+  },
+  {
+    "children": {
+      "fixes": ["Fix parallel tools calling race issue."]
+    },
+    "date": "2026-01-20",
+    "version": "2.0.0-next.318"
+  },
+  {
+    "children": {},
+    "date": "2026-01-19",
+    "version": "2.0.0-next.317"
+  },
+  {
+    "children": {
+      "fixes": ["When use trpc client should include the credentials cookies."]
+    },
+    "date": "2026-01-19",
+    "version": "2.0.0-next.316"
+  },
+  {
+    "children": {
+      "features": ["Add the cloudEndpoint & Klavis Tools Call in Excuation Task."]
+    },
+    "date": "2026-01-19",
+    "version": "2.0.0-next.315"
+  },
+  {
+    "children": {
+      "features": ["Improve desktop onboarding window management and footer actions."]
+    },
+    "date": "2026-01-19",
+    "version": "2.0.0-next.314"
+  },
+  {
+    "children": {
+      "fixes": ["Fix server agent task run with headless, internlm provider base url and homepage."]
+    },
+    "date": "2026-01-19",
+    "version": "2.0.0-next.313"
+  },
+  {
+    "children": {
+      "improvements": ["Change the /community/assistant to /agent routes."],
+      "features": ["Improve the agentbuilder systemRole."]
+    },
+    "date": "2026-01-19",
+    "version": "2.0.0-next.312"
+  },
+  {
+    "children": {
+      "improvements": ["Refactor market sdk into market servers."]
+    },
+    "date": "2026-01-19",
+    "version": "2.0.0-next.311"
+  },
+  {
+    "children": {
+      "improvements": ["Update i18n."]
+    },
+    "date": "2026-01-19",
+    "version": "2.0.0-next.310"
+  },
+  {
+    "children": {
+      "fixes": ["Fix group sub task execution."]
+    },
+    "date": "2026-01-18",
+    "version": "2.0.0-next.309"
+  },
+  {
+    "children": {
+      "fixes": ["Fix group subagent task issue."],
+      "improvements": ["Update i18n."]
+    },
+    "date": "2026-01-18",
+    "version": "2.0.0-next.308"
+  },
+  {
+    "children": {
+      "fixes": [
+        "Fixed the createGroupWithSupervisor function test, slove when use copy & install group from market, the member system Role is lost."
+      ]
+    },
+    "date": "2026-01-18",
+    "version": "2.0.0-next.307"
+  },
+  {
+    "children": {
+      "fixes": ["Fix supervisor id issue."]
+    },
+    "date": "2026-01-18",
+    "version": "2.0.0-next.306"
+  },
+  {
+    "children": {},
+    "date": "2026-01-18",
+    "version": "2.0.0-next.305"
+  },
+  {
+    "children": {
+      "improvements": ["Improve auto scroll and loading hint."]
+    },
+    "date": "2026-01-18",
+    "version": "2.0.0-next.304"
+  },
+  {
+    "children": {
+      "improvements": ["Improve operation hint and fix scroll issue."]
+    },
+    "date": "2026-01-18",
+    "version": "2.0.0-next.303"
+  },
+  {
+    "children": {
+      "fixes": ["Try to fix group supervisor id not sync successful."],
+      "improvements": ["Fix left panel on group page."]
+    },
+    "date": "2026-01-17",
+    "version": "2.0.0-next.302"
+  },
+  {
+    "children": {},
+    "date": "2026-01-17",
+    "version": "2.0.0-next.301"
+  },
+  {
+    "children": {
+      "fixes": ["Fix supervisor group prompt."]
+    },
+    "date": "2026-01-17",
+    "version": "2.0.0-next.300"
+  },
+  {
+    "children": {
+      "fixes": ["Fix topic messages display error when switch topic quickly."]
+    },
+    "date": "2026-01-17",
+    "version": "2.0.0-next.299"
+  },
+  {
+    "children": {
+      "fixes": ["Fix switch skill in home."]
+    },
+    "date": "2026-01-16",
+    "version": "2.0.0-next.298"
+  },
+  {
+    "children": {
+      "features": ["Add agent group publish into market & use market group agents in lobehub."]
+    },
+    "date": "2026-01-16",
+    "version": "2.0.0-next.297"
+  },
+  {
     "children": {
       "improvements": ["Improve todo list."]
     },

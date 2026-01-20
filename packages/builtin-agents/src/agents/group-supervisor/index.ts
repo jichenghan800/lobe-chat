@@ -1,6 +1,5 @@
 import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
 import { GroupManagementIdentifier } from '@lobechat/builtin-tool-group-management';
-import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
 
 import type { BuiltinAgentDefinition } from '../../types';
 import { BUILTIN_AGENT_SLUGS } from '../../types';
@@ -11,7 +10,9 @@ import type { GroupSupervisorContext } from './type';
  * Replace template variables in system role
  */
 const resolveSystemRole = (ctx: GroupSupervisorContext): string => {
-  return supervisorSystemRole.replace('{{GROUP_TITLE}}', ctx.groupTitle);
+  return supervisorSystemRole
+    .replace('{{GROUP_TITLE}}', ctx.groupTitle)
+    .replace('{{SYSTEM_PROMPT}}', ctx.systemPrompt || '');
 };
 
 /**
@@ -39,12 +40,7 @@ export const GROUP_SUPERVISOR: BuiltinAgentDefinition = {
       chatConfig: {
         enableHistoryCount: false,
       },
-      plugins: [
-        GroupManagementIdentifier,
-        GroupAgentBuilderIdentifier,
-        GTDIdentifier,
-        ...(ctx.plugins || []),
-      ],
+      plugins: [GroupManagementIdentifier, GroupAgentBuilderIdentifier, ...(ctx.plugins || [])],
       systemRole: resolveSystemRole(groupSupervisorContext),
     };
   },
