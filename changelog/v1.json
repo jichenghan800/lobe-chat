@@ -2180,6 +2180,21 @@
   {
     "children": {
       "improvements": [
+        "Fix left panel on group page, improve auto scroll and loading hint, improve operation hint and fix scroll issue, optimize profile settings skeleton screen, update i18n, update i18n."
+      ],
+      "features": [
+        "Add agent group publish into market & use market group agents in lobehub, add the agents and agents group fork feature, add the cloudEndpoint & Klavis Tools Call in Excuation Task, improve desktop onboarding window management and footer actions, improve the agentbuilder systemRole."
+      ],
+      "fixes": [
+        "Fix group sub task execution, fix group subagent task issue, fix parallel tools calling race issue, fix server agent task run with headless, fix supervisor group prompt, fix supervisor id issue, fix switch skill in home, fix Topic component causing stack overflow and freezing the app, fix topic messages display error when switch topic quickly, fixed the createGroupWithSupervisor function test, internlm provider base url and homepage, simplify updater config logic, slove commnuity user avatarUrl is wrong, should update others in profile, slove the nuqs error in commnuity agent group page, slove when use copy & install group from market, the member system Role is lost, try to fix group supervisor id not sync successful, when use trpc client should include the credentials cookies."
+      ]
+    },
+    "date": "2026-01-20",
+    "version": "1.152.0"
+  },
+  {
+    "children": {
+      "improvements": [
         "Add MiniMax-M2.1 and GLM-4.7 for Qiniu provider, fix UI issues with tooltip wrapping and dropdown type, force gpt-5.2 use response api, improve agent loading state, improve cron jobs style, improve todo list, modelParse support to get model settings params & Customize extendParams UI, remember page agent panel width, update i18n, update i18n, update readFile content."
       ],
       "features": [
