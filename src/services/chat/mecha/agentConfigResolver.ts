@@ -51,6 +51,12 @@ export interface AgentConfigResolverContext {
   /** Agent ID to resolve config for */
   agentId: string;
 
+  /**
+   * Whether to disable all tools for this agent execution.
+   * When true, returns empty plugins array (used for broadcast scenarios).
+   */
+  disableTools?: boolean;
+
   // Builtin agent specific context
   /** Document content for page-agent */
   documentContent?: string;
@@ -60,6 +66,12 @@ export interface AgentConfigResolverContext {
    * When provided, used for direct lookup instead of iterating all groups.
    */
   groupId?: string;
+
+  /**
+   * Whether this is a sub-task execution.
+   * When true, filters out lobe-gtd tools to prevent nested sub-task creation.
+   */
+  isSubTask?: boolean;
 
   /** Current model being used (for template variables) */
   model?: string;
@@ -106,9 +118,27 @@ export interface ResolvedAgentConfig {
  * For regular agents, this simply returns the config from the store.
  */
 export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAgentConfig => {
-  const { agentId, model, documentContent, plugins, targetAgentConfig } = ctx;
+  const { agentId, model, documentContent, plugins, targetAgentConfig, isSubTask, disableTools } =
+    ctx;
 
-  log('resolveAgentConfig called with agentId: %s, scope: %s', agentId, ctx.scope);
+  log(
+    'resolveAgentConfig called with agentId: %s, scope: %s, isSubTask: %s, disableTools: %s',
+    agentId,
+    ctx.scope,
+    isSubTask,
+    disableTools,
+  );
+
+  // Helper to apply plugin filters:
+  // 1. If disableTools is true, return empty array (for broadcast scenarios)
+  // 2. If isSubTask is true, filter out lobe-gtd to prevent nested sub-task creation
+  const applyPluginFilters = (pluginIds: string[]) => {
+    if (disableTools) {
+      log('disableTools is true, returning empty plugins');
+      return [];
+    }
+    return isSubTask ? pluginIds.filter((id) => id !== 'lobe-gtd') : pluginIds;
+  };
 
   const agentStoreState = getAgentStoreState();
 
@@ -120,18 +150,18 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
   const basePlugins = agentConfig.plugins ?? [];
 
   // Check if this is a builtin agent
-  // First check agent store, then check if this is a supervisor agent via groupId
-  let slug = agentSelectors.getAgentSlugById(agentId)(agentStoreState);
-  log('slug from agentStore: %s (agentId: %s)', slug, agentId);
+  // Priority: supervisor check (when in group scope) > agent store slug
+  let slug: string | undefined;
 
-  // If not found in agent store, check if this is a supervisor agent using groupId
-  // This is more reliable than iterating all groups to find a match
-  if (!slug && ctx.groupId) {
+  // IMPORTANT: When in group scope with groupId, check if this agent is the group's supervisor FIRST
+  // This takes priority because supervisor needs special group-supervisor behavior,
+  // even if the agent has its own slug
+  if (ctx.groupId && ctx.scope === 'group') {
     const groupStoreState = getChatGroupStoreState();
     const group = agentGroupByIdSelectors.groupById(ctx.groupId)(groupStoreState);
 
     log(
-      'checking supervisor via groupId %s: group=%o',
+      'checking supervisor FIRST (scope=group): groupId=%s, group=%O, agentId=%s',
       ctx.groupId,
       group
         ? {
@@ -140,6 +170,7 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
             title: group.title,
           }
         : null,
+      agentId,
     );
 
     // Check if this agent is the supervisor of the specified group
@@ -152,6 +183,12 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
         slug,
       );
     }
+  }
+
+  // If not identified as supervisor, check agent store for slug
+  if (!slug) {
+    slug = agentSelectors.getAgentSlugById(agentId)(agentStoreState) ?? undefined;
+    log('slug from agentStore: %s (agentId: %s)', slug, agentId);
   }
 
   if (!slug) {
@@ -199,7 +236,7 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
         agentConfig: finalAgentConfig,
         chatConfig: finalChatConfig,
         isBuiltinAgent: false,
-        plugins: pageAgentPlugins,
+        plugins: applyPluginFilters(pageAgentPlugins),
       };
     }
 
@@ -208,7 +245,7 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
       agentConfig: finalAgentConfig,
       chatConfig: finalChatConfig,
       isBuiltinAgent: false,
-      plugins: finalPlugins,
+      plugins: applyPluginFilters(finalPlugins),
     };
   }
 
@@ -260,11 +297,13 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
   }
 
   // Builtin agent - merge runtime config
+  // Use basePlugins as fallback when ctx.plugins is not provided
+  // This ensures builtin agents (e.g., INBOX) receive user-configured plugins for merging
   const runtimeConfig = getAgentRuntimeConfig(slug, {
     documentContent,
     groupSupervisorContext,
     model,
-    plugins,
+    plugins: plugins || basePlugins,
     targetAgentConfig,
   });
 
@@ -329,7 +368,7 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
     agentConfig: finalAgentConfig,
     chatConfig: resolvedChatConfig,
     isBuiltinAgent: true,
-    plugins: finalPlugins,
+    plugins: applyPluginFilters(finalPlugins),
     slug,
   };
 };

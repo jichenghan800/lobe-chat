@@ -18,7 +18,7 @@ import KlavisServerItem from '@/features/ChatInput/ActionBar/Tools/KlavisServerI
 import LobehubSkillServerItem from '@/features/ChatInput/ActionBar/Tools/LobehubSkillServerItem';
 import ToolItem from '@/features/ChatInput/ActionBar/Tools/ToolItem';
 import ActionDropdown from '@/features/ChatInput/ActionBar/components/ActionDropdown';
-import PluginStore from '@/features/PluginStore';
+import { createSkillStoreModal } from '@/features/SkillStore';
 import { useCheckPluginsIsInstalled } from '@/hooks/useCheckPluginsIsInstalled';
 import { useFetchInstalledPlugins } from '@/hooks/useFetchInstalledPlugins';
 import { useAgentStore } from '@/store/agent';
@@ -157,8 +157,6 @@ const AgentTool = memo<AgentToolProps>(
     const allLobehubSkillServers = useToolStore(lobehubSkillStoreSelectors.getServers, isEqual);
     const isLobehubSkillEnabled = useServerConfigStore(serverConfigSelectors.enableLobehubSkill);
 
-    // Plugin store modal state
-    const [modalOpen, setModalOpen] = useState(false);
     const [updating, setUpdating] = useState(false);
 
     // Tab state for dual-column layout
@@ -423,7 +421,7 @@ const AgentTool = memo<AgentToolProps>(
           key: 'plugin-store',
           label: t('tools.plugins.store'),
           onClick: () => {
-            setModalOpen(true);
+            createSkillStoreModal();
           },
         },
       ],
@@ -556,20 +554,7 @@ const AgentTool = memo<AgentToolProps>(
       <>
         {/* Plugin Selector and Tags */}
         <Flexbox align="center" gap={8} horizontal wrap={'wrap'}>
-          {/* Second Row: Selected Plugins as Tags */}
-          {allEnabledTools.map((pluginId) => {
-            return (
-              <PluginTag
-                key={pluginId}
-                onRemove={handleRemovePlugin(pluginId)}
-                pluginId={pluginId}
-                showDesktopOnlyLabel={filterAvailableInWeb}
-                useAllMetaList={useAllMetaList}
-              />
-            );
-          })}
           {/* Plugin Selector Dropdown - Using Action component pattern */}
-
           <Suspense fallback={button}>
             <ActionDropdown
               maxHeight={500}
@@ -622,10 +607,19 @@ const AgentTool = memo<AgentToolProps>(
               {button}
             </ActionDropdown>
           </Suspense>
+          {/* Selected Plugins as Tags */}
+          {allEnabledTools.map((pluginId) => {
+            return (
+              <PluginTag
+                key={pluginId}
+                onRemove={handleRemovePlugin(pluginId)}
+                pluginId={pluginId}
+                showDesktopOnlyLabel={filterAvailableInWeb}
+                useAllMetaList={useAllMetaList}
+              />
+            );
+          })}
         </Flexbox>
-
-        {/* PluginStore Modal - rendered outside Flexbox to avoid event interference */}
-        {modalOpen && <PluginStore open={modalOpen} setOpen={setModalOpen} />}
       </>
     );
   },

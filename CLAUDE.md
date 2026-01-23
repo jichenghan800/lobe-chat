@@ -32,6 +32,10 @@ This repository adopts a monorepo structure.
 
 see @.cursor/rules/typescript.mdc
 
+### Code Comments
+
+- **Avoid meaningless comments**: Do not write comments that merely restate what the code does. Comments should explain _why_ something is done, not _what_ is being done. The code itself should be self-explanatory.
+
 ### Testing
 
 - **Required Rule**: read `.cursor/rules/testing-guide/testing-guide.mdc` before writing tests
@@ -57,9 +61,11 @@ see @.cursor/rules/typescript.mdc
 - **Dev**: Translate `locales/zh-CN/namespace.json` and `locales/en-US/namespace.json` locales file only for dev preview
 - DON'T run `pnpm i18n`, let CI auto handle it
 
-## Linear Issue Management(ignore if not installed linear mcp)
+## Linear Issue Management (search tools first; ignore if not installed)
 
-Read @.cursor/rules/linear.mdc when working with Linear issues.
+ClaudeCode may not inject MCP tools until they are discovered/used.\
+Before applying Linear workflows, **use tool search** to confirm `linear-server` exists (e.g. search `linear` / `mcp__linear-server__`). If not found, treat it as not installed.\
+Then read `@.cursor/rules/linear.mdc` when working with Linear issues.
 
 ## Rules Index
 

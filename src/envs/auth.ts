@@ -2,55 +2,12 @@
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
-/**
- * Resolve public auth URL with compatibility fallbacks for NextAuth and Vercel deployments.
- */
-const resolvePublicAuthUrl = () => {
-  if (process.env.NEXT_PUBLIC_AUTH_URL) return process.env.NEXT_PUBLIC_AUTH_URL;
-
-  if (process.env.NEXTAUTH_URL) {
-    try {
-      return new URL(process.env.NEXTAUTH_URL).origin;
-    } catch {
-      // ignore invalid NEXTAUTH_URL
-    }
-  }
-
-  if (process.env.APP_URL) {
-    try {
-      return new URL(process.env.APP_URL).origin;
-    } catch {
-      // ignore invalid APP_URL
-    }
-  }
-
-  if (process.env.VERCEL_URL) {
-    try {
-      const normalizedVercelUrl = process.env.VERCEL_URL.startsWith('http')
-        ? process.env.VERCEL_URL
-        : `https://${process.env.VERCEL_URL}`;
-
-      return new URL(normalizedVercelUrl).origin;
-    } catch {
-      // ignore invalid Vercel URL
-    }
-  }
-
-  return undefined;
-};
-
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace NodeJS {
     interface ProcessEnv {
-      // ===== Clerk ===== //
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
-      CLERK_SECRET_KEY?: string;
-      CLERK_WEBHOOK_SECRET?: string;
-
       // ===== Auth (shared by Better Auth / Next Auth) ===== //
       AUTH_SECRET?: string;
-      NEXT_PUBLIC_AUTH_URL?: string;
       AUTH_EMAIL_VERIFICATION?: string;
       ENABLE_MAGIC_LINK?: string;
       AUTH_SSO_PROVIDERS?: string;
@@ -174,22 +131,13 @@ declare global {
 export const getAuthConfig = () => {
   return createEnv({
     client: {
-      // ---------------------------------- clerk ----------------------------------
-      NEXT_PUBLIC_ENABLE_CLERK_AUTH: z.boolean().optional().default(false),
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().optional(),
-
       // ---------------------------------- better auth ----------------------------------
       NEXT_PUBLIC_ENABLE_BETTER_AUTH: z.boolean().optional(),
-      NEXT_PUBLIC_AUTH_URL: z.string().optional(),
 
       // ---------------------------------- next auth ----------------------------------
       NEXT_PUBLIC_ENABLE_NEXT_AUTH: z.boolean().optional(),
     },
     server: {
-      // ---------------------------------- clerk ----------------------------------
-      CLERK_SECRET_KEY: z.string().optional(),
-      CLERK_WEBHOOK_SECRET: z.string().optional(),
-
       // ---------------------------------- better auth ----------------------------------
       AUTH_SECRET: z.string().optional(),
       AUTH_SSO_PROVIDERS: z.string().optional().default(''),
@@ -300,18 +248,8 @@ export const getAuthConfig = () => {
     },
 
     runtimeEnv: {
-      // Clerk
-      NEXT_PUBLIC_ENABLE_CLERK_AUTH:
-        process.env.NEXT_PUBLIC_ENABLE_CLERK_AUTH === '1' ||
-        !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-      CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-      CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
-
       // ---------------------------------- better auth ----------------------------------
       NEXT_PUBLIC_ENABLE_BETTER_AUTH: process.env.NEXT_PUBLIC_ENABLE_BETTER_AUTH === '1',
-      // Fallback to NEXTAUTH_URL origin or Vercel deployment domain for seamless migration from next-auth
-      NEXT_PUBLIC_AUTH_URL: resolvePublicAuthUrl(),
       // Fallback to NEXT_PUBLIC_* for seamless migration
       AUTH_EMAIL_VERIFICATION:
         process.env.AUTH_EMAIL_VERIFICATION === '1' ||
@@ -437,13 +375,9 @@ export const getAuthConfig = () => {
 export const authEnv = getAuthConfig();
 
 // Auth flags - use process.env directly for build-time dead code elimination
-export const enableClerk =
-  process.env.NEXT_PUBLIC_ENABLE_CLERK_AUTH === '1'
-    ? true
-    : !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-export const enableBetterAuth = process.env.NEXT_PUBLIC_ENABLE_BETTER_AUTH === '1';
+// Better Auth is the default auth solution when NextAuth is not explicitly enabled
 export const enableNextAuth = process.env.NEXT_PUBLIC_ENABLE_NEXT_AUTH === '1';
-export const enableAuth = enableClerk || enableBetterAuth || enableNextAuth || false;
+export const enableBetterAuth = !enableNextAuth;
 
 // Auth headers and constants
 export const LOBE_CHAT_AUTH_HEADER = 'X-lobe-chat-auth';

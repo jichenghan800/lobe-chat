@@ -120,11 +120,6 @@ export const createGroupOrchestrationExecutors = (
         };
       }
 
-      // Variable to capture the decision from tool handler
-      // let decision: ExecutorResult['type'] | undefined;
-      // let decisionParams: Record<string, unknown> = {};
-      // let skipCallSupervisor = false;
-
       // Execute Supervisor agent with the supervisor's agentId in context
       // Mark isSupervisor=true so assistant messages get metadata.isSupervisor for UI rendering
       // Note: Don't pass operationId - let it create a new child operation (same as call_agent)
@@ -138,10 +133,6 @@ export const createGroupOrchestrationExecutors = (
       });
 
       log(`[${sessionLogId}] Supervisor agent finished`);
-
-      // Check what decision was made by the supervisor
-      // This is captured from the groupOrchestration callbacks registered by tools
-      // const orchestrationCallbacks = get().getGroupOrchestrationCallbacks();
 
       // If no tool was called (supervisor finished normally), end orchestration
       // The actual decision is captured via the afterCompletion callbacks
@@ -244,13 +235,14 @@ export const createGroupOrchestrationExecutors = (
     parallel_call_agents: async (instruction, state): Promise<GroupOrchestrationExecutorOutput> => {
       const {
         agentIds,
+        disableTools,
         instruction: agentInstruction,
         toolMessageId,
       } = (instruction as SupervisorInstructionParallelCallAgents).payload;
 
       const sessionLogId = `${state.operationId}:parallel_call_agents`;
       log(
-        `[${sessionLogId}] Broadcasting to agents: ${agentIds.join(', ')}, instruction: ${agentInstruction}, toolMessageId: ${toolMessageId}`,
+        `[${sessionLogId}] Broadcasting to agents: ${agentIds.join(', ')}, instruction: ${agentInstruction}, toolMessageId: ${toolMessageId}, disableTools: ${disableTools}`,
       );
 
       const messages = getMessages();
@@ -288,10 +280,12 @@ export const createGroupOrchestrationExecutors = (
       // - messageContext keeps the group's main conversation context (for message storage)
       // - subAgentId specifies which agent's config to use for each agent
       // - toolMessageId is used as parentMessageId so agent responses are children of the tool message
+      // - disableTools prevents broadcast agents from calling tools (expected behavior for broadcast)
       await Promise.all(
         agentIds.map(async (agentId) => {
           await get().internal_execAgentRuntime({
             context: { ...messageContext, subAgentId: agentId },
+            disableTools,
             messages: messagesWithInstruction,
             parentMessageId: toolMessageId,
             parentMessageType: 'tool',
