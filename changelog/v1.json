@@ -2356,6 +2356,16 @@
   },
   {
     "children": {
+      "fixes": [
+        "Add advace config back in agent/group profiles, fixed the group topic copy not right."
+      ],
+      "improvements": ["Move plugin store button outside scroll container."]
+    },
+    "date": "2026-01-23",
+    "version": "1.153.1"
+  },
+  {
+    "children": {
       "improvements": ["Improve auto scroll and group profile, update og, update share style."],
       "features": [
         "Add platform-aware download client menu option, add server version check for desktop app, remove Clerk authentication code, skill setting page and skill store, support agent group unpublish agents, support client tasks mode, update the sandbox preinstall libs in sys role."
