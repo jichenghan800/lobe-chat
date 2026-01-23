@@ -2,6 +2,67 @@
 
 # Changelog
 
+## [Version 1.154.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.153.1...v1.154.0)
+
+<sup>Released on **2026-01-23**</sup>
+
+#### ♻ Code Refactoring
+
+- **misc**: Migrate AI Rules to Claude Code Skills.
+
+#### ✨ Features
+
+- **database**: Extended async task with metadata and parent id, added index.
+- **misc**: Remove NextAuth.
+
+#### 🐛 Bug Fixes
+
+- **copilot**: History popover not refreshing when agentId changes.
+- **editor**: Prevent crash when toggling enableInputMarkdown setting.
+- **home**: Use correct CreateGroupModal for session group creation.
+- **model-runtime**: Handle null content in anthropic message builder.
+- **ModelSelect**: Resolve tooltip hover causing popup to close.
+- **pdf**: Ensure worker config before Document render.
+- **store**: Delete message before regeneration.
+- **misc**: Fix auto scroll, fix favorite refresh bug and group topic refresh issue, fixed the agent group builder tools excaution edge case crash, page content switch mismatch, when use market group, the group sys role was not used.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **misc**: Migrate AI Rules to Claude Code Skills, closes [#11737](https://github.com/jaworldwideorg/OneJA-Bot/issues/11737) ([346fc46](https://github.com/jaworldwideorg/OneJA-Bot/commit/346fc46))
+
+#### What's improved
+
+- **database**: Extended async task with metadata and parent id, added index, closes [#11712](https://github.com/jaworldwideorg/OneJA-Bot/issues/11712) ([31d2f26](https://github.com/jaworldwideorg/OneJA-Bot/commit/31d2f26))
+- **misc**: Remove NextAuth, closes [#11732](https://github.com/jaworldwideorg/OneJA-Bot/issues/11732) ([1eff864](https://github.com/jaworldwideorg/OneJA-Bot/commit/1eff864))
+
+#### What's fixed
+
+- **copilot**: History popover not refreshing when agentId changes, closes [#11731](https://github.com/jaworldwideorg/OneJA-Bot/issues/11731) ([64f39e7](https://github.com/jaworldwideorg/OneJA-Bot/commit/64f39e7))
+- **editor**: Prevent crash when toggling enableInputMarkdown setting, closes [#11755](https://github.com/jaworldwideorg/OneJA-Bot/issues/11755) ([ea5eed8](https://github.com/jaworldwideorg/OneJA-Bot/commit/ea5eed8))
+- **home**: Use correct CreateGroupModal for session group creation, closes [#11752](https://github.com/jaworldwideorg/OneJA-Bot/issues/11752) ([36bcc50](https://github.com/jaworldwideorg/OneJA-Bot/commit/36bcc50))
+- **model-runtime**: Handle null content in anthropic message builder, closes [#11756](https://github.com/jaworldwideorg/OneJA-Bot/issues/11756) ([539753a](https://github.com/jaworldwideorg/OneJA-Bot/commit/539753a))
+- **ModelSelect**: Resolve tooltip hover causing popup to close, closes [#11742](https://github.com/jaworldwideorg/OneJA-Bot/issues/11742) ([1b73f14](https://github.com/jaworldwideorg/OneJA-Bot/commit/1b73f14))
+- **pdf**: Ensure worker config before Document render, closes [#11746](https://github.com/jaworldwideorg/OneJA-Bot/issues/11746) ([ad34072](https://github.com/jaworldwideorg/OneJA-Bot/commit/ad34072))
+- **store**: Delete message before regeneration, closes [#11760](https://github.com/jaworldwideorg/OneJA-Bot/issues/11760) ([a8a6300](https://github.com/jaworldwideorg/OneJA-Bot/commit/a8a6300))
+- **misc**: Fix auto scroll, closes [#11734](https://github.com/jaworldwideorg/OneJA-Bot/issues/11734) ([892fa9f](https://github.com/jaworldwideorg/OneJA-Bot/commit/892fa9f))
+- **misc**: Fix favorite refresh bug and group topic refresh issue, closes [#11745](https://github.com/jaworldwideorg/OneJA-Bot/issues/11745) ([5d115ef](https://github.com/jaworldwideorg/OneJA-Bot/commit/5d115ef))
+- **misc**: Fixed the agent group builder tools excaution edge case crash, closes [#11735](https://github.com/jaworldwideorg/OneJA-Bot/issues/11735) ([5de4742](https://github.com/jaworldwideorg/OneJA-Bot/commit/5de4742))
+- **misc**: Page content switch mismatch, closes [#11758](https://github.com/jaworldwideorg/OneJA-Bot/issues/11758) ([fdc8f95](https://github.com/jaworldwideorg/OneJA-Bot/commit/fdc8f95))
+- **misc**: When use market group, the group sys role was not used, closes [#11739](https://github.com/jaworldwideorg/OneJA-Bot/issues/11739) ([afc76f9](https://github.com/jaworldwideorg/OneJA-Bot/commit/afc76f9))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.357](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.356...v2.0.0-next.357)
 
 <sup>Released on **2026-01-23**</sup>
