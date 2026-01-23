@@ -1,6 +1,13 @@
 [
   {
     "children": {
+      "fixes": ["Page content switch mismatch."]
+    },
+    "date": "2026-01-23",
+    "version": "2.0.0-next.357"
+  },
+  {
+    "children": {
       "features": ["Remove NextAuth."]
     },
     "date": "2026-01-23",
@@ -2412,6 +2419,17 @@
     },
     "date": "2025-10-30",
     "version": "2.0.0-next.1"
+  },
+  {
+    "children": {
+      "improvements": ["Migrate AI Rules to Claude Code Skills."],
+      "features": ["Remove NextAuth."],
+      "fixes": [
+        "Fix auto scroll, fix favorite refresh bug and group topic refresh issue, fixed the agent group builder tools excaution edge case crash, page content switch mismatch, when use market group, the group sys role was not used."
+      ]
+    },
+    "date": "2026-01-23",
+    "version": "1.154.0"
   },
   {
     "children": {
