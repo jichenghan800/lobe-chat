@@ -2,6 +2,40 @@
 
 # Changelog
 
+### [Version 1.153.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.153.0...v1.153.1)
+
+<sup>Released on **2026-01-23**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Add advace config back in agent/group profiles, fixed the group topic copy not right.
+
+#### 💄 Styles
+
+- **misc**: Move plugin store button outside scroll container.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Add advace config back in agent/group profiles, closes [#11727](https://github.com/jaworldwideorg/OneJA-Bot/issues/11727) ([403175f](https://github.com/jaworldwideorg/OneJA-Bot/commit/403175f))
+- **misc**: Fixed the group topic copy not right, closes [#11730](https://github.com/jaworldwideorg/OneJA-Bot/issues/11730) ([282c1fb](https://github.com/jaworldwideorg/OneJA-Bot/commit/282c1fb))
+
+#### Styles
+
+- **misc**: Move plugin store button outside scroll container, closes [#11728](https://github.com/jaworldwideorg/OneJA-Bot/issues/11728) ([c484d1a](https://github.com/jaworldwideorg/OneJA-Bot/commit/c484d1a))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 1.153.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.152.0...v1.153.0)
 
 <sup>Released on **2026-01-23**</sup>
