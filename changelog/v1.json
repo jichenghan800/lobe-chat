@@ -1,6 +1,49 @@
 [
   {
     "children": {
+      "features": ["Remove NextAuth."]
+    },
+    "date": "2026-01-23",
+    "version": "2.0.0-next.356"
+  },
+  {
+    "children": {
+      "fixes": ["Fix favorite refresh bug and group topic refresh issue."]
+    },
+    "date": "2026-01-23",
+    "version": "2.0.0-next.355"
+  },
+  {
+    "children": {
+      "improvements": ["Migrate AI Rules to Claude Code Skills."]
+    },
+    "date": "2026-01-23",
+    "version": "2.0.0-next.354"
+  },
+  {
+    "children": {},
+    "date": "2026-01-23",
+    "version": "2.0.0-next.353"
+  },
+  {
+    "children": {},
+    "date": "2026-01-23",
+    "version": "2.0.0-next.352"
+  },
+  {
+    "children": {
+      "fixes": ["Fix auto scroll."]
+    },
+    "date": "2026-01-23",
+    "version": "2.0.0-next.351"
+  },
+  {
+    "children": {},
+    "date": "2026-01-23",
+    "version": "2.0.0-next.350"
+  },
+  {
+    "children": {
       "fixes": ["When use market group, the group sys role was not used."]
     },
     "date": "2026-01-23",
