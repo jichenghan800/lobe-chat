@@ -2,13 +2,41 @@
 
 # Changelog
 
-### [Version 1.153.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.153.0...v1.153.1)
+## [Version 2.0.0-next.348](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.347...v2.0.0-next.348)
 
 <sup>Released on **2026-01-23**</sup>
 
 #### 🐛 Bug Fixes
 
-- **misc**: Add advace config back in agent/group profiles, fixed the group topic copy not right.
+- **copilot**: History popover not refreshing when agentId changes.
+- **misc**: Fixed the agent group builder tools excaution edge case crash, fixed the group topic copy not right.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **copilot**: History popover not refreshing when agentId changes, closes [#11731](https://github.com/lobehub/lobe-chat/issues/11731) ([64f39e7](https://github.com/lobehub/lobe-chat/commit/64f39e7))
+- **misc**: Fixed the agent group builder tools excaution edge case crash, closes [#11735](https://github.com/lobehub/lobe-chat/issues/11735) ([5de4742](https://github.com/lobehub/lobe-chat/commit/5de4742))
+- **misc**: Fixed the group topic copy not right, closes [#11730](https://github.com/lobehub/lobe-chat/issues/11730) ([282c1fb](https://github.com/lobehub/lobe-chat/commit/282c1fb))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.347](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.346...v2.0.0-next.347)
+
+<sup>Released on **2026-01-23**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Add advace config back in agent/group profiles.
 
 #### 💄 Styles
 
@@ -21,106 +49,11 @@
 
 #### What's fixed
 
-- **misc**: Add advace config back in agent/group profiles, closes [#11727](https://github.com/jaworldwideorg/OneJA-Bot/issues/11727) ([403175f](https://github.com/jaworldwideorg/OneJA-Bot/commit/403175f))
-- **misc**: Fixed the group topic copy not right, closes [#11730](https://github.com/jaworldwideorg/OneJA-Bot/issues/11730) ([282c1fb](https://github.com/jaworldwideorg/OneJA-Bot/commit/282c1fb))
+- **misc**: Add advace config back in agent/group profiles, closes [#11727](https://github.com/lobehub/lobe-chat/issues/11727) ([403175f](https://github.com/lobehub/lobe-chat/commit/403175f))
 
 #### Styles
 
-- **misc**: Move plugin store button outside scroll container, closes [#11728](https://github.com/jaworldwideorg/OneJA-Bot/issues/11728) ([c484d1a](https://github.com/jaworldwideorg/OneJA-Bot/commit/c484d1a))
-
-</details>
-
-<div align="right">
-
-[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
-
-</div>
-
-## [Version 1.153.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.152.0...v1.153.0)
-
-<sup>Released on **2026-01-23**</sup>
-
-#### ♻ Code Refactoring
-
-- **auth**: Remove NEXT_PUBLIC_AUTH_URL env variable.
-- **model-select**: Migrate FunctionCallingModelSelect to LobeSelect.
-- **ModelSwitchPanel**: Migrate from Popover to DropdownMenu with virtual scrolling.
-- **userMemories**: Removed un-used code.
-- **misc**: Improve memory data with experience and identity, move vercel-react-best-practices skills to .agents directory.
-
-#### ✨ Features
-
-- **database**: Added user memory activity.
-- **desktop**: Add legacy local database detection and migration guidance.
-- **misc**: Add platform-aware download client menu option, add server version check for desktop app, remove Clerk authentication code, skill setting page and skill store, support agent group unpublish agents, support client tasks mode, update the sandbox preinstall libs in sys role.
-
-#### 🐛 Bug Fixes
-
-- **copilot**: Pass correct scope when creating new session in PageEditor.
-- **desktop**: Gracefully handle missing update manifest 404 errors.
-- **model-runtime**: Filter unsupported image types (SVG) before sending to vision models.
-- **pdf**: Upgrade pdfjs-dist and react-pdf to v5.x.
-- **sidebar-drawer**: Fix drawer positioning and title style.
-- **misc**: Fix group broadcast trigger tool use, fix local system tools, fix memory schema, fix multi agent tasks issue, fix multi tasks no summary issue, fix scope issue, fix tool argument scape and improve multi task run, fixed the sandbox tools call when error should use right callback, improve e2e server and complete i18n resources, slove the agent group editor not focus in editdata area, slove the agents header switch agents the lobeAI not show problem, sloved the old removeSessionTopics not work, TypewriterEffect not refreshing on language change, updata cron job ui & fixed commnuity pagenation goto error, update the agentbuilder tools not always use humanIntervention.
-
-#### 💄 Styles
-
-- **misc**: Improve auto scroll and group profile, update og, update share style.
-
-<br/>
-
-<details>
-<summary><kbd>Improvements and Fixes</kbd></summary>
-
-#### Code refactoring
-
-- **auth**: Remove NEXT_PUBLIC_AUTH_URL env variable, closes [#11658](https://github.com/jaworldwideorg/OneJA-Bot/issues/11658) ([c0f9875](https://github.com/jaworldwideorg/OneJA-Bot/commit/c0f9875))
-- **model-select**: Migrate FunctionCallingModelSelect to LobeSelect, closes [#11664](https://github.com/jaworldwideorg/OneJA-Bot/issues/11664) ([ad51305](https://github.com/jaworldwideorg/OneJA-Bot/commit/ad51305))
-- **ModelSwitchPanel**: Migrate from Popover to DropdownMenu with virtual scrolling, closes [#11663](https://github.com/jaworldwideorg/OneJA-Bot/issues/11663) ([c9d9dff](https://github.com/jaworldwideorg/OneJA-Bot/commit/c9d9dff))
-- **userMemories**: Removed un-used code, closes [#11713](https://github.com/jaworldwideorg/OneJA-Bot/issues/11713) ([89750fc](https://github.com/jaworldwideorg/OneJA-Bot/commit/89750fc))
-- **misc**: Improve memory data with experience and identity, closes [#11717](https://github.com/jaworldwideorg/OneJA-Bot/issues/11717) ([bdb3eb4](https://github.com/jaworldwideorg/OneJA-Bot/commit/bdb3eb4))
-- **misc**: Move vercel-react-best-practices skills to .agents directory, closes [#11703](https://github.com/jaworldwideorg/OneJA-Bot/issues/11703) ([6df7731](https://github.com/jaworldwideorg/OneJA-Bot/commit/6df7731))
-
-#### What's improved
-
-- **database**: Added user memory activity, closes [#11680](https://github.com/jaworldwideorg/OneJA-Bot/issues/11680) ([0160fbd](https://github.com/jaworldwideorg/OneJA-Bot/commit/0160fbd))
-- **desktop**: Add legacy local database detection and migration guidance, closes [#11682](https://github.com/jaworldwideorg/OneJA-Bot/issues/11682) ([5664b84](https://github.com/jaworldwideorg/OneJA-Bot/commit/5664b84))
-- **misc**: Add platform-aware download client menu option, closes [#11676](https://github.com/jaworldwideorg/OneJA-Bot/issues/11676) ([55abddc](https://github.com/jaworldwideorg/OneJA-Bot/commit/55abddc))
-- **misc**: Add server version check for desktop app, closes [#11710](https://github.com/jaworldwideorg/OneJA-Bot/issues/11710) ([0cf2723](https://github.com/jaworldwideorg/OneJA-Bot/commit/0cf2723))
-- **misc**: Remove Clerk authentication code, closes [#11711](https://github.com/jaworldwideorg/OneJA-Bot/issues/11711) ([395595a](https://github.com/jaworldwideorg/OneJA-Bot/commit/395595a))
-- **misc**: Skill setting page and skill store, closes [#11665](https://github.com/jaworldwideorg/OneJA-Bot/issues/11665) ([d8c0c26](https://github.com/jaworldwideorg/OneJA-Bot/commit/d8c0c26))
-- **misc**: Support agent group unpublish agents, closes [#11687](https://github.com/jaworldwideorg/OneJA-Bot/issues/11687) ([4e060be](https://github.com/jaworldwideorg/OneJA-Bot/commit/4e060be))
-- **misc**: Support client tasks mode, closes [#11666](https://github.com/jaworldwideorg/OneJA-Bot/issues/11666) ([98cf57b](https://github.com/jaworldwideorg/OneJA-Bot/commit/98cf57b))
-- **misc**: Update the sandbox preinstall libs in sys role, closes [#11688](https://github.com/jaworldwideorg/OneJA-Bot/issues/11688) ([404c577](https://github.com/jaworldwideorg/OneJA-Bot/commit/404c577))
-
-#### What's fixed
-
-- **copilot**: Pass correct scope when creating new session in PageEditor, closes [#11714](https://github.com/jaworldwideorg/OneJA-Bot/issues/11714) ([0259270](https://github.com/jaworldwideorg/OneJA-Bot/commit/0259270))
-- **desktop**: Gracefully handle missing update manifest 404 errors, closes [#11625](https://github.com/jaworldwideorg/OneJA-Bot/issues/11625) ([13e95b9](https://github.com/jaworldwideorg/OneJA-Bot/commit/13e95b9))
-- **model-runtime**: Filter unsupported image types (SVG) before sending to vision models, closes [#11698](https://github.com/jaworldwideorg/OneJA-Bot/issues/11698) ([c0c99a7](https://github.com/jaworldwideorg/OneJA-Bot/commit/c0c99a7))
-- **pdf**: Upgrade pdfjs-dist and react-pdf to v5.x, closes [#11686](https://github.com/jaworldwideorg/OneJA-Bot/issues/11686) ([2b620df](https://github.com/jaworldwideorg/OneJA-Bot/commit/2b620df))
-- **sidebar-drawer**: Fix drawer positioning and title style, closes [#11655](https://github.com/jaworldwideorg/OneJA-Bot/issues/11655) ([cf5320e](https://github.com/jaworldwideorg/OneJA-Bot/commit/cf5320e))
-- **misc**: Fix group broadcast trigger tool use, closes [#11646](https://github.com/jaworldwideorg/OneJA-Bot/issues/11646) ([831a9b3](https://github.com/jaworldwideorg/OneJA-Bot/commit/831a9b3))
-- **misc**: Fix local system tools, closes [#11702](https://github.com/jaworldwideorg/OneJA-Bot/issues/11702) ([6548fc7](https://github.com/jaworldwideorg/OneJA-Bot/commit/6548fc7))
-- **misc**: Fix memory schema, closes [#11645](https://github.com/jaworldwideorg/OneJA-Bot/issues/11645) ([3baf780](https://github.com/jaworldwideorg/OneJA-Bot/commit/3baf780))
-- **misc**: Fix multi agent tasks issue, closes [#11672](https://github.com/jaworldwideorg/OneJA-Bot/issues/11672) ([9de773b](https://github.com/jaworldwideorg/OneJA-Bot/commit/9de773b))
-- **misc**: Fix multi tasks no summary issue, closes [#11685](https://github.com/jaworldwideorg/OneJA-Bot/issues/11685) ([26ce317](https://github.com/jaworldwideorg/OneJA-Bot/commit/26ce317))
-- **misc**: Fix scope issue, closes [#11719](https://github.com/jaworldwideorg/OneJA-Bot/issues/11719) ([17adde8](https://github.com/jaworldwideorg/OneJA-Bot/commit/17adde8))
-- **misc**: Fix tool argument scape and improve multi task run, closes [#11691](https://github.com/jaworldwideorg/OneJA-Bot/issues/11691) ([b13bb8a](https://github.com/jaworldwideorg/OneJA-Bot/commit/b13bb8a))
-- **misc**: Fixed the sandbox tools call when error should use right callback, closes [#11721](https://github.com/jaworldwideorg/OneJA-Bot/issues/11721) ([e8fce68](https://github.com/jaworldwideorg/OneJA-Bot/commit/e8fce68))
-- **misc**: Improve e2e server and complete i18n resources, closes [#11678](https://github.com/jaworldwideorg/OneJA-Bot/issues/11678) ([d450dd9](https://github.com/jaworldwideorg/OneJA-Bot/commit/d450dd9))
-- **misc**: Slove the agent group editor not focus in editdata area, closes [#11677](https://github.com/jaworldwideorg/OneJA-Bot/issues/11677) ([9ac84e6](https://github.com/jaworldwideorg/OneJA-Bot/commit/9ac84e6))
-- **misc**: Slove the agents header switch agents the lobeAI not show problem, closes [#11726](https://github.com/jaworldwideorg/OneJA-Bot/issues/11726) ([f45f508](https://github.com/jaworldwideorg/OneJA-Bot/commit/f45f508))
-- **misc**: Sloved the old removeSessionTopics not work, closes [#11671](https://github.com/jaworldwideorg/OneJA-Bot/issues/11671) ([06d41e5](https://github.com/jaworldwideorg/OneJA-Bot/commit/06d41e5))
-- **misc**: TypewriterEffect not refreshing on language change, closes [#11657](https://github.com/jaworldwideorg/OneJA-Bot/issues/11657) ([ba30f46](https://github.com/jaworldwideorg/OneJA-Bot/commit/ba30f46))
-- **misc**: Updata cron job ui & fixed commnuity pagenation goto error, closes [#11700](https://github.com/jaworldwideorg/OneJA-Bot/issues/11700) ([42ad2a0](https://github.com/jaworldwideorg/OneJA-Bot/commit/42ad2a0))
-- **misc**: Update the agentbuilder tools not always use humanIntervention, closes [#11696](https://github.com/jaworldwideorg/OneJA-Bot/issues/11696) ([0d3017b](https://github.com/jaworldwideorg/OneJA-Bot/commit/0d3017b))
-
-#### Styles
-
-- **misc**: Improve auto scroll and group profile, closes [#11725](https://github.com/jaworldwideorg/OneJA-Bot/issues/11725) ([550acc2](https://github.com/jaworldwideorg/OneJA-Bot/commit/550acc2))
-- **misc**: Update og, closes [#11709](https://github.com/jaworldwideorg/OneJA-Bot/issues/11709) ([01cf4e4](https://github.com/jaworldwideorg/OneJA-Bot/commit/01cf4e4))
-- **misc**: Update share style, closes [#11716](https://github.com/jaworldwideorg/OneJA-Bot/issues/11716) ([3c70dfa](https://github.com/jaworldwideorg/OneJA-Bot/commit/3c70dfa))
+- **misc**: Move plugin store button outside scroll container, closes [#11728](https://github.com/lobehub/lobe-chat/issues/11728) ([c484d1a](https://github.com/lobehub/lobe-chat/commit/c484d1a))
 
 </details>
 
