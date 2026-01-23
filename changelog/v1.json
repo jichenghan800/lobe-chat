@@ -2348,6 +2348,19 @@
   },
   {
     "children": {
+      "improvements": ["Improve auto scroll and group profile, update og, update share style."],
+      "features": [
+        "Add platform-aware download client menu option, add server version check for desktop app, remove Clerk authentication code, skill setting page and skill store, support agent group unpublish agents, support client tasks mode, update the sandbox preinstall libs in sys role."
+      ],
+      "fixes": [
+        "Fix group broadcast trigger tool use, fix local system tools, fix memory schema, fix multi agent tasks issue, fix multi tasks no summary issue, fix scope issue, fix tool argument scape and improve multi task run, fixed the sandbox tools call when error should use right callback, improve e2e server and complete i18n resources, slove the agent group editor not focus in editdata area, slove the agents header switch agents the lobeAI not show problem, sloved the old removeSessionTopics not work, TypewriterEffect not refreshing on language change, updata cron job ui & fixed commnuity pagenation goto error, update the agentbuilder tools not always use humanIntervention."
+      ]
+    },
+    "date": "2026-01-23",
+    "version": "1.153.0"
+  },
+  {
+    "children": {
       "improvements": [
         "Fix left panel on group page, improve auto scroll and loading hint, improve operation hint and fix scroll issue, optimize profile settings skeleton screen, update i18n, update i18n."
       ],
