@@ -49,7 +49,6 @@ if (process.env.NODE_ENV === 'development') {
 // Email verification link expiration time (in seconds)
 // Default is 1 hour (3600 seconds) as per Better Auth documentation
 const VERIFICATION_LINK_EXPIRES_IN = 3600;
-const enableEmailAndPassword = authEnv.AUTH_ENABLE_EMAIL_PASSWORD;
 
 /**
  * Safely extract hostname from APP_URL for passkey rpID.
@@ -108,7 +107,7 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
 
     emailAndPassword: {
       autoSignIn: true,
-      enabled: enableEmailAndPassword,
+      enabled: true,
       maxPasswordLength: 64,
       minPasswordLength: 8,
       requireEmailVerification: authEnv.AUTH_EMAIL_VERIFICATION,
