@@ -2,6 +2,53 @@
 
 # Changelog
 
+## [Version 1.156.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.155.0...v1.156.0)
+
+<sup>Released on **2026-01-26**</sup>
+
+#### ✨ Features
+
+- **desktop**: Add manual update check entry in About page.
+- **electron**: Enhance native module handling and improve desktop features.
+- **utils**: Added errorCauseFrom, errorMessageFrom, errorNameFrom.
+- **misc**: Group builder not set true edit data, share page improvements and pg17 docs update.
+
+#### 🐛 Bug Fixes
+
+- **community**: Should be able to switch category with All and Discover.
+- **model-runtime**: Filter null values from enum for Gemini compatibility.
+- **misc**: Fix page count issue, fix resource pages, group builder not set true edit data, tts and translate error.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **desktop**: Add manual update check entry in About page, closes [#11854](https://github.com/jaworldwideorg/OneJA-Bot/issues/11854) ([ec854d7](https://github.com/jaworldwideorg/OneJA-Bot/commit/ec854d7))
+- **electron**: Enhance native module handling and improve desktop features, closes [#11867](https://github.com/jaworldwideorg/OneJA-Bot/issues/11867) ([e3c80d5](https://github.com/jaworldwideorg/OneJA-Bot/commit/e3c80d5))
+- **utils**: Added errorCauseFrom, errorMessageFrom, errorNameFrom, closes [#11864](https://github.com/jaworldwideorg/OneJA-Bot/issues/11864) ([a396ab1](https://github.com/jaworldwideorg/OneJA-Bot/commit/a396ab1))
+- **misc**: Group builder not set true edit data, closes [#11861](https://github.com/jaworldwideorg/OneJA-Bot/issues/11861) ([37944e7](https://github.com/jaworldwideorg/OneJA-Bot/commit/37944e7))
+- **misc**: Share page improvements and pg17 docs update, closes [#11850](https://github.com/jaworldwideorg/OneJA-Bot/issues/11850) ([5b953b1](https://github.com/jaworldwideorg/OneJA-Bot/commit/5b953b1))
+
+#### What's fixed
+
+- **community**: Should be able to switch category with All and Discover, closes [#11869](https://github.com/jaworldwideorg/OneJA-Bot/issues/11869) ([ba0fab1](https://github.com/jaworldwideorg/OneJA-Bot/commit/ba0fab1))
+- **model-runtime**: Filter null values from enum for Gemini compatibility, closes [#11859](https://github.com/jaworldwideorg/OneJA-Bot/issues/11859) ([1163f71](https://github.com/jaworldwideorg/OneJA-Bot/commit/1163f71))
+- **misc**: Fix page count issue, closes [#11868](https://github.com/jaworldwideorg/OneJA-Bot/issues/11868) ([89572e4](https://github.com/jaworldwideorg/OneJA-Bot/commit/89572e4))
+- **misc**: Fix resource pages, closes [#11863](https://github.com/jaworldwideorg/OneJA-Bot/issues/11863) ([7ce31c1](https://github.com/jaworldwideorg/OneJA-Bot/commit/7ce31c1))
+- **misc**: Group builder not set true edit data, closes [#11858](https://github.com/jaworldwideorg/OneJA-Bot/issues/11858) ([8eba0e6](https://github.com/jaworldwideorg/OneJA-Bot/commit/8eba0e6))
+- **misc**: Tts and translate error, closes [#11871](https://github.com/jaworldwideorg/OneJA-Bot/issues/11871) ([b63c791](https://github.com/jaworldwideorg/OneJA-Bot/commit/b63c791))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.388](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.387...v2.0.0-next.388)
 
 <sup>Released on **2026-01-26**</sup>
