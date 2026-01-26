@@ -2059,7 +2059,7 @@ describe('UserMemoryModel', () => {
       // accessedAt should be updated (either later or same if test runs fast)
       if (initialAccessedAt && afterIdentity!.accessedAt) {
         expect(afterIdentity!.accessedAt.getTime()).toBeGreaterThanOrEqual(
-          initialAccessedAt.getTime(),
+          initialAccessedAt.getTime()
         );
       }
     });

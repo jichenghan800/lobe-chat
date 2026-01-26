@@ -567,8 +567,7 @@ const zhipuChatModels: AIChatModelCard[] = [
       search: true,
     },
     contextWindowTokens: 131_072,
-    description:
-      'Fast and low-cost: Flash-enhanced with ultra-fast reasoning and higher concurrency.',
+    description: 'Fast and low-cost: Flash-enhanced with ultra-fast reasoning and higher concurrency.',
     displayName: 'GLM-Z1-FlashX',
     id: 'glm-z1-flashx',
     maxOutput: 32_768,
@@ -790,8 +789,7 @@ const zhipuChatModels: AIChatModelCard[] = [
       vision: true,
     },
     contextWindowTokens: 16_000,
-    description:
-      'GLM-4V-Plus understands video and multiple images, suitable for multimodal tasks.',
+    description: 'GLM-4V-Plus understands video and multiple images, suitable for multimodal tasks.',
     displayName: 'GLM-4V-Plus-0111',
     id: 'glm-4v-plus-0111',
     pricing: {

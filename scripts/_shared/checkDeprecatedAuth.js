@@ -197,11 +197,7 @@ function printIssueBlock(name, vars, message, docUrl, formatVar, severity = 'err
 
   log(`\n${icon} ${name}`);
   log('─'.repeat(50));
-  log(
-    isWarning
-      ? 'Missing recommended environment variables:'
-      : 'Detected deprecated environment variables:',
-  );
+  log(isWarning ? 'Missing recommended environment variables:' : 'Detected deprecated environment variables:');
   for (const envVar of vars) {
     log(`  • ${formatVar ? formatVar(envVar) : envVar}`);
   }
@@ -241,14 +237,7 @@ function checkDeprecatedAuth(options = {}) {
     console.warn('═'.repeat(70));
 
     for (const issue of warnings) {
-      printIssueBlock(
-        issue.name,
-        issue.foundVars,
-        issue.message,
-        issue.docUrl,
-        issue.formatVar,
-        'warning',
-      );
+      printIssueBlock(issue.name, issue.foundVars, issue.message, issue.docUrl, issue.formatVar, 'warning');
     }
 
     console.warn('\n' + '═'.repeat(70));
@@ -259,18 +248,13 @@ function checkDeprecatedAuth(options = {}) {
   // Print errors and exit (blocking)
   if (errors.length > 0) {
     console.error('\n' + '═'.repeat(70));
-    console.error(`❌ ERROR: Found ${errors.length} deprecated environment variable issue(s)!`);
+    console.error(
+      `❌ ERROR: Found ${errors.length} deprecated environment variable issue(s)!`,
+    );
     console.error('═'.repeat(70));
 
     for (const issue of errors) {
-      printIssueBlock(
-        issue.name,
-        issue.foundVars,
-        issue.message,
-        issue.docUrl,
-        issue.formatVar,
-        'error',
-      );
+      printIssueBlock(issue.name, issue.foundVars, issue.message, issue.docUrl, issue.formatVar, 'error');
     }
 
     console.error('\n' + '═'.repeat(70));

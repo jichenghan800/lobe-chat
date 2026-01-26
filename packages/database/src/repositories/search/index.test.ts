@@ -2,12 +2,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { getTestDB } from '../../core/getTestDB';
-import { documents } from '../../schemas';
 import { NewAgent, agents } from '../../schemas/agent';
 import { NewFile, files } from '../../schemas/file';
 import { messages } from '../../schemas/message';
 import { NewTopic, topics } from '../../schemas/topic';
 import { users } from '../../schemas/user';
+import { documents } from '../../schemas';
 import { LobeChatDatabase } from '../../type';
 import { SearchRepo } from './index';
 

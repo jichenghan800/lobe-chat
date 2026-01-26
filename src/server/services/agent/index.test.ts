@@ -360,9 +360,7 @@ describe('AgentService', () => {
       (AgentModel as any).mockImplementation(() => mockAgentModel);
       (parseAgentConfig as any).mockReturnValue({});
       // Use mockResolvedValueOnce to avoid affecting subsequent tests
-      mockUserModel.getUserSettingsDefaultAgentConfig.mockResolvedValueOnce({
-        config: userDefaultConfig,
-      });
+      mockUserModel.getUserSettingsDefaultAgentConfig.mockResolvedValueOnce({ config: userDefaultConfig });
 
       const newService = new AgentService(mockDb, mockUserId);
       const result = await newService.getAgentConfig('agent-1');
@@ -544,9 +542,7 @@ describe('AgentService', () => {
         (AgentModel as any).mockImplementation(() => mockAgentModel);
         (parseAgentConfig as any).mockReturnValue({});
         vi.mocked(isRedisEnabled).mockReturnValue(true);
-        vi.mocked(initializeRedisWithPrefix).mockRejectedValue(
-          new Error('Redis connection failed'),
-        );
+        vi.mocked(initializeRedisWithPrefix).mockRejectedValue(new Error('Redis connection failed'));
 
         const newService = new AgentService(mockDb, mockUserId);
         const result = await newService.getAgentConfigById('agent-1');

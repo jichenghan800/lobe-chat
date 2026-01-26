@@ -23,9 +23,9 @@ import { type FileListItem as FileListItemType } from '@/types/files';
 import { formatSize } from '@/utils/format';
 import { isChunkingUnsupported } from '@/utils/isChunkingUnsupported';
 
+import { useFileItemClick } from '../../hooks/useFileItemClick';
 import DropdownMenu from '../../ItemDropdown/DropdownMenu';
 import { useFileItemDropdown } from '../../ItemDropdown/useFileItemDropdown';
-import { useFileItemClick } from '../../hooks/useFileItemClick';
 import ChunksBadge from './ChunkTag';
 import TruncatedFileName from './TruncatedFileName';
 
@@ -205,8 +205,7 @@ const FileListItem = memo<FileListItemProps>(
         emoji: sourceType === 'document' || fileType === PAGE_FILE_TYPE ? metadata?.emoji : null,
         isFolder: fileType === 'custom/folder',
         // PDF and Office files should not be treated as pages, even if they have sourceType='document'
-        isPage:
-          !isPDF && !isOfficeFile && (sourceType === 'document' || fileType === PAGE_FILE_TYPE),
+        isPage: !isPDF && !isOfficeFile && (sourceType === 'document' || fileType === PAGE_FILE_TYPE),
         isSupportedForChunking: !isChunkingUnsupported(fileType),
       };
     }, [fileType, sourceType, metadata?.emoji, name]);

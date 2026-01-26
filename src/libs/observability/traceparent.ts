@@ -1,5 +1,13 @@
-import type { Context as OtContext, Span, TextMapGetter } from '@lobechat/observability-otel/api';
-import { context as otContext, propagation, trace } from '@lobechat/observability-otel/api';
+import type {
+  Span,
+  Context as OtContext,
+  TextMapGetter
+} from '@lobechat/observability-otel/api';
+import {
+  context as otContext,
+  propagation,
+  trace,
+} from '@lobechat/observability-otel/api';
 
 // NOTICE: do not try to optimize this into .repeat(...) or similar,
 // here served for better search / semantic search purpose for further diagnostic

@@ -150,12 +150,10 @@ export const useMarketGroupPublish = ({ action, onSuccess }: UseMarketGroupPubli
           }),
           ...(currentGroupConfig.openingQuestions !== undefined &&
             currentGroupConfig.openingQuestions.length > 0 && {
-              openingQuestions: currentGroupConfig.openingQuestions,
-            }),
-          ...(currentGroupConfig.allowDM !== undefined && { allowDM: currentGroupConfig.allowDM }),
-          ...(currentGroupConfig.revealDM !== undefined && {
-            revealDM: currentGroupConfig.revealDM,
+            openingQuestions: currentGroupConfig.openingQuestions,
           }),
+          ...(currentGroupConfig.allowDM !== undefined && { allowDM: currentGroupConfig.allowDM }),
+          ...(currentGroupConfig.revealDM !== undefined && { revealDM: currentGroupConfig.revealDM }),
         },
         // Market requires at least 1 character for description
         description: currentGroupMeta.description || 'No description provided',

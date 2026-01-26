@@ -1,4 +1,5 @@
 import {
+  AuthorizationPhase,
   AuthorizationProgress,
   DataSyncConfig,
   MarketAuthorizationParams,

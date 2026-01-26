@@ -5,8 +5,8 @@ import { GitFork } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import useSWR from 'swr';
 import urlJoin from 'url-join';
+import useSWR from 'swr';
 
 import { marketApiService } from '@/services/marketApi';
 

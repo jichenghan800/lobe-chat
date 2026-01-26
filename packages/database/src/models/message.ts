@@ -659,10 +659,7 @@ export class MessageModel {
             })
             .from(threads)
             .where(
-              and(
-                eq(threads.userId, this.userId),
-                inArray(threads.sourceMessageId, taskMessageIds),
-              ),
+              and(eq(threads.userId, this.userId), inArray(threads.sourceMessageId, taskMessageIds)),
             )
         : Promise.resolve([]),
     ]);

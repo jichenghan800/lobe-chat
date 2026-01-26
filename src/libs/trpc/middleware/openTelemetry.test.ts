@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { injectSpanTraceHeaders } from '@/libs/observability/traceparent';
-
-// eslint-disable-next-line import/first
-import { openTelemetry } from './openTelemetry';
-
 const spanContext = {
   traceId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
   spanId: 'bbbbbbbbbbbbbbbb',
@@ -54,6 +49,8 @@ vi.mock('../lambda/init', () => {
   };
 });
 
+import { injectSpanTraceHeaders } from '@/libs/observability/traceparent';
+
 vi.mock('@/libs/observability/traceparent', async () => {
   const actual = await vi.importActual<typeof import('@/libs/observability/traceparent')>(
     '@/libs/observability/traceparent',
@@ -63,6 +60,9 @@ vi.mock('@/libs/observability/traceparent', async () => {
     injectSpanTraceHeaders: vi.fn(actual.injectSpanTraceHeaders),
   };
 });
+
+// eslint-disable-next-line import/first
+import { openTelemetry } from './openTelemetry';
 
 describe('openTelemetry middleware', () => {
   beforeEach(() => {

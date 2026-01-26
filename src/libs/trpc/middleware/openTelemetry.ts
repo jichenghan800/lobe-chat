@@ -19,9 +19,9 @@ import {
 import { TRPCError } from '@trpc/server';
 import { env } from 'node:process';
 
+import { name } from '../../../../package.json';
 import { injectSpanTraceHeaders } from '@/libs/observability/traceparent';
 
-import { name } from '../../../../package.json';
 import { trpc } from '../lambda/init';
 
 const tracer = trace.getTracer('trpc-server');

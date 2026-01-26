@@ -2,20 +2,20 @@
 
 import { Flexbox } from '@lobehub/ui';
 import {
+  CalendarClockIcon,
   BrainCircuitIcon,
   BubblesIcon,
-  CalendarClockIcon,
   HeartPulseIcon,
   LightbulbIcon,
   SearchIcon,
   SignatureIcon,
 } from 'lucide-react';
+import { usePathname } from '@/libs/router/navigation';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
 import NavItem, { type NavItemProps } from '@/features/NavPanel/components/NavItem';
-import { usePathname } from '@/libs/router/navigation';
 import { useGlobalStore } from '@/store/global';
 
 interface Item {

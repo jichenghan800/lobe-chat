@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { getTestDB } from '../../../core/getTestDB';
 import { topics, users } from '../../../schemas';
 import { LobeChatDatabase } from '../../../type';
 import { TopicModel } from '../../topic';
+import { getTestDB } from '../../../core/getTestDB';
 
 const userId = 'topic-memory-extractor-user';
 const serverDB: LobeChatDatabase = await getTestDB();

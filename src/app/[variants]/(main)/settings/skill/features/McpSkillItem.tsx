@@ -1,6 +1,6 @@
 'use client';
 
-import { Block, Flexbox, Modal } from '@lobehub/ui';
+import { Flexbox, Modal, Block } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
 import { Suspense, memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

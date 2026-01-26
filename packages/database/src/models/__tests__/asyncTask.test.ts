@@ -1,13 +1,17 @@
 // @vitest-environment node
 import { ASYNC_TASK_TIMEOUT } from '@lobechat/business-config/server';
-import { AsyncTaskStatus, AsyncTaskType, type UserMemoryExtractionMetadata } from '@lobechat/types';
+import {
+  AsyncTaskStatus,
+  AsyncTaskType,
+  type UserMemoryExtractionMetadata,
+} from '@lobechat/types';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getTestDB } from '../../core/getTestDB';
 import { asyncTasks, users } from '../../schemas';
 import { LobeChatDatabase } from '../../type';
 import { AsyncTaskModel } from '../asyncTask';
+import { getTestDB } from '../../core/getTestDB';
 
 const serverDB: LobeChatDatabase = await getTestDB();
 

@@ -45,9 +45,7 @@ export class MarketApiService {
   }
 
   // Get agent detail by identifier
-  async getAgentDetail(
-    identifier: string,
-  ): Promise<AgentItemDetail & { forkedFromAgentId?: string }> {
+  async getAgentDetail(identifier: string): Promise<AgentItemDetail & { forkedFromAgentId?: string }> {
     return lambdaClient.market.agent.getAgentDetail.query({
       identifier,
     }) as Promise<AgentItemDetail>;

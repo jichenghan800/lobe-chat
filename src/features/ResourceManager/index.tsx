@@ -113,7 +113,11 @@ const ResourceManager = memo(() => {
 
   return (
     <>
-      <DragUploadZone enabledFiles onUploadFiles={handleUploadFiles} style={{ height: '100%' }}>
+      <DragUploadZone
+        enabledFiles
+        onUploadFiles={handleUploadFiles}
+        style={{ height: '100%' }}
+      >
         <Flexbox className={styles.container} height={'100%'} style={cssVariables}>
           {/* Explorer is always rendered to preserve its state */}
           <Explorer />

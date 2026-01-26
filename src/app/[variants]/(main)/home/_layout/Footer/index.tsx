@@ -1,7 +1,6 @@
 'use client';
 
 import { BRANDING_EMAIL, SOCIAL_URL } from '@lobechat/business-const';
-import { useAnalytics } from '@lobehub/analytics/react';
 import { ActionIcon, DropdownMenu, Icon, type MenuProps } from '@lobehub/ui';
 import { Flexbox } from '@lobehub/ui';
 import { DiscordIcon } from '@lobehub/ui/icons';
@@ -15,6 +14,7 @@ import {
   Mail,
   Rocket,
 } from 'lucide-react';
+import { useAnalytics } from '@lobehub/analytics/react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

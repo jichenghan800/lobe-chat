@@ -1,15 +1,16 @@
 /* eslint-disable unicorn/prefer-top-level-await */
-import type { GenerateObjectSchema } from '@lobechat/model-runtime';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { exit } from 'node:process';
 
+import type { GenerateObjectSchema } from '@lobechat/model-runtime';
+
 import {
   ActivityMemorySchema,
   ContextMemorySchema,
-  ExperienceMemorySchema,
   IdentityActionsSchema,
   PreferenceMemorySchema,
+  ExperienceMemorySchema,
 } from '../src/schemas';
 import { buildGenerateObjectSchema } from '../src/utils/zod';
 
@@ -30,7 +31,7 @@ const writeSchema = async (name: string, schema: any, description: string) => {
 };
 
 const writeGenerateObjectSchema = async (name: string, generateSchema: GenerateObjectSchema) => {
-  const responseFormat: { json_schema: GenerateObjectSchema; type: 'json_schema' } = {
+  const responseFormat: { json_schema: GenerateObjectSchema, type: 'json_schema' } = {
     json_schema: {
       name: generateSchema.name || name,
       schema: generateSchema.schema,

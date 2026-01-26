@@ -18,7 +18,7 @@ export interface ActivityQueryParams {
   q?: string;
   sort?: 'capturedAt' | 'startsAt';
   status?: string[];
-  types?: string[];
+   types?: string[];
 }
 
 export interface ActivityAction {

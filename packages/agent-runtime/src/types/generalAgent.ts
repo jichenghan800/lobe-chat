@@ -77,6 +77,8 @@ export interface GeneralAgentConfig {
     maxWindowToken?: number;
   };
   modelRuntimeConfig?: {
+    model: string;
+    provider: string;
     /**
      * Compression model configuration
      * Used for context compression tasks
@@ -85,8 +87,6 @@ export interface GeneralAgentConfig {
       model: string;
       provider: string;
     };
-    model: string;
-    provider: string;
   };
   operationId: string;
   userId?: string;

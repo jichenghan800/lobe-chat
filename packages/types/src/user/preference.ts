@@ -84,8 +84,8 @@ export interface UserInitializationState {
   hasConversation?: boolean;
   interests?: string[];
   isFreePlan?: boolean;
-  isInWaitList?: boolean;
   isInviteCodeRequired?: boolean;
+  isInWaitList?: boolean;
   /** @deprecated Use onboarding field instead */
   isOnboard?: boolean;
   lastName?: string;

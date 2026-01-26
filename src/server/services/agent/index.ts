@@ -10,12 +10,7 @@ import { AgentModel } from '@/database/models/agent';
 import { SessionModel } from '@/database/models/session';
 import { UserModel } from '@/database/models/user';
 import { getRedisConfig } from '@/envs/redis';
-import {
-  RedisKeyNamespace,
-  RedisKeys,
-  initializeRedisWithPrefix,
-  isRedisEnabled,
-} from '@/libs/redis';
+import { RedisKeyNamespace, RedisKeys, initializeRedisWithPrefix, isRedisEnabled } from '@/libs/redis';
 import { getServerDefaultAgentConfig } from '@/server/globalConfig';
 
 import { type UpdateAgentResult } from './type';

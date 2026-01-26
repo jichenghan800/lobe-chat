@@ -21,9 +21,9 @@ import {
   UserMemoryIdentityModel,
   UserMemoryPreferenceModel,
 } from '@/database/models/userMemory/index';
-import { appEnv } from '@/envs/app';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
+import { appEnv } from '@/envs/app';
 import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
 import {
   MemoryExtractionWorkflowService,
@@ -77,6 +77,7 @@ export const userMemoryRouter = router({
       });
     }),
 
+
   // ============ Activity CRUD ============
   deleteActivity: userMemoryProcedure
     .input(z.object({ id: z.string() }))
@@ -98,11 +99,13 @@ export const userMemoryRouter = router({
       return ctx.experienceModel.delete(input.id);
     }),
 
+
   deleteIdentity: userMemoryProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return ctx.userMemoryModel.removeIdentityEntry(input.id);
     }),
+
 
   // ============ Preference CRUD ============
   deletePreference: userMemoryProcedure
@@ -110,6 +113,7 @@ export const userMemoryRouter = router({
     .mutation(async ({ ctx, input }) => {
       return ctx.preferenceModel.delete(input.id);
     }),
+
 
   getActivities: userMemoryProcedure.query(async ({ ctx }) => {
     return ctx.userMemoryModel.searchActivities({});
@@ -141,17 +145,16 @@ export const userMemoryRouter = router({
       return {
         error: task.error,
         id: task.id,
-        metadata: initUserMemoryExtractionMetadata(
-          task.metadata as UserMemoryExtractionMetadata | undefined,
-        ),
+        metadata: initUserMemoryExtractionMetadata(task.metadata as UserMemoryExtractionMetadata | undefined),
         status: task.status as AsyncTaskStatus,
       };
     }),
 
   // ============ Persona ============
-  getPersona: userMemoryProcedure.query(async () => {
+getPersona: userMemoryProcedure.query(async () => {
     return { content: '', summary: '' };
   }),
+
 
   getPreferences: userMemoryProcedure.query(async ({ ctx }) => {
     return ctx.userMemoryModel.searchPreferences({});
@@ -196,7 +199,8 @@ export const userMemoryRouter = router({
         source: 'chat_topic',
       });
 
-      const initialStatus = totalTopics === 0 ? AsyncTaskStatus.Success : AsyncTaskStatus.Pending;
+      const initialStatus =
+        totalTopics === 0 ? AsyncTaskStatus.Success : AsyncTaskStatus.Pending;
       const taskId = await ctx.asyncTaskModel.create({
         metadata,
         status: initialStatus,

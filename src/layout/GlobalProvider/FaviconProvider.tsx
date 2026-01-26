@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  type ReactNode,
-  createContext,
-  memo,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
+import { type ReactNode, createContext, memo, useCallback, useContext, useMemo, useState } from 'react';
 
 export type FaviconState = 'default' | 'done' | 'error' | 'progress';
 
@@ -102,9 +94,15 @@ export const FaviconProvider = memo<{ children: ReactNode }>(({ children }) => {
     });
   }, []);
 
-  const stateValue = useMemo(() => ({ currentState, isDevMode }), [currentState, isDevMode]);
+  const stateValue = useMemo(
+    () => ({ currentState, isDevMode }),
+    [currentState, isDevMode],
+  );
 
-  const settersValue = useMemo(() => ({ setFavicon, setIsDevMode }), [setFavicon, setIsDevMode]);
+  const settersValue = useMemo(
+    () => ({ setFavicon, setIsDevMode }),
+    [setFavicon, setIsDevMode],
+  );
 
   return (
     <FaviconStateContext.Provider value={stateValue}>

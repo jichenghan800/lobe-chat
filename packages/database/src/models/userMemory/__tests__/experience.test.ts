@@ -1,7 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { getTestDB } from '../../../core/getTestDB';
 import {
   NewUserMemoryExperience,
   userMemories,
@@ -9,6 +8,7 @@ import {
   users,
 } from '../../../schemas';
 import { LobeChatDatabase } from '../../../type';
+import { getTestDB } from '../../../core/getTestDB';
 import { UserMemoryExperienceModel } from '../experience';
 
 const userId = 'experience-test-user';

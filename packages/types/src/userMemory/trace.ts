@@ -1,5 +1,5 @@
-import type { MemorySourceType } from './list';
 import type { LayersEnum } from './shared';
+import type { MemorySourceType } from './list';
 
 export type MemoryExtractionAgent =
   | 'gatekeeper'

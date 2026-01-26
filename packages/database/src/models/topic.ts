@@ -17,7 +17,14 @@ import {
   sql,
 } from 'drizzle-orm';
 
-import { TopicItem, agents, agentsToSessions, messagePlugins, messages, topics } from '../schemas';
+import {
+  TopicItem,
+  agents,
+  agentsToSessions,
+  messagePlugins,
+  messages,
+  topics,
+} from '../schemas';
 import { LobeChatDatabase } from '../type';
 import { genEndDateWhere, genRangeWhere, genStartDateWhere, genWhere } from '../utils/genWhere';
 import { idGenerator } from '../utils/idGenerator';
@@ -509,7 +516,10 @@ export class TopicModel {
       const messageIds = originalMessages.map((m) => m.id);
       const originalPlugins =
         messageIds.length > 0
-          ? await tx.select().from(messagePlugins).where(inArray(messagePlugins.id, messageIds))
+          ? await tx
+              .select()
+              .from(messagePlugins)
+              .where(inArray(messagePlugins.id, messageIds))
           : [];
 
       // Build oldId -> newId mapping for messages
@@ -736,13 +746,11 @@ export class TopicModel {
     });
   };
 
-  countTopicsForMemoryExtractor = async (
-    options: {
-      endDate?: Date;
-      ignoreExtracted?: boolean;
-      startDate?: Date;
-    } = {},
-  ) => {
+  countTopicsForMemoryExtractor = async (options: {
+    endDate?: Date;
+    ignoreExtracted?: boolean;
+    startDate?: Date;
+  } = {}) => {
     const result = await this.db
       .select({ total: count(topics.id) })
       .from(topics)
@@ -753,10 +761,10 @@ export class TopicModel {
           options.endDate ? lte(topics.createdAt, options.endDate) : undefined,
           options.ignoreExtracted
             ? undefined
-            : or(
-                isNull(topics.metadata),
-                sql`(${topics.metadata}->>'userMemoryExtractStatus') IS DISTINCT FROM 'completed'`,
-              ),
+          : or(
+              isNull(topics.metadata),
+              sql`(${topics.metadata}->>'userMemoryExtractStatus') IS DISTINCT FROM 'completed'`,
+            ),
         ),
       );
 

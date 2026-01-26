@@ -88,8 +88,7 @@ export const useFileItemDropdown = ({
     lowerFilename?.endsWith('.ppt') ||
     lowerFilename?.endsWith('.pptx') ||
     lowerFilename?.endsWith('.odt');
-  const isPage =
-    !isPDF && !isOfficeFile && (sourceType === 'document' || fileType === PAGE_FILE_TYPE);
+  const isPage = !isPDF && !isOfficeFile && (sourceType === 'document' || fileType === PAGE_FILE_TYPE);
 
   const menuItems = useCallback(() => {
     // Filter out current knowledge base and create submenu items
