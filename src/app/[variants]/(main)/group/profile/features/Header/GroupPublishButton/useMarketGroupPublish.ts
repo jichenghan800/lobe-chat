@@ -113,6 +113,12 @@ export const useMarketGroupPublish = ({ action, onSuccess }: UseMarketGroupPubli
           model: agent.model,
           params: agent.params,
           systemRole: agent.systemRole,
+          // Include plugins if they exist
+          ...(agent.plugins && agent.plugins.length > 0 ? { plugins: agent.plugins } : {}),
+          // Include provider if it exists
+          ...(agent.provider ? { provider: agent.provider } : {}),
+          // Include chatConfig if it exists
+          ...(agent.chatConfig ? { chatConfig: agent.chatConfig } : {}),
         },
         // Market requires at least 1 character for description
         description: agent.description || 'No description provided',
@@ -144,10 +150,12 @@ export const useMarketGroupPublish = ({ action, onSuccess }: UseMarketGroupPubli
           }),
           ...(currentGroupConfig.openingQuestions !== undefined &&
             currentGroupConfig.openingQuestions.length > 0 && {
-            openingQuestions: currentGroupConfig.openingQuestions,
-          }),
+              openingQuestions: currentGroupConfig.openingQuestions,
+            }),
           ...(currentGroupConfig.allowDM !== undefined && { allowDM: currentGroupConfig.allowDM }),
-          ...(currentGroupConfig.revealDM !== undefined && { revealDM: currentGroupConfig.revealDM }),
+          ...(currentGroupConfig.revealDM !== undefined && {
+            revealDM: currentGroupConfig.revealDM,
+          }),
         },
         // Market requires at least 1 character for description
         description: currentGroupMeta.description || 'No description provided',

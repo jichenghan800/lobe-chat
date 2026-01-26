@@ -4,17 +4,18 @@ import { Flexbox } from '@lobehub/ui';
 import {
   BrainCircuitIcon,
   BubblesIcon,
+  CalendarClockIcon,
   HeartPulseIcon,
   LightbulbIcon,
   SearchIcon,
   SignatureIcon,
 } from 'lucide-react';
-import { usePathname } from '@/libs/router/navigation';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
 import NavItem, { type NavItemProps } from '@/features/NavPanel/components/NavItem';
+import { usePathname } from '@/libs/router/navigation';
 import { useGlobalStore } from '@/store/global';
 
 interface Item {
@@ -26,6 +27,7 @@ interface Item {
 }
 
 enum MemoryTabKey {
+  Activities = 'activities',
   Contexts = 'contexts',
   Experiences = 'experiences',
   Home = 'home',
@@ -84,6 +86,12 @@ const Nav = memo(() => {
         key: MemoryTabKey.Experiences,
         title: t('tab.experiences'),
         url: '/memory/experiences',
+      },
+      {
+        icon: CalendarClockIcon,
+        key: MemoryTabKey.Activities,
+        title: t('tab.activities'),
+        url: '/memory/activities',
       },
     ],
     [t],

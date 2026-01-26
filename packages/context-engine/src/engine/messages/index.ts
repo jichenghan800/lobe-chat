@@ -17,6 +17,7 @@ export type {
   OpenAIChatMessage,
   ToolsConfig,
   UIChatMessage,
+  UserMemoryActivityItem,
   UserMemoryConfig,
   UserMemoryContextItem,
   UserMemoryData,

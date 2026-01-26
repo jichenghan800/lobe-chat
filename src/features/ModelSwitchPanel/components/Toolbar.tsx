@@ -19,7 +19,14 @@ export const Toolbar = memo<ToolbarProps>(
     const { t } = useTranslation('components');
 
     return (
-      <Flexbox className={styles.toolbar} gap={4} horizontal paddingBlock={8} paddingInline={8}>
+      <Flexbox
+        align="center"
+        className={styles.toolbar}
+        gap={4}
+        horizontal
+        paddingBlock={8}
+        paddingInline={8}
+      >
         <SearchBar
           allowClear
           onChange={(e) => onSearchKeywordChange(e.target.value)}

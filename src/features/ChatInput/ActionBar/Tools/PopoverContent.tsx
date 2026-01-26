@@ -1,6 +1,6 @@
 import { Flexbox, Icon, type ItemType, usePopoverContext } from '@lobehub/ui';
 import { createStaticStyles, cssVar } from 'antd-style';
-import { ChevronRight, Settings, Store } from 'lucide-react';
+import { ChevronRight, ExternalLink, Settings, Store } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -18,12 +18,11 @@ const styles = createStaticStyles(({ css }) => ({
 }));
 
 interface PopoverContentProps {
-  enableKlavis: boolean;
   items: ItemType[];
   onOpenStore: () => void;
 }
 
-const PopoverContent = memo<PopoverContentProps>(({ items, enableKlavis, onOpenStore }) => {
+const PopoverContent = memo<PopoverContentProps>(({ items, onOpenStore }) => {
   const { t } = useTranslation('setting');
   const navigate = useNavigate();
 
@@ -34,7 +33,6 @@ const PopoverContent = memo<PopoverContentProps>(({ items, enableKlavis, onOpenS
       <div
         style={{
           maxHeight: 500,
-          minHeight: enableKlavis ? 500 : undefined,
           overflowY: 'auto',
         }}
       >
@@ -53,7 +51,7 @@ const PopoverContent = memo<PopoverContentProps>(({ items, enableKlavis, onOpenS
           <div className={toolsListStyles.itemIcon}>
             <Icon icon={Store} size={20} />
           </div>
-          <div className={toolsListStyles.itemContent}>{t('tools.plugins.store')}</div>
+          <div className={toolsListStyles.itemContent}>{t('skillStore.title')}</div>
           <Icon className={styles.trailingIcon} icon={ChevronRight} size={16} />
         </div>
         <div
@@ -69,7 +67,7 @@ const PopoverContent = memo<PopoverContentProps>(({ items, enableKlavis, onOpenS
             <Icon icon={Settings} size={20} />
           </div>
           <div className={toolsListStyles.itemContent}>{t('tools.plugins.management')}</div>
-          <Icon className={styles.trailingIcon} icon={ChevronRight} size={16} />
+          <Icon className={styles.trailingIcon} icon={ExternalLink} size={16} />
         </div>
       </div>
     </Flexbox>

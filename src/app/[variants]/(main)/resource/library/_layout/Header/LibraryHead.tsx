@@ -33,10 +33,13 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   `,
 }));
 
+/**
+ * Quickly switch between libraries
+ */
 const Head = memo<{ id: string }>(({ id }) => {
   const navigate = useNavigate();
   const name = useKnowledgeBaseStore(knowledgeBaseSelectors.getKnowledgeBaseNameById(id));
-  const setMode = useResourceManagerStore((s) => s.setMode);
+  const [setMode, setLibraryId] = useResourceManagerStore((s) => [s.setMode, s.setLibraryId]);
   const isDragActive = useDragActive();
   const [isDropZoneActive, setIsDropZoneActive] = useState(false);
 
@@ -50,10 +53,14 @@ const Head = memo<{ id: string }>(({ id }) => {
 
   const handleLibrarySwitch = useCallback(
     (libraryId: string) => {
-      navigate(`/resource/library/${libraryId}`);
+      setLibraryId(libraryId);
       setMode('explorer');
+      // 使用 setTimeout 确保在下一个事件循环中执行 navigate
+      setTimeout(() => {
+        navigate(`/resource/library/${libraryId}`);
+      }, 0);
     },
-    [navigate, setMode],
+    [navigate, setLibraryId, setMode],
   );
 
   // Native HTML5 drag-and-drop handlers for root directory drop

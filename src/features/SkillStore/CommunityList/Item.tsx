@@ -4,11 +4,12 @@ import { ActionIcon, Block, DropdownMenu, Flexbox, Icon, Modal } from '@lobehub/
 import { App, Button } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { MoreVerticalIcon, Plus, Trash2 } from 'lucide-react';
-import React, { memo, useState } from 'react';
+import React, { Suspense, memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import PluginAvatar from '@/components/Plugins/PluginAvatar';
 import McpDetail from '@/features/MCP/MCPDetail';
+import McpDetailLoading from '@/features/MCP/MCPDetail/Loading';
 import MCPInstallProgress from '@/features/MCP/MCPInstallProgress';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 import { useAgentStore } from '@/store/agent';
@@ -94,6 +95,7 @@ const Item = memo<DiscoverMcpItem>(({ name, description, icon, identifier }) => 
               },
             },
           ]}
+          nativeButton={false}
           placement="bottomRight"
         >
           <ActionIcon icon={MoreVerticalIcon} />
@@ -148,7 +150,9 @@ const Item = memo<DiscoverMcpItem>(({ name, description, icon, identifier }) => 
         title={t('dev.title.skillDetails')}
         width={800}
       >
-        <McpDetail identifier={identifier} noSettings />
+        <Suspense fallback={<McpDetailLoading />}>
+          <McpDetail identifier={identifier} noSettings />
+        </Suspense>
       </Modal>
     </>
   );
