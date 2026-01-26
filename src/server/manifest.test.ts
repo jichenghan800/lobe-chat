@@ -131,7 +131,7 @@ describe('Manifest', () => {
         sizes: '1280x676',
         type: 'image/png',
       });
-      expect(result.src).toContain('v=4');
+      expect(result.src).toBe(qs.stringifyUrl({ query: { v: 4 }, url: BRANDING_LOGO_URL }));
     });
 
     it('should return correct screenshot object for narrow form factor', () => {
@@ -150,7 +150,7 @@ describe('Manifest', () => {
         immutable: 'true',
         max_age: 31536000,
         sizes: '1280x676',
-        src: 'https://example.com/screenshot.png?v=1',
+        src: qs.stringifyUrl({ query: { v: 1 }, url: BRANDING_LOGO_URL }),
         type: 'image/png',
       });
     });
