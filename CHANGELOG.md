@@ -2,6 +2,159 @@
 
 # Changelog
 
+## [Version 2.0.0-next.388](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.387...v2.0.0-next.388)
+
+<sup>Released on **2026-01-26**</sup>
+
+#### ✨ Features
+
+- **electron**: Enhance native module handling and improve desktop features.
+
+#### 🐛 Bug Fixes
+
+- **community**: Should be able to switch category with All and Discover.
+- **misc**: Fix page count issue.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **electron**: Enhance native module handling and improve desktop features, closes [#11867](https://github.com/lobehub/lobe-chat/issues/11867) ([e3c80d5](https://github.com/lobehub/lobe-chat/commit/e3c80d5))
+
+#### What's fixed
+
+- **community**: Should be able to switch category with All and Discover, closes [#11869](https://github.com/lobehub/lobe-chat/issues/11869) ([ba0fab1](https://github.com/lobehub/lobe-chat/commit/ba0fab1))
+- **misc**: Fix page count issue, closes [#11868](https://github.com/lobehub/lobe-chat/issues/11868) ([89572e4](https://github.com/lobehub/lobe-chat/commit/89572e4))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.387](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.386...v2.0.0-next.387)
+
+<sup>Released on **2026-01-26**</sup>
+
+#### ✨ Features
+
+- **utils**: Added errorCauseFrom, errorMessageFrom, errorNameFrom.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **utils**: Added errorCauseFrom, errorMessageFrom, errorNameFrom, closes [#11864](https://github.com/lobehub/lobe-chat/issues/11864) ([a396ab1](https://github.com/lobehub/lobe-chat/commit/a396ab1))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.386](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.385...v2.0.0-next.386)
+
+<sup>Released on **2026-01-26**</sup>
+
+#### ✨ Features
+
+- **misc**: Group builder not set true edit data.
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fix resource pages.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Group builder not set true edit data, closes [#11861](https://github.com/lobehub/lobe-chat/issues/11861) ([37944e7](https://github.com/lobehub/lobe-chat/commit/37944e7))
+
+#### What's fixed
+
+- **misc**: Fix resource pages, closes [#11863](https://github.com/lobehub/lobe-chat/issues/11863) ([7ce31c1](https://github.com/lobehub/lobe-chat/commit/7ce31c1))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.385](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.384...v2.0.0-next.385)
+
+<sup>Released on **2026-01-26**</sup>
+
+#### ✨ Features
+
+- **misc**: Share page improvements and pg17 docs update.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Share page improvements and pg17 docs update, closes [#11850](https://github.com/lobehub/lobe-chat/issues/11850) ([5b953b1](https://github.com/lobehub/lobe-chat/commit/5b953b1))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+## [Version 2.0.0-next.384](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.383...v2.0.0-next.384)
+
+<sup>Released on **2026-01-26**</sup>
+
+#### ✨ Features
+
+- **desktop**: Add manual update check entry in About page.
+
+#### 🐛 Bug Fixes
+
+- **model-runtime**: Filter null values from enum for Gemini compatibility.
+- **misc**: Group builder not set true edit data.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **desktop**: Add manual update check entry in About page, closes [#11854](https://github.com/lobehub/lobe-chat/issues/11854) ([ec854d7](https://github.com/lobehub/lobe-chat/commit/ec854d7))
+
+#### What's fixed
+
+- **model-runtime**: Filter null values from enum for Gemini compatibility, closes [#11859](https://github.com/lobehub/lobe-chat/issues/11859) ([1163f71](https://github.com/lobehub/lobe-chat/commit/1163f71))
+- **misc**: Group builder not set true edit data, closes [#11858](https://github.com/lobehub/lobe-chat/issues/11858) ([8eba0e6](https://github.com/lobehub/lobe-chat/commit/8eba0e6))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.383](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.382...v2.0.0-next.383)
 
 <sup>Released on **2026-01-26**</sup>
