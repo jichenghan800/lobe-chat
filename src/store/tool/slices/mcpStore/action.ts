@@ -205,9 +205,6 @@ export const createMCPPluginStoreSlice: StateCreator<
     const normalizedConfig = toNonEmptyStringRecord(config);
     let plugin = mcpStoreSelectors.getPluginById(identifier)(get());
 
-    // @ts-expect-error
-    const { haveCloudEndpoint } = plugin || {};
-
     if (!plugin || !plugin.manifestUrl) {
       const data = await discoverService.getMcpDetail({ identifier });
       if (!data) return;
@@ -216,6 +213,10 @@ export const createMCPPluginStoreSlice: StateCreator<
     }
 
     if (!plugin) return;
+
+    // Extract haveCloudEndpoint after plugin is loaded
+    // @ts-expect-error
+    const { haveCloudEndpoint } = plugin || {};
 
     const { updateInstallLoadingState, refreshPlugins, updateMCPInstallProgress } = get();
 
