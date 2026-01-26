@@ -2634,6 +2634,18 @@
   },
   {
     "children": {
+      "features": [
+        "Group builder not set true edit data, share page improvements and pg17 docs update."
+      ],
+      "fixes": [
+        "Fix page count issue, fix resource pages, group builder not set true edit data, tts and translate error."
+      ]
+    },
+    "date": "2026-01-26",
+    "version": "1.156.0"
+  },
+  {
+    "children": {
       "improvements": ["Update i18n, update share action bar."],
       "features": [
         "Add the agent/group profiles page the states and forked by tag, add the fork tag show in community detail page, optimize profile editor, support history context auto compress, update the discover page sort, add haveSkill、mostUsage params."
