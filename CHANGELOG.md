@@ -2,6 +2,117 @@
 
 # Changelog
 
+## [Version 1.155.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.154.0...v1.155.0)
+
+<sup>Released on **2026-01-26**</sup>
+
+#### ♻ Code Refactoring
+
+- **memory-user-memory**: Simplify buildContext(...).
+- **ModelSelect**: Migrate from antd Select to LobeSelect.
+- **misc**: Improve popover trigger styles and component consistency, refactor search model implement.
+
+#### ✨ Features
+
+- **database**: Added listMemories method, added user memory persona schema.
+- **desktop**: Add system save dialog for markdown export.
+- **memory-user-memory,database,userMemories**: Implemented user memory persona.
+- **observability-otel,libs**: Include and propagate Traceparent header to tid.
+- **trpc**: Add response metadata and auth header handling.
+- **userMemories**: Added memory layer activity, added user memory request, implemented workflow trigger, memory activity list.
+- **utils**: Added `trimBasedOnBatchProbe` for truncating without compromising structured data.
+- **misc**: Add the agent/group profiles page the states and forked by tag, add the fork tag show in community detail page, optimize profile editor, support history context auto compress, update the discover page sort, add haveSkill、mostUsage params.
+
+#### 🐛 Bug Fixes
+
+- **AgentTool**: Prevent popover overflow from window.
+- **builtin-tool-memory**: Missing activities for topK parameter, update identity tool should have type for enum.
+- **deps**: Lock better-auth to 1.4.6 and better-call to 1.1.8.
+- **desktop-onboarding**: Improve auth countdown and error UI.
+- **desktop**: Prevent duplicate IPC handler registration from dynamic imports.
+- **email**: Use || instead of ?? to handle empty string from Dockerfile.
+- **userMemories**: Added memory activity tools, should log out more errors for extraction.
+- **misc**: Add cron pages enables change should reload the state, broadcast tools calling and improve auto scroll, docker deploy REDIS_URL check, fix add message and improve local system tool, fix cron job issue, fix page selection not display correctly, fix share single message, fix sub task issue, fix update memory tools, fixed when windows withd low the protal will resize, library cannot nav, login success callback url error, prevent recently viewed items from shrinking, resolve server version check issue for desktop app, show fallback title for custom assistant in chat messages, slove group member plugin is lost & not use the plugins, slove the agentbuilder install market tools not work, slove the descktop use offical endpoint mcp not use stdio, surface streaming errors during mid-stream pulls, webhook user service compatibility for old nextauth users.
+
+#### 💄 Styles
+
+- **misc**: Update i18n, update share action bar.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **memory-user-memory**: Simplify buildContext(...), closes [#11808](https://github.com/jaworldwideorg/OneJA-Bot/issues/11808) ([d5a9913](https://github.com/jaworldwideorg/OneJA-Bot/commit/d5a9913))
+- **ModelSelect**: Migrate from antd Select to LobeSelect, closes [#11772](https://github.com/jaworldwideorg/OneJA-Bot/issues/11772) ([73412d1](https://github.com/jaworldwideorg/OneJA-Bot/commit/73412d1))
+- **misc**: Improve popover trigger styles and component consistency, closes [#11832](https://github.com/jaworldwideorg/OneJA-Bot/issues/11832) ([f5c5d52](https://github.com/jaworldwideorg/OneJA-Bot/commit/f5c5d52))
+- **misc**: Refactor search model implement, closes [#11825](https://github.com/jaworldwideorg/OneJA-Bot/issues/11825) ([3cf0bfa](https://github.com/jaworldwideorg/OneJA-Bot/commit/3cf0bfa))
+
+#### What's improved
+
+- **database**: Added listMemories method, closes [#11806](https://github.com/jaworldwideorg/OneJA-Bot/issues/11806) ([5929f7b](https://github.com/jaworldwideorg/OneJA-Bot/commit/5929f7b))
+- **database**: Added user memory persona schema, closes [#11833](https://github.com/jaworldwideorg/OneJA-Bot/issues/11833) ([14adf99](https://github.com/jaworldwideorg/OneJA-Bot/commit/14adf99))
+- **desktop**: Add system save dialog for markdown export, closes [#11852](https://github.com/jaworldwideorg/OneJA-Bot/issues/11852) ([8896c06](https://github.com/jaworldwideorg/OneJA-Bot/commit/8896c06))
+- **memory-user-memory,database,userMemories**: Implemented user memory persona, closes [#11838](https://github.com/jaworldwideorg/OneJA-Bot/issues/11838) ([75ea548](https://github.com/jaworldwideorg/OneJA-Bot/commit/75ea548))
+- **observability-otel,libs**: Include and propagate Traceparent header to tid, closes [#11845](https://github.com/jaworldwideorg/OneJA-Bot/issues/11845) ([0d101da](https://github.com/jaworldwideorg/OneJA-Bot/commit/0d101da))
+- **trpc**: Add response metadata and auth header handling, closes [#11816](https://github.com/jaworldwideorg/OneJA-Bot/issues/11816) ([1276a87](https://github.com/jaworldwideorg/OneJA-Bot/commit/1276a87))
+- **userMemories**: Added memory layer activity, closes [#11747](https://github.com/jaworldwideorg/OneJA-Bot/issues/11747) ([2021b1c](https://github.com/jaworldwideorg/OneJA-Bot/commit/2021b1c))
+- **userMemories**: Added user memory request, implemented workflow trigger, closes [#11749](https://github.com/jaworldwideorg/OneJA-Bot/issues/11749) ([9df3b88](https://github.com/jaworldwideorg/OneJA-Bot/commit/9df3b88))
+- **userMemories**: Memory activity list, closes [#11785](https://github.com/jaworldwideorg/OneJA-Bot/issues/11785) ([a9f3a53](https://github.com/jaworldwideorg/OneJA-Bot/commit/a9f3a53))
+- **utils**: Added `trimBasedOnBatchProbe` for truncating without compromising structured data, closes [#11836](https://github.com/jaworldwideorg/OneJA-Bot/issues/11836) ([6dac3d1](https://github.com/jaworldwideorg/OneJA-Bot/commit/6dac3d1))
+- **misc**: Add the agent/group profiles page the states and forked by tag, closes [#11784](https://github.com/jaworldwideorg/OneJA-Bot/issues/11784) ([1458100](https://github.com/jaworldwideorg/OneJA-Bot/commit/1458100))
+- **misc**: Add the fork tag show in community detail page, closes [#11814](https://github.com/jaworldwideorg/OneJA-Bot/issues/11814) ([cd029eb](https://github.com/jaworldwideorg/OneJA-Bot/commit/cd029eb))
+- **misc**: Optimize profile editor, closes [#11783](https://github.com/jaworldwideorg/OneJA-Bot/issues/11783) ([da95ad5](https://github.com/jaworldwideorg/OneJA-Bot/commit/da95ad5))
+- **misc**: Support history context auto compress, closes [#11790](https://github.com/jaworldwideorg/OneJA-Bot/issues/11790) ([09a00df](https://github.com/jaworldwideorg/OneJA-Bot/commit/09a00df))
+- **misc**: Update the discover page sort, add haveSkill、mostUsage params, closes [#11807](https://github.com/jaworldwideorg/OneJA-Bot/issues/11807) ([01c641e](https://github.com/jaworldwideorg/OneJA-Bot/commit/01c641e))
+
+#### What's fixed
+
+- **AgentTool**: Prevent popover overflow from window, closes [#11770](https://github.com/jaworldwideorg/OneJA-Bot/issues/11770) ([385522a](https://github.com/jaworldwideorg/OneJA-Bot/commit/385522a))
+- **builtin-tool-memory**: Missing activities for topK parameter, closes [#11801](https://github.com/jaworldwideorg/OneJA-Bot/issues/11801) ([d6dee2a](https://github.com/jaworldwideorg/OneJA-Bot/commit/d6dee2a))
+- **builtin-tool-memory**: Update identity tool should have type for enum, closes [#11803](https://github.com/jaworldwideorg/OneJA-Bot/issues/11803) ([aa63f18](https://github.com/jaworldwideorg/OneJA-Bot/commit/aa63f18))
+- **deps**: Lock better-auth to 1.4.6 and better-call to 1.1.8, closes [#11809](https://github.com/jaworldwideorg/OneJA-Bot/issues/11809) ([b2409a5](https://github.com/jaworldwideorg/OneJA-Bot/commit/b2409a5))
+- **desktop-onboarding**: Improve auth countdown and error UI, closes [#11788](https://github.com/jaworldwideorg/OneJA-Bot/issues/11788) ([c0ffd8f](https://github.com/jaworldwideorg/OneJA-Bot/commit/c0ffd8f))
+- **desktop**: Prevent duplicate IPC handler registration from dynamic imports, closes [#11827](https://github.com/jaworldwideorg/OneJA-Bot/issues/11827) ([c3fd2dc](https://github.com/jaworldwideorg/OneJA-Bot/commit/c3fd2dc))
+- **email**: Use || instead of ?? to handle empty string from Dockerfile, closes [#11778](https://github.com/jaworldwideorg/OneJA-Bot/issues/11778) [#11757](https://github.com/jaworldwideorg/OneJA-Bot/issues/11757) [#11757](https://github.com/jaworldwideorg/OneJA-Bot/issues/11757) [#11707](https://github.com/jaworldwideorg/OneJA-Bot/issues/11707) [#11757](https://github.com/jaworldwideorg/OneJA-Bot/issues/11757) [#11707](https://github.com/jaworldwideorg/OneJA-Bot/issues/11707) ([0e65517](https://github.com/jaworldwideorg/OneJA-Bot/commit/0e65517))
+- **userMemories**: Added memory activity tools, closes [#11800](https://github.com/jaworldwideorg/OneJA-Bot/issues/11800) ([8ea08dd](https://github.com/jaworldwideorg/OneJA-Bot/commit/8ea08dd))
+- **userMemories**: Should log out more errors for extraction, closes [#11810](https://github.com/jaworldwideorg/OneJA-Bot/issues/11810) ([e45c529](https://github.com/jaworldwideorg/OneJA-Bot/commit/e45c529))
+- **misc**: Add cron pages enables change should reload the state, closes [#11775](https://github.com/jaworldwideorg/OneJA-Bot/issues/11775) ([12c193d](https://github.com/jaworldwideorg/OneJA-Bot/commit/12c193d))
+- **misc**: Broadcast tools calling and improve auto scroll, closes [#11804](https://github.com/jaworldwideorg/OneJA-Bot/issues/11804) ([c352915](https://github.com/jaworldwideorg/OneJA-Bot/commit/c352915))
+- **misc**: Docker deploy REDIS_URL check, closes [#11773](https://github.com/jaworldwideorg/OneJA-Bot/issues/11773) ([a9702bf](https://github.com/jaworldwideorg/OneJA-Bot/commit/a9702bf))
+- **misc**: Fix add message and improve local system tool, closes [#11815](https://github.com/jaworldwideorg/OneJA-Bot/issues/11815) ([3b41009](https://github.com/jaworldwideorg/OneJA-Bot/commit/3b41009))
+- **misc**: Fix cron job issue, closes [#11835](https://github.com/jaworldwideorg/OneJA-Bot/issues/11835) ([6d50f80](https://github.com/jaworldwideorg/OneJA-Bot/commit/6d50f80))
+- **misc**: Fix page selection not display correctly, closes [#11765](https://github.com/jaworldwideorg/OneJA-Bot/issues/11765) ([7ae5f68](https://github.com/jaworldwideorg/OneJA-Bot/commit/7ae5f68))
+- **misc**: Fix share single message, closes [#11840](https://github.com/jaworldwideorg/OneJA-Bot/issues/11840) ([9433bbb](https://github.com/jaworldwideorg/OneJA-Bot/commit/9433bbb))
+- **misc**: Fix sub task issue, closes [#11777](https://github.com/jaworldwideorg/OneJA-Bot/issues/11777) ([8ae3456](https://github.com/jaworldwideorg/OneJA-Bot/commit/8ae3456))
+- **misc**: Fix update memory tools, closes [#11831](https://github.com/jaworldwideorg/OneJA-Bot/issues/11831) ([cfc03dd](https://github.com/jaworldwideorg/OneJA-Bot/commit/cfc03dd))
+- **misc**: Fixed when windows withd low the protal will resize, closes [#11738](https://github.com/jaworldwideorg/OneJA-Bot/issues/11738) ([96f7862](https://github.com/jaworldwideorg/OneJA-Bot/commit/96f7862))
+- **misc**: Library cannot nav, closes [#11828](https://github.com/jaworldwideorg/OneJA-Bot/issues/11828) ([d424a81](https://github.com/jaworldwideorg/OneJA-Bot/commit/d424a81))
+- **misc**: Login success callback url error, closes [#11763](https://github.com/jaworldwideorg/OneJA-Bot/issues/11763) ([f73435d](https://github.com/jaworldwideorg/OneJA-Bot/commit/f73435d))
+- **misc**: Prevent recently viewed items from shrinking, closes [#11780](https://github.com/jaworldwideorg/OneJA-Bot/issues/11780) ([60ad7de](https://github.com/jaworldwideorg/OneJA-Bot/commit/60ad7de))
+- **misc**: Resolve server version check issue for desktop app, closes [#11834](https://github.com/jaworldwideorg/OneJA-Bot/issues/11834) ([0bd2a59](https://github.com/jaworldwideorg/OneJA-Bot/commit/0bd2a59))
+- **misc**: Show fallback title for custom assistant in chat messages, closes [#11820](https://github.com/jaworldwideorg/OneJA-Bot/issues/11820) ([0c96b5a](https://github.com/jaworldwideorg/OneJA-Bot/commit/0c96b5a))
+- **misc**: Slove group member plugin is lost & not use the plugins, closes [#11802](https://github.com/jaworldwideorg/OneJA-Bot/issues/11802) ([e4ebd40](https://github.com/jaworldwideorg/OneJA-Bot/commit/e4ebd40))
+- **misc**: Slove the agentbuilder install market tools not work, closes [#11848](https://github.com/jaworldwideorg/OneJA-Bot/issues/11848) ([dbe9011](https://github.com/jaworldwideorg/OneJA-Bot/commit/dbe9011))
+- **misc**: Slove the descktop use offical endpoint mcp not use stdio, closes [#11813](https://github.com/jaworldwideorg/OneJA-Bot/issues/11813) ([370bf16](https://github.com/jaworldwideorg/OneJA-Bot/commit/370bf16))
+- **misc**: Surface streaming errors during mid-stream pulls, closes [#11762](https://github.com/jaworldwideorg/OneJA-Bot/issues/11762) ([74a88d3](https://github.com/jaworldwideorg/OneJA-Bot/commit/74a88d3))
+- **misc**: Webhook user service compatibility for old nextauth users, closes [#11826](https://github.com/jaworldwideorg/OneJA-Bot/issues/11826) ([a6bfaab](https://github.com/jaworldwideorg/OneJA-Bot/commit/a6bfaab))
+
+#### Styles
+
+- **misc**: Update i18n, closes [#11630](https://github.com/jaworldwideorg/OneJA-Bot/issues/11630) ([92a6b5c](https://github.com/jaworldwideorg/OneJA-Bot/commit/92a6b5c))
+- **misc**: Update share action bar, closes [#11811](https://github.com/jaworldwideorg/OneJA-Bot/issues/11811) ([0a856bc](https://github.com/jaworldwideorg/OneJA-Bot/commit/0a856bc))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.0.0-next.382](https://github.com/lobehub/lobe-chat/compare/v2.0.0-next.381...v2.0.0-next.382)
 
 <sup>Released on **2026-01-26**</sup>
