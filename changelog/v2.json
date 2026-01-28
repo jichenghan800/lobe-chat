@@ -1997,5 +1997,15 @@
     "children": {},
     "date": "2025-10-30",
     "version": "2.0.0-next.1"
+  },
+  {
+    "children": {
+      "features": ["Group support client agent task."],
+      "fixes": [
+        "Bump next to 16.1.5 to fix CVE-2026-23864, fix inbox agent in mobile, fixed compressed group message & open the switch config to control compression config enabled, fixed the onboarding crash problem, rename docker image and update docs for v2, slove the recentTopicLinkError, some UI bugs fixed, the klavis in onboarding connect timeout fixed, update resource URL in Action component, update the agent cron job update way, update the artifact prompt, various bug fixes and cleanups."
+      ]
+    },
+    "date": "2026-01-28",
+    "version": "1.157.0"
   }
 ]
