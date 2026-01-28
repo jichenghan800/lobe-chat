@@ -185,6 +185,22 @@ const DEPRECATED_CHECKS = [
       'Microsoft Entra ID provider has been renamed to Microsoft. Please update your environment variables.',
     name: 'Microsoft Entra ID',
   },
+  {
+    docUrl: MIGRATION_DOC_BASE,
+    getVars: () => {
+      const hasEmailService =
+        process.env['SMTP_HOST'] || process.env['EMAIL_SERVICE_PROVIDER'] === 'resend';
+      const hasEmailVerification = process.env['AUTH_EMAIL_VERIFICATION'] === '1';
+      if (hasEmailService && !hasEmailVerification) {
+        return ['AUTH_EMAIL_VERIFICATION'];
+      }
+      return [];
+    },
+    message:
+      'Email service is configured but email verification is disabled. Consider setting AUTH_EMAIL_VERIFICATION=1 to verify user email ownership during registration.',
+    name: 'Email Verification',
+    severity: 'warning',
+  },
 ];
 
 /**
@@ -197,7 +213,11 @@ function printIssueBlock(name, vars, message, docUrl, formatVar, severity = 'err
 
   log(`\n${icon} ${name}`);
   log('─'.repeat(50));
-  log(isWarning ? 'Missing recommended environment variables:' : 'Detected deprecated environment variables:');
+  log(
+    isWarning
+      ? 'Missing recommended environment variables:'
+      : 'Detected deprecated environment variables:',
+  );
   for (const envVar of vars) {
     log(`  • ${formatVar ? formatVar(envVar) : envVar}`);
   }
@@ -237,7 +257,14 @@ function checkDeprecatedAuth(options = {}) {
     console.warn('═'.repeat(70));
 
     for (const issue of warnings) {
-      printIssueBlock(issue.name, issue.foundVars, issue.message, issue.docUrl, issue.formatVar, 'warning');
+      printIssueBlock(
+        issue.name,
+        issue.foundVars,
+        issue.message,
+        issue.docUrl,
+        issue.formatVar,
+        'warning',
+      );
     }
 
     console.warn('\n' + '═'.repeat(70));
@@ -248,13 +275,18 @@ function checkDeprecatedAuth(options = {}) {
   // Print errors and exit (blocking)
   if (errors.length > 0) {
     console.error('\n' + '═'.repeat(70));
-    console.error(
-      `❌ ERROR: Found ${errors.length} deprecated environment variable issue(s)!`,
-    );
+    console.error(`❌ ERROR: Found ${errors.length} deprecated environment variable issue(s)!`);
     console.error('═'.repeat(70));
 
     for (const issue of errors) {
-      printIssueBlock(issue.name, issue.foundVars, issue.message, issue.docUrl, issue.formatVar, 'error');
+      printIssueBlock(
+        issue.name,
+        issue.foundVars,
+        issue.message,
+        issue.docUrl,
+        issue.formatVar,
+        'error',
+      );
     }
 
     console.error('\n' + '═'.repeat(70));

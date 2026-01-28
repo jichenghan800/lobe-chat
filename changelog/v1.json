@@ -1,6 +1,13 @@
 [
   {
     "children": {
+      "fixes": ["Tts and translate error."]
+    },
+    "date": "2026-01-27",
+    "version": "2.0.0-next.389"
+  },
+  {
+    "children": {
       "fixes": ["Fix page count issue."]
     },
     "date": "2026-01-26",
@@ -2708,7 +2715,7 @@
   {
     "children": {
       "improvements": [
-        "Adjust modal setting form styles for improved layout and responsiveness, Unzip file when uploading in knowledge base [LOB-500]."
+        "Adjust modal setting form styles for improved layout and responsiveness, Unzip file when uploading in knowledge base \\LOB-500]."
       ]
     },
     "date": "2025-10-27",
@@ -2751,7 +2758,7 @@
   },
   {
     "children": {
-      "improvements": ["Improvement for Agent Team After Alpha Launch [LOB-517]."]
+      "improvements": ["Improvement for Agent Team After Alpha Launch \\LOB-517]."]
     },
     "date": "2025-10-23",
     "version": "1.141.8"
@@ -2808,7 +2815,7 @@
         "Ignore abort signal errors in TRPC client, slove when pwa user info have code cannot be viewed in full."
       ],
       "improvements": [
-        "Add knowledge base mansory layout [LOB-496], improve rich text link display."
+        "Add knowledge base mansory layout \\LOB-496], improve rich text link display."
       ]
     },
     "date": "2025-10-21",
@@ -3883,6 +3890,21 @@
       "improvements": ["Update i18n."]
     },
     "date": "2025-08-29",
+    "version": "1.117.0"
+  },
+  {
+    "children": {
+      "features": ["Ai image support Gemini 2.5 Flash Image."],
+      "improvements": ["Update i18n."]
+    },
+    "date": "2025-08-29",
+    "version": "1.117.0"
+  },
+  {
+    "children": {
+      "features": ["Ai image support Gemini 2.5 Flash Image."]
+    },
+    "date": "2025-08-28",
     "version": "1.117.0"
   },
   {
@@ -4992,7 +5014,7 @@
   },
   {
     "children": {
-      "improvements": ["Refactor <think> & </think> handling."]
+      "improvements": ["Refactor ` & ` handling."]
     },
     "date": "2025-06-09",
     "version": "1.93.2"
@@ -7308,7 +7330,7 @@
   },
   {
     "children": {
-      "fixes": ["Fix /file/[id] 500 issue."]
+      "fixes": ["Fix /file/id] 500 issue."]
     },
     "date": "2025-02-06",
     "version": "1.51.11"
@@ -7477,7 +7499,7 @@
   },
   {
     "children": {
-      "fixes": ["Fix <think> tag crash with special markdown content."]
+      "fixes": ["Fix `` tag crash with special markdown content."]
     },
     "date": "2025-02-02",
     "version": "1.49.10"
@@ -7668,7 +7690,7 @@
   },
   {
     "children": {
-      "improvements": ["Refactor [@nav](https://github.com/nav) layout and improve pin list style."]
+      "improvements": ["Refactor @nav layout and improve pin list style."]
     },
     "date": "2025-01-21",
     "version": "1.47.12"
@@ -7863,7 +7885,7 @@
   },
   {
     "children": {
-      "fixes": ["Fix pin package manager to pnpm@9 for docker."]
+      "fixes": ["Fix pin package manager to pnpm\\@9 for docker."]
     },
     "date": "2025-01-14",
     "version": "1.45.9"
@@ -7919,7 +7941,7 @@
   },
   {
     "children": {
-      "fixes": ["Fix remark gfm regex breaks in Safari versions < 16.4."]
+      "fixes": ["Fix remark gfm regex breaks in Safari versions"]
     },
     "date": "2025-01-09",
     "version": "1.45.1"
@@ -8282,7 +8304,7 @@
   },
   {
     "children": {
-      "fixes": ["Add unique keys to <ModelList> children."]
+      "fixes": ["Add unique keys to `` children."]
     },
     "date": "2024-12-16",
     "version": "1.36.27"
@@ -8754,7 +8776,7 @@
   },
   {
     "children": {
-      "improvements": ["genServerLLMConfig function, get *_MODEL_LIST from env."]
+      "improvements": ["genServerLLMConfig function, get \\*\\_MODEL_LIST from env."]
     },
     "date": "2024-11-15",
     "version": "1.31.7"
