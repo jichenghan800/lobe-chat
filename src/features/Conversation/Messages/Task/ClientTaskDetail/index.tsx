@@ -1,7 +1,6 @@
 'use client';
 
 import { type TaskDetail, ThreadStatus } from '@lobechat/types';
-import { Flexbox } from '@lobehub/ui';
 import { memo, useMemo } from 'react';
 
 import BubblesLoading from '@/components/BubblesLoading';
@@ -9,10 +8,8 @@ import { useChatStore } from '@/store/chat';
 import { displayMessageSelectors } from '@/store/chat/selectors';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 
-import CompletedState from './CompletedState';
+import { TaskMessages } from '../../Tasks/shared';
 import InitializingState from './InitializingState';
-import InstructionAccordion from './InstructionAccordion';
-import ProcessingState from './ProcessingState';
 
 interface ClientTaskDetailProps {
   /** Agent ID from the task message (use task's agentId, not activeAgentId) */
@@ -69,7 +66,6 @@ const ClientTaskDetail = memo<ClientTaskDetailProps>(
 
     // Find the assistantGroup message which contains the children blocks
     const assistantGroupMessage = threadMessages.find((item) => item.role === 'assistantGroup');
-    const instruction = threadMessages.find((item) => item.role === 'user')?.content;
     const childrenCount = assistantGroupMessage?.children?.length ?? 0;
 
     // Get model/provider from assistantGroup message
@@ -82,36 +78,19 @@ const ClientTaskDetail = memo<ClientTaskDetailProps>(
     }
 
     return (
-      <Flexbox gap={4}>
-        {instruction && (
-          <InstructionAccordion childrenCount={childrenCount} instruction={instruction} />
-        )}
-
-        {isExecuting ? (
-          <ProcessingState
-            assistantId={assistantGroupMessage.id}
-            blocks={assistantGroupMessage.children}
-            model={model ?? undefined}
-            provider={provider ?? undefined}
-            startTime={assistantGroupMessage.createdAt}
-          />
-        ) : (
-          <CompletedState
-            assistantId={assistantGroupMessage.id}
-            blocks={assistantGroupMessage.children}
-            duration={taskDetail?.duration}
-            model={model ?? undefined}
-            provider={provider ?? undefined}
-            totalCost={taskDetail?.totalCost}
-            totalTokens={taskDetail?.totalTokens}
-            totalToolCalls={taskDetail?.totalToolCalls}
-          />
-        )}
-      </Flexbox>
+      <TaskMessages
+        duration={taskDetail?.duration}
+        isProcessing={isExecuting}
+        messages={threadMessages}
+        model={model ?? undefined}
+        provider={provider ?? undefined}
+        startTime={assistantGroupMessage.createdAt}
+        totalCost={taskDetail?.totalCost}
+      />
     );
   },
 );
 
-ClientTaskDetail.displayName = 'ClientClientTaskDetail';
+ClientTaskDetail.displayName = 'ClientTaskDetail';
 
 export default ClientTaskDetail;
