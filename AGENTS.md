@@ -1,6 +1,7 @@
 # LobeChat Development Guidelines
 
 This document serves as a comprehensive guide for all team members when developing LobeChat.
+本项目二次开发请参考 src/\_custom/SECONDARY_DEV_GUIDE.md。
 
 ## Project Description
 
@@ -102,3 +103,7 @@ All AI development skills are available in `.agents/skills/` directory:
 | Workflow    | `linear`, `debug`                          |
 | Performance | `vercel-react-best-practices`              |
 | Overview    | `project-overview`                         |
+
+## Secondary Development (Custom)
+
+本项目二次开发请参考 `src/_custom/SECONDARY_DEV_GUIDE.md`，并使用 `src/_custom/CHANGELOG.md` 记录例外修改与上游同步日志。
