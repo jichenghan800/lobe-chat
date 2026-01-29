@@ -33,3 +33,8 @@
 *.mp3 binary
 *.zip binary
 *.gz binary
+
+# Merge strategies
+.github/workflows/sync.yml merge=ours
+CHANGELOG.md merge=theirs
+changelog/v2.json merge=theirs
