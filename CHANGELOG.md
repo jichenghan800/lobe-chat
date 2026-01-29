@@ -2,6 +2,41 @@
 
 # Changelog
 
+### [Version 1.157.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.157.0...v1.157.1)
+
+<sup>Released on **2026-01-29**</sup>
+
+#### 🐛 Bug Fixes
+
+- **model-bank**: Fix ZenMux model IDs by adding provider prefixes.
+- **misc**: Add ExtendParamsTypeSchema for enhanced model settings.
+
+#### 💄 Styles
+
+- **misc**: Fix group task render.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **model-bank**: Fix ZenMux model IDs by adding provider prefixes, closes [#11947](https://github.com/jaworldwideorg/OneJA-Bot/issues/11947) ([17f8a5c](https://github.com/jaworldwideorg/OneJA-Bot/commit/17f8a5c))
+- **misc**: Add ExtendParamsTypeSchema for enhanced model settings, closes [#11437](https://github.com/jaworldwideorg/OneJA-Bot/issues/11437) ([f58c980](https://github.com/jaworldwideorg/OneJA-Bot/commit/f58c980))
+
+#### Styles
+
+- **misc**: Fix group task render, closes [#11952](https://github.com/jaworldwideorg/OneJA-Bot/issues/11952) ([b8ef02e](https://github.com/jaworldwideorg/OneJA-Bot/commit/b8ef02e))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version 2.0.11](https://github.com/lobehub/lobe-chat/compare/v2.0.10...v2.0.11)
 
 <sup>Released on **2026-01-29**</sup>
