@@ -34,7 +34,21 @@
 *.zip binary
 *.gz binary
 
-# Merge strategies
+# Merge strategies - Keep our customizations
+.github/workflows/lighthouse.yml merge=ours
+.github/workflows/pr-build-docker.yml merge=ours
+.github/workflows/release-docker.yml merge=ours
 .github/workflows/sync.yml merge=ours
+packages/business/const/src/branding.ts merge=ours
+public/icons/* merge=ours
+public/apple-touch-icon.png merge=ours
+public/favicon.ico merge=ours
+public/favicon-32x32.png merge=ours
+src/server/manifest.test.ts merge=ours
+src/server/metadata.test.ts merge=ours
+.releaserc.cjs merge=ours
+.gitattributes merge=ours
+
+# Always accept upstream changes
 CHANGELOG.md merge=theirs
 changelog/v2.json merge=theirs
