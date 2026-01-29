@@ -37,7 +37,7 @@ jobs:
           upstream_sync_repo: lobehub/lobe-chat
           upstream_sync_branch: main
           target_sync_branch: main
-          target_repo_token: ${{ secrets.GITHUB_TOKEN }} # automatically generated, no need to set
+          target_repo_token: ${{ secrets.GH_TOKEN }} # Use PAT to trigger workflows
           test_mode: false
 
       - name: Sync check
@@ -58,11 +58,3 @@ jobs:
             [tutorial-zh-CN]: https://lobehub.com/zh/docs/self-hosting/advanced/upstream-sync
             [tutorial-en-US]: https://lobehub.com/docs/self-hosting/advanced/upstream-sync
 
-      - name: Trigger Release Workflow
-        if: success() && steps.sync.outputs.has_new_commits == 'true'
-        run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/actions/workflows/release.yml/dispatches \
-            -d '{"ref":"main"}'
