@@ -32,6 +32,7 @@ export const useSignIn = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const enableMagicLink = useServerConfigStore(serverConfigSelectors.enableMagicLink);
+  const enableEmailPassword = useServerConfigStore(serverConfigSelectors.enableEmailPassword);
   const [form] = Form.useForm<SignInFormValues>();
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
@@ -244,6 +245,7 @@ export const useSignIn = () => {
 
   return {
     email,
+    enableEmailPassword,
     form,
     handleBackToEmail,
     handleCheckUser,

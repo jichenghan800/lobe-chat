@@ -11,6 +11,7 @@ import { useSignIn } from './useSignIn';
 const SignInPage = () => {
   const {
     email,
+    enableEmailPassword,
     form,
     handleBackToEmail,
     handleCheckUser,
@@ -30,6 +31,7 @@ const SignInPage = () => {
     <Suspense fallback={<Loading debugId={'Signin'} />}>
       {step === 'email' ? (
         <SignInEmailStep
+          enableEmailPassword={enableEmailPassword}
           form={form as any}
           isSocialOnly={isSocialOnly}
           loading={loading}
