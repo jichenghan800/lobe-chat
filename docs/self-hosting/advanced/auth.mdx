@@ -170,9 +170,10 @@ Enable email verification to ensure users own the email addresses they register 
 
 Enable magic-link login (depends on a working email provider above, off by default):
 
-| Environment Variable     | Type     | Description                                                         |
-| ------------------------ | -------- | ------------------------------------------------------------------- |
-| `AUTH_ENABLE_MAGIC_LINK` | Optional | Set to `1` to enable passwordless magic-link login (off by default) |
+| Environment Variable         | Type     | Description                                                                                     |
+| ---------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `AUTH_ENABLE_MAGIC_LINK`     | Optional | Set to `1` to enable passwordless magic-link login (off by default)                             |
+| `AUTH_ENABLE_EMAIL_PASSWORD` | Optional | Set to `0` to disable email/password authentication, keeping only social login (off by default) |
 
 <Callout type={'tip'}>
   Go to [Environment Variables](/docs/self-hosting/environment-variables/auth#better-auth) for detailed information on all Better Auth variables.
