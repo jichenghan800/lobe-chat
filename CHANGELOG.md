@@ -2,18 +2,38 @@
 
 # Changelog
 
-### [Version 1.157.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.157.0...v1.157.1)
+### [Version 2.0.13](https://github.com/lobehub/lobe-chat/compare/v2.0.12...v2.0.13)
+
+<sup>Released on **2026-01-29**</sup>
+
+#### 💄 Styles
+
+- **misc**: Fix usage table display issues.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **misc**: Fix usage table display issues, closes [#10108](https://github.com/lobehub/lobe-chat/issues/10108) ([4bd82c3](https://github.com/lobehub/lobe-chat/commit/4bd82c3))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 2.0.12](https://github.com/lobehub/lobe-chat/compare/v2.0.11...v2.0.12)
 
 <sup>Released on **2026-01-29**</sup>
 
 #### 🐛 Bug Fixes
 
-- **model-bank**: Fix ZenMux model IDs by adding provider prefixes.
-- **misc**: Add ExtendParamsTypeSchema for enhanced model settings.
-
-#### 💄 Styles
-
-- **misc**: Fix group task render.
+- **misc**: Group publish to market should set local group market identifer.
 
 <br/>
 
@@ -22,12 +42,7 @@
 
 #### What's fixed
 
-- **model-bank**: Fix ZenMux model IDs by adding provider prefixes, closes [#11947](https://github.com/jaworldwideorg/OneJA-Bot/issues/11947) ([17f8a5c](https://github.com/jaworldwideorg/OneJA-Bot/commit/17f8a5c))
-- **misc**: Add ExtendParamsTypeSchema for enhanced model settings, closes [#11437](https://github.com/jaworldwideorg/OneJA-Bot/issues/11437) ([f58c980](https://github.com/jaworldwideorg/OneJA-Bot/commit/f58c980))
-
-#### Styles
-
-- **misc**: Fix group task render, closes [#11952](https://github.com/jaworldwideorg/OneJA-Bot/issues/11952) ([b8ef02e](https://github.com/jaworldwideorg/OneJA-Bot/commit/b8ef02e))
+- **misc**: Group publish to market should set local group market identifer, closes [#11965](https://github.com/lobehub/lobe-chat/issues/11965) ([0bda4d9](https://github.com/lobehub/lobe-chat/commit/0bda4d9))
 
 </details>
 
