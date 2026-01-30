@@ -47,7 +47,17 @@ export const emailWhitelist = (): BetterAuthPlugin => ({
               before: async (user) => {
                 if (!user.email) return { data: user };
 
-                if (!isEmailAllowed(user.email)) {
+                const emailValue = user.email.toLowerCase();
+                const domain = emailValue.split('@')[1] || null;
+                const allowedList = parseAllowedEmails(authEnv.AUTH_ALLOWED_EMAILS);
+                const isAllowed = isEmailAllowed(emailValue);
+                console.warn('[auth] email whitelist check', {
+                  allowedListCount: allowedList.length,
+                  emailDomain: domain,
+                  isAllowed,
+                });
+
+                if (!isAllowed) {
                   throw new APIError('FORBIDDEN', {
                     code: 'EMAIL_NOT_ALLOWED',
                     message: 'EMAIL_NOT_ALLOWED',
