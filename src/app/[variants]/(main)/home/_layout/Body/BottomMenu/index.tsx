@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { filterDesktopBottomNavItems } from '@/_custom/registry/navigation';
 import { getRouteById } from '@/config/routes';
 import NavItem from '@/features/NavPanel/components/NavItem';
 import { useActiveTabKey } from '@/hooks/useActiveTabKey';
@@ -23,26 +24,28 @@ const BottomMenu = memo(() => {
 
   const items = useMemo(
     () =>
-      [
-        {
-          icon: getRouteById('settings')!.icon,
-          key: SidebarTabKey.Setting,
-          title: t('tab.setting'),
-          url: '/settings',
-        },
-        {
-          icon: getRouteById('resource')!.icon,
-          key: SidebarTabKey.Resource,
-          title: t('tab.resource'),
-          url: '/resource',
-        },
-        {
-          icon: getRouteById('memory')!.icon,
-          key: SidebarTabKey.Memory,
-          title: t('tab.memory'),
-          url: '/memory',
-        },
-      ].filter(Boolean) as Item[],
+      filterDesktopBottomNavItems(
+        [
+          {
+            icon: getRouteById('settings')!.icon,
+            key: SidebarTabKey.Setting,
+            title: t('tab.setting'),
+            url: '/settings',
+          },
+          {
+            icon: getRouteById('resource')!.icon,
+            key: SidebarTabKey.Resource,
+            title: t('tab.resource'),
+            url: '/resource',
+          },
+          {
+            icon: getRouteById('memory')!.icon,
+            key: SidebarTabKey.Memory,
+            title: t('tab.memory'),
+            url: '/memory',
+          },
+        ].filter(Boolean) as Item[],
+      ),
     [t],
   );
 

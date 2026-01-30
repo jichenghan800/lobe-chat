@@ -99,6 +99,11 @@ const provider: GenericProviderDefinition<{
         const tokenMissing = !payload.access_token;
 
         if (!tokenResponse.ok || hasErrorCode || tokenMissing) {
+          console.error('[feishu] token exchange failed', {
+            body: parsed,
+            status: tokenResponse.status,
+            statusText: tokenResponse.statusText,
+          });
           throw new Error(parsed.msg ?? parsed.message ?? 'Failed to fetch Feishu OAuth token');
         }
 
@@ -114,6 +119,7 @@ const provider: GenericProviderDefinition<{
           tokenType: payload.token_type ?? payload.tokenType ?? 'Bearer',
         };
       },
+
       getUserInfo: async (tokens) => {
         if (!tokens.accessToken) return null;
 
@@ -159,6 +165,7 @@ const provider: GenericProviderDefinition<{
           name: profile.name ?? profile.en_name ?? unionId,
         };
       },
+
       pkce: false,
       providerId: 'feishu',
       responseMode: 'query',
