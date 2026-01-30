@@ -167,17 +167,20 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
     if (typeof window !== 'undefined') {
       const baseUrl = process.env.NEXT_PUBLIC_MARKET_BASE_URL || 'https://market.lobehub.com';
       const desktopRedirectUri = new URL(MARKET_OIDC_ENDPOINTS.desktopCallback, baseUrl).toString();
+      const useHandoff = !isDesktop && process.env.NEXT_PUBLIC_MARKET_OIDC_HANDOFF === '1';
 
       // 桌面端使用 Market 手动维护的 Web 回调，Web 端使用当前域名
-      const redirectUri = isDesktop
-        ? desktopRedirectUri
-        : `${window.location.origin}/market-auth-callback`;
+      const redirectUri =
+        isDesktop || useHandoff
+          ? desktopRedirectUri
+          : `${window.location.origin}/market-auth-callback`;
 
       const oidcConfig: OIDCConfig = {
         baseUrl,
-        clientId: isDesktop ? 'lobehub-desktop' : 'lobechat-com',
+        clientId: isDesktop || useHandoff ? 'lobehub-desktop' : 'lobechat-com',
         redirectUri,
         scope: 'openid profile email',
+        useHandoff,
       };
       setOidcClient(new MarketOIDC(oidcConfig));
     }
