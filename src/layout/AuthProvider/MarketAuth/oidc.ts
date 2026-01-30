@@ -199,11 +199,9 @@ export class MarketOIDC {
         'market_auth',
         'width=580,height=720,scrollbars=yes,resizable=yes',
       );
-      try {
-        return await this.pollDesktopHandoff(state);
-      } finally {
-        popup?.close();
-      }
+      const result = await this.pollDesktopHandoff(state);
+      popup?.close();
+      return result;
     }
 
     // 在新窗口中打开授权页面
