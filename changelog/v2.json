@@ -2040,6 +2040,13 @@
   },
   {
     "children": {
+      "fixes": ["Correct desktop download URL path."]
+    },
+    "date": "2026-01-30",
+    "version": "1.158.1"
+  },
+  {
+    "children": {
       "features": [
         "Add custom labels for oAuth SSO providers, refactor cron job UI and use runtime enableBusinessFeatures flag."
       ],
