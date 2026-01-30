@@ -130,7 +130,7 @@
 - 类型: custom
 - 涉及文件: src/\_custom/components/marketAuth/ManualCallbackModal.tsx; src/layout/AuthProvider/MarketAuth/MarketAuthProvider.tsx; src/layout/AuthProvider/MarketAuth/oidc.ts; src/locales/default/marketAuth.ts; locales/zh-CN/marketAuth.json; .env
 - 原因：办公网环境下官方 consent/callback 页面无法请求 app.lobehub.com，handoff 长期 pending
-- 方案：handoff 失败 / 超时后弹出输入框，用户粘贴回调 URL 解析 code/state 完成本地 token 交换；保留授权弹窗便于复制；支持 `NEXT_PUBLIC_MARKET_OIDC_HANDOFF_TIMEOUT_MS` 缩短等待
+- 方案：handoff 失败 / 超时后弹出输入框，用户粘贴回调 URL 解析 code/state 完成本地 token 交换；保留授权弹窗便于复制；手动回调会同步更新 state；支持 `NEXT_PUBLIC_MARKET_OIDC_HANDOFF_TIMEOUT_MS` 缩短等待
 - 回滚：移除 ManualCallbackModal 与 MarketAuthProvider 的手动兜底逻辑
 - 影响：当自动回调失败时，用户可通过复制回调链接完成授权
 
