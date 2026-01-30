@@ -2,6 +2,31 @@
 
 # Changelog
 
+### [Version 1.158.1](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.158.0...v1.158.1)
+
+<sup>Released on **2026-01-30**</sup>
+
+#### 🐛 Bug Fixes
+
+- **misc**: Correct desktop download URL path.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **misc**: Correct desktop download URL path, closes [#11990](https://github.com/jaworldwideorg/OneJA-Bot/issues/11990) ([e46df98](https://github.com/jaworldwideorg/OneJA-Bot/commit/e46df98))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 1.158.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.157.1...v1.158.0)
 
 <sup>Released on **2026-01-30**</sup>
