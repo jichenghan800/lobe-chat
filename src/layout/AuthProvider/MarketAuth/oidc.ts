@@ -4,6 +4,12 @@ import { MARKET_OIDC_ENDPOINTS } from '@/services/_url';
 import { MarketAuthError } from './errors';
 import { type OIDCConfig, type PKCEParams, type TokenResponse } from './types';
 
+const resolveDesktopHandoffTimeout = () => {
+  const raw = process.env.NEXT_PUBLIC_MARKET_OIDC_HANDOFF_TIMEOUT_MS;
+  const value = raw ? Number(raw) : Number.NaN;
+  return Number.isFinite(value) && value > 0 ? value : 5 * 60 * 1000;
+};
+
 /**
  * Market OIDC 授权工具类
  */
@@ -14,7 +20,7 @@ export class MarketOIDC {
 
   private static readonly DESKTOP_HANDOFF_POLL_INTERVAL = 1500;
 
-  private static readonly DESKTOP_HANDOFF_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  private static readonly DESKTOP_HANDOFF_TIMEOUT = resolveDesktopHandoffTimeout();
 
   constructor(config: OIDCConfig) {
     this.config = config;
