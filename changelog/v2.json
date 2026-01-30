@@ -1,6 +1,13 @@
 [
   {
     "children": {
+      "features": ["Refactor cron job UI and use runtime enableBusinessFeatures flag."]
+    },
+    "date": "2026-01-30",
+    "version": "2.1.0"
+  },
+  {
+    "children": {
       "improvements": ["Fix usage table display issues."]
     },
     "date": "2026-01-29",
@@ -2030,6 +2037,17 @@
     "children": {},
     "date": "2025-10-30",
     "version": "2.0.0-next.1"
+  },
+  {
+    "children": {
+      "features": [
+        "Add custom labels for oAuth SSO providers, refactor cron job UI and use runtime enableBusinessFeatures flag."
+      ],
+      "fixes": ["Group publish to market should set local group market identifer."],
+      "improvements": ["Fix usage table display issues."]
+    },
+    "date": "2026-01-30",
+    "version": "1.158.0"
   },
   {
     "children": {
