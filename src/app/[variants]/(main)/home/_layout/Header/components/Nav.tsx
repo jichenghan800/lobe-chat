@@ -6,6 +6,7 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { filterDesktopHeaderNavItems } from '@/_custom/registry/navigation';
 import { getRouteById } from '@/config/routes';
 import { useActiveTabKey } from '@/hooks/useActiveTabKey';
 import { useGlobalStore } from '@/store/global';
@@ -33,42 +34,43 @@ const Nav = memo(() => {
   const { showMarket, showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   const items: Item[] = useMemo(
-    () => [
-      {
-        icon: SearchIcon,
-        key: 'search',
-        onClick: () => {
-          toggleCommandMenu(true);
+    () =>
+      filterDesktopHeaderNavItems([
+        {
+          icon: SearchIcon,
+          key: 'search',
+          onClick: () => {
+            toggleCommandMenu(true);
+          },
+          title: t('tab.search'),
         },
-        title: t('tab.search'),
-      },
-      {
-        icon: HomeIcon,
-        key: SidebarTabKey.Home,
-        title: t('tab.home'),
-        url: '/',
-      },
-      {
-        icon: getRouteById('page')!.icon,
-        key: SidebarTabKey.Pages,
-        title: t('tab.pages'),
-        url: '/page',
-      },
-      {
-        hidden: !showAiImage,
-        icon: getRouteById('image')!.icon,
-        key: SidebarTabKey.Image,
-        title: t('tab.aiImage'),
-        url: '/image',
-      },
-      {
-        hidden: !showMarket,
-        icon: getRouteById('community')!.icon,
-        key: SidebarTabKey.Community,
-        title: t('tab.community'),
-        url: '/community',
-      },
-    ],
+        {
+          icon: HomeIcon,
+          key: SidebarTabKey.Home,
+          title: t('tab.home'),
+          url: '/',
+        },
+        {
+          icon: getRouteById('page')!.icon,
+          key: SidebarTabKey.Pages,
+          title: t('tab.pages'),
+          url: '/page',
+        },
+        {
+          hidden: !showAiImage,
+          icon: getRouteById('image')!.icon,
+          key: SidebarTabKey.Image,
+          title: t('tab.aiImage'),
+          url: '/image',
+        },
+        {
+          hidden: !showMarket,
+          icon: getRouteById('community')!.icon,
+          key: SidebarTabKey.Community,
+          title: t('tab.community'),
+          url: '/community',
+        },
+      ]),
     [t],
   );
 
