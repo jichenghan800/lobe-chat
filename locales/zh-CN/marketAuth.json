@@ -32,7 +32,7 @@
   "errors.stateMissing": "未找到授权状态，请重试。",
   "manual.actions.cancel": "取消",
   "manual.actions.submit": "完成授权",
-  "manual.description": "如果 Market 页面显示 “Authentication Error / Failed to fetch”，请复制地址栏里的完整回调链接并粘贴到下方完成授权。",
+  "manual.description": "如果 Market 页面显示 “Authentication Error / Failed to fetch”，请保持弹窗不关闭，复制地址栏里的完整回调链接并粘贴到下方完成授权。",
   "manual.errors.invalidUrl": "未从链接中找到 code 或 state，请粘贴完整回调链接。",
   "manual.input.placeholder": "https://market.lobehub.com/lobehub-oidc/consent/callback?code=...&state=...",
   "manual.title": "手动完成授权",

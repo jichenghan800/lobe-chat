@@ -38,7 +38,7 @@ export default {
   'manual.actions.cancel': 'Cancel',
   'manual.actions.submit': 'Complete Authorization',
   'manual.description':
-    'If the Market page shows “Authentication Error / Failed to fetch”, copy the full callback URL and paste it here to finish sign-in.',
+    'If the Market page shows “Authentication Error / Failed to fetch”, keep the popup open, copy the full callback URL, and paste it here to finish sign-in.',
   'manual.errors.invalidUrl':
     'We could not find code or state in the URL. Paste the full callback URL.',
   'manual.input.placeholder':
