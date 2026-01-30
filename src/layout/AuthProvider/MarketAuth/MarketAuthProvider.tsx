@@ -81,19 +81,19 @@ const saveMarketTokensToDB = async (
 };
 
 const parseMarketCallbackParams = (input: string) => {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
+  const normalized = input.replaceAll(/\s+/g, '').trim();
+  if (!normalized) return null;
 
-  const queryIndex = trimmed.indexOf('?');
-  const query = queryIndex >= 0 ? trimmed.slice(queryIndex + 1) : trimmed.replace(/^#/, '');
+  const queryIndex = normalized.indexOf('?');
+  const query = queryIndex >= 0 ? normalized.slice(queryIndex + 1) : normalized.replace(/^#/, '');
   const params = new URLSearchParams(query);
   const code = params.get('code');
   const state = params.get('state');
 
   if (code && state) return { code, state };
 
-  const codeMatch = trimmed.match(/(?:^|[&?])code=([^&]+)/);
-  const stateMatch = trimmed.match(/(?:^|[&?])state=([^&]+)/);
+  const codeMatch = normalized.match(/(?:^|[&?])code=([^&]+)/);
+  const stateMatch = normalized.match(/(?:^|[&?])state=([^&]+)/);
   if (!codeMatch || !stateMatch) return null;
 
   return {
@@ -441,6 +441,12 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
     setManualCallbackLoading(true);
     setShowManualCallbackModal(false);
     setManualCallbackLoading(false);
+
+    try {
+      sessionStorage.setItem('market_state', parsed.state);
+    } catch (error) {
+      console.warn('[MarketAuth] Failed to update market_state from manual callback', error);
+    }
 
     if (pendingManualCallbackResolve) {
       pendingManualCallbackResolve(parsed);
