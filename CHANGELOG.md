@@ -2,6 +2,48 @@
 
 # Changelog
 
+## [Version 1.158.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.157.1...v1.158.0)
+
+<sup>Released on **2026-01-30**</sup>
+
+#### ✨ Features
+
+- **misc**: Add custom labels for oAuth SSO providers, refactor cron job UI and use runtime enableBusinessFeatures flag.
+
+#### 🐛 Bug Fixes
+
+- **misc**: Group publish to market should set local group market identifer.
+
+#### 💄 Styles
+
+- **misc**: Fix usage table display issues.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **misc**: Add custom labels for oAuth SSO providers, closes [#9176](https://github.com/jaworldwideorg/OneJA-Bot/issues/9176) ([136721e](https://github.com/jaworldwideorg/OneJA-Bot/commit/136721e))
+- **misc**: Refactor cron job UI and use runtime enableBusinessFeatures flag, closes [#11975](https://github.com/jaworldwideorg/OneJA-Bot/issues/11975) ([104a19a](https://github.com/jaworldwideorg/OneJA-Bot/commit/104a19a))
+
+#### What's fixed
+
+- **misc**: Group publish to market should set local group market identifer, closes [#11965](https://github.com/jaworldwideorg/OneJA-Bot/issues/11965) ([0bda4d9](https://github.com/jaworldwideorg/OneJA-Bot/commit/0bda4d9))
+
+#### Styles
+
+- **misc**: Fix usage table display issues, closes [#10108](https://github.com/jaworldwideorg/OneJA-Bot/issues/10108) ([4bd82c3](https://github.com/jaworldwideorg/OneJA-Bot/commit/4bd82c3))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 2.1.0](https://github.com/lobehub/lobe-chat/compare/v2.0.13...v2.1.0)
 
 <sup>Released on **2026-01-30**</sup>
