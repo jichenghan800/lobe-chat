@@ -6,6 +6,7 @@ import { createContext, use, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mutate as globalMutate } from 'swr';
 
+import ManualCallbackModal from '@/_custom/components/marketAuth/ManualCallbackModal';
 import { lambdaClient } from '@/libs/trpc/client';
 import { MARKET_OIDC_ENDPOINTS } from '@/services/_url';
 import { useServerConfigStore } from '@/store/serverConfig';
@@ -13,16 +14,17 @@ import { serverConfigSelectors } from '@/store/serverConfig/selectors';
 import { useUserStore } from '@/store/user';
 import { settingsSelectors } from '@/store/user/slices/settings/selectors/settings';
 
-import { MarketAuthError } from './errors';
 import MarketAuthConfirmModal from './MarketAuthConfirmModal';
-import { MarketOIDC } from './oidc';
 import ProfileSetupModal from './ProfileSetupModal';
+import { MarketAuthError, resolveMarketAuthError } from './errors';
+import { MarketOIDC } from './oidc';
 import {
   type MarketAuthContextType,
   type MarketAuthSession,
   type MarketUserInfo,
   type MarketUserProfile,
   type OIDCConfig,
+  type TokenResponse,
 } from './types';
 import { useMarketUserProfile } from './useMarketUserProfile';
 
@@ -77,6 +79,28 @@ const saveMarketTokensToDB = async (
   } catch (error) {
     console.error('[MarketAuth] Failed to save tokens to DB:', error);
   }
+};
+
+const parseMarketCallbackParams = (input: string) => {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const queryIndex = trimmed.indexOf('?');
+  const query = queryIndex >= 0 ? trimmed.slice(queryIndex + 1) : trimmed.replace(/^#/, '');
+  const params = new URLSearchParams(query);
+  const code = params.get('code');
+  const state = params.get('state');
+
+  if (code && state) return { code, state };
+
+  const codeMatch = trimmed.match(/(?:^|[&?])code=([^&]+)/);
+  const stateMatch = trimmed.match(/(?:^|[&?])state=([^&]+)/);
+  if (!codeMatch || !stateMatch) return null;
+
+  return {
+    code: decodeURIComponent(codeMatch[1]),
+    state: decodeURIComponent(stateMatch[1]),
+  };
 };
 
 /**
@@ -144,6 +168,8 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
   const [oidcClient, setOidcClient] = useState<MarketOIDC | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
+  const [showManualCallbackModal, setShowManualCallbackModal] = useState(false);
+  const [manualCallbackLoading, setManualCallbackLoading] = useState(false);
   const [isFirstTimeSetup, setIsFirstTimeSetup] = useState(false);
   const [pendingSignInResolve, setPendingSignInResolve] = useState<
     ((_value: number | null) => void) | null
@@ -151,6 +177,12 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
   const [pendingSignInReject, setPendingSignInReject] = useState<((_reason?: any) => void) | null>(
     null,
   );
+  const [pendingManualCallbackResolve, setPendingManualCallbackResolve] = useState<
+    ((_value: { code: string; state: string }) => void) | null
+  >(null);
+  const [pendingManualCallbackReject, setPendingManualCallbackReject] = useState<
+    ((_reason?: any) => void) | null
+  >(null);
   const [pendingProfileSuccessCallback, setPendingProfileSuccessCallback] = useState<
     ((_profile: MarketUserProfile) => void) | null
   >(null);
@@ -261,6 +293,44 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
   /**
    * 实际执行登录的方法（内部使用）
    */
+  const completeSignInWithToken = async (tokenResponse: TokenResponse): Promise<number | null> => {
+    const userInfo = await fetchUserInfo(tokenResponse.accessToken);
+
+    const expiresAt = Date.now() + tokenResponse.expiresIn * 1000;
+    const newSession: MarketAuthSession = {
+      accessToken: tokenResponse.accessToken,
+      expiresAt,
+      expiresIn: tokenResponse.expiresIn,
+      scope: tokenResponse.scope,
+      tokenType: tokenResponse.tokenType as 'Bearer',
+      userInfo: userInfo || undefined,
+    };
+
+    await saveMarketTokensToDB(tokenResponse.accessToken, tokenResponse.refreshToken, expiresAt);
+
+    setSession(newSession);
+    setStatus('authenticated');
+
+    if (userInfo?.sub) {
+      const needsSetup = await checkNeedsProfileSetup(userInfo.sub);
+      if (needsSetup) {
+        setTimeout(() => {
+          setIsFirstTimeSetup(true);
+          setShowProfileSetupModal(true);
+        }, 0);
+      }
+    }
+
+    return userInfo?.accountId ?? null;
+  };
+
+  const waitForManualCallback = () =>
+    new Promise<{ code: string; state: string }>((resolve, reject) => {
+      setPendingManualCallbackResolve(() => resolve);
+      setPendingManualCallbackReject(() => reject);
+      setShowManualCallbackModal(true);
+    });
+
   const handleActualSignIn = async (): Promise<number | null> => {
     if (!oidcClient) {
       console.error('[MarketAuth] OIDC client not initialized');
@@ -273,57 +343,34 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
       // 启动 OIDC 授权流程并获取授权码
       const authResult = await oidcClient.startAuthorization();
 
-      // 用授权码换取访问令牌
       const tokenResponse = await oidcClient.exchangeCodeForToken(
         authResult.code,
         authResult.state,
       );
 
-      // 获取用户信息
-      const userInfo = await fetchUserInfo(tokenResponse.accessToken);
+      return await completeSignInWithToken(tokenResponse);
+    } catch (error) {
+      const resolvedError = resolveMarketAuthError(error);
 
-      // 创建会话对象
-      const expiresAt = Date.now() + tokenResponse.expiresIn * 1000;
-      const newSession: MarketAuthSession = {
-        accessToken: tokenResponse.accessToken,
-        expiresAt,
-        expiresIn: tokenResponse.expiresIn,
-        scope: tokenResponse.scope,
-        tokenType: tokenResponse.tokenType as 'Bearer',
-        userInfo: userInfo || undefined,
-      };
-
-      // 存储 tokens 到 DB
-      await saveMarketTokensToDB(tokenResponse.accessToken, tokenResponse.refreshToken, expiresAt);
-
-      setSession(newSession);
-      setStatus('authenticated');
-
-      // Check if user needs to set up profile (first-time login)
-      if (userInfo?.sub) {
-        const needsSetup = await checkNeedsProfileSetup(userInfo.sub);
-        if (needsSetup) {
-          // Wait for next tick to ensure session state is updated before opening modal
-          // This prevents the edge case where accessToken is null when modal opens
-          setTimeout(() => {
-            setIsFirstTimeSetup(true);
-            setShowProfileSetupModal(true);
-          }, 0);
+      if (resolvedError.code === 'handoffFailed' || resolvedError.code === 'handoffTimeout') {
+        try {
+          const manualResult = await waitForManualCallback();
+          const manualToken = await oidcClient.exchangeCodeForToken(
+            manualResult.code,
+            manualResult.state,
+          );
+          return await completeSignInWithToken(manualToken);
+        } catch (manualError) {
+          const manualResolved = resolveMarketAuthError(manualError);
+          setStatus('unauthenticated');
+          message.error(t(`errors.${manualResolved.code}`) || t('errors.general'));
+          throw manualResolved;
         }
       }
 
-      return userInfo?.accountId ?? null;
-    } catch (error) {
       setStatus('unauthenticated');
-
-      // 根据错误类型显示不同的错误消息
-      if (error instanceof MarketAuthError) {
-        message.error(t(`errors.${error.code}`) || t('errors.general'));
-      } else {
-        message.error(t('errors.general'));
-      }
-
-      throw error;
+      message.error(t(`errors.${resolvedError.code}`) || t('errors.general'));
+      throw resolvedError;
     }
   };
 
@@ -382,6 +429,34 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
       pendingSignInReject(new Error('User cancelled authorization'));
       setPendingSignInResolve(null);
       setPendingSignInReject(null);
+    }
+  };
+
+  const handleManualCallbackSubmit = (value: string) => {
+    const parsed = parseMarketCallbackParams(value);
+    if (!parsed) {
+      message.error(t('manual.errors.invalidUrl'));
+      return;
+    }
+
+    setManualCallbackLoading(true);
+    setShowManualCallbackModal(false);
+    setManualCallbackLoading(false);
+
+    if (pendingManualCallbackResolve) {
+      pendingManualCallbackResolve(parsed);
+      setPendingManualCallbackResolve(null);
+      setPendingManualCallbackReject(null);
+    }
+  };
+
+  const handleManualCallbackCancel = () => {
+    setShowManualCallbackModal(false);
+    setManualCallbackLoading(false);
+    if (pendingManualCallbackReject) {
+      pendingManualCallbackReject(new Error('Manual authorization cancelled'));
+      setPendingManualCallbackResolve(null);
+      setPendingManualCallbackReject(null);
     }
   };
 
@@ -506,6 +581,12 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
         open={showConfirmModal}
         onCancel={handleCancelAuth}
         onConfirm={handleConfirmAuth}
+      />
+      <ManualCallbackModal
+        loading={manualCallbackLoading}
+        onCancel={handleManualCallbackCancel}
+        onSubmit={handleManualCallbackSubmit}
+        open={showManualCallbackModal}
       />
       <ProfileSetupModal
         accessToken={session?.accessToken ?? null}
