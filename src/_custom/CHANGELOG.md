@@ -136,6 +136,17 @@
 
 ---
 
+### \[2026-01-30] Market token 代理失败日志增强
+
+- 类型: hotfix
+- 涉及文件: src/app/(backend)/market/oidc/\[\[...segments]]/route.ts
+- 原因：token 交换 500 无法定位具体错误原因
+- 方案：输出 Market SDK 错误的 status/statusText/body，返回 detail 便于排查
+- 回滚：移除 extractProxyError 与 detail 透传
+- 影响：仅增加日志与错误详情
+
+---
+
 ## 变更记录模板
 
 ```
