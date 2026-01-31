@@ -39,7 +39,7 @@ lobe-chat/
 
 ### Git Workflow
 
-- The current release branch is `next` until v2.0.0 is officially released
+- The release branch is `main`
 - Use rebase for git pull
 - Git commit messages should prefix with gitmoji
 - Git branch name format: `username/feat/feature-name`
