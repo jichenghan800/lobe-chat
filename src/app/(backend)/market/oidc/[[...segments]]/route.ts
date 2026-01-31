@@ -43,6 +43,34 @@ const methodNotAllowed = (allowed: string[]) =>
     },
   );
 
+const extractProxyError = (error: unknown) => {
+  if (!error || typeof error !== 'object') {
+    return { message: String(error) };
+  }
+
+  const maybeError = error as {
+    body?: unknown;
+    data?: unknown;
+    message?: string;
+    response?: { body?: unknown; data?: unknown, status?: number; statusText?: string; };
+    status?: number;
+    statusCode?: number;
+    statusText?: string;
+  };
+
+  const status = maybeError.status ?? maybeError.statusCode ?? maybeError.response?.status;
+  const statusText = maybeError.statusText ?? maybeError.response?.statusText;
+  const body =
+    maybeError.body ?? maybeError.data ?? maybeError.response?.body ?? maybeError.response?.data;
+
+  return {
+    body,
+    message: maybeError.message,
+    status,
+    statusText,
+  };
+};
+
 const handleProxy = async (req: NextRequest, context: RouteContext) => {
   const marketService = new MarketService();
   const market = marketService.market;
@@ -144,9 +172,11 @@ const handleProxy = async (req: NextRequest, context: RouteContext) => {
           { status: 400 },
         );
       } catch (error) {
-        console.error('[MarketOIDC] Failed to proxy token request:', error);
+        const detail = extractProxyError(error);
+        console.error('[MarketOIDC] Failed to proxy token request:', detail);
         return NextResponse.json(
           {
+            detail,
             error: 'token_proxy_failed',
             message: error instanceof Error ? error.message : 'Unknown error',
             status: 'error',
