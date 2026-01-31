@@ -4,12 +4,6 @@ import { MARKET_OIDC_ENDPOINTS } from '@/services/_url';
 import { MarketAuthError } from './errors';
 import { type OIDCConfig, type PKCEParams, type TokenResponse } from './types';
 
-const resolveDesktopHandoffTimeout = () => {
-  const raw = process.env.NEXT_PUBLIC_MARKET_OIDC_HANDOFF_TIMEOUT_MS;
-  const value = raw ? Number(raw) : Number.NaN;
-  return Number.isFinite(value) && value > 0 ? value : 5 * 60 * 1000;
-};
-
 /**
  * Market OIDC 授权工具类
  */
@@ -20,7 +14,7 @@ export class MarketOIDC {
 
   private static readonly DESKTOP_HANDOFF_POLL_INTERVAL = 1500;
 
-  private static readonly DESKTOP_HANDOFF_TIMEOUT = resolveDesktopHandoffTimeout();
+  private static readonly DESKTOP_HANDOFF_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
   constructor(config: OIDCConfig) {
     this.config = config;
@@ -104,9 +98,6 @@ export class MarketOIDC {
     authUrl.searchParams.set('state', pkceParams.state);
     authUrl.searchParams.set('code_challenge', pkceParams.codeChallenge);
     authUrl.searchParams.set('code_challenge_method', 'S256');
-    if (this.config.useHandoff) {
-      authUrl.searchParams.set('client', MarketOIDC.DESKTOP_HANDOFF_CLIENT);
-    }
 
     console.log('[MarketOIDC] Authorization URL built:', authUrl.toString());
     return authUrl.toString();
@@ -191,17 +182,6 @@ export class MarketOIDC {
       throw new MarketAuthError('stateMissing', {
         message: 'Authorization state not found. Please try again.',
       });
-    }
-
-    if (this.config.useHandoff) {
-      const popup = window.open(
-        authUrl,
-        'market_auth',
-        'width=580,height=720,scrollbars=yes,resizable=yes',
-      );
-      const result = await this.pollDesktopHandoff(state);
-      popup?.close();
-      return result;
     }
 
     // 在新窗口中打开授权页面
