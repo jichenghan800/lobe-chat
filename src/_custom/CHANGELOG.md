@@ -169,6 +169,17 @@
 
 ---
 
+### \[2026-01-31] 回退 Market/OIDC 兜底逻辑（保持官方实现）
+
+- 类型: revert
+- 涉及文件: src/layout/AuthProvider/MarketAuth/MarketAuthProvider.tsx; src/layout/AuthProvider/MarketAuth/oidc.ts; src/layout/AuthProvider/MarketAuth/types.ts; src/app/(backend)/market/oidc/\[\[...segments]]/route.ts; src/locales/default/marketAuth.ts; locales/zh-CN/marketAuth.json; locales/en-US/marketAuth.json
+- 原因：等待官方修复，保持与上游一致
+- 方案：撤销 handoff / 手动回调 / 直连 token 代理相关改动
+- 回滚：重新引入 Market/OIDC 兜底逻辑
+- 影响：Market 登录链路回到官方默认实现
+
+---
+
 ## 变更记录模板
 
 ```
