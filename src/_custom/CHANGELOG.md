@@ -158,6 +158,17 @@
 
 ---
 
+### \[2026-01-31] 回退 agent fork 登录自动触发逻辑（等待官方修复）
+
+- 类型: revert
+- 涉及文件: src/app/\[variants]/(main)/community/(detail)/agent/features/Sidebar/ActionButton/ForkAndChat.tsx; src/app/\[variants]/(main)/community/(detail)/group_agent/features/Sidebar/ActionButton/ForkGroupAndChat.tsx
+- 原因：官方 bug，fork 授权链路不稳定，先保持官方实现
+- 方案：撤销 fork 前自动触发 Market OIDC 登录
+- 回滚：重新引入 fork 前 signIn 逻辑
+- 影响：fork 继续依赖官方 Market 侧修复
+
+---
+
 ## 变更记录模板
 
 ```
