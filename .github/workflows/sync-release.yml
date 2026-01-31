@@ -30,11 +30,29 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           api="https://api.github.com/repos/lobehub/lobe-chat/releases/latest"
-          tag=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" "$api" | jq -r .tag_name)
+          header_auth=""
+          if [ -n "$GH_TOKEN" ]; then
+            header_auth="-H \"Authorization: Bearer $GH_TOKEN\""
+          fi
+
+          resp=$(eval curl -sS $header_auth -H "X-GitHub-Api-Version: 2022-11-28" "$api")
+          tag=$(echo "$resp" | jq -r '.tag_name // empty')
+          if [ -z "$tag" ]; then
+            message=$(echo "$resp" | jq -r '.message // empty')
+            echo "Latest release lookup failed: $message" >&2
+            echo "Raw response: $resp" >&2
+
+            # fallback: list releases
+            fallback_api="https://api.github.com/repos/lobehub/lobe-chat/releases?per_page=1"
+            resp=$(eval curl -sS $header_auth -H "X-GitHub-Api-Version: 2022-11-28" "$fallback_api")
+            tag=$(echo "$resp" | jq -r '.[0].tag_name // empty')
+          fi
+
           if [ -z "$tag" ] || [ "$tag" = "null" ]; then
             echo "Failed to fetch latest release tag" >&2
             exit 1
           fi
+
           safe_tag=$(echo "$tag" | tr '/' '-')
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "safe_tag=$safe_tag" >> "$GITHUB_OUTPUT"
