@@ -1,11 +1,12 @@
 'use client';
 
-import { ModelTag, ProviderIcon } from '@lobehub/icons';
+import { ProviderIcon } from '@lobehub/icons';
 import { Flexbox, Tag } from '@lobehub/ui';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import urlJoin from 'url-join';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import { OFFICIAL_URL } from '@/const/url';
 
 import ShareButton from '../../../../features/ShareButton';
@@ -28,7 +29,7 @@ const ActionButton = memo(() => {
                 .slice(0, 4)
                 .filter(Boolean)
                 .map((item) => (
-                  <ModelTag key={item.id} model={item.id} style={{ margin: 0 }} />
+                  <ModelDisplayNameTag key={item.id} model={item.id} style={{ margin: 0 }} />
                 ))}
               {models.length > 3 && <Tag>+{models.length - 3}</Tag>}
             </Flexbox>

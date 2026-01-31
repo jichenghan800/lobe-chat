@@ -1,12 +1,12 @@
 import { OFFICIAL_DOMAIN } from '@lobechat/const';
 import { type UIChatMessage } from '@lobechat/types';
-import { ModelTag } from '@lobehub/icons';
 import { Avatar, Flexbox } from '@lobehub/ui';
 import { ChatHeaderTitle } from '@lobehub/ui/chat';
 import { cx } from 'antd-style';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import { ProductLogo } from '@/components/Branding';
 import { ChatItem } from '@/features/Conversation/ChatItem';
 import PluginTag from '@/features/PluginTag';
@@ -27,8 +27,9 @@ interface PreviewProps extends FieldType {
 
 const Preview = memo<PreviewProps>(
   ({ title, withBackground, withFooter, message, previewId = 'preview' }) => {
-    const [model, plugins] = useAgentStore((s) => [
+    const [model, provider, plugins] = useAgentStore((s) => [
       agentSelectors.currentAgentModel(s),
+      agentSelectors.currentAgentModelProvider(s),
       agentSelectors.displayableAgentPlugins(s),
     ]);
 
@@ -63,7 +64,7 @@ const Preview = memo<PreviewProps>(
                   desc={displayDesc}
                   tag={
                     <Flexbox gap={4} horizontal>
-                      <ModelTag model={model} />
+                      <ModelDisplayNameTag model={model} provider={provider} />
                       {plugins?.length > 0 && <PluginTag plugins={plugins} />}
                     </Flexbox>
                   }

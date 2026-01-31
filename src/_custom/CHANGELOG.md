@@ -4,6 +4,17 @@
 
 ---
 
+### \[2026-01-31] Dev 免密登录调试入口
+
+- 类型: custom
+- 涉及文件: src/\_custom/routes/dev-login.ts; src/app/(backend)/api/dev/login/route.ts
+- 原因：开发阶段需要为 Chrome Dev MCP 提供免密调试账号
+- 方案：新增 /api/dev/login，使用环境变量 + token 校验后创建 / 更新调试用户并写入 Better Auth 会话
+- 回滚：删除上述文件并移除 DEV_AUTH_BYPASS\_\* 环境变量
+- 影响：仅在 DEV_AUTH_BYPASS_ENABLED=1 且 token 校验通过时生效
+
+---
+
 ### \[2026-01-30] 仅保留聊天与助理的导航收敛
 
 - 类型: custom
@@ -177,6 +188,17 @@
 - 方案：撤销 handoff / 手动回调 / 直连 token 代理相关改动
 - 回滚：重新引入 Market/OIDC 兜底逻辑
 - 影响：Market 登录链路回到官方默认实现
+
+---
+
+### \[2026-01-31] 模型显示名统一映射（非 Provider / 模型配置页）
+
+- 类型: custom
+- 涉及文件: src/\_custom/hooks/useModelDisplayName.ts; src/\_custom/components/ModelDisplayNameTag.tsx; src/app/\[variants]/(main)/agent/features/Conversation/Header/Tags/index.tsx; src/features/Conversation/Messages/components/Extras/Usage/index.tsx; src/features/Conversation/Messages/components/Extras/Usage/UsageDetail/ModelCard.tsx; src/features/Conversation/components/History/index.tsx; src/features/Conversation/components/ShareMessageModal/ShareImage/Preview\.tsx; src/features/ShareModal/ShareImage/Preview\.tsx; src/app/\[variants]/(mobile)/(home)/features/SessionListContent/List/Item/index.tsx; src/app/\[variants]/(main)/community/(detail)/provider/features/Sidebar/ActionButton/index.tsx; src/app/\[variants]/(main)/community/(list)/provider/features/List/Item.tsx; src/app/\[variants]/(main)/image/features/GenerationFeed/BatchItem.tsx
+- 原因：需要在非 Provider / 模型配置页统一显示可配置的模型 displayName
+- 方案：新增 displayName 解析 hook + Tag 组件，并替换多处 ModelTag / 模型文本显示
+- 回滚：移除上述 hook / 组件并恢复各处 ModelTag / 模型文本显示
+- 影响：模型名称展示优先显示自定义 displayName，模型 id 作为 fallback/tooltip
 
 ---
 

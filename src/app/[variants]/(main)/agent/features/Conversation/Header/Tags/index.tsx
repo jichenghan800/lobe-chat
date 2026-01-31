@@ -1,8 +1,8 @@
-import { ModelTag } from '@lobehub/icons';
 import { Flexbox, Skeleton } from '@lobehub/ui';
 import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import PluginTag from '@/features/PluginTag';
 import { useAgentEnableSearch } from '@/hooks/useAgentEnableSearch';
@@ -48,7 +48,7 @@ const TitleTags = memo(() => {
   ) : (
     <Flexbox align={'center'} gap={4} horizontal>
       <ModelSwitchPanel>
-        <ModelTag model={model} />
+        <ModelDisplayNameTag model={model} provider={provider} />
       </ModelSwitchPanel>
       {isAgentEnableSearch && <SearchTags />}
       {showPlugin && plugins?.length > 0 && <PluginTag plugins={plugins} />}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { ModelTag } from '@lobehub/icons';
 import { ActionIconGroup, Block, Flexbox, Grid, Markdown, Tag, Text } from '@lobehub/ui';
 import { App } from 'antd';
 import { createStaticStyles } from 'antd-style';
@@ -13,6 +12,7 @@ import { type RuntimeImageGenParams } from 'model-bank';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import useRenderBusinessBatchItem from '@/business/client/hooks/useRenderBusinessBatchItem';
 import APIKeyForm from '@/components/InvalidAPIKey';
 import { useImageStore } from '@/store/image';
@@ -151,7 +151,7 @@ export const GenerationBatchItem = memo<GenerationBatchItemProps>(({ batch }) =>
       <Markdown variant={'chat'}>{batch.prompt}</Markdown>
       <Flexbox gap={4} horizontal justify="space-between" style={{ marginBottom: 10 }}>
         <Flexbox gap={4} horizontal>
-          <ModelTag model={batch.model} />
+          <ModelDisplayNameTag model={batch.model} provider={batch.provider} />
           {batch.width && batch.height && (
             <Tag>
               {batch.width} × {batch.height}
