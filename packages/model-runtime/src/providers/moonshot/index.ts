@@ -177,6 +177,7 @@ const fetchMoonshotModels = async ({ client }: { client: OpenAI }): Promise<Chat
 export const anthropicParams = createAnthropicCompatibleParams({
   baseURL: DEFAULT_MOONSHOT_ANTHROPIC_BASE_URL,
   chatCompletion: {
+    forceImageBase64: true,
     handlePayload: buildMoonshotAnthropicPayload,
   },
   customClient: {},
