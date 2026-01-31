@@ -1,8 +1,8 @@
-import { ModelTag } from '@lobehub/icons';
 import { Avatar, Flexbox, Markdown, Text } from '@lobehub/ui';
 import { cx } from 'antd-style';
 import { memo } from 'react';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import { ProductLogo } from '@/components/Branding';
 import PluginTag from '@/features/PluginTag';
 import { useAgentStore } from '@/store/agent';
@@ -12,20 +12,23 @@ import pkg from '../../../../package.json';
 import { containerStyles } from '../style';
 import ChatList from './ChatList';
 import { styles } from './style';
-import { type FieldType } from './type';
 import { WidthMode } from './type';
+import { type FieldType } from './type';
 
 const Preview = memo<FieldType & { title?: string }>(
   ({ title, withSystemRole, withBackground, withFooter, widthMode }) => {
-    const [model, plugins, systemRole, isInbox, avatar, backgroundColor] = useAgentStore((s) => [
-      agentSelectors.currentAgentModel(s),
-      agentSelectors.displayableAgentPlugins(s),
-      agentSelectors.currentAgentSystemRole(s),
-      builtinAgentSelectors.isInboxAgent(s),
-      agentSelectors.currentAgentDescription(s),
-      agentSelectors.currentAgentAvatar(s),
-      agentSelectors.currentAgentBackgroundColor(s),
-    ]);
+    const [model, provider, plugins, systemRole, isInbox, avatar, backgroundColor] = useAgentStore(
+      (s) => [
+        agentSelectors.currentAgentModel(s),
+        agentSelectors.currentAgentModelProvider(s),
+        agentSelectors.displayableAgentPlugins(s),
+        agentSelectors.currentAgentSystemRole(s),
+        builtinAgentSelectors.isInboxAgent(s),
+        agentSelectors.currentAgentDescription(s),
+        agentSelectors.currentAgentAvatar(s),
+        agentSelectors.currentAgentBackgroundColor(s),
+      ],
+    );
 
     const displayTitle = isInbox ? 'Lobe AI' : title;
 
@@ -44,7 +47,7 @@ const Preview = memo<FieldType & { title?: string }>(
             gap={16}
           >
             <div className={styles.header}>
-              <Flexbox horizontal align={'center'} gap={12}>
+              <Flexbox align={'center'} gap={12} horizontal>
                 <Avatar
                   avatar={avatar}
                   background={backgroundColor}
@@ -52,11 +55,11 @@ const Preview = memo<FieldType & { title?: string }>(
                   size={28}
                   title={title}
                 />
-                <Text strong fontSize={16}>
+                <Text fontSize={16} strong>
                   {displayTitle}
                 </Text>
-                <Flexbox horizontal gap={4}>
-                  <ModelTag model={model} />
+                <Flexbox gap={4} horizontal>
+                  <ModelDisplayNameTag model={model} provider={provider} />
                   {plugins?.length > 0 && <PluginTag plugins={plugins} />}
                 </Flexbox>
               </Flexbox>

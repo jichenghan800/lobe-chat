@@ -1,8 +1,8 @@
-import { ModelTag } from '@lobehub/icons';
 import { Flexbox } from '@lobehub/ui';
 import React, { memo, useMemo, useState } from 'react';
 import { shallow } from 'zustand/shallow';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import { DEFAULT_AVATAR } from '@/const/meta';
 import { INBOX_SESSION_ID } from '@/const/session';
 import { isDesktop } from '@/const/version';
@@ -90,8 +90,8 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
   const addon = useMemo(
     () =>
       !showModel ? undefined : (
-        <Flexbox horizontal gap={4} style={{ flexWrap: 'wrap' }}>
-          <ModelTag model={model} />
+        <Flexbox gap={4} horizontal style={{ flexWrap: 'wrap' }}>
+          <ModelDisplayNameTag model={model} />
         </Flexbox>
       ),
     [showModel, model],
@@ -128,10 +128,11 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
         draggable={isDesktop}
         key={id}
         loading={loading}
+        onDoubleClick={handleDoubleClick}
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
         pin={pin}
         showAction={open}
-        title={title}
-        type={sessionType}
         styles={{
           container: {
             gap: 12,
@@ -141,14 +142,13 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
             maskImage: `linear-gradient(90deg, #000 90%, transparent)`,
           },
         }}
-        onDoubleClick={handleDoubleClick}
-        onDragEnd={handleDragEnd}
-        onDragStart={handleDragStart}
+        title={title}
+        type={sessionType}
       />
       <CreateGroupModal
         id={id}
-        open={createGroupModalOpen}
         onCancel={() => setCreateGroupModalOpen(false)}
+        open={createGroupModalOpen}
       />
     </>
   );
