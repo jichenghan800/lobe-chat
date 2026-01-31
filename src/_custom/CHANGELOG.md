@@ -147,6 +147,17 @@
 
 ---
 
+### \[2026-01-30] Market token 代理改为直连 token endpoint
+
+- 类型: hotfix
+- 涉及文件: src/app/(backend)/market/oidc/\[\[...segments]]/route.ts
+- 原因：Market SDK 返回 “Invalid token response payload”，无法获取实际响应
+- 方案：token/refresh 走直连 `https://market.lobehub.com/token` 并透传原始响应
+- 回滚：恢复使用 Market SDK `exchangeOAuthToken`
+- 影响：仅影响 OIDC token 交换
+
+---
+
 ## 变更记录模板
 
 ```
