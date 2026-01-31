@@ -4,7 +4,6 @@ import { getTrustedClientTokenForSession } from '@/libs/trusted-client';
 import { MarketService } from '@/server/services/market';
 
 const MARKET_BASE_URL = process.env.NEXT_PUBLIC_MARKET_BASE_URL || 'https://market.lobehub.com';
-const MARKET_TOKEN_ENDPOINT = `${MARKET_BASE_URL}/token`;
 
 type RouteContext = {
   params: Promise<{
@@ -43,34 +42,6 @@ const methodNotAllowed = (allowed: string[]) =>
       status: 405,
     },
   );
-
-const extractProxyError = (error: unknown) => {
-  if (!error || typeof error !== 'object') {
-    return { message: String(error) };
-  }
-
-  const maybeError = error as {
-    body?: unknown;
-    data?: unknown;
-    message?: string;
-    response?: { body?: unknown; data?: unknown; status?: number; statusText?: string };
-    status?: number;
-    statusCode?: number;
-    statusText?: string;
-  };
-
-  const status = maybeError.status ?? maybeError.statusCode ?? maybeError.response?.status;
-  const statusText = maybeError.statusText ?? maybeError.response?.statusText;
-  const body =
-    maybeError.body ?? maybeError.data ?? maybeError.response?.body ?? maybeError.response?.data;
-
-  return {
-    body,
-    message: maybeError.message,
-    status,
-    statusText,
-  };
-};
 
 const handleProxy = async (req: NextRequest, context: RouteContext) => {
   const marketService = new MarketService();
@@ -140,85 +111,28 @@ const handleProxy = async (req: NextRequest, context: RouteContext) => {
           const codeVerifier = form.get('code_verifier');
           const redirectUri = form.get('redirect_uri');
 
-          const response = await fetch(MARKET_TOKEN_ENDPOINT, {
-            body: new URLSearchParams({
-              client_id: clientId || '',
-              code: code || '',
-              code_verifier: codeVerifier || '',
-              grant_type: 'authorization_code',
-              redirect_uri: redirectUri || '',
-            }).toString(),
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            method: 'POST',
+          const response = await market.auth.exchangeOAuthToken({
+            clientId: clientId as string,
+            code: code as string,
+            codeVerifier: codeVerifier as string,
+            grantType: 'authorization_code',
+            redirectUri: redirectUri as string,
           });
 
-          const raw = await response.text();
-          try {
-            const json = JSON.parse(raw) as Record<string, unknown>;
-            if (!response.ok) {
-              return NextResponse.json(
-                {
-                  detail: { body: json, status: response.status, statusText: response.statusText },
-                  error: 'token_exchange_failed',
-                  message: json?.error_description || json?.error || 'Token exchange failed',
-                  status: 'error',
-                },
-                { status: response.status },
-              );
-            }
-            return NextResponse.json(json);
-          } catch {
-            return NextResponse.json(
-              {
-                detail: { body: raw, status: response.status, statusText: response.statusText },
-                error: 'invalid_token_response',
-                message: 'Invalid token response payload',
-                status: 'error',
-              },
-              { status: 500 },
-            );
-          }
+          return NextResponse.json(response);
         }
 
         if (grantType === 'refresh_token') {
           const refreshToken = form.get('refresh_token');
           const clientId = form.get('client_id');
-          const response = await fetch(MARKET_TOKEN_ENDPOINT, {
-            body: new URLSearchParams({
-              client_id: clientId || '',
-              grant_type: 'refresh_token',
-              refresh_token: refreshToken || '',
-            }).toString(),
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            method: 'POST',
+
+          const response = await market.auth.exchangeOAuthToken({
+            clientId: clientId ?? undefined,
+            grantType: 'refresh_token',
+            refreshToken: refreshToken as string,
           });
 
-          const raw = await response.text();
-          try {
-            const json = JSON.parse(raw) as Record<string, unknown>;
-            if (!response.ok) {
-              return NextResponse.json(
-                {
-                  detail: { body: json, status: response.status, statusText: response.statusText },
-                  error: 'token_refresh_failed',
-                  message: json?.error_description || json?.error || 'Token refresh failed',
-                  status: 'error',
-                },
-                { status: response.status },
-              );
-            }
-            return NextResponse.json(json);
-          } catch {
-            return NextResponse.json(
-              {
-                detail: { body: raw, status: response.status, statusText: response.statusText },
-                error: 'invalid_token_response',
-                message: 'Invalid token response payload',
-                status: 'error',
-              },
-              { status: 500 },
-            );
-          }
+          return NextResponse.json(response);
         }
 
         return NextResponse.json(
@@ -230,11 +144,9 @@ const handleProxy = async (req: NextRequest, context: RouteContext) => {
           { status: 400 },
         );
       } catch (error) {
-        const detail = extractProxyError(error);
-        console.error('[MarketOIDC] Failed to proxy token request:', detail);
+        console.error('[MarketOIDC] Failed to proxy token request:', error);
         return NextResponse.json(
           {
-            detail,
             error: 'token_proxy_failed',
             message: error instanceof Error ? error.message : 'Unknown error',
             status: 'error',
