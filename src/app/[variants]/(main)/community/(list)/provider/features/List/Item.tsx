@@ -1,5 +1,5 @@
-import { Github, ModelTag, ProviderCombine } from '@lobehub/icons';
-import { ActionIcon, Block, Flexbox, MaskShadow, Text, stopPropagation } from '@lobehub/ui';
+import { Github, ProviderCombine } from '@lobehub/icons';
+import { ActionIcon, Block, Flexbox, MaskShadow, Text } from '@lobehub/ui';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { GlobeIcon } from 'lucide-react';
 import { memo } from 'react';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import urlJoin from 'url-join';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import { type DiscoverProviderItem } from '@/types/discover';
 
 const styles = createStaticStyles(({ css, cssVar }) => {
@@ -54,44 +55,49 @@ const ProviderItem = memo<DiscoverProviderItem>(
         clickable
         data-testid="provider-item"
         height={'100%'}
-        variant={'outlined'}
-        width={'100%'}
+        onClick={() => {
+          navigate(link);
+        }}
         style={{
           overflow: 'hidden',
           position: 'relative',
         }}
-        onClick={() => {
-          navigate(link);
-        }}
+        variant={'outlined'}
+        width={'100%'}
       >
         <Flexbox
-          horizontal
           align={'flex-start'}
           gap={16}
+          horizontal
           justify={'space-between'}
           padding={16}
           width={'100%'}
         >
           <Flexbox
-            title={identifier}
             style={{
               overflow: 'hidden',
             }}
+            title={identifier}
           >
             <Link style={{ color: 'inherit', overflow: 'hidden' }} to={link}>
               <ProviderCombine provider={identifier} size={28} style={{ flex: 'none' }} />
             </Link>
             <div className={styles.author}>@{name}</div>
           </Flexbox>
-          <Flexbox horizontal align={'center'}>
-            <a href={url} rel="noopener noreferrer" target={'_blank'} onClick={stopPropagation}>
+          <Flexbox align={'center'} horizontal>
+            <a
+              href={url}
+              onClick={(e) => e.stopPropagation()}
+              rel="noopener noreferrer"
+              target={'_blank'}
+            >
               <ActionIcon color={cssVar.colorTextDescription} icon={GlobeIcon} />
             </a>
             <a
               href={`https://github.com/lobehub/lobe-chat/blob/main/src/config/modelProviders/${identifier}.ts`}
+              onClick={(e) => e.stopPropagation()}
               rel="noopener noreferrer"
               target={'_blank'}
-              onClick={stopPropagation}
             >
               <ActionIcon fill={cssVar.colorTextDescription} icon={Github} />
             </a>
@@ -110,19 +116,19 @@ const ProviderItem = memo<DiscoverProviderItem>(
           )}
         </Flexbox>
         <Flexbox
-          horizontal
           align={'center'}
           className={styles.footer}
+          horizontal
           justify={'space-between'}
           padding={16}
         >
-          <MaskShadow horizontal gap={6} position={'right'} size={10} width={'100%'}>
+          <MaskShadow gap={6} horizontal position={'right'} size={10} width={'100%'}>
             {models
               .slice(0, 6)
               .filter(Boolean)
               .map((tag: string) => (
                 <Link key={tag} to={urlJoin('/model', tag)}>
-                  <ModelTag model={tag} style={{ margin: 0 }} />
+                  <ModelDisplayNameTag model={tag} style={{ margin: 0 }} />
                 </Link>
               ))}
           </MaskShadow>
