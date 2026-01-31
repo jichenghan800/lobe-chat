@@ -5,6 +5,8 @@ import { createStaticStyles } from 'antd-style';
 import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 
+import { useModelDisplayName } from '@/_custom/hooks/useModelDisplayName';
+
 import TokenDetail from './UsageDetail';
 
 export const styles = createStaticStyles(({ css, cssVar }) => ({
@@ -22,6 +24,8 @@ interface UsageProps {
 }
 
 const Usage = memo<UsageProps>(({ model, usage, performance, provider }) => {
+  const displayName = useModelDisplayName(model, provider);
+
   return (
     <Flexbox
       align={'center'}
@@ -32,7 +36,7 @@ const Usage = memo<UsageProps>(({ model, usage, performance, provider }) => {
     >
       <Center gap={4} horizontal style={{ fontSize: 12 }}>
         <ModelIcon model={model as string} type={'mono'} />
-        {model}
+        {displayName || model}
       </Center>
 
       {!!usage?.totalTokens && (

@@ -1,4 +1,4 @@
-import { Github, ModelTag, ProviderCombine } from '@lobehub/icons';
+import { Github, ProviderCombine } from '@lobehub/icons';
 import { ActionIcon, Block, Flexbox, MaskShadow, Text } from '@lobehub/ui';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { GlobeIcon } from 'lucide-react';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import urlJoin from 'url-join';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import { type DiscoverProviderItem } from '@/types/discover';
 
 const styles = createStaticStyles(({ css, cssVar }) => {
@@ -127,7 +128,7 @@ const ProviderItem = memo<DiscoverProviderItem>(
               .filter(Boolean)
               .map((tag: string) => (
                 <Link key={tag} to={urlJoin('/model', tag)}>
-                  <ModelTag model={tag} style={{ margin: 0 }} />
+                  <ModelDisplayNameTag model={tag} style={{ margin: 0 }} />
                 </Link>
               ))}
           </MaskShadow>

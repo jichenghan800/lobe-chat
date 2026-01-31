@@ -7,6 +7,7 @@ import { type LobeDefaultAiModelListItem } from 'model-bank';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useModelDisplayName } from '@/_custom/hooks/useModelDisplayName';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 
@@ -34,6 +35,7 @@ interface ModelCardProps extends LobeDefaultAiModelListItem {
 
 const ModelCard = memo<ModelCardProps>(({ pricing, id, provider, displayName }) => {
   const { t } = useTranslation('chat');
+  const displayLabel = useModelDisplayName(id, provider) || displayName || id;
 
   const isShowCredit = useGlobalStore(systemStatusSelectors.isShowCredit) && !!pricing;
   const updateSystemStatus = useGlobalStore((s) => s.updateSystemStatus);
@@ -54,7 +56,7 @@ const ModelCard = memo<ModelCardProps>(({ pricing, id, provider, displayName }) 
           <ModelIcon model={id} size={22} />
           <Flexbox flex={1} gap={2} style={{ minWidth: 0 }}>
             <Flexbox align={'center'} gap={8} horizontal style={{ lineHeight: '12px' }}>
-              {displayName || id}
+              {displayLabel}
             </Flexbox>
             <span className={styles.desc}>{provider}</span>
           </Flexbox>
