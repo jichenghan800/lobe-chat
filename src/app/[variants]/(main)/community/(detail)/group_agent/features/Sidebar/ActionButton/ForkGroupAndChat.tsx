@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import urlJoin from 'url-join';
 
-import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 import { chatGroupService } from '@/services/chatGroup';
 import { discoverService } from '@/services/discover';
 import { marketApiService } from '@/services/marketApi';
@@ -48,7 +47,6 @@ const ForkGroupAndChat = memo<{ mobile?: boolean }>(() => {
   const { t } = useTranslation('discover');
   const navigate = useNavigate();
   const loadGroups = useAgentGroupStore((s) => s.loadGroups);
-  const { isAuthenticated: isMarketAuthenticated, signIn: signInMarket } = useMarketAuth();
 
   const meta = {
     avatar,
@@ -61,14 +59,6 @@ const ForkGroupAndChat = memo<{ mobile?: boolean }>(() => {
   const handleForkAndChat = async () => {
     try {
       setIsLoading(true);
-
-      if (!isMarketAuthenticated) {
-        try {
-          await signInMarket();
-        } catch {
-          return;
-        }
-      }
 
       // Step 1: Check if user has already forked this group
       const existingGroupId = await chatGroupService.getGroupByForkedFromIdentifier(identifier!);
