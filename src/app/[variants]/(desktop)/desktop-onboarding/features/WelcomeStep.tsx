@@ -9,6 +9,7 @@ import { BrainIcon, HeartHandshakeIcon, PencilRulerIcon } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { ProductLogo } from '@/components/Branding';
 import { useUserStore } from '@/store/user';
 
@@ -57,7 +58,7 @@ const WelcomeStep = memo<WelcomeStepProps>(({ onNext }) => {
             key={locale}
             pauseDuration={16_000}
             sentences={[
-              t('telemetry.title', { name: 'Lobe AI' }),
+              t('telemetry.title', { name: getBrandAssistantName() }),
               t('telemetry.title2'),
               t('telemetry.title3'),
             ]}

@@ -7,6 +7,8 @@ import dayjs from 'dayjs';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
+
 interface Props {
   footerNote: string;
   onCancel: () => void;
@@ -20,6 +22,7 @@ interface Props {
 const DateRangeModal = memo<Props>(
   ({ footerNote, onCancel, onChange, onSubmit, open, range, submitting }) => {
     const { t } = useTranslation('memory');
+    const assistantName = getBrandAssistantName();
 
     const disabledDate = useCallback<NonNullable<RangePickerProps['disabledDate']>>(
       (current) => current.isAfter(dayjs(), 'day'),
@@ -37,7 +40,7 @@ const DateRangeModal = memo<Props>(
         title={t('analysis.modal.title')}
       >
         <Flexbox gap={12}>
-          <Text type={'secondary'}>{t('analysis.modal.helper')}</Text>
+          <Text type={'secondary'}>{t('analysis.modal.helper', { assistant: assistantName })}</Text>
           <DatePicker.RangePicker
             allowClear
             disabledDate={disabledDate}
