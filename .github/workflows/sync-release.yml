@@ -62,9 +62,8 @@ jobs:
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-
           git remote add upstream https://github.com/lobehub/lobe-chat.git
-          git fetch upstream --tags
+          git fetch upstream --tags -f
           git fetch origin main
 
           tag="${{ steps.release.outputs.tag }}"
