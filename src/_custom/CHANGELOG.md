@@ -4,6 +4,27 @@
 
 ---
 
+### \[2026-02-01] 模型提供商名称映射与分组方式全局控制
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/providerName.ts; src/\_custom/registry/modelSwitchPanel.ts; src/store/aiInfra/slices/aiProvider/action.ts; src/store/global/initialState.ts; src/store/global/selectors/systemStatus.ts; .env
+- 原因：需要统一隐藏或自定义模型提供商显示名，并全局默认按模型分组
+- 方案：新增 `NEXT_PUBLIC_PROVIDER_NAME_MAP` 映射显示名；新增 `NEXT_PUBLIC_MODEL_SWITCH_GROUP_MODE` 强制分组模式
+- 回滚：移除上述 env 与对应注入逻辑
+- 影响：仅影响 UI 展示，不改变模型实际 providerId
+
+---
+
+### \[2026-01-31] Dev 免密登录调试入口
+
+- 类型: custom
+- 涉及文件: src/\_custom/routes/dev-login.ts; src/app/(backend)/api/dev/login/route.ts
+- 原因：开发阶段需要为 Chrome Dev MCP 提供免密调试账号
+- 方案：新增 /api/dev/login，使用环境变量 + token 校验后创建 / 更新调试用户并写入 Better Auth 会话
+- 回滚：删除上述文件并移除 DEV_AUTH_BYPASS\_\* 环境变量
+- 影响：仅在 DEV_AUTH_BYPASS_ENABLED=1 且 token 校验通过时生效
+
+---
 ### \[2026-01-30] 仅保留聊天与助理的导航收敛
 
 - 类型: custom

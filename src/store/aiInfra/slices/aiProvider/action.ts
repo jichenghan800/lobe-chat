@@ -10,6 +10,7 @@ import {
 } from 'model-bank';
 import { type SWRResponse } from 'swr';
 
+import { mapProviderListName, resolveProviderName } from '@/_custom/registry/providerName';
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { aiProviderService } from '@/services/aiProvider';
 import { type AiInfraStore } from '@/store/aiInfra/store';
@@ -182,7 +183,7 @@ const buildProviderModelLists = async (
     providers.map(async (provider) => ({
       ...provider,
       children: await collector(enabledAiModels, provider.id),
-      name: provider.name || provider.id,
+      name: resolveProviderName(provider.id, provider.name || provider.id),
     })),
   );
 };
@@ -430,16 +431,17 @@ export class AiProviderActionImpl {
       {
         fallbackData: [],
         onSuccess: (data) => {
+          const mapped = mapProviderListName(data);
           if (!this.#get().initAiProviderList) {
             this.#set(
-              { aiProviderList: data, initAiProviderList: true },
+              { aiProviderList: mapped, initAiProviderList: true },
               false,
               'useFetchAiProviderList/init',
             );
             return;
           }
 
-          this.#set({ aiProviderList: data }, false, 'useFetchAiProviderList/refresh');
+          this.#set({ aiProviderList: mapped }, false, 'useFetchAiProviderList/refresh');
         },
       },
     );
@@ -464,26 +466,38 @@ export class AiProviderActionImpl {
 
         if (isLogin) {
           const data = await aiProviderService.getAiProviderRuntimeState();
+          const mappedEnabledAiProviders = mapProviderListName(data.enabledAiProviders);
+          const mappedEnabledChatAiProviders = mapProviderListName(data.enabledChatAiProviders);
+          const mappedEnabledImageAiProviders = mapProviderListName(data.enabledImageAiProviders);
+          const mappedEnabledVideoAiProviders = mapProviderListName(data.enabledVideoAiProviders);
           // Build model lists with proper async handling
           const [enabledChatModelList, enabledImageModelList, enabledVideoModelList] =
             await Promise.all([
-              buildChatProviderModelLists(data.enabledChatAiProviders, data.enabledAiModels),
-              buildImageProviderModelLists(data.enabledImageAiProviders, data.enabledAiModels),
-              buildVideoProviderModelLists(data.enabledVideoAiProviders, data.enabledAiModels),
+              buildChatProviderModelLists(mappedEnabledChatAiProviders, data.enabledAiModels),
+              buildImageProviderModelLists(mappedEnabledImageAiProviders, data.enabledAiModels),
+              buildVideoProviderModelLists(mappedEnabledVideoAiProviders, data.enabledAiModels),
             ]);
 
           return {
             ...data,
             builtinAiModelList,
+            enabledAiProviders: mappedEnabledAiProviders,
+            enabledChatAiProviders: mappedEnabledChatAiProviders,
             enabledChatModelList,
+            enabledImageAiProviders: mappedEnabledImageAiProviders,
             enabledImageModelList,
+            enabledVideoAiProviders: mappedEnabledVideoAiProviders,
             enabledVideoModelList,
           };
         }
 
         const enabledAiProviders: EnabledProvider[] = DEFAULT_MODEL_PROVIDER_LIST.filter(
           (provider) => provider.enabled,
-        ).map((item) => ({ id: item.id, name: item.name, source: AiProviderSourceEnum.Builtin }));
+        ).map((item) => ({
+          id: item.id,
+          name: resolveProviderName(item.id, item.name),
+          source: AiProviderSourceEnum.Builtin,
+        }));
 
         const enabledChatAiProviders = enabledAiProviders.filter((provider) => {
           return builtinAiModelList.some(
