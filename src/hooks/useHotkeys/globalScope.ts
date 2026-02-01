@@ -58,7 +58,7 @@ export const useCommandPaletteHotkey = () => {
 };
 
 export const useRegisterGlobalHotkeys = () => {
-  // 全局自动注册不需要 enableScope
+  // Global auto-registration doesn't need enableScope
   useToggleLeftPanelHotkey();
   useToggleRightPanelHotkey();
   useNavigateToChatHotkey();
