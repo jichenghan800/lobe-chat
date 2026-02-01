@@ -5,6 +5,7 @@ import { ChevronsUpDownIcon } from 'lucide-react';
 import React, { type PropsWithChildren, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { DEFAULT_AVATAR, DEFAULT_INBOX_AVATAR } from '@/const/meta';
 import { SkeletonItem } from '@/features/NavPanel/components/SkeletonList';
 import { useAgentStore } from '@/store/agent';
@@ -23,7 +24,9 @@ const Agent = memo<PropsWithChildren>(() => {
     agentSelectors.currentAgentBackgroundColor(s),
   ]);
 
-  const displayTitle = isInbox ? 'Lobe AI' : title || t('defaultSession', { ns: 'common' });
+  const displayTitle = isInbox
+    ? getBrandAssistantName()
+    : title || t('defaultSession', { ns: 'common' });
 
   if (isLoading) return <SkeletonItem height={32} padding={0} />;
 

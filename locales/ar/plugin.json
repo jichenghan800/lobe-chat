@@ -491,7 +491,7 @@
   "settings.saveSettings": "حفظ",
   "settings.title": "إعدادات مجتمع المهارات",
   "showInPortal": "عرض التفاصيل في مساحة العمل",
-  "skillInstallBanner.title": "أضف المهارات إلى Lobe AI",
+  "skillInstallBanner.title": "أضف المهارات إلى {{assistant}}",
   "store.actions.cancel": "إلغاء",
   "store.actions.configure": "تهيئة",
   "store.actions.confirmUninstall": "سيؤدي إلغاء التثبيت إلى مسح إعدادات المهارة. هل ترغب في المتابعة؟",

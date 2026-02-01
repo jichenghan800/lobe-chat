@@ -491,7 +491,7 @@
   "settings.saveSettings": "Ayarları kaydet",
   "settings.title": "Skill topluluğu ayarları",
   "showInPortal": "Workspace'te ayrıntıları görüntüle",
-  "skillInstallBanner.title": "Lobe AI'a yetenekler ekleyin",
+  "skillInstallBanner.title": "{{assistant}}'a yetenekler ekleyin",
   "store.actions.cancel": "İptal",
   "store.actions.configure": "Yapılandır",
   "store.actions.confirmUninstall": "Skill yapılandırması silinecek. Devam edilsin mi?",

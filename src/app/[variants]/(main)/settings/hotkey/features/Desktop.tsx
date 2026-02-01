@@ -8,6 +8,7 @@ import { Loader2Icon } from 'lucide-react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { DESKTOP_HOTKEYS_REGISTRATION } from '@/const/hotkeys';
 import { FORM_STYLE } from '@/const/layoutTokens';
 import hotkeyMeta from '@/locales/default/hotkey';
@@ -19,6 +20,7 @@ const HotkeySetting = memo(() => {
   const { t } = useTranslation(['setting', 'hotkey']);
   const [form] = Form.useForm();
   const { message } = App.useApp();
+  const assistantName = getBrandAssistantName();
 
   const hotkeys = useElectronStore(desktopHotkeysSelectors.hotkeys, isEqual);
   const [isHotkeysInit, updateDesktopHotkey, useFetchDesktopHotkeys] = useElectronStore((s) => [
@@ -61,9 +63,15 @@ const HotkeySetting = memo(() => {
     ),
 
     desc: hotkeyMeta[`desktop.${item.id}.desc` as keyof typeof hotkeyMeta]
-      ? t(`desktop.${item.id}.desc` as keyof typeof hotkeyMeta, { ns: 'hotkey' })
+      ? t(`desktop.${item.id}.desc` as keyof typeof hotkeyMeta, {
+          assistant: assistantName,
+          ns: 'hotkey',
+        })
       : undefined,
-    label: t(`desktop.${item.id}.title` as keyof typeof hotkeyMeta, { ns: 'hotkey' }),
+    label: t(`desktop.${item.id}.title` as keyof typeof hotkeyMeta, {
+      assistant: assistantName,
+      ns: 'hotkey',
+    }),
     name: item.id,
   });
 

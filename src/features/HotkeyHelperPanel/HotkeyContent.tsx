@@ -4,6 +4,7 @@ import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { HOTKEYS_REGISTRATION } from '@/const/hotkeys';
 import hotkeyMeta from '@/locales/default/hotkey';
 import { useUserStore } from '@/store/user';
@@ -34,14 +35,17 @@ interface HotkeyContentProps {
 const HotkeyContent = memo<HotkeyContentProps>(({ groupId }) => {
   const settings = useUserStore(settingsSelectors.currentSettings, isEqual);
   const { t } = useTranslation('hotkey');
+  const assistantName = getBrandAssistantName();
   return (
     <>
       {HOTKEYS_REGISTRATION.filter((item) => item.group === groupId).map((item) => (
         <Flexbox align={'flex-start'} gap={16} horizontal key={item.id} width={'100%'}>
           <Flexbox flex={1} gap={4} justify={'space-between'}>
-            <span>{t(`${item.id}.title`)}</span>
+            <span>{t(`${item.id}.title`, { assistant: assistantName })}</span>
             {hotkeyMeta[`${item.id}.desc`] ? (
-              <span className={styles.desc}>{t(`${item.id}.desc`)}</span>
+              <span className={styles.desc}>
+                {t(`${item.id}.desc`, { assistant: assistantName })}
+              </span>
             ) : null}
           </Flexbox>
           <Hotkey

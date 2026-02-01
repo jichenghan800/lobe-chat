@@ -7,6 +7,7 @@ import { Loader2Icon } from 'lucide-react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { HOTKEYS_REGISTRATION } from '@/const/hotkeys';
 import { FORM_STYLE } from '@/const/layoutTokens';
 import hotkeyMeta from '@/locales/default/hotkey';
@@ -17,6 +18,7 @@ import { HotkeyGroupEnum, type HotkeyItem } from '@/types/hotkey';
 const HotkeySetting = memo(() => {
   const { t } = useTranslation(['setting', 'hotkey']);
   const [form] = Form.useForm();
+  const assistantName = getBrandAssistantName();
 
   const { hotkey } = useUserStore(settingsSelectors.currentSettings, isEqual);
   const [setSettings, isUserStateInit] = useUserStore((s) => [s.setSettings, s.isUserStateInit]);
@@ -41,8 +43,10 @@ const HotkeySetting = memo(() => {
           resetValue={item.keys}
         />
       ),
-      desc: hotkeyMeta[`${item.id}.desc`] ? t(`${item.id}.desc`, { ns: 'hotkey' }) : undefined,
-      label: t(`${item.id}.title`, { ns: 'hotkey' }),
+      desc: hotkeyMeta[`${item.id}.desc`]
+        ? t(`${item.id}.desc`, { assistant: assistantName, ns: 'hotkey' })
+        : undefined,
+      label: t(`${item.id}.title`, { assistant: assistantName, ns: 'hotkey' }),
       name: item.id,
     };
   };
