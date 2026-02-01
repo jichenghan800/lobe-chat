@@ -10,6 +10,7 @@ import {
 } from 'model-bank';
 import { type SWRResponse } from 'swr';
 
+import { mapProviderListName, resolveProviderName } from '@/_custom/registry/providerName';
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { aiProviderService } from '@/services/aiProvider';
 import { type AiInfraStore } from '@/store/aiInfra/store';
@@ -135,7 +136,7 @@ const buildProviderModelLists = async (
     providers.map(async (provider) => ({
       ...provider,
       children: await collector(enabledAiModels, provider.id),
-      name: provider.name || provider.id,
+      name: resolveProviderName(provider.id, provider.name || provider.id),
     })),
   );
 };
@@ -374,16 +375,27 @@ export class AiProviderActionImpl {
       {
         fallbackData: [],
         onSuccess: (data) => {
+<<<<<<< HEAD
           if (!this.#get().initAiProviderList) {
             this.#set(
               { aiProviderList: data, initAiProviderList: true },
+=======
+          const mapped = mapProviderListName(data);
+          if (!get().initAiProviderList) {
+            set(
+              { aiProviderList: mapped, initAiProviderList: true },
+>>>>>>> 40223e8d24 (✨ feat: map provider display names and force model grouping)
               false,
               'useFetchAiProviderList/init',
             );
             return;
           }
 
+<<<<<<< HEAD
           this.#set({ aiProviderList: data }, false, 'useFetchAiProviderList/refresh');
+=======
+          set({ aiProviderList: mapped }, false, 'useFetchAiProviderList/refresh');
+>>>>>>> 40223e8d24 (✨ feat: map provider display names and force model grouping)
         },
       },
     );
@@ -408,23 +420,33 @@ export class AiProviderActionImpl {
 
         if (isLogin) {
           const data = await aiProviderService.getAiProviderRuntimeState();
+          const mappedEnabledAiProviders = mapProviderListName(data.enabledAiProviders);
+          const mappedEnabledChatAiProviders = mapProviderListName(data.enabledChatAiProviders);
+          const mappedEnabledImageAiProviders = mapProviderListName(data.enabledImageAiProviders);
           // Build model lists with proper async handling
           const [enabledChatModelList, enabledImageModelList] = await Promise.all([
-            buildChatProviderModelLists(data.enabledChatAiProviders, data.enabledAiModels),
-            buildImageProviderModelLists(data.enabledImageAiProviders, data.enabledAiModels),
+            buildChatProviderModelLists(mappedEnabledChatAiProviders, data.enabledAiModels),
+            buildImageProviderModelLists(mappedEnabledImageAiProviders, data.enabledAiModels),
           ]);
 
           return {
             ...data,
             builtinAiModelList,
+            enabledAiProviders: mappedEnabledAiProviders,
+            enabledChatAiProviders: mappedEnabledChatAiProviders,
             enabledChatModelList,
+            enabledImageAiProviders: mappedEnabledImageAiProviders,
             enabledImageModelList,
           };
         }
 
         const enabledAiProviders: EnabledProvider[] = DEFAULT_MODEL_PROVIDER_LIST.filter(
           (provider) => provider.enabled,
-        ).map((item) => ({ id: item.id, name: item.name, source: AiProviderSourceEnum.Builtin }));
+        ).map((item) => ({
+          id: item.id,
+          name: resolveProviderName(item.id, item.name),
+          source: AiProviderSourceEnum.Builtin,
+        }));
 
         const enabledChatAiProviders = enabledAiProviders.filter((provider) => {
           return builtinAiModelList.some(
