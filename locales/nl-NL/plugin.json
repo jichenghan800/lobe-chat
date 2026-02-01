@@ -492,7 +492,7 @@
   "settings.saveSettings": "Instellingen opslaan",
   "settings.title": "Instellingen Skill-community",
   "showInPortal": "Details bekijken in Werkruimte",
-  "skillInstallBanner.title": "Vaardigheden toevoegen aan Lobe AI",
+  "skillInstallBanner.title": "Vaardigheden toevoegen aan {{assistant}}",
   "store.actions.cancel": "Annuleren",
   "store.actions.configure": "Configureren",
   "store.actions.confirmUninstall": "De Skill-configuratie wordt verwijderd bij het deïnstalleren. Doorgaan?",

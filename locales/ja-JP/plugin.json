@@ -492,7 +492,7 @@
   "settings.saveSettings": "設定を保存",
   "settings.title": "スキルコミュニティの設定",
   "showInPortal": "ワークスペースで詳細を確認してください",
-  "skillInstallBanner.title": "Lobe AI にスキルを追加",
+  "skillInstallBanner.title": "{{assistant}} にスキルを追加",
   "store.actions.cancel": "インストールをキャンセル",
   "store.actions.configure": "設定",
   "store.actions.confirmUninstall": "このスキルをアンインストールすると設定も削除されます。操作を確認してください",

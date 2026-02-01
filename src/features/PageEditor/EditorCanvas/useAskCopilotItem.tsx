@@ -9,6 +9,7 @@ import { createStaticStyles, cssVar } from 'antd-style';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { useFileStore } from '@/store/file';
 import { useGlobalStore } from '@/store/global';
 
@@ -29,11 +30,12 @@ export const useAskCopilotItem = (editor: IEditor | undefined): ChatInputActions
   const { t } = useTranslation('common');
   const addSelectionContext = useFileStore((s) => s.addChatContextSelection);
   const pageId = usePageEditorStore((s) => s.documentId);
+  const assistantName = getBrandAssistantName();
 
   return useMemo(() => {
     if (!editor) return [];
 
-    const label = t('cmdk.askLobeAI');
+    const label = t('cmdk.askLobeAI', { assistant: assistantName });
 
     return [
       {
@@ -99,5 +101,5 @@ export const useAskCopilotItem = (editor: IEditor | undefined): ChatInputActions
         onClick: () => {},
       },
     ];
-  }, [addSelectionContext, editor, pageId, t]);
+  }, [addSelectionContext, assistantName, editor, pageId, t]);
 };

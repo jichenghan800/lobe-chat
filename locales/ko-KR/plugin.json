@@ -492,7 +492,7 @@
   "settings.saveSettings": "설정 저장",
   "settings.title": "기능 커뮤니티 설정",
   "showInPortal": "워크스페이스에서 자세히 보기",
-  "skillInstallBanner.title": "Lobe AI에 스킬 추가",
+  "skillInstallBanner.title": "{{assistant}}에 스킬 추가",
   "store.actions.cancel": "설치 취소",
   "store.actions.configure": "구성",
   "store.actions.confirmUninstall": "이 기능을 제거하려고 합니다. 제거 시 설정 정보도 함께 삭제됩니다. 계속하시겠습니까?",

@@ -102,7 +102,7 @@
   "cmdk.askAIHeadingEmpty": "Изберете AI функция",
   "cmdk.askAgentHeading": "Попитай агент",
   "cmdk.askAgentPlaceholder": "Попитай {{agent}} нещо...",
-  "cmdk.askLobeAI": "Попитай Lobe AI",
+  "cmdk.askLobeAI": "Попитай {{assistant}}",
   "cmdk.community": "Общност",
   "cmdk.communitySupport": "Поддръжка от общността",
   "cmdk.contactUs": "Свържете се с нас",

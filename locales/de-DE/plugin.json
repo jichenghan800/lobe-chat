@@ -492,7 +492,7 @@
   "settings.saveSettings": "Speichern",
   "settings.title": "Skill-Community-Einstellungen",
   "showInPortal": "Details im Workspace anzeigen",
-  "skillInstallBanner.title": "Funktionen zu Lobe AI hinzufügen",
+  "skillInstallBanner.title": "Funktionen zu {{assistant}} hinzufügen",
   "store.actions.cancel": "Abbrechen",
   "store.actions.configure": "Konfigurieren",
   "store.actions.confirmUninstall": "Durch Deinstallation wird die Skill-Konfiguration gelöscht. Fortfahren?",

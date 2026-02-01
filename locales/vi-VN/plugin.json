@@ -492,7 +492,7 @@
   "settings.saveSettings": "Lưu cài đặt",
   "settings.title": "Cài đặt cộng đồng Kỹ năng",
   "showInPortal": "Xem chi tiết trong Không gian làm việc",
-  "skillInstallBanner.title": "Thêm kỹ năng vào Lobe AI",
+  "skillInstallBanner.title": "Thêm kỹ năng vào {{assistant}}",
   "store.actions.cancel": "Hủy",
   "store.actions.configure": "Cấu hình",
   "store.actions.confirmUninstall": "Gỡ cài đặt sẽ xóa cấu hình Kỹ năng. Tiếp tục?",

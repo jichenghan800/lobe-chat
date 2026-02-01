@@ -10,6 +10,7 @@ import { BrainIcon, HeartHandshakeIcon, PencilRulerIcon, ShieldCheck } from 'luc
 import { memo, useCallback, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { ProductLogo } from '@/components/Branding';
 import { PRIVACY_URL, TERMS_URL } from '@/const/url';
 import { useUserStore } from '@/store/user';
@@ -67,7 +68,7 @@ const TelemetryStep = memo<TelemetryStepProps>(({ onNext }) => {
             key={locale}
             pauseDuration={16_000}
             sentences={[
-              t('telemetry.title', { name: 'Lobe AI' }),
+              t('telemetry.title', { name: getBrandAssistantName() }),
               t('telemetry.title2'),
               t('telemetry.title3'),
             ]}

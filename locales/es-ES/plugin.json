@@ -492,7 +492,7 @@
   "settings.saveSettings": "Guardar",
   "settings.title": "Configuración de la comunidad de Skills",
   "showInPortal": "Ver detalles en el espacio de trabajo",
-  "skillInstallBanner.title": "Agrega habilidades a Lobe AI",
+  "skillInstallBanner.title": "Agrega habilidades a {{assistant}}",
   "store.actions.cancel": "Cancelar",
   "store.actions.configure": "Configurar",
   "store.actions.confirmUninstall": "Desinstalar eliminará la configuración del Skill. ¿Continuar?",
