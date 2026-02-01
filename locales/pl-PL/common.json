@@ -102,7 +102,7 @@
   "cmdk.askAIHeadingEmpty": "Wybierz funkcję AI",
   "cmdk.askAgentHeading": "Zapytaj agenta",
   "cmdk.askAgentPlaceholder": "Zadaj pytanie {{agent}}...",
-  "cmdk.askLobeAI": "Zapytaj Lobe AI",
+  "cmdk.askLobeAI": "Zapytaj {{assistant}}",
   "cmdk.community": "Społeczność",
   "cmdk.communitySupport": "Wsparcie społeczności",
   "cmdk.contactUs": "Skontaktuj się z nami",

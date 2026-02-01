@@ -7,7 +7,7 @@ import { useGlobalStore } from '@/store/global';
 
 import { useHotkeyById } from './useHotkeyById';
 
-// Switch to chat tab (and focus on Lobe AI)
+// 切换到会话标签(并聚焦到默认会话)
 export const useNavigateToChatHotkey = () => {
   const navigateToAgent = useNavigateToAgent();
   const [, { unpinAgent }] = usePinnedAgentState();
@@ -58,7 +58,7 @@ export const useCommandPaletteHotkey = () => {
 };
 
 export const useRegisterGlobalHotkeys = () => {
-  // Global auto-registration doesn't need enableScope
+  // 全局自动注册不需要 enableScope
   useToggleLeftPanelHotkey();
   useToggleRightPanelHotkey();
   useNavigateToChatHotkey();

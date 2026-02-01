@@ -3,6 +3,7 @@ import { cx } from 'antd-style';
 import { memo } from 'react';
 
 import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { ProductLogo } from '@/components/Branding';
 import PluginTag from '@/features/PluginTag';
 import { useAgentStore } from '@/store/agent';
@@ -30,7 +31,7 @@ const Preview = memo<FieldType & { title?: string }>(
       ],
     );
 
-    const displayTitle = isInbox ? 'Lobe AI' : title;
+    const displayTitle = isInbox ? getBrandAssistantName() : title;
 
     return (
       <div
