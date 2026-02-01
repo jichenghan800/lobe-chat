@@ -20,12 +20,10 @@ export const styles = createStaticStyles(({ css, cssVar }) => ({
   `,
   paramKey: css`
     font-family: ${cssVar.fontFamilyCode};
-    font-size: 12px;
     color: ${cssVar.colorTextTertiary};
   `,
   paramValue: css`
     font-family: ${cssVar.fontFamilyCode};
-    font-size: 12px;
     color: ${cssVar.colorTextSecondary};
   `,
   root: css`
