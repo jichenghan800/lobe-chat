@@ -7,6 +7,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { useHomeStore } from '@/store/home';
 import { homeAgentListSelectors } from '@/store/home/selectors';
 
@@ -20,6 +21,7 @@ const AskAIMenu = memo(() => {
   const navigate = useNavigate();
   const { handleAskLobeAI, handleAIPainting, closeCommandMenu } = useCommandMenu();
   const { search } = useCommandMenuContext();
+  const assistantName = getBrandAssistantName();
 
   // Get agent list (limit to first 20 items for simplicity)
   const allAgents = useHomeStore(homeAgentListSelectors.allAgents);
@@ -59,25 +61,25 @@ const AskAIMenu = memo(() => {
 
   return (
     <Command.Group heading={heading}>
-      <Command.Item value="lobe-ai" onSelect={handleAskLobeAI}>
-        <Avatar emojiScaleWithBackground avatar={DEFAULT_INBOX_AVATAR} shape="square" size={18} />
+      <Command.Item onSelect={handleAskLobeAI} value={assistantName.toLowerCase()}>
+        <Avatar avatar={DEFAULT_INBOX_AVATAR} emojiScaleWithBackground shape="square" size={18} />
         <div className={styles.itemContent}>
-          <div className={styles.itemLabel}>Lobe AI</div>
+          <div className={styles.itemLabel}>{assistantName}</div>
         </div>
       </Command.Item>
-      <Command.Item value="agent-builder" onSelect={handleAgentBuilder}>
+      <Command.Item onSelect={handleAgentBuilder} value="agent-builder">
         <Bot className={styles.icon} />
         <div className={styles.itemContent}>
           <div className={styles.itemLabel}>{t('agentBuilder.title', { ns: 'chat' })}</div>
         </div>
       </Command.Item>
-      <Command.Item value="group-builder" onSelect={handleGroupBuilder}>
+      <Command.Item onSelect={handleGroupBuilder} value="group-builder">
         <GroupBotSquareIcon className={styles.icon} />
         <div className={styles.itemContent}>
           <div className={styles.itemLabel}>{t('starter.createGroup', { ns: 'home' })}</div>
         </div>
       </Command.Item>
-      <Command.Item value="ai-painting" onSelect={handleAIPainting}>
+      <Command.Item onSelect={handleAIPainting} value="ai-painting">
         <Image className={styles.icon} />
         <div className={styles.itemContent}>
           <div className={styles.itemLabel}>{t('cmdk.aiPainting')}</div>
@@ -86,20 +88,20 @@ const AskAIMenu = memo(() => {
 
       {agents.map((agent) => (
         <CommandItem
-          key={agent.id}
-          title={agent.title || t('defaultAgent')}
-          trailingLabel={t('cmdk.search.agent')}
-          value={`agent-${agent.id}`}
-          variant="detailed"
           icon={
             <Avatar
-              emojiScaleWithBackground
               avatar={typeof agent.avatar === 'string' ? agent.avatar : DEFAULT_AVATAR}
+              emojiScaleWithBackground
               shape="square"
               size={18}
             />
           }
+          key={agent.id}
           onSelect={() => handleAgentSelect(agent.id)}
+          title={agent.title || t('defaultAgent')}
+          trailingLabel={t('cmdk.search.agent')}
+          value={`agent-${agent.id}`}
+          variant="detailed"
         />
       ))}
     </Command.Group>

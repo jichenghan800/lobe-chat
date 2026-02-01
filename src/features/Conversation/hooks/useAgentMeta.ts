@@ -1,17 +1,18 @@
 import { type MetaData } from '@lobechat/types';
 import { useMemo } from 'react';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 
 import { contextSelectors, useConversationStore } from '../store';
 
-const LOBE_AI_TITLE = 'Lobe AI';
+const ASSISTANT_TITLE = getBrandAssistantName();
 
 /**
  * Hook to get agent meta data for a specific agent or the current conversation.
  * Handles special cases for builtin agents (inbox, page agent, agent builder)
- * by showing Lobe AI title instead of the agent's own meta.
+ * by showing branded assistant title instead of the agent's own meta.
  * Avatar is now returned from the backend (merged from builtin-agents package).
  *
  * @param messageAgentId - Optional agent ID from the message. If provided, uses this agent's meta.
@@ -31,7 +32,7 @@ export const useAgentMeta = (messageAgentId?: string | null): MetaData => {
 
     if (isBuiltinAgent) {
       // Use avatar from backend (merged from builtin-agents package), only override title
-      return { ...agentMeta, title: LOBE_AI_TITLE };
+      return { ...agentMeta, title: ASSISTANT_TITLE };
     }
 
     return agentMeta;

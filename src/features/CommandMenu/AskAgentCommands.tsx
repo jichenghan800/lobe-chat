@@ -1,9 +1,10 @@
 import { DEFAULT_AVATAR, DEFAULT_INBOX_AVATAR } from '@lobechat/const';
-import { Avatar, preventDefault } from '@lobehub/ui';
+import { Avatar } from '@lobehub/ui';
 import { Command } from 'cmdk';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors/builtinAgentSelectors';
 import { useHomeStore } from '@/store/home';
@@ -15,6 +16,10 @@ import { styles } from './styles';
 const AskAgentCommands = memo(() => {
   const { t } = useTranslation('common');
   const { search, setSearch, setSelectedAgent } = useCommandMenuContext();
+  const assistantName = getBrandAssistantName();
+  const assistantNameLower = assistantName.toLowerCase();
+  const assistantMentionLabel = '@' + assistantName;
+  const assistantValue = '@' + assistantNameLower.replaceAll(/\s+/g, '-');
 
   const inboxAgentId = useAgentStore(builtinAgentSelectors.inboxAgentId);
   const allAgents = useHomeStore(homeAgentListSelectors.allAgents);
@@ -54,21 +59,20 @@ const AskAgentCommands = memo(() => {
   // Only show when user types "@"
   if (!isAtMention) return null;
 
-  // Check if Lobe AI matches the query
-  const showLobeAI = !mentionQuery || 'lobe ai'.includes(mentionQuery);
+  // Check if inbox assistant matches the query
+  const showAssistant = !mentionQuery || assistantNameLower.includes(mentionQuery);
 
   return (
     <Command.Group heading={t('cmdk.mentionAgent')}>
-      {/* @Lobe AI option */}
-      {showLobeAI && (
+      {/* Inbox assistant option */}
+      {showAssistant && (
         <Command.Item
-          value="@lobe-ai"
-          onMouseDown={preventDefault}
-          onSelect={() => handleAgentSelect(inboxAgentId, 'Lobe AI', DEFAULT_INBOX_AVATAR)}
+          onSelect={() => handleAgentSelect(inboxAgentId, assistantName, DEFAULT_INBOX_AVATAR)}
+          value={assistantValue}
         >
-          <Avatar emojiScaleWithBackground avatar={DEFAULT_INBOX_AVATAR} shape="square" size={18} />
+          <Avatar avatar={DEFAULT_INBOX_AVATAR} emojiScaleWithBackground shape="square" size={18} />
           <div className={styles.itemContent}>
-            <div className={styles.itemLabel}>@Lobe AI</div>
+            <div className={styles.itemLabel}>{assistantMentionLabel}</div>
           </div>
         </Command.Item>
       )}
@@ -77,8 +81,6 @@ const AskAgentCommands = memo(() => {
       {filteredAgents.map((agent) => (
         <Command.Item
           key={agent.id}
-          value={`@${agent.title || 'agent'}-${agent.id}`}
-          onMouseDown={preventDefault}
           onSelect={() =>
             handleAgentSelect(
               agent.id,
@@ -86,10 +88,11 @@ const AskAgentCommands = memo(() => {
               typeof agent.avatar === 'string' ? agent.avatar : DEFAULT_AVATAR,
             )
           }
+          value={`@${agent.title || 'agent'}-${agent.id}`}
         >
           <Avatar
-            emojiScaleWithBackground
             avatar={typeof agent.avatar === 'string' ? agent.avatar : DEFAULT_AVATAR}
+            emojiScaleWithBackground
             shape="square"
             size={18}
           />
