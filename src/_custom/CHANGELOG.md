@@ -4,6 +4,17 @@
 
 ---
 
+### \[2026-02-01] 模型提供商名称映射与分组方式全局控制
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/providerName.ts; src/\_custom/registry/modelSwitchPanel.ts; src/store/aiInfra/slices/aiProvider/action.ts; src/store/global/initialState.ts; src/store/global/selectors/systemStatus.ts; .env
+- 原因：需要统一隐藏或自定义模型提供商显示名，并全局默认按模型分组
+- 方案：新增 `NEXT_PUBLIC_PROVIDER_NAME_MAP` 映射显示名；新增 `NEXT_PUBLIC_MODEL_SWITCH_GROUP_MODE` 强制分组模式
+- 回滚：移除上述 env 与对应注入逻辑
+- 影响：仅影响 UI 展示，不改变模型实际 providerId
+
+---
+
 ### \[2026-01-31] Dev 免密登录调试入口
 
 - 类型: custom
