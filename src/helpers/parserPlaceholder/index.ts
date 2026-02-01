@@ -1,6 +1,8 @@
 import { uuid } from '@lobechat/utils';
 import { template } from 'es-toolkit/compat';
 
+import { getBrandAssistantName, getBrandName } from '@/_custom/registry/branding';
+import { resolveModelDisplayName } from '@/_custom/registry/modelDisplayName';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
@@ -126,8 +128,15 @@ export const VARIABLE_GENERATORS = {
    * | `{{provider}}` | openai |
    *
    */
-  model: () => agentSelectors.currentAgentModel(useAgentStore.getState()),
+  model: () => {
+    const state = useAgentStore.getState();
+    const model = agentSelectors.currentAgentModel(state);
+    const provider = agentSelectors.currentAgentModelProvider(state);
+    return resolveModelDisplayName(model, provider);
+  },
   provider: () => agentSelectors.currentAgentModelProvider(useAgentStore.getState()),
+  brand: () => getBrandName(),
+  assistant_name: () => getBrandAssistantName(),
 
   /**
    * Desktop app path-related template variables (only available in Electron)

@@ -7,6 +7,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { useHomeStore } from '@/store/home';
 import { homeAgentListSelectors } from '@/store/home/selectors';
 
@@ -20,6 +21,7 @@ const AskAIMenu = memo(() => {
   const navigate = useNavigate();
   const { handleAskLobeAI, handleAIPainting, closeCommandMenu } = useCommandMenu();
   const { search } = useCommandMenuContext();
+  const assistantName = getBrandAssistantName();
 
   // Get agent list (limit to first 20 items for simplicity)
   const allAgents = useHomeStore(homeAgentListSelectors.allAgents);
@@ -59,10 +61,10 @@ const AskAIMenu = memo(() => {
 
   return (
     <Command.Group heading={heading}>
-      <Command.Item onSelect={handleAskLobeAI} value="lobe-ai">
+      <Command.Item onSelect={handleAskLobeAI} value={assistantName.toLowerCase()}>
         <Avatar avatar={DEFAULT_INBOX_AVATAR} emojiScaleWithBackground shape="square" size={18} />
         <div className={styles.itemContent}>
-          <div className={styles.itemLabel}>Lobe AI</div>
+          <div className={styles.itemLabel}>{assistantName}</div>
         </div>
       </Command.Item>
       <Command.Item onSelect={handleAgentBuilder} value="agent-builder">

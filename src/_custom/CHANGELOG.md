@@ -4,6 +4,17 @@
 
 ---
 
+### \[2026-02-01] 品牌名称自定义与模型显示名占位符
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/branding.ts; src/\_custom/registry/modelDisplayName.ts; src/helpers/parserPlaceholder/index.ts; packages/builtin-agents/src/agents/inbox/systemRole.ts; src/features/CommandMenu/AskAgentCommands.tsx; src/features/CommandMenu/AskAIMenu.tsx; src/app/\[variants]/(mobile)/(home)/features/SessionListContent/Inbox/index.tsx; src/app/\[variants]/onboarding/features/TelemetryStep.tsx; src/app/\[variants]/(desktop)/desktop-onboarding/features/WelcomeStep.tsx; src/app/\[variants]/(main)/settings/stats/features/rankings/AssistantsRank.tsx; src/app/\[variants]/(main)/memory/features/MemoryAnalysis/DateRangeModal.tsx; src/features/PageEditor/EditorCanvas/useAskCopilotItem.tsx; src/features/HotkeyHelperPanel/HotkeyContent.tsx; src/app/\[variants]/(main)/settings/hotkey/features/Essential.tsx; src/app/\[variants]/(main)/settings/hotkey/features/Conversation.tsx; src/app/\[variants]/(main)/settings/hotkey/features/Desktop.tsx; src/locales/default/_; locales/_/\*.json
+- 原因：需要可配置的品牌展示名，并在默认系统提示中显示模型 displayName
+- 方案：新增 `NEXT_PUBLIC_BRAND_NAME` / `NEXT_PUBLIC_BRAND_ASSISTANT_NAME` 读取入口；`{{assistant_name}}`/`{{brand}}` 占位符；`{{model}}` 使用 displayName；UI 关键入口统一使用品牌名；相关文案改为插值
+- 回滚：移除 branding/modelDisplayName registry 与相关调用，恢复默认文案
+- 影响：仅影响 UI 展示与默认系统提示，不改变模型选择逻辑
+
+---
+
 ### \[2026-02-01] 模型提供商名称映射与分组方式全局控制
 
 - 类型: custom

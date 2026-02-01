@@ -7,7 +7,7 @@ import { useGlobalStore } from '@/store/global';
 
 import { useHotkeyById } from './useHotkeyById';
 
-// 切换到会话标签(并聚焦到Lobe AI)
+// 切换到会话标签(并聚焦到默认会话)
 export const useNavigateToChatHotkey = () => {
   const navigateToAgent = useNavigateToAgent();
   const [, { unpinAgent }] = usePinnedAgentState();

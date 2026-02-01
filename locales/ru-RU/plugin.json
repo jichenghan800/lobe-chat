@@ -491,7 +491,7 @@
   "settings.saveSettings": "Сохранить",
   "settings.title": "Настройки сообщества навыков",
   "showInPortal": "Посмотреть в рабочем пространстве",
-  "skillInstallBanner.title": "Добавьте навыки в Lobe AI",
+  "skillInstallBanner.title": "Добавьте навыки в {{assistant}}",
   "store.actions.cancel": "Отмена",
   "store.actions.configure": "Настроить",
   "store.actions.confirmUninstall": "Удаление очистит настройки навыка. Продолжить?",

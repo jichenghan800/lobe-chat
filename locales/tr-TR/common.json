@@ -102,7 +102,7 @@
   "cmdk.askAIHeadingEmpty": "Bir yapay zeka özelliği seçin",
   "cmdk.askAgentHeading": "Temsilciye Sor",
   "cmdk.askAgentPlaceholder": "{{agent}} hakkında bir şey sor...",
-  "cmdk.askLobeAI": "Lobe AI'ye Sor",
+  "cmdk.askLobeAI": "{{assistant}}'ye Sor",
   "cmdk.community": "Topluluk",
   "cmdk.communitySupport": "Topluluk Desteği",
   "cmdk.contactUs": "Bize Ulaşın",

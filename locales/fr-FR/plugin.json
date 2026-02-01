@@ -491,7 +491,7 @@
   "settings.saveSettings": "Enregistrer",
   "settings.title": "Paramètres de la communauté de compétences",
   "showInPortal": "Voir les détails dans l’espace de travail",
-  "skillInstallBanner.title": "Ajouter des compétences à Lobe AI",
+  "skillInstallBanner.title": "Ajouter des compétences à {{assistant}}",
   "store.actions.cancel": "Annuler",
   "store.actions.configure": "Configurer",
   "store.actions.confirmUninstall": "La désinstallation effacera la configuration de la compétence. Continuer ?",

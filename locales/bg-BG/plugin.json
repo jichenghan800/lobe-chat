@@ -491,7 +491,7 @@
   "settings.saveSettings": "Запази",
   "settings.title": "Настройки на общността за умения",
   "showInPortal": "Преглед на подробности в Работното пространство",
-  "skillInstallBanner.title": "Добавете умения към Lobe AI",
+  "skillInstallBanner.title": "Добавете умения към {{assistant}}",
   "store.actions.cancel": "Отказ",
   "store.actions.configure": "Конфигурирай",
   "store.actions.confirmUninstall": "Деинсталирането ще изчисти конфигурацията на умението. Продължите ли?",

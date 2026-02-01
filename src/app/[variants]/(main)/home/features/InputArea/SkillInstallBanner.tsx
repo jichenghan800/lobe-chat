@@ -7,6 +7,7 @@ import { Blocks } from 'lucide-react';
 import React, { createElement, memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { createSkillStoreModal } from '@/features/SkillStore';
 import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useToolStore } from '@/store/tool';
@@ -77,6 +78,7 @@ const BANNER_SKILL_IDS = [
 
 const SkillInstallBanner = memo(() => {
   const { t } = useTranslation('plugin');
+  const assistantName = getBrandAssistantName();
 
   const isLobehubSkillEnabled = useServerConfigStore(serverConfigSelectors.enableLobehubSkill);
   const isKlavisEnabled = useServerConfigStore(serverConfigSelectors.enableKlavis);
@@ -120,7 +122,9 @@ const SkillInstallBanner = memo(() => {
     <div className={styles.banner} onClick={handleOpenStore}>
       <Flexbox align="center" gap={8} horizontal>
         <Icon className={styles.icon} icon={Blocks} size={18} />
-        <span className={styles.text}>{t('skillInstallBanner.title')}</span>
+        <span className={styles.text}>
+          {t('skillInstallBanner.title', { assistant: assistantName })}
+        </span>
       </Flexbox>
       {skillIcons.length > 0 && (
         <div className={styles.iconGroup}>
