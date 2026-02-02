@@ -7,22 +7,19 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天凌晨检查一次
+    - cron: '0 0 * * *' 
   workflow_dispatch:
-
-concurrency:
-  group: sync-upstream-release
-  cancel-in-progress: false
 
 jobs:
   sync_release:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # 必须拉取所有标签以供后续判定
+          fetch-tags: true 
 
       - name: Get latest upstream release tag
         id: release
@@ -30,26 +27,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          # 使用 /tags 接口获取时间线上物理存在的最新标签，更适合频繁更新的项目
+          # 依然使用 /tags 接口确保获取最及时的版本
           api="https://api.github.com/repos/lobehub/lobe-chat/tags?per_page=1"
-          auth_header=()
-          if [ -n "${GH_TOKEN:-}" ]; then
-            auth_header=(-H "Authorization: Bearer $GH_TOKEN")
-          fi
-
-          resp=$(curl -sSL "${auth_header[@]}" -H "X-GitHub-Api-Version: 2022-11-28" "$api")
-          # 解析数组第一项的 name
+          resp=$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" "$api")
           tag=$(echo "$resp" | jq -r '.[0].name // empty')
 
           if [ -z "$tag" ] || [ "$tag" = "null" ]; then
-            echo "Failed to fetch latest tag from /tags" >&2
-            exit 1
+            echo "Error: Cannot fetch tag" && exit 1
           fi
 
-          safe_tag=$(echo "$tag" | tr '/' '-')
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "safe_tag=$safe_tag" >> "$GITHUB_OUTPUT"
-          echo "Detected latest tag: $tag"
+          echo "safe_tag=$(echo "$tag" | tr '/' '-')" >> "$GITHUB_OUTPUT"
 
       - name: Prepare merge
         id: merge
@@ -58,51 +46,33 @@ jobs:
           git config --global user.email "action@github.com"
           git remote add upstream https://github.com/lobehub/lobe-chat.git
           
-          # 获取上游所有标签
-          git fetch upstream --tags -f
+          # 关键点 1：强制刷新上游标签，解决 clobber 问题
+          git fetch upstream --tags -f 
           git fetch origin main
 
           tag="${{ steps.release.outputs.tag }}"
           
-          # 诊断逻辑：如果本地已经存在该 Tag，说明 main 分支或者之前的 PR 已经包含该版本
-          if git rev-parse "$tag" >/dev/null 2>&1; then
+          # 关键点 2：优化判定逻辑
+          # 如果当前 main 分支的描述已经包含这个 tag，说明已经同步过了
+          if git describe --tags --always | grep -q "$tag"; then
             echo "up_to_date=true" >> "$GITHUB_OUTPUT"
-            echo "Tag $tag already exists in local repository. Skipping..."
+            echo "Current HEAD is already at or past $tag. Skipping..."
             exit 0
           fi
 
           branch="sync/release-${{ steps.release.outputs.safe_tag }}"
-          
-          # 强制清理可能存在的同名旧分支，防止 checkout 失败
           git branch -D "$branch" || true
           git checkout -b "$branch"
 
-          # 尝试合并
-          echo "Attempting to merge $tag into $branch..."
+          # 尝试非侵入式合并
           if ! git merge --no-ff "$tag" -m "chore: sync upstream release $tag"; then
-            echo "Conflict detected during merge."
-            git merge --abort || true
             echo "conflict=true" >> "$GITHUB_OUTPUT"
+            git merge --abort || true
             exit 0
           fi
 
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
           echo "up_to_date=false" >> "$GITHUB_OUTPUT"
-
-      - name: Create sync conflict issue
-        if: steps.merge.outputs.conflict == 'true'
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: 'create-issue'
-          title: '🚨 Release Sync Conflict (${{ steps.release.outputs.tag }})'
-          labels: '🚨 Sync Fail'
-          body: |
-            自动合并上游 Tag `${{ steps.release.outputs.tag }}` 时产生冲突。
-            
-            **建议处理步骤：**
-            1. 在本地执行 `git fetch upstream --tags`
-            2. 执行 `git checkout main && git pull`
-            3. 执行 `git merge ${{ steps.release.outputs.tag }}` 并手动解决冲突。
 
       - name: Create pull request
         id: pr
@@ -112,42 +82,24 @@ jobs:
           branch: ${{ steps.merge.outputs.branch }}
           base: main
           title: 'chore: sync upstream release ${{ steps.release.outputs.tag }}'
-          commit-message: 'chore: sync upstream release ${{ steps.release.outputs.tag }}'
-          delete-branch: true # 合并后自动删除同步分支
+          delete-branch: true
           body: |
-            Sync upstream release tag `${{ steps.release.outputs.tag }}` into `main`.
+            已检测到上游新版本 `${{ steps.release.outputs.tag }}`。
+            此 PR 自动将上游代码合并至当前二开分支。
 
-            - Auto-generated by workflow: `sync-release.yml`
-            - Upstream: lobehub/lobe-chat
-
-      - name: Create local release tag
-        if: steps.merge.outputs.up_to_date == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const tag = `${{ steps.release.outputs.tag }}`;
-            const { owner, repo } = context.repo;
-            try {
-              await github.rest.git.getRef({ owner, repo, ref: `refs/tags/${tag}` });
-              core.info(`Tag ${tag} already exists in GitHub`);
-            } catch (error) {
-              if (error.status !== 404) throw error;
-              await github.rest.git.createRef({
-                owner,
-                repo,
-                ref: `refs/tags/${tag}`,
-                sha: context.sha,
-              });
-              core.info(`Successfully mirrored tag ${tag}`);
-            }
-
-      - name: Summary
-        if: always()
+      - name: Force Sync Tag to Origin
+        if: steps.merge.outputs.up_to_date != 'true' && steps.merge.outputs.conflict != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "## Sync Result" >> $GITHUB_STEP_SUMMARY
-          echo "- **Upstream tag:** ${{ steps.release.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ steps.merge.outputs.up_to_date == 'true' && 'Already up to date' || 'New version found' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Conflict:** ${{ steps.merge.outputs.conflict || 'false' }}" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.pr.outputs.pull-request-url }}" != "" ]; then
-            echo "- **Pull Request:** ${{ steps.pr.outputs.pull-request-url }}" >> $GITHUB_STEP_SUMMARY
-          fi
+          # 关键点 3：强制将正确的上游标签推送到你的 origin
+          # 解决你之前提到的“本地没生成 release”或标签指向错误的问题
+          git push origin ${{ steps.release.outputs.tag }} --force
+
+      - name: Create conflict issue
+        if: steps.merge.outputs.conflict == 'true'
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'create-issue'
+          title: '🚨 Sync Conflict: ${{ steps.release.outputs.tag }}'
+          body: '自动合并上游版本时产生冲突，请在本地手动执行 `git merge ${{ steps.release.outputs.tag }}`。'
