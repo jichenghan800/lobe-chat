@@ -7,8 +7,10 @@ import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { filterHomeStarterItems } from '@/_custom/registry/homeStarter';
 import { useInitBuiltinAgent } from '@/hooks/useInitBuiltinAgent';
 import { type StarterMode, useHomeStore } from '@/store/home';
+import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   active: css`
@@ -45,6 +47,7 @@ interface StarterItem {
 const StarterList = memo(() => {
   const navigate = useNavigate();
   const { t } = useTranslation('home');
+  const { showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.agentBuilder);
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.groupAgentBuilder);
@@ -55,35 +58,39 @@ const StarterList = memo(() => {
   ]);
 
   const items: StarterItem[] = useMemo(
-    () => [
-      {
-        icon: BotIcon,
-        key: 'agent',
-        titleKey: 'starter.createAgent',
-      },
-      {
-        icon: GroupBotSquareIcon,
-        key: 'group',
-        titleKey: 'starter.createGroup',
-      },
-      {
-        icon: FilePenIcon,
-        key: 'write',
-        titleKey: 'starter.write',
-      },
-      {
-        icon: ImageIcon,
-        key: 'image',
-        titleKey: 'starter.image',
-      },
-      // {
-      //   disabled: true,
-      //   icon: MicroscopeIcon,
-      //   key: 'research',
-      //   titleKey: 'starter.deepResearch',
-      // },
-    ],
-    [],
+    () =>
+      filterHomeStarterItems(
+        [
+          {
+            icon: BotIcon,
+            key: 'agent',
+            titleKey: 'starter.createAgent',
+          },
+          {
+            icon: GroupBotSquareIcon,
+            key: 'group',
+            titleKey: 'starter.createGroup',
+          },
+          {
+            icon: FilePenIcon,
+            key: 'write',
+            titleKey: 'starter.write',
+          },
+          {
+            icon: ImageIcon,
+            key: 'image',
+            titleKey: 'starter.image',
+          },
+          // {
+          //   disabled: true,
+          //   icon: MicroscopeIcon,
+          //   key: 'research',
+          //   titleKey: 'starter.deepResearch',
+          // },
+        ],
+        { showAiImage },
+      ),
+    [showAiImage],
   );
 
   const handleClick = useCallback(
