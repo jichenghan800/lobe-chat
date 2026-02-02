@@ -2,10 +2,12 @@ import { ActionIcon, Block, Flexbox, Text } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { BotIcon, FilePenIcon, ImageIcon, PenLineIcon, X } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isHomeStarterModeVisible } from '@/_custom/registry/homeStarter';
 import { useHomeStore } from '@/store/home';
+import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   container: css`
@@ -29,11 +31,20 @@ const modeConfig = {
 
 const ModeHeader = memo(() => {
   const { t } = useTranslation('home');
+  const { showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   const [inputActiveMode, clearInputMode] = useHomeStore((s) => [
     s.inputActiveMode,
     s.clearInputMode,
   ]);
+
+  useEffect(() => {
+    if (inputActiveMode === 'image' && !showAiImage) {
+      clearInputMode();
+    }
+  }, [clearInputMode, inputActiveMode, showAiImage]);
+
+  if (!isHomeStarterModeVisible(inputActiveMode, { showAiImage })) return null;
 
   if (!inputActiveMode) return null;
 
