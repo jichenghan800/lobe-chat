@@ -71,10 +71,14 @@ You can customize the display name of each SSO provider on the login page by set
 ```bash
 AUTH_OKTA_LABEL="Corporate SSO"
 AUTH_KEYCLOAK_LABEL="Employee Login"
-AUTH_GOOGLE_LABEL="Sign in with Google"
+AUTH_GOOGLE_LABEL="Work Account"
 ```
 
-This will display "Continue with Corporate SSO" instead of "Continue with Okta" on the login page.
+The label will be automatically prefixed with a localized prefix, so `AUTH_OKTA_LABEL="Corporate SSO"` will display as "Continue with Corporate SSO" in English or "使用 Corporate SSO 登录" in Chinese.
+
+<Callout type={'tip'}>
+  Provide only the provider name in the label (e.g., "Corporate SSO", not "Continue with Corporate SSO"). The prefix is added automatically and localized based on the user's language setting.
+</Callout>
 
 Click on a provider below for detailed configuration guides:
 
