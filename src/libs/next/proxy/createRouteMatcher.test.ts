@@ -57,6 +57,7 @@ describe('createRouteMatcher', () => {
       expect(matcher(createMockRequest('/trpc/user.get'))).toBe(true);
       expect(matcher(createMockRequest('/trpc/chat.create'))).toBe(true);
     });
+
   });
 
   describe('multiple patterns', () => {

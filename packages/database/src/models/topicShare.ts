@@ -130,12 +130,7 @@ export class TopicShareModel {
 
     // Fetch group members if this is a group topic
     let groupMembers:
-      | {
-          avatar: string | null;
-          backgroundColor: string | null;
-          id: string;
-          title: string | null;
-        }[]
+      | { avatar: string | null; backgroundColor: string | null; id: string; title: string | null }[]
       | undefined;
     if (share.groupId) {
       const members = await db

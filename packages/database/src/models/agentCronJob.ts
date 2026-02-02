@@ -85,11 +85,10 @@ export class AgentCronJobModel {
 
     if (data?.cronPattern !== undefined || data?.timezone !== undefined) {
       const existing = await this.findById(id);
-      if (
-        existing &&
-        ((data?.cronPattern !== undefined && data?.cronPattern !== existing.cronPattern) ||
-          (data?.timezone !== undefined && data?.timezone !== existing.timezone))
-      ) {
+      if (existing && (
+        (data?.cronPattern !== undefined && data?.cronPattern !== existing.cronPattern) ||
+        (data?.timezone !== undefined && data?.timezone !== existing.timezone)
+      )) {
         shouldResetLastExecuted = true;
       }
     }

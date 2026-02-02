@@ -3,11 +3,10 @@
 import { Button, Icon, Text } from '@lobehub/ui';
 import { Form, Input } from 'antd';
 import { Lock, Mail } from 'lucide-react';
-import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-
 import Link from '@/libs/next/Link';
 import { useSearchParams } from '@/libs/next/navigation';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AuthCard } from '../../../../../features/AuthCard';
 import { type SignUpFormValues, useSignUp } from './useSignUp';

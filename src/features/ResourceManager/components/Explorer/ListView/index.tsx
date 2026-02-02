@@ -330,7 +330,8 @@ const ListView = memo(function ListView() {
 
     // Leave some padding at the end when there are no more pages,
     // so users can clearly feel they've reached the end of the list.
-    if (hasMore === false && dataLength > 0) return <div aria-hidden style={{ height: 96 }} />;
+    if (hasMore === false && dataLength > 0)
+      return <div aria-hidden style={{ height: 96 }} />;
 
     return null;
   }, [columnWidths, dataLength, hasMore, isLoadingMore]);

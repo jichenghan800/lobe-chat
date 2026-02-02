@@ -87,16 +87,7 @@ const AddButton = () => {
     // Switch to page view mode with real ID
     setCurrentViewItemId(realId);
     setMode('page');
-  }, [
-    category,
-    createResourceAndSync,
-    currentFolderId,
-    libraryId,
-    setCategory,
-    setCurrentViewItemId,
-    setMode,
-    t,
-  ]);
+  }, [category, createResourceAndSync, currentFolderId, libraryId, setCategory, setCurrentViewItemId, setMode, t]);
 
   const handleCreateFolder = useCallback(async () => {
     // Navigate to "All" category first if not already there
@@ -144,15 +135,7 @@ const AddButton = () => {
       message.error(t('header.actions.createFolderError'));
       console.error('Failed to create folder:', error);
     }
-  }, [
-    category,
-    createResourceAndSync,
-    currentFolderId,
-    libraryId,
-    setCategory,
-    setPendingRenameItemId,
-    t,
-  ]);
+  }, [category, createResourceAndSync, currentFolderId, libraryId, setCategory, setPendingRenameItemId, t]);
 
   const {
     handleCloseNotionGuide,

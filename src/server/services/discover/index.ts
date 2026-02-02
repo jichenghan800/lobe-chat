@@ -574,9 +574,9 @@ export class DiscoverService {
 
         examples: Array.isArray((data as any).examples)
           ? (data as any).examples.map((example: any) => ({
-              content: typeof example === 'string' ? example : example.content || '',
-              role: example.role || 'user',
-            }))
+            content: typeof example === 'string' ? example : example.content || '',
+            role: example.role || 'user',
+          }))
           : [],
         forkCount: (data as any).forkCount,
         forkedFromAgentId: (data as any).forkedFromAgentId,
@@ -680,7 +680,8 @@ export class DiscoverService {
     try {
       const normalizedLocale = normalizeLocale(locale);
 
-      let apiSort: 'createdAt' | 'updatedAt' | 'name' | 'mostUsage' | 'recommended' = 'recommended';
+      let apiSort: 'createdAt' | 'updatedAt' | 'name' | 'mostUsage' | 'recommended' =
+        'recommended';
       let haveSkills: boolean | undefined = rest.haveSkills;
 
       switch (sort) {
@@ -830,9 +831,7 @@ export class DiscoverService {
     log('getMcpList: params=%O', params);
     const { category, locale, sort } = params;
     const normalizedLocale = normalizeLocale(locale);
-    const shouldOmitCategory = [McpCategory.All, McpCategory.Discover].includes(
-      category as McpCategory,
-    );
+    const shouldOmitCategory = [McpCategory.All, McpCategory.Discover].includes(category as McpCategory)
 
     const result = await this.market.plugins.getPluginList(
       {
