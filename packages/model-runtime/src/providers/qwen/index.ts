@@ -59,6 +59,7 @@ export const LobeQwenAI = createOpenAICompatibleRuntime({
                 'deepseek-v3.1',
                 'deepseek-v3.2',
                 'glm',
+                'kimi-k2.5',
               ].some((keyword) => model.toLowerCase().includes(keyword))
             ? {
                 enable_thinking: thinking !== undefined ? thinking.type === 'enabled' : false,

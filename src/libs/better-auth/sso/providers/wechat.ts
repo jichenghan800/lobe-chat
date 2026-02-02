@@ -74,6 +74,7 @@ const provider: GenericProviderDefinition<{
           tokenType: data.token_type ?? 'Bearer',
         };
       },
+
       /**
        * Use openid/unionid returned in the token response; no custom scope encoding needed.
        */
@@ -122,6 +123,8 @@ const provider: GenericProviderDefinition<{
       responseMode: 'query',
 
       scopes: ['snsapi_login'],
+
+      tokenUrl: WECHAT_TOKEN_URL,
     };
   },
 
@@ -130,7 +133,6 @@ const provider: GenericProviderDefinition<{
       ? {
           AUTH_WECHAT_ID: authEnv.AUTH_WECHAT_ID,
           AUTH_WECHAT_SECRET: authEnv.AUTH_WECHAT_SECRET,
-          label: authEnv.AUTH_WECHAT_LABEL,
         }
       : false;
   },

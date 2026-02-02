@@ -7,18 +7,16 @@ export type BuiltinProviderDefinition<
 > = {
   aliases?: string[];
   build: (env: E) => SocialProviders[Id];
-  checkEnvs: () => (E & { label?: string }) | false;
+  checkEnvs: () => E | false;
   id: Id;
-  label?: string;
   type: 'builtin';
 };
 
 export type GenericProviderDefinition<E extends Record<string, string | undefined>> = {
   aliases?: string[];
-  build: (env: E & { label?: string }) => GenericOAuthConfig & { label?: string };
-  checkEnvs: () => (E & { label?: string }) | false;
+  build: (env: E) => GenericOAuthConfig;
+  checkEnvs: () => E | false;
   id: string;
-  label?: string;
   type: 'generic';
 };
 

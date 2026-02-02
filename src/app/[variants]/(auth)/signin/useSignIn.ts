@@ -32,7 +32,7 @@ export const useSignIn = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const enableMagicLink = useServerConfigStore(serverConfigSelectors.enableMagicLink);
-  const enableEmailPassword = useServerConfigStore(serverConfigSelectors.enableEmailPassword);
+  const disableEmailPassword = useServerConfigStore(serverConfigSelectors.disableEmailPassword);
   const [form] = Form.useForm<SignInFormValues>();
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
@@ -41,7 +41,6 @@ export const useSignIn = () => {
   const [isSocialOnly, setIsSocialOnly] = useState(false);
   const serverConfigInit = useServerConfigStore((s) => s.serverConfigInit);
   const oAuthSSOProviders = useServerConfigStore((s) => s.serverConfig.oAuthSSOProviders) || [];
-  const oAuthSSOProviderLabels = useServerConfigStore(serverConfigSelectors.oAuthSSOProviderLabels);
   const { ssoProviders, preSocialSigninCheck, getAdditionalData } = useBusinessSignin();
 
   useEffect(() => {
@@ -244,8 +243,8 @@ export const useSignIn = () => {
   };
 
   return {
+    disableEmailPassword,
     email,
-    enableEmailPassword,
     form,
     handleBackToEmail,
     handleCheckUser,
@@ -255,7 +254,6 @@ export const useSignIn = () => {
     handleSocialSignIn,
     isSocialOnly,
     loading,
-    oAuthSSOProviderLabels,
     oAuthSSOProviders: ENABLE_BUSINESS_FEATURES ? ssoProviders : oAuthSSOProviders,
     serverConfigInit: ENABLE_BUSINESS_FEATURES ? true : serverConfigInit,
     socialLoading,

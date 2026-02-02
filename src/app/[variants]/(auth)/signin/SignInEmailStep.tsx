@@ -24,11 +24,10 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const USERNAME_REGEX = /^\w+$/;
 
 export interface SignInEmailStepProps {
-  enableEmailPassword: boolean;
+  disableEmailPassword?: boolean;
   form: FormInstance<{ email: string }>;
   isSocialOnly: boolean;
   loading: boolean;
-  oAuthSSOProviderLabels?: Record<string, string | undefined>;
   oAuthSSOProviders: string[];
   onCheckUser: (values: { email: string }) => Promise<void>;
   onSetPassword: () => void;
@@ -38,11 +37,10 @@ export interface SignInEmailStepProps {
 }
 
 export const SignInEmailStep = ({
-  enableEmailPassword,
+  disableEmailPassword,
   form,
   isSocialOnly,
   loading,
-  oAuthSSOProviderLabels,
   oAuthSSOProviders,
   serverConfigInit,
   socialLoading,
@@ -66,12 +64,6 @@ export const SignInEmailStep = ({
   );
 
   const getProviderLabel = (provider: string) => {
-    // Use custom label if provided
-    if (oAuthSSOProviderLabels?.[provider]) {
-      return `Continue with ${oAuthSSOProviderLabels[provider]}`;
-    }
-
-    // Fallback to i18n or default label generation
     const normalized = provider
       .toLowerCase()
       .replaceAll(/(^|[_-])([a-z])/g, (_, __, c) => c.toUpperCase());
@@ -111,7 +103,7 @@ export const SignInEmailStep = ({
     <AuthCard
       footer={footer}
       subtitle={t('signin.subtitle', { appName: BRANDING_NAME })}
-      title={'Agent teams that grow with you'}
+      title={'Agent teammates that grow with you'}
     >
       {!serverConfigInit && (
         <Flexbox gap={12}>
@@ -143,10 +135,13 @@ export const SignInEmailStep = ({
               {getProviderLabel(provider)}
             </Button>
           ))}
-          {enableEmailPassword && divider}
+          {!disableEmailPassword && divider}
         </Flexbox>
       )}
-      {enableEmailPassword && (
+      {serverConfigInit && disableEmailPassword && oAuthSSOProviders.length === 0 && (
+        <Alert description={t('betterAuth.signin.ssoOnlyNoProviders')} showIcon type="warning" />
+      )}
+      {!disableEmailPassword && (
         <Form
           form={form}
           layout="vertical"
@@ -197,7 +192,7 @@ export const SignInEmailStep = ({
           </Form.Item>
         </Form>
       )}
-      {enableEmailPassword && isSocialOnly && (
+      {isSocialOnly && (
         <Alert
           description={
             <>

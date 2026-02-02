@@ -13,7 +13,6 @@ const provider: GenericProviderDefinition<{
       clientId: env.AUTH_CLOUDFLARE_ZERO_TRUST_ID,
       clientSecret: env.AUTH_CLOUDFLARE_ZERO_TRUST_SECRET,
       issuer: env.AUTH_CLOUDFLARE_ZERO_TRUST_ISSUER,
-      label: env.label,
       overrides: {
         mapProfileToUser: (profile) => ({
           email: profile.email,
@@ -32,7 +31,6 @@ const provider: GenericProviderDefinition<{
           AUTH_CLOUDFLARE_ZERO_TRUST_ID: authEnv.AUTH_CLOUDFLARE_ZERO_TRUST_ID,
           AUTH_CLOUDFLARE_ZERO_TRUST_ISSUER: authEnv.AUTH_CLOUDFLARE_ZERO_TRUST_ISSUER,
           AUTH_CLOUDFLARE_ZERO_TRUST_SECRET: authEnv.AUTH_CLOUDFLARE_ZERO_TRUST_SECRET,
-          label: authEnv.AUTH_CLOUDFLARE_ZERO_TRUST_LABEL,
         }
       : false;
   },

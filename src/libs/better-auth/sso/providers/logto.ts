@@ -13,7 +13,6 @@ const provider: GenericProviderDefinition<{
       clientId: env.AUTH_LOGTO_ID,
       clientSecret: env.AUTH_LOGTO_SECRET,
       issuer: env.AUTH_LOGTO_ISSUER,
-      label: env.label,
       overrides: {
         mapProfileToUser: (profile) => ({
           email: profile.email,
@@ -29,7 +28,6 @@ const provider: GenericProviderDefinition<{
           AUTH_LOGTO_ID: authEnv.AUTH_LOGTO_ID,
           AUTH_LOGTO_ISSUER: authEnv.AUTH_LOGTO_ISSUER,
           AUTH_LOGTO_SECRET: authEnv.AUTH_LOGTO_SECRET,
-          label: authEnv.AUTH_LOGTO_LABEL,
         }
       : false;
   },

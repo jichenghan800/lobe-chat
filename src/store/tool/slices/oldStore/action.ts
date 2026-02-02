@@ -11,13 +11,21 @@ import { pluginService } from '@/services/plugin';
 import { toolService } from '@/services/tool';
 import { globalHelpers } from '@/store/global/helpers';
 import { pluginStoreSelectors } from '@/store/tool/selectors';
-import { type DiscoverPluginItem, type PluginListResponse, type PluginQueryParams } from '@/types/discover';
+import {
+  type DiscoverPluginItem,
+  type PluginListResponse,
+  type PluginQueryParams,
+} from '@/types/discover';
 import { type PluginInstallError } from '@/types/tool/plugin';
 import { sleep } from '@/utils/sleep';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type ToolStore } from '../../store';
-import { type PluginInstallProgress, PluginInstallStep, type PluginStoreState } from './initialState';
+import {
+  type PluginInstallProgress,
+  PluginInstallStep,
+  type PluginStoreState,
+} from './initialState';
 
 const n = setNamespace('pluginStore');
 
@@ -148,7 +156,7 @@ export const createPluginStoreSlice: StateCreator<
   loadMorePlugins: () => {
     const { oldPluginItems, pluginTotalCount, currentPluginPage } = get();
 
-    // 检查是否还有更多数据可以加载
+    // Check if there is more data to load
     if (oldPluginItems.length < (pluginTotalCount || 0)) {
       set(
         produce((draft: PluginStoreState) => {
@@ -234,19 +242,19 @@ export const createPluginStoreSlice: StateCreator<
             produce((draft: PluginStoreState) => {
               draft.pluginSearchLoading = false;
 
-              // 设置基础信息
+              // Set basic information
               if (!draft.isPluginListInit) {
                 draft.activePluginIdentifier = data.items?.[0]?.identifier;
                 draft.isPluginListInit = true;
                 draft.pluginTotalCount = data.totalCount;
               }
 
-              // 累积数据逻辑
+              // Accumulate data logic
               if (params.page === 1) {
-                // 第一页，直接设置
+                // First page, set directly
                 draft.oldPluginItems = uniqBy(data.items, 'identifier');
               } else {
-                // 后续页面，累积数据
+                // Subsequent pages, accumulate data
                 draft.oldPluginItems = uniqBy(
                   [...draft.oldPluginItems, ...data.items],
                   'identifier',

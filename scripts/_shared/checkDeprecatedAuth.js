@@ -5,7 +5,7 @@
  * IMPORTANT: Keep this file as CommonJS (.js) for compatibility with startServer.js
  */
 
-const MIGRATION_DOC_BASE = 'https://lobehub.com/docs/self-hosting/advanced/auth';
+const MIGRATION_DOC_BASE = 'https://lobehub.com/docs/self-hosting/migration/v2/auth';
 
 /**
  * Deprecated environment variable checks configuration
@@ -86,10 +86,10 @@ const DEPRECATED_CHECKS = [
       const mapping = {
         AUTH_AZURE_AD_ID: 'AUTH_MICROSOFT_ID',
         AUTH_AZURE_AD_SECRET: 'AUTH_MICROSOFT_SECRET',
-        AUTH_AZURE_AD_TENANT_ID: 'No longer needed',
+        AUTH_AZURE_AD_TENANT_ID: 'AUTH_MICROSOFT_TENANT_ID',
         AZURE_AD_CLIENT_ID: 'AUTH_MICROSOFT_ID',
         AZURE_AD_CLIENT_SECRET: 'AUTH_MICROSOFT_SECRET',
-        AZURE_AD_TENANT_ID: 'No longer needed',
+        AZURE_AD_TENANT_ID: 'AUTH_MICROSOFT_TENANT_ID',
       };
       return `${envVar} → ${mapping[envVar]}`;
     },
@@ -167,10 +167,10 @@ const DEPRECATED_CHECKS = [
     docUrl: `${MIGRATION_DOC_BASE}/nextauth-to-betterauth`,
     formatVar: (envVar) => {
       const mapping = {
-        AUTH_MICROSOFT_ENTRA_ID_BASE_URL: 'No longer needed',
+        AUTH_MICROSOFT_ENTRA_ID_BASE_URL: 'AUTH_MICROSOFT_AUTHORITY_URL',
         AUTH_MICROSOFT_ENTRA_ID_ID: 'AUTH_MICROSOFT_ID',
         AUTH_MICROSOFT_ENTRA_ID_SECRET: 'AUTH_MICROSOFT_SECRET',
-        AUTH_MICROSOFT_ENTRA_ID_TENANT_ID: 'No longer needed',
+        AUTH_MICROSOFT_ENTRA_ID_TENANT_ID: 'AUTH_MICROSOFT_TENANT_ID',
       };
       return `${envVar} → ${mapping[envVar]}`;
     },

@@ -15,7 +15,6 @@ const provider: GenericProviderDefinition<ZitadelEnv> = {
       clientId: env.AUTH_ZITADEL_ID!,
       clientSecret: env.AUTH_ZITADEL_SECRET!,
       issuer: env.AUTH_ZITADEL_ISSUER!,
-      label: env.label,
       providerId: 'zitadel',
     }),
   checkEnvs: () => {
@@ -27,7 +26,6 @@ const provider: GenericProviderDefinition<ZitadelEnv> = {
           AUTH_ZITADEL_ID: clientId,
           AUTH_ZITADEL_ISSUER: issuer,
           AUTH_ZITADEL_SECRET: clientSecret,
-          label: authEnv.AUTH_ZITADEL_LABEL,
         }
       : false;
   },

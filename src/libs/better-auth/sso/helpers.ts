@@ -13,7 +13,6 @@ type OIDCProviderInput = {
   clientId?: string;
   clientSecret?: string;
   issuer?: string;
-  label?: string;
   overrides?: Partial<GenericOAuthConfig>;
   pkce?: boolean;
   providerId: string;
@@ -25,11 +24,10 @@ export const buildOidcConfig = ({
   clientId,
   clientSecret,
   issuer,
-  label,
   scopes = DEFAULT_OIDC_SCOPES,
   pkce = true,
   overrides,
-}: OIDCProviderInput): GenericOAuthConfig & { label?: string } => {
+}: OIDCProviderInput): GenericOAuthConfig => {
   const sanitizedIssuer = issuer?.trim();
 
   if (!clientId || !clientSecret || !sanitizedIssuer) {
@@ -43,10 +41,9 @@ export const buildOidcConfig = ({
     clientId,
     clientSecret,
     discoveryUrl,
-    label,
     pkce,
     providerId,
     scopes,
     ...overrides,
-  } satisfies GenericOAuthConfig & { label?: string };
+  } satisfies GenericOAuthConfig;
 };

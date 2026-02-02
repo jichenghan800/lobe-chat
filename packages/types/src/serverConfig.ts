@@ -49,8 +49,8 @@ export type ServerLanguageModel = Partial<Record<GlobalLLMProviderKey, ServerMod
 export interface GlobalServerConfig {
   aiProvider: ServerLanguageModel;
   defaultAgent?: PartialDeep<UserDefaultAgent>;
+  disableEmailPassword?: boolean;
   enableBusinessFeatures?: boolean;
-  enableEmailPassword?: boolean;
   enableEmailVerification?: boolean;
   enableKlavis?: boolean;
   enableLobehubSkill?: boolean;
@@ -63,7 +63,6 @@ export interface GlobalServerConfig {
   enabledOAuthSSO?: boolean;
   image?: PartialDeep<UserImageConfig>;
   memory?: GlobalMemoryConfig;
-  oAuthSSOProviderLabels?: Record<string, string | undefined>;
   oAuthSSOProviders?: string[];
   systemAgent?: PartialDeep<UserSystemAgentConfig>;
   telemetry: {
