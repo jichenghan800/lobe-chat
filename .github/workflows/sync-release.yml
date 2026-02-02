@@ -44,31 +44,26 @@ jobs:
           git config --global user.email "action@github.com"
           git remote add upstream https://github.com/lobehub/lobe-chat.git
           
-          # 1. 强制刷新标签和上游分支
           git fetch upstream --tags -f 
           git fetch origin main
 
           tag="${{ steps.release.outputs.tag }}"
-          
-          # 2. 校验 Tag 是否存在
           git rev-parse "$tag" >/dev/null 2>&1 || { echo "Tag $tag not found"; exit 1; }
           
-          # 2.1 版本号判定：如果当前版本已 >= 上游 tag 版本，直接跳过
+          # 判定 1: 检查 package.json 版本号
           tag_version="${tag#v}"
           current_version=$(jq -r '.version' package.json)
           if [ -n "$current_version" ]; then
             latest=$(printf '%s\n' "$tag_version" "$current_version" | sort -V | tail -n1)
             if [ "$latest" = "$current_version" ]; then
               echo "up_to_date=true" >> "$GITHUB_OUTPUT"
-              echo "Logic: current version ($current_version) >= tag version ($tag_version). Skipping..."
               exit 0
             fi
           fi
 
-          # 3. 精准判定：检查 tag 是否已经是当前 HEAD 的祖先
+          # 判定 2: 检查 Git 提交祖先关系
           if git merge-base --is-ancestor "$tag" HEAD; then
             echo "up_to_date=true" >> "$GITHUB_OUTPUT"
-            echo "Logic: $tag is already merged into current branch."
             exit 0
           fi
 
@@ -76,7 +71,6 @@ jobs:
           git branch -D "$branch" || true
           git checkout -b "$branch"
 
-          # 4. 尝试合并上游版本
           if ! git merge --no-ff "$tag" -m "chore: sync upstream release $tag"; then
             echo "conflict=true" >> "$GITHUB_OUTPUT"
             git merge --abort || true
@@ -99,13 +93,24 @@ jobs:
             已检测到上游新版本 `${{ steps.release.outputs.tag }}`。
             此 PR 自动将上游代码合并至当前二开分支。
 
-      - name: Force Sync Tag to Origin
-        if: steps.merge.outputs.up_to_date != 'true' && steps.merge.outputs.conflict != 'true'
+      # 关键步骤：同步 Tag 与 Release 记录 (即使代码已手动合并也运行)
+      - name: Ensure Tag and Release Sync
+        if: always() && steps.release.outputs.tag != '' && steps.merge.outputs.conflict != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 关键：强制同步标签至你的远程仓库，解决 Release 记录不一致问题
-          git push origin ${{ steps.release.outputs.tag }} --force
+          tag="${{ steps.release.outputs.tag }}"
+          
+          # 强制同步 Tag 到 Origin
+          git push origin "$tag" --force
+
+          # 使用 GitHub CLI 创建 Release (如果不存在)
+          if ! gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$tag" \
+              --target main \
+              --title "$tag" \
+              --notes "Sync from upstream $tag. Optimized for customized injection-style development."
+          fi
 
       - name: Create conflict issue
         if: steps.merge.outputs.conflict == 'true'
