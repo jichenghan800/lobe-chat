@@ -28,7 +28,7 @@ export interface SignInEmailStepProps {
   form: FormInstance<{ email: string }>;
   isSocialOnly: boolean;
   loading: boolean;
-  oAuthSSOProviderLabels?: Record<string, string>;
+  oAuthSSOProviderLabels?: Record<string, string | undefined>;
   oAuthSSOProviders: string[];
   onCheckUser: (values: { email: string }) => Promise<void>;
   onSetPassword: () => void;
