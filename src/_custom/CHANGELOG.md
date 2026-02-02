@@ -4,6 +4,17 @@
 
 ---
 
+### \[2026-02-02] 首页 Starter “绘画” 按特性开关隐藏
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/homeStarter.ts; src/app/\[variants]/(main)/home/features/InputArea/StarterList.tsx; src/app/\[variants]/(main)/home/features/InputArea/ModeHeader.tsx
+- 原因：与 FEATURE_FLAGS `-ai_image` 联动，隐藏首页 “绘画” 入口
+- 方案：在 `_custom` 新增 starter 过滤器，并在首页列表 / 模式头部注入
+- 回滚：删除上述文件与调用
+- 影响：仅影响 UI 展示，不改变路由与服务能力
+
+---
+
 ### \[2026-02-01] 品牌名称自定义与模型显示名占位符
 
 - 类型: custom
