@@ -4,6 +4,17 @@
 
 ---
 
+### \[2026-02-02] 隐藏指定模型提供商（不影响服务端能力）
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/providerVisibility.ts; src/store/aiInfra/slices/aiProvider/action.ts; .env
+- 原因：在保留 Azure embedding 的前提下，全局隐藏 Azure 模型展示
+- 方案：新增 `NEXT_PUBLIC_PROVIDER_HIDE` 支持按 providerId 过滤 UI 列表（默认不影响后端能力）
+- 回滚：删除 providerVisibility 注入与 `NEXT_PUBLIC_PROVIDER_HIDE`
+- 影响：仅影响 UI 模型列表 / 提供商显示
+
+---
+
 ### \[2026-02-02] 首页 Starter “绘画” 按特性开关隐藏
 
 - 类型: custom
