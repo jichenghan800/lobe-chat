@@ -166,8 +166,8 @@ export const generalActionSlice: StateCreator<
   useCheckServerVersion: () =>
     useOnlyFetchOnceSWR(
       isDesktop &&
-      // only check server version for self-hosted remote server
-      electronSyncSelectors.storageMode(getElectronStoreState()) !== 'cloud'
+        // only check server version for self-hosted remote server
+        electronSyncSelectors.storageMode(getElectronStoreState()) !== 'cloud'
         ? 'checkServerVersion'
         : null,
       async () => globalService.getServerVersion(),

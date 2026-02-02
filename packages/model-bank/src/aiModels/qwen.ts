@@ -1130,8 +1130,8 @@ const qwenChatModels: AIChatModelCard[] = [
   {
     abilities: {
       functionCall: true,
-      search: true,
       reasoning: true,
+      search: true,
     },
     contextWindowTokens: 262_144,
     description:

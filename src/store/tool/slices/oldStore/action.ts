@@ -11,13 +11,21 @@ import { pluginService } from '@/services/plugin';
 import { toolService } from '@/services/tool';
 import { globalHelpers } from '@/store/global/helpers';
 import { pluginStoreSelectors } from '@/store/tool/selectors';
-import { type DiscoverPluginItem, type PluginListResponse, type PluginQueryParams } from '@/types/discover';
+import {
+  type DiscoverPluginItem,
+  type PluginListResponse,
+  type PluginQueryParams,
+} from '@/types/discover';
 import { type PluginInstallError } from '@/types/tool/plugin';
 import { sleep } from '@/utils/sleep';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type ToolStore } from '../../store';
-import { type PluginInstallProgress, PluginInstallStep, type PluginStoreState } from './initialState';
+import {
+  type PluginInstallProgress,
+  PluginInstallStep,
+  type PluginStoreState,
+} from './initialState';
 
 const n = setNamespace('pluginStore');
 
