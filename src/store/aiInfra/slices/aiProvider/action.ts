@@ -11,6 +11,7 @@ import {
 import { type SWRResponse } from 'swr';
 
 import { mapProviderListName, resolveProviderName } from '@/_custom/registry/providerName';
+import { filterHiddenProviders } from '@/_custom/registry/providerVisibility';
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { aiProviderService } from '@/services/aiProvider';
 import { type AiInfraStore } from '@/store/aiInfra/store';
@@ -466,10 +467,18 @@ export class AiProviderActionImpl {
 
         if (isLogin) {
           const data = await aiProviderService.getAiProviderRuntimeState();
-          const mappedEnabledAiProviders = mapProviderListName(data.enabledAiProviders);
-          const mappedEnabledChatAiProviders = mapProviderListName(data.enabledChatAiProviders);
-          const mappedEnabledImageAiProviders = mapProviderListName(data.enabledImageAiProviders);
-          const mappedEnabledVideoAiProviders = mapProviderListName(data.enabledVideoAiProviders);
+          const mappedEnabledAiProviders = filterHiddenProviders(
+            mapProviderListName(data.enabledAiProviders),
+          );
+          const mappedEnabledChatAiProviders = filterHiddenProviders(
+            mapProviderListName(data.enabledChatAiProviders),
+          );
+          const mappedEnabledImageAiProviders = filterHiddenProviders(
+            mapProviderListName(data.enabledImageAiProviders),
+          );
+          const mappedEnabledVideoAiProviders = filterHiddenProviders(
+            mapProviderListName(data.enabledVideoAiProviders),
+          );
           // Build model lists with proper async handling
           const [enabledChatModelList, enabledImageModelList, enabledVideoModelList] =
             await Promise.all([
@@ -491,13 +500,13 @@ export class AiProviderActionImpl {
           };
         }
 
-        const enabledAiProviders: EnabledProvider[] = DEFAULT_MODEL_PROVIDER_LIST.filter(
-          (provider) => provider.enabled,
-        ).map((item) => ({
-          id: item.id,
-          name: resolveProviderName(item.id, item.name),
-          source: AiProviderSourceEnum.Builtin,
-        }));
+        const enabledAiProviders: EnabledProvider[] = filterHiddenProviders(
+          DEFAULT_MODEL_PROVIDER_LIST.filter((provider) => provider.enabled).map((item) => ({
+            id: item.id,
+            name: resolveProviderName(item.id, item.name),
+            source: AiProviderSourceEnum.Builtin,
+          })),
+        );
 
         const enabledChatAiProviders = enabledAiProviders.filter((provider) => {
           return builtinAiModelList.some(
