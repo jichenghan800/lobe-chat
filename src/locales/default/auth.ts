@@ -63,6 +63,7 @@ export default {
     'Password reset successful, please sign in with your new password',
   'betterAuth.resetPassword.title': 'Reset Password',
   'betterAuth.signin.backToEmail': 'Back to change email',
+  'betterAuth.signin.continueWith': 'Continue with',
   'betterAuth.signin.continueWithApple': 'Continue with Apple',
   'betterAuth.signin.continueWithAuth0': 'Sign in with Auth0',
   'betterAuth.signin.continueWithAuthelia': 'Sign in with Authelia',
