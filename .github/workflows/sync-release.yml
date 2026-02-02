@@ -53,6 +53,18 @@ jobs:
           # 2. 校验 Tag 是否存在
           git rev-parse "$tag" >/dev/null 2>&1 || { echo "Tag $tag not found"; exit 1; }
           
+          # 2.1 版本号判定：如果当前版本已 >= 上游 tag 版本，直接跳过
+          tag_version="${tag#v}"
+          current_version=$(jq -r '.version' package.json)
+          if [ -n "$current_version" ]; then
+            latest=$(printf '%s\n' "$tag_version" "$current_version" | sort -V | tail -n1)
+            if [ "$latest" = "$current_version" ]; then
+              echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+              echo "Logic: current version ($current_version) >= tag version ($tag_version). Skipping..."
+              exit 0
+            fi
+          fi
+
           # 3. 精准判定：检查 tag 是否已经是当前 HEAD 的祖先
           if git merge-base --is-ancestor "$tag" HEAD; then
             echo "up_to_date=true" >> "$GITHUB_OUTPUT"
