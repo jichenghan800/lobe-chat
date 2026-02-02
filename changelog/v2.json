@@ -1,5 +1,10 @@
 [
   {
+    "children": {},
+    "date": "2026-02-02",
+    "version": "2.1.10"
+  },
+  {
     "children": {
       "improvements": ["Upgrade agents/group detail pages tabs、hidden like button."],
       "fixes": ["Fixed in community pluings tab the lobehub skills not display."]
