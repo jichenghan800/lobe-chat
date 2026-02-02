@@ -1,15 +1,16 @@
 import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
-import { type ButtonProps } from '@lobehub/ui';
-import { Button, Center, Tooltip } from '@lobehub/ui';
+import { Button, type ButtonProps, Center, Tooltip } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
-import { BotIcon, PenLineIcon } from 'lucide-react';
+import { BotIcon, ImageIcon, PenLineIcon } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
+import { filterHomeStarterItems } from '@/_custom/registry/homeStarter';
 import { useInitBuiltinAgent } from '@/hooks/useInitBuiltinAgent';
-import { type StarterMode } from '@/store/home';
-import { useHomeStore } from '@/store/home';
+import { type StarterMode, useHomeStore } from '@/store/home';
+import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   active: css`
@@ -33,19 +34,24 @@ type StarterTitleKey =
   | 'starter.createAgent'
   | 'starter.createGroup'
   | 'starter.write'
+  | 'starter.image'
   | 'starter.seedance'
   | 'starter.deepResearch';
+
+type StarterItemKey = Exclude<StarterMode, null> | 'image';
 
 interface StarterItem {
   disabled?: boolean;
   hot?: boolean;
   icon?: ButtonProps['icon'];
-  key: StarterMode;
+  key: StarterItemKey;
   titleKey: StarterTitleKey;
 }
 
 const StarterList = memo(() => {
+  const routeNavigate = useNavigate();
   const { t } = useTranslation('home');
+  const { showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.agentBuilder);
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.groupAgentBuilder);
@@ -58,40 +64,54 @@ const StarterList = memo(() => {
   ]);
 
   const items: StarterItem[] = useMemo(
-    () => [
-      {
-        icon: BotIcon,
-        key: 'agent',
-        titleKey: 'starter.createAgent',
-      },
-      {
-        icon: GroupBotSquareIcon,
-        key: 'group',
-        titleKey: 'starter.createGroup',
-      },
-      {
-        icon: PenLineIcon,
-        key: 'write',
-        titleKey: 'starter.write',
-      },
-      // {
-      //   hot: true,
-      //   icon: VideoIcon,
-      //   key: 'video',
-      //   titleKey: 'starter.seedance',
-      // },
-      // {
-      //   disabled: true,
-      //   icon: MicroscopeIcon,
-      //   key: 'research',
-      //   titleKey: 'starter.deepResearch',
-      // },
-    ],
-    [],
+    () =>
+      filterHomeStarterItems(
+        [
+          {
+            icon: BotIcon,
+            key: 'agent',
+            titleKey: 'starter.createAgent',
+          },
+          {
+            icon: GroupBotSquareIcon,
+            key: 'group',
+            titleKey: 'starter.createGroup',
+          },
+          {
+            icon: PenLineIcon,
+            key: 'write',
+            titleKey: 'starter.write',
+          },
+          {
+            icon: ImageIcon,
+            key: 'image',
+            titleKey: 'starter.image',
+          },
+          // {
+          //   hot: true,
+          //   icon: VideoIcon,
+          //   key: 'video',
+          //   titleKey: 'starter.seedance',
+          // },
+          // {
+          //   disabled: true,
+          //   icon: MicroscopeIcon,
+          //   key: 'research',
+          //   titleKey: 'starter.deepResearch',
+          // },
+        ],
+        { showAiImage },
+      ),
+    [showAiImage],
   );
 
   const handleClick = useCallback(
-    (key: StarterMode) => {
+    (key: StarterItemKey) => {
+      if (key === 'image') {
+        routeNavigate('/image');
+        return;
+      }
+
       if (key === 'video') {
         navigate?.('/video');
         return;
@@ -104,7 +124,7 @@ const StarterList = memo(() => {
         setInputActiveMode(key);
       }
     },
-    [inputActiveMode, setInputActiveMode],
+    [inputActiveMode, navigate, routeNavigate, setInputActiveMode],
   );
 
   return (

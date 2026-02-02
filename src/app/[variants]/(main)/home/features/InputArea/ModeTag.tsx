@@ -2,10 +2,12 @@ import { ActionIcon, Block, Text } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { BotIcon, FilePenIcon, ImageIcon, PenLineIcon, VideoIcon, X } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isHomeStarterModeVisible } from '@/_custom/registry/homeStarter';
 import { useHomeStore } from '@/store/home';
+import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   container: css`
@@ -30,15 +32,25 @@ const modeConfig = {
 
 const ModeHeader = memo(() => {
   const { t } = useTranslation('home');
+  const { showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   const [inputActiveMode, clearInputMode] = useHomeStore((s) => [
     s.inputActiveMode,
     s.clearInputMode,
   ]);
 
-  if (!inputActiveMode) return null;
+  const activeMode = inputActiveMode as keyof typeof modeConfig | null;
 
-  const config = modeConfig[inputActiveMode];
+  useEffect(() => {
+    if (activeMode === 'image' && !showAiImage) {
+      clearInputMode();
+    }
+  }, [activeMode, clearInputMode, showAiImage]);
+
+  if (!isHomeStarterModeVisible(activeMode, { showAiImage })) return null;
+  if (!activeMode) return null;
+
+  const config = modeConfig[activeMode];
   const Icon = config.icon;
 
   return (
