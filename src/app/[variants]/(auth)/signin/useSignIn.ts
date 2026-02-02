@@ -42,7 +42,8 @@ export const useSignIn = () => {
   const serverConfigInit = useServerConfigStore((s) => s.serverConfigInit);
   const oAuthSSOProviders = useServerConfigStore((s) => s.serverConfig.oAuthSSOProviders) || [];
   const oAuthSSOProviderLabels = useServerConfigStore(serverConfigSelectors.oAuthSSOProviderLabels);
-  const { ssoProviders, preSocialSigninCheck, getAdditionalData } = useBusinessSignin();
+  const { ssoProviders, ssoProviderLabels, preSocialSigninCheck, getAdditionalData } =
+    useBusinessSignin();
 
   useEffect(() => {
     const emailParam = searchParams.get('email');
@@ -255,7 +256,8 @@ export const useSignIn = () => {
     handleSocialSignIn,
     isSocialOnly,
     loading,
-    oAuthSSOProviderLabels,
+    // Use business labels when business features are enabled, otherwise use server config labels
+    oAuthSSOProviderLabels: ENABLE_BUSINESS_FEATURES ? ssoProviderLabels : oAuthSSOProviderLabels,
     oAuthSSOProviders: ENABLE_BUSINESS_FEATURES ? ssoProviders : oAuthSSOProviders,
     serverConfigInit: ENABLE_BUSINESS_FEATURES ? true : serverConfigInit,
     socialLoading,

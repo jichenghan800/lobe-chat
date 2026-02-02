@@ -6,6 +6,7 @@ export const useBusinessSignin = () => {
     preSocialSigninCheck: async () => {
       return true;
     },
+    ssoProviderLabels: {} as Record<string, string | undefined>,
     ssoProviders: [],
   };
 };
