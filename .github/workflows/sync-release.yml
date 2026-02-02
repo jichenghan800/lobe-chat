@@ -1,5 +1,6 @@
 name: Sync Upstream Release
 
+# 显式声明权限，确保 GITHUB_TOKEN 有权创建 Release 和 Issue
 permissions:
   contents: write
   pull-requests: write
@@ -7,7 +8,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 0 * * *' 
+    - cron: '0 0 * * *' # 每天凌晨检查一次
   workflow_dispatch:
 
 jobs:
@@ -26,6 +27,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
+          # 获取物理存在的最新 Tag
           api="https://api.github.com/repos/lobehub/lobe-chat/tags?per_page=1"
           resp=$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" "$api")
           tag=$(echo "$resp" | jq -r '.[0].name // empty')
@@ -44,6 +46,7 @@ jobs:
           git config --global user.email "action@github.com"
           git remote add upstream https://github.com/lobehub/lobe-chat.git
           
+          # 强制刷新标签，解决 clobber 冲突
           git fetch upstream --tags -f 
           git fetch origin main
 
@@ -61,7 +64,7 @@ jobs:
             fi
           fi
 
-          # 判定 2: 检查 Git 提交祖先关系
+          # 判定 2: 检查 Git 提交祖先关系 (Codex 建议)
           if git merge-base --is-ancestor "$tag" HEAD; then
             echo "up_to_date=true" >> "$GITHUB_OUTPUT"
             exit 0
@@ -71,6 +74,7 @@ jobs:
           git branch -D "$branch" || true
           git checkout -b "$branch"
 
+          # 尝试合并上游版本
           if ! git merge --no-ff "$tag" -m "chore: sync upstream release $tag"; then
             echo "conflict=true" >> "$GITHUB_OUTPUT"
             git merge --abort || true
@@ -93,24 +97,26 @@ jobs:
             已检测到上游新版本 `${{ steps.release.outputs.tag }}`。
             此 PR 自动将上游代码合并至当前二开分支。
 
-      # 关键步骤：同步 Tag 与 Release 记录 (即使代码已手动合并也运行)
-      - name: Ensure Tag and Release Sync
+      - name: Force Sync Tag to Origin
         if: always() && steps.release.outputs.tag != '' && steps.merge.outputs.conflict != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${{ steps.release.outputs.tag }}"
-          
-          # 强制同步 Tag 到 Origin
-          git push origin "$tag" --force
+          # 即使判定为 up_to_date，也强制推送 Tag 以对齐 Release 记录
+          git push origin ${{ steps.release.outputs.tag }} --force
 
-          # 使用 GitHub CLI 创建 Release (如果不存在)
-          if ! gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$tag" \
-              --target main \
-              --title "$tag" \
-              --notes "Sync from upstream $tag. Optimized for customized injection-style development."
-          fi
+      # 使用专用 Action 插件创建 Release，规避 403 权限风险
+      - name: Create GitHub Release
+        if: always() && steps.release.outputs.tag != '' && steps.merge.outputs.conflict != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: ${{ steps.release.outputs.tag }}
+          body: |
+            Sync from upstream ${{ steps.release.outputs.tag }}.
+            This release maintains customized injection-style development.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create conflict issue
         if: steps.merge.outputs.conflict == 'true'
@@ -118,4 +124,9 @@ jobs:
         with:
           actions: 'create-issue'
           title: '🚨 Sync Conflict: ${{ steps.release.outputs.tag }}'
-          body: '自动合并上游版本时产生冲突，请在本地手动执行 `git merge ${{ steps.release.outputs.tag }}`。'
+          body: |
+            自动合并上游版本时产生冲突，请在本地手动执行：
+            ```bash
+            git fetch upstream --tags -f
+            git merge ${{ steps.release.outputs.tag }}
+            ```
