@@ -2,6 +2,33 @@
 
 # Changelog
 
+### [Version 2.1.12](https://github.com/jaworldwideorg/OneJA-Bot/compare/v2.1.11...v2.1.12)
+
+<sup>Released on **2026-02-03**</sup>
+
+#### 🐛 Bug Fixes
+
+- **changelog**: Normalize versionRange to valid semver.
+- **docker**: Add librt.so.1 to fix PDF parsing.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **changelog**: Normalize versionRange to valid semver, closes [#12049](https://github.com/jaworldwideorg/OneJA-Bot/issues/12049) ([74b9bd0](https://github.com/jaworldwideorg/OneJA-Bot/commit/74b9bd0))
+- **docker**: Add librt.so.1 to fix PDF parsing, closes [#12039](https://github.com/jaworldwideorg/OneJA-Bot/issues/12039) ([4a6be92](https://github.com/jaworldwideorg/OneJA-Bot/commit/4a6be92))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version 2.1.13](https://github.com/lobehub/lobe-chat/compare/v2.1.12...v2.1.13)
 
 <sup>Released on **2026-02-03**</sup>
