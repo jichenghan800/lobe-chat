@@ -2,50 +2,47 @@
 
 # Changelog
 
-## [Version 1.159.0](https://github.com/jaworldwideorg/OneJA-Bot/compare/v1.158.1...v1.159.0)
+### [Version 2.1.13](https://github.com/lobehub/lobe-chat/compare/v2.1.12...v2.1.13)
 
-<sup>Released on **2026-02-02**</sup>
-
-#### ✨ Features
-
-- **misc**: Support business-specific SSO provider labels.
+<sup>Released on **2026-02-03**</sup>
 
 #### 🐛 Bug Fixes
 
-- **auth**: Add AUTH_DISABLE_EMAIL_PASSWORD env to enable SSO-only mode, revert authority URL and tenant ID for Microsoft authentication..
-- **stream**: Update event handling to use 'text' instead of 'content_part' in gemini 2.5 models.
-- **misc**: Add missing description parameter docs in Notebook system prompt, fix feishu sso provider, hide password features when AUTH_DISABLE_EMAIL_PASSWORD is set, slove the group member agents cant set skills problem, use oauth2.link for generic OIDC provider account linking.
-
-#### 💄 Styles
-
-- **misc**: Improve local-system tool implement, improve tasks display, update i18n, Update Kimi K2.5 & Qwen3 Max Thinking models.
+- **docker**: Add librt.so.1 to fix PDF parsing.
 
 <br/>
 
 <details>
 <summary><kbd>Improvements and Fixes</kbd></summary>
 
-#### What's improved
+#### What's fixed
 
-- **misc**: Support business-specific SSO provider labels ([98a0a7d](https://github.com/jaworldwideorg/OneJA-Bot/commit/98a0a7d))
+- **docker**: Add librt.so.1 to fix PDF parsing, closes [#12039](https://github.com/lobehub/lobe-chat/issues/12039) ([4a6be92](https://github.com/lobehub/lobe-chat/commit/4a6be92))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
+### [Version 2.1.12](https://github.com/lobehub/lobe-chat/compare/v2.1.11...v2.1.12)
+
+<sup>Released on **2026-02-03**</sup>
+
+#### 🐛 Bug Fixes
+
+- **changelog**: Normalize versionRange to valid semver.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
 
 #### What's fixed
 
-- **auth**: Add AUTH_DISABLE_EMAIL_PASSWORD env to enable SSO-only mode, closes [#12009](https://github.com/jaworldwideorg/OneJA-Bot/issues/12009) ([f3210a3](https://github.com/jaworldwideorg/OneJA-Bot/commit/f3210a3))
-- **auth**: Revert authority URL and tenant ID for Microsoft authentication., closes [#11930](https://github.com/jaworldwideorg/OneJA-Bot/issues/11930) ([98f93ef](https://github.com/jaworldwideorg/OneJA-Bot/commit/98f93ef))
-- **stream**: Update event handling to use 'text' instead of 'content_part' in gemini 2.5 models, closes [#11235](https://github.com/jaworldwideorg/OneJA-Bot/issues/11235) ([a76a630](https://github.com/jaworldwideorg/OneJA-Bot/commit/a76a630))
-- **misc**: Add missing description parameter docs in Notebook system prompt, closes [#12015](https://github.com/jaworldwideorg/OneJA-Bot/issues/12015) [#11391](https://github.com/jaworldwideorg/OneJA-Bot/issues/11391) ([182030f](https://github.com/jaworldwideorg/OneJA-Bot/commit/182030f))
-- **misc**: Fix feishu sso provider, closes [#11970](https://github.com/jaworldwideorg/OneJA-Bot/issues/11970) ([ffd9fff](https://github.com/jaworldwideorg/OneJA-Bot/commit/ffd9fff))
-- **misc**: Hide password features when AUTH_DISABLE_EMAIL_PASSWORD is set, closes [#12023](https://github.com/jaworldwideorg/OneJA-Bot/issues/12023) ([e2fd28e](https://github.com/jaworldwideorg/OneJA-Bot/commit/e2fd28e))
-- **misc**: Slove the group member agents cant set skills problem, closes [#12021](https://github.com/jaworldwideorg/OneJA-Bot/issues/12021) ([2302940](https://github.com/jaworldwideorg/OneJA-Bot/commit/2302940))
-- **misc**: Use oauth2.link for generic OIDC provider account linking, closes [#12024](https://github.com/jaworldwideorg/OneJA-Bot/issues/12024) ([c7a06a4](https://github.com/jaworldwideorg/OneJA-Bot/commit/c7a06a4))
-
-#### Styles
-
-- **misc**: Improve local-system tool implement, closes [#12022](https://github.com/jaworldwideorg/OneJA-Bot/issues/12022) ([5e203b8](https://github.com/jaworldwideorg/OneJA-Bot/commit/5e203b8))
-- **misc**: Improve tasks display, closes [#12032](https://github.com/jaworldwideorg/OneJA-Bot/issues/12032) ([3423ad1](https://github.com/jaworldwideorg/OneJA-Bot/commit/3423ad1))
-- **misc**: Update i18n, closes [#11920](https://github.com/jaworldwideorg/OneJA-Bot/issues/11920) ([1a590a0](https://github.com/jaworldwideorg/OneJA-Bot/commit/1a590a0))
-- **misc**: Update Kimi K2.5 & Qwen3 Max Thinking models, closes [#11925](https://github.com/jaworldwideorg/OneJA-Bot/issues/11925) ([6f9e010](https://github.com/jaworldwideorg/OneJA-Bot/commit/6f9e010))
+- **changelog**: Normalize versionRange to valid semver, closes [#12049](https://github.com/lobehub/lobe-chat/issues/12049) ([74b9bd0](https://github.com/lobehub/lobe-chat/commit/74b9bd0))
 
 </details>
 
