@@ -7,7 +7,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天凌晨检查一次
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -26,7 +26,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          # 获取上游真正的最新 Release Tag
           api="https://api.github.com/repos/lobehub/lobe-chat/releases/latest"
           resp=$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" "$api")
           tag=$(echo "$resp" | jq -r '.tag_name // empty')
@@ -44,47 +43,34 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/lobehub/lobe-chat.git
-          
-          # 强制拉取上游所有标签
           git fetch upstream --tags -f 
 
           tag="${{ steps.release.outputs.tag }}"
-
-          # 判定 1: 如果本地已经存在该 Tag，说明已同步过
+          
+          # === 关键修改 ===
+          # 即使 Tag 存在，也不直接 exit 0，而是标记状态供后续判断
           if git rev-parse "$tag" >/dev/null 2>&1; then
-            echo "Tag $tag already exists locally. Everything is up to date."
+            echo "Tag $tag already exists locally."
             echo "up_to_date=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # 判定 2: 检查 package.json 版本号（兜底方案）
-          tag_version="${tag#v}"
-          current_version=$(jq -r '.version' package.json)
-          if [ -n "$current_version" ]; then
-            latest=$(printf '%s\n' "$tag_version" "$current_version" | sort -V | tail -n1)
-            if [ "$latest" = "$current_version" ] && [ "$tag_version" != "$current_version" ]; then
-              echo "Local version $current_version is newer than or equal to $tag."
-              echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+            # 既然 Tag 都在了，就不需要再 checkout 和 merge 了
+          else
+            # Tag 不存在，正常执行合并流程
+            branch="sync/release-${{ steps.release.outputs.safe_tag }}"
+            git checkout -b "$branch"
+  
+            if ! git merge --no-ff "$tag" -m "chore: sync upstream release $tag"; then
+              echo "conflict=true" >> "$GITHUB_OUTPUT"
+              git merge --abort || true
               exit 0
             fi
+            
+            echo "branch=$branch" >> "$GITHUB_OUTPUT"
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
           fi
-
-          # 开始准备合并分支
-          branch="sync/release-${{ steps.release.outputs.safe_tag }}"
-          git checkout -b "$branch"
-
-          # 尝试合并上游 Tag
-          if ! git merge --no-ff "$tag" -m "chore: sync upstream release $tag"; then
-            echo "conflict=true" >> "$GITHUB_OUTPUT"
-            git merge --abort || true
-            exit 0
-          fi
-
-          echo "branch=$branch" >> "$GITHUB_OUTPUT"
-          echo "up_to_date=false" >> "$GITHUB_OUTPUT"
 
       - name: Create pull request
         id: pr
+        # 只有在代码真的有更新（非 up_to_date）时才发 PR
         if: steps.merge.outputs.up_to_date == 'false' && steps.merge.outputs.conflict != 'true'
         uses: peter-evans/create-pull-request@v6
         with:
@@ -96,26 +82,23 @@ jobs:
             ## ⬆️ 上游新版本同步
             检测到上游发布了新版本 `${{ steps.release.outputs.tag }}`。
             本 PR 已自动完成代码合并。
-            
-            **操作**：请检查合并是否符合预期并合并此 PR。
 
       - name: Force Sync Tag to Origin
-        if: steps.merge.outputs.up_to_date == 'false' && steps.merge.outputs.conflict != 'true'
+        # 只要没有冲突，始终确保 Tag 被同步到远程（防止本地有但远程没有的情况）
+        if: steps.merge.outputs.conflict != 'true'
         run: |
-          # 将上游 Tag 推送到自己的 origin 仓库
           git push origin ${{ steps.release.outputs.tag }} --force
 
       - name: Create GitHub Release
-        if: steps.merge.outputs.up_to_date == 'false' && steps.merge.outputs.conflict != 'true'
+        # === 关键修改 ===
+        # 只要没有冲突，始终尝试发布 Release（补发或更新）
+        if: steps.merge.outputs.conflict != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.tag }}
           name: ${{ steps.release.outputs.tag }}
           body: |
             Sync from upstream ${{ steps.release.outputs.tag }}.
-            
-            > [!TIP]
-            > 此 Release 由 GitHub Action 自动根据上游版本生成。
           draft: false
           prerelease: false
         env:
@@ -129,10 +112,3 @@ jobs:
           title: '🚨 同步冲突: ${{ steps.release.outputs.tag }}'
           body: |
             自动合并上游版本 `${{ steps.release.outputs.tag }}` 时产生冲突。
-            请手动在本地处理冲突：
-            ```bash
-            git fetch upstream --tags -f
-            git checkout -b sync/fix-conflict-${{ steps.release.outputs.safe_tag }}
-            git merge ${{ steps.release.outputs.tag }}
-            # 处理完成后推送到 origin 并提交 PR
-            ```
