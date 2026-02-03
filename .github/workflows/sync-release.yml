@@ -19,11 +19,12 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          token: ${{ secrets.PAT }} # <--- 关键修改：使用 PAT 进行鉴权
 
       - name: Get latest upstream release tag
         id: release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 查信息可以用普通 Token
         shell: bash
         run: |
           api="https://api.github.com/repos/lobehub/lobe-chat/releases/latest"
@@ -47,14 +48,10 @@ jobs:
 
           tag="${{ steps.release.outputs.tag }}"
           
-          # === 关键修改 ===
-          # 即使 Tag 存在，也不直接 exit 0，而是标记状态供后续判断
           if git rev-parse "$tag" >/dev/null 2>&1; then
             echo "Tag $tag already exists locally."
             echo "up_to_date=true" >> "$GITHUB_OUTPUT"
-            # 既然 Tag 都在了，就不需要再 checkout 和 merge 了
           else
-            # Tag 不存在，正常执行合并流程
             branch="sync/release-${{ steps.release.outputs.safe_tag }}"
             git checkout -b "$branch"
   
@@ -70,10 +67,10 @@ jobs:
 
       - name: Create pull request
         id: pr
-        # 只有在代码真的有更新（非 up_to_date）时才发 PR
         if: steps.merge.outputs.up_to_date == 'false' && steps.merge.outputs.conflict != 'true'
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.PAT }} # <--- 创建 PR 也建议用 PAT
           branch: ${{ steps.merge.outputs.branch }}
           base: main
           title: 'chore: sync upstream release ${{ steps.release.outputs.tag }}'
@@ -84,25 +81,22 @@ jobs:
             本 PR 已自动完成代码合并。
 
       - name: Force Sync Tag to Origin
-        # 只要没有冲突，始终确保 Tag 被同步到远程（防止本地有但远程没有的情况）
         if: steps.merge.outputs.conflict != 'true'
         run: |
+          # 既能解决权限问题，也能确保标签同步
           git push origin ${{ steps.release.outputs.tag }} --force
 
       - name: Create GitHub Release
-        # === 关键修改 ===
-        # 只要没有冲突，始终尝试发布 Release（补发或更新）
         if: steps.merge.outputs.conflict != 'true'
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.PAT }} # <--- 发 Release 也用 PAT 更稳妥
           tag_name: ${{ steps.release.outputs.tag }}
           name: ${{ steps.release.outputs.tag }}
           body: |
             Sync from upstream ${{ steps.release.outputs.tag }}.
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create conflict issue
         if: steps.merge.outputs.conflict == 'true'
