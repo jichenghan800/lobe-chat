@@ -134,15 +134,29 @@ COPY --from=builder /app/scripts/serverLauncher/startServer.js /app/startServer.
 COPY --from=builder /app/scripts/_shared /app/scripts/_shared
 
 RUN set -e && \
-    addgroup -S -g 1001 nodejs && \
-    adduser -D -G nodejs -H -S -h /app -u 1001 nextjs && \
+    apt update && \
+    apt install -y shadow-utils || apt install -y passwd || true && \
+    groupadd -g 1001 nodejs || addgroup -g 1001 nodejs && \
+    useradd -r -g nodejs -d /app -u 1001 nextjs || adduser -D -G nodejs -H -h /app -u 1001 nextjs && \
     chown -R nextjs:nodejs /app /etc/proxychains4.conf
 
 ## Production image, copy all the files and run next
-FROM scratch
+FROM node:${NODEJS_VERSION}-slim
 
-# Copy all the files from app, set the correct permission for prerender cache
+# Install OpenSSH server in the final stage
+RUN apt update && \
+    apt install -y openssh-server ca-certificates && \
+    echo "root:Docker!" | chpasswd && \
+    ssh-keygen -A && \
+    mkdir -p /var/run/sshd && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy all the files from app
 COPY --from=app / /
+
+COPY sshd_config /etc/ssh/
+COPY entrypoint.sh ./
+RUN chmod +x ./entrypoint.sh
 
 ENV NODE_ENV="production" \
     NODE_OPTIONS="--dns-result-order=ipv4first --use-openssl-ca" \
@@ -179,7 +193,6 @@ ENV AUTH_SECRET="" \
     AUTH_DISABLE_EMAIL_PASSWORD="" \
     AUTH_EMAIL_VERIFICATION="" \
     AUTH_ENABLE_MAGIC_LINK="" \
-    # Google
     AUTH_GOOGLE_ID="" \
     AUTH_GOOGLE_SECRET="" \
     # GitHub
@@ -341,10 +354,7 @@ ENV \
     # Cerebras
     CEREBRAS_API_KEY="" CEREBRAS_MODEL_LIST=""
 
-USER nextjs
+USER root
+EXPOSE 3210/tcp 2222
 
-EXPOSE 3210/tcp
-
-ENTRYPOINT ["/bin/node"]
-
-CMD ["/app/startServer.js"]
+ENTRYPOINT ["./entrypoint.sh"]
