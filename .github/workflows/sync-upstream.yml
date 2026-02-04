@@ -70,10 +70,12 @@ jobs:
           )
           HEAD="upstream-sync"
           BASE="main"
+          REPO="${GITHUB_REPOSITORY}"
+          HEAD_REF="${GITHUB_REPOSITORY_OWNER}:${HEAD}"
 
-          # 预检查：如果 main 已经包含该版本，直接跳过
-          git fetch origin main
-          if git merge-base --is-ancestor HEAD origin/main; then
+          # 预检查：如果没有差异，直接跳过
+          COMPARE_STATUS=$(gh api "/repos/${REPO}/compare/${BASE}...${HEAD}" -q '.status' || echo "unknown")
+          if [ "$COMPARE_STATUS" = "identical" ]; then
              echo "✅ Main branch already contains release $TAG. Skipping PR."
              exit 0
           fi
@@ -85,6 +87,6 @@ jobs:
             gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
           else
             echo "🆕 Creating new PR..."
-            gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE
+            gh pr create --title "$TITLE" --body "$BODY" --head "$HEAD_REF" --base $BASE
             echo "✅ PR created."
           fi
