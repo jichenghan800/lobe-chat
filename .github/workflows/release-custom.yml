@@ -10,13 +10,19 @@ on:
     paths:
       - 'package.json' # 且只有当版本号变了才发
 
+# 🔒 并发控制：防止短时间内多次合并导致发版冲突
+concurrency:
+  group: release-custom
+  cancel-in-progress: true
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.PAT }} # 必须使用 PAT 才有权限推 Tag
 
       - name: Get Version
         id: version
@@ -26,16 +32,20 @@ jobs:
 
       - name: Check & Create Tag
         id: release_check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.version.outputs.tag_name }}"
+          
+          # 检查远程是否已有该 Tag
           if git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists."
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
+            echo "Tag $TAG does not exist. Creating..."
             echo "exists=false" >> "$GITHUB_OUTPUT"
+            
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            
             git tag -a "$TAG" -m "Custom Release $TAG"
             git push origin "$TAG"
           fi
