@@ -4,6 +4,28 @@
 
 ---
 
+### \[2026-02-03] Google GenAI 配额限流指数退避重试
+
+- 类型: custom
+- 涉及文件: packages/model-runtime/src/\_custom/googleQuotaRetry.ts; packages/model-runtime/src/providers/google/index.ts
+- 原因：Google/Vertex AI 遇到 429 配额限流时，提升稳定性与成功率
+- 方案：为 generateContentStream 增加指数退避 + 抖动重试，仅对 429 类错误生效，支持 AbortSignal 中断
+- 回滚：移除 quota retry helper 与调用
+- 影响：仅在配额限流时重试，不改变其他错误行为
+
+---
+
+### \[2026-02-03] Docker 构建 type-check 兼容 vitest-canvas-mock
+
+- 类型: custom
+- 涉及文件: src/\_custom/types/vitest-canvas-mock.d.ts
+- 原因：Docker 构建 type-check 引用 `vitest-canvas-mock` 时缺少类型声明导致失败
+- 方案：添加全局模块声明以避免 type-check 阻塞
+- 回滚：删除该 d.ts
+- 影响：仅影响类型检查，不影响运行时
+
+---
+
 ### \[2026-02-02] 隐藏指定模型提供商（不影响服务端能力）
 
 - 类型: custom
@@ -58,6 +80,7 @@
 - 影响：仅在 DEV_AUTH_BYPASS_ENABLED=1 且 token 校验通过时生效
 
 ---
+
 ### \[2026-01-30] 仅保留聊天与助理的导航收敛
 
 - 类型: custom
@@ -176,6 +199,94 @@
 - 方案：增加 `NEXT_PUBLIC_MARKET_OIDC_HANDOFF=1`，Web 端使用 desktop clientId + handoff 轮询完成授权
 - 回滚：移除 handoff 开关逻辑，恢复原 web redirect 流程
 - 影响：授权弹窗会停留在官方页面，但本地通过 handoff 闭环获取 token
+
+---
+
+### \[2026-01-30] Market OIDC 手动回调兜底（复制回调 URL 完成授权）
+
+- 类型: custom
+- 涉及文件: src/\_custom/components/marketAuth/ManualCallbackModal.tsx; src/layout/AuthProvider/MarketAuth/MarketAuthProvider.tsx; src/layout/AuthProvider/MarketAuth/oidc.ts; src/locales/default/marketAuth.ts; locales/zh-CN/marketAuth.json; .env
+- 原因：办公网环境下官方 consent/callback 页面无法请求 app.lobehub.com，handoff 长期 pending
+- 方案：handoff 失败 / 超时后弹出输入框，用户粘贴回调 URL 解析 code/state 完成本地 token 交换；保留授权弹窗便于复制；手动回调会同步更新 state；支持 `NEXT_PUBLIC_MARKET_OIDC_HANDOFF_TIMEOUT_MS` 缩短等待
+- 回滚：移除 ManualCallbackModal 与 MarketAuthProvider 的手动兜底逻辑
+- 影响：当自动回调失败时，用户可通过复制回调链接完成授权
+
+---
+
+### \[2026-01-30] Market token 代理失败日志增强
+
+- 类型: hotfix
+- 涉及文件: src/app/(backend)/market/oidc/\[\[...segments]]/route.ts
+- 原因：token 交换 500 无法定位具体错误原因
+- 方案：输出 Market SDK 错误的 status/statusText/body，返回 detail 便于排查
+- 回滚：移除 extractProxyError 与 detail 透传
+- 影响：仅增加日志与错误详情
+
+---
+
+### \[2026-01-30] Market token 代理改为直连 token endpoint
+
+- 类型: hotfix
+- 涉及文件: src/app/(backend)/market/oidc/\[\[...segments]]/route.ts
+- 原因：Market SDK 返回 “Invalid token response payload”，无法获取实际响应
+- 方案：token/refresh 走直连 `https://market.lobehub.com/token` 并透传原始响应
+- 回滚：恢复使用 Market SDK `exchangeOAuthToken`
+- 影响：仅影响 OIDC token 交换
+
+---
+
+### \[2026-01-31] 回退 agent fork 登录自动触发逻辑（等待官方修复）
+
+- 类型: revert
+- 涉及文件: src/app/\[variants]/(main)/community/(detail)/agent/features/Sidebar/ActionButton/ForkAndChat.tsx; src/app/\[variants]/(main)/community/(detail)/group_agent/features/Sidebar/ActionButton/ForkGroupAndChat.tsx
+- 原因：官方 bug，fork 授权链路不稳定，先保持官方实现
+- 方案：撤销 fork 前自动触发 Market OIDC 登录
+- 回滚：重新引入 fork 前 signIn 逻辑
+- 影响：fork 继续依赖官方 Market 侧修复
+
+---
+
+### \[2026-01-31] 回退 Market/OIDC 兜底逻辑（保持官方实现）
+
+- 类型: revert
+- 涉及文件: src/layout/AuthProvider/MarketAuth/MarketAuthProvider.tsx; src/layout/AuthProvider/MarketAuth/oidc.ts; src/layout/AuthProvider/MarketAuth/types.ts; src/app/(backend)/market/oidc/\[\[...segments]]/route.ts; src/locales/default/marketAuth.ts; locales/zh-CN/marketAuth.json; locales/en-US/marketAuth.json
+- 原因：等待官方修复，保持与上游一致
+- 方案：撤销 handoff / 手动回调 / 直连 token 代理相关改动
+- 回滚：重新引入 Market/OIDC 兜底逻辑
+- 影响：Market 登录链路回到官方默认实现
+
+---
+
+### \[2026-02-02] Docker Compose 部署调整（外部依赖）
+
+- 类型: custom
+- 涉及文件: docker-compose/deploy/docker-compose.yml; docker-compose/deploy/.env.example; docker-compose/deploy/.env.zh-CN.example; .gitignore; package.json
+- 原因：使用外部数据库 / Redis / 对象存储（B 方案）
+- 方案: deploy compose 仅启动 LobeChat，依赖改为从 .env 读取 DATABASE_URL / REDIS_URL / S3\_\*；模板更新为外部连接示例；compose 改为本地 build 使用二开镜像；为保证 docker build 通过，将 @aws-sdk/client-bedrock-runtime 提升到根依赖；.gitignore 增加 Dockerfile 和 compose 文件忽略规则
+- 回滚：恢复 deploy compose 中内置 postgresql/redis/rustfs 服务与原始 env 模板
+- 影响：使用 deploy 方案时需要提前准备外部依赖并正确填写 .env
+
+---
+
+### \[2026-02-02] 首页模块与 Starter 入口按导航 / 权限隐藏
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/homeSections.ts; src/\_custom/registry/homeStarter.ts; src/\_custom/registry/navigation.ts; src/app/\[variants]/(main)/home/features/index.tsx; src/app/\[variants]/(main)/home/features/InputArea/StarterList.tsx; src/app/\[variants]/(main)/home/features/InputArea/ModeHeader.tsx
+- 原因：需要在首页联动导航隐藏与权限开关，避免仍展示不可达入口
+- 方案: Community/RecentPage/RecentResource 根据导航隐藏与 market flag 控制；Starter 入口根据导航隐藏与 edit_agent 控制
+- 回滚：移除 homeSections/homeStarter 增强逻辑并恢复原始 Home 组件渲染
+- 影响：仅影响首页展示，不改变路由与功能权限
+
+---
+
+### \[2026-01-31] 模型显示名统一映射（非 Provider / 模型配置页）
+
+- 类型: custom
+- 涉及文件: src/\_custom/hooks/useModelDisplayName.ts; src/\_custom/components/ModelDisplayNameTag.tsx; src/app/\[variants]/(main)/agent/features/Conversation/Header/Tags/index.tsx; src/features/Conversation/Messages/components/Extras/Usage/index.tsx; src/features/Conversation/Messages/components/Extras/Usage/UsageDetail/ModelCard.tsx; src/features/Conversation/components/History/index.tsx; src/features/Conversation/components/ShareMessageModal/ShareImage/Preview\.tsx; src/features/ShareModal/ShareImage/Preview\.tsx; src/app/\[variants]/(mobile)/(home)/features/SessionListContent/List/Item/index.tsx; src/app/\[variants]/(main)/community/(detail)/provider/features/Sidebar/ActionButton/index.tsx; src/app/\[variants]/(main)/community/(list)/provider/features/List/Item.tsx; src/app/\[variants]/(main)/image/features/GenerationFeed/BatchItem.tsx
+- 原因：需要在非 Provider / 模型配置页统一显示可配置的模型 displayName
+- 方案：新增 displayName 解析 hook + Tag 组件，并替换多处 ModelTag / 模型文本显示
+- 回滚：移除上述 hook / 组件并恢复各处 ModelTag / 模型文本显示
+- 影响：模型名称展示优先显示自定义 displayName，模型 id 作为 fallback/tooltip
 
 ---
 

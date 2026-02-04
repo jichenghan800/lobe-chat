@@ -129,3 +129,9 @@ i18n-unused-keys-report.json
 .vitest-reports
 
 pnpm-lock.yaml
+
+# Docker compose / Dockerfile (local overrides)
+Dockerfile
+docker-compose/**/docker-compose*.yml
+docker-compose/**/.env
+docker-compose/**/.env.*

@@ -4,7 +4,12 @@ import { Flexbox } from '@lobehub/ui';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useHomeStore } from '@/store/home';
+import {
+  shouldShowHomeCommunityAgents,
+  shouldShowHomeRecentPages,
+  shouldShowHomeRecentResources,
+} from '@/_custom/registry/homeSections';
+import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/slices/auth/selectors';
 
@@ -18,10 +23,11 @@ import WelcomeText from './WelcomeText';
 const Home = memo(() => {
   const { i18n } = useTranslation();
   const isLogin = useUserStore(authSelectors.isLogin);
-  const inputActiveMode = useHomeStore((s) => s.inputActiveMode);
+  const { showMarket } = useServerConfigStore(featureFlagsSelectors);
 
-  // Hide other modules when a starter mode is active
-  const hideOtherModules = inputActiveMode && ['agent', 'group', 'write'].includes(inputActiveMode);
+  const showCommunityAgents = shouldShowHomeCommunityAgents(showMarket);
+  const showRecentPages = shouldShowHomeRecentPages();
+  const showRecentResources = shouldShowHomeRecentResources();
 
   const Welcome = useCallback(() => <WelcomeText />, [i18n.language]);
 
@@ -29,18 +35,11 @@ const Home = memo(() => {
     <Flexbox gap={40}>
       <Welcome />
       <InputArea />
-      {/* Use CSS visibility to hide instead of unmounting to prevent data re-fetching */}
-      <Flexbox gap={40} style={{ display: hideOtherModules ? 'none' : undefined }}>
-        {isLogin && (
-          <>
-            <RecentTopic />
-            <RecentPage />
-          </>
-        )}
-        <CommunityAgents />
-        {/*<FeaturedPlugins />*/}
-        {isLogin && <RecentResource />}
-      </Flexbox>
+      {isLogin && <RecentTopic />}
+      {isLogin && showRecentPages && <RecentPage />}
+      {showCommunityAgents && <CommunityAgents />}
+      {/*<FeaturedPlugins />*/}
+      {isLogin && showRecentResources && <RecentResource />}
     </Flexbox>
   );
 });
