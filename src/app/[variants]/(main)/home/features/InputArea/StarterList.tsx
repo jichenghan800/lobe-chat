@@ -47,7 +47,7 @@ interface StarterItem {
 const StarterList = memo(() => {
   const navigate = useNavigate();
   const { t } = useTranslation('home');
-  const { showAiImage } = useServerConfigStore(featureFlagsSelectors);
+  const { isAgentEditable, showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.agentBuilder);
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.groupAgentBuilder);
@@ -88,9 +88,9 @@ const StarterList = memo(() => {
           //   titleKey: 'starter.deepResearch',
           // },
         ],
-        { showAiImage },
+        { isAgentEditable, showAiImage },
       ),
-    [showAiImage],
+    [isAgentEditable, showAiImage],
   );
 
   const handleClick = useCallback(
