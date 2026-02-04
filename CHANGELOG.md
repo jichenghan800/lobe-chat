@@ -2,6 +2,39 @@
 
 # Changelog
 
+### [Version 2.1.20](https://github.com/jaworldwideorg/OneJA-Bot/compare/v2.1.19...v2.1.20)
+
+<sup>Released on **2026-02-04**</sup>
+
+#### ♻ Code Refactoring
+
+- **model-runtime**: Extract Anthropic factory and convert Moonshot to RouterRuntime.
+
+#### 🐛 Bug Fixes
+
+- **model-runtime**: Fix moonshot interleaved thinking and circular dependency.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **model-runtime**: Extract Anthropic factory and convert Moonshot to RouterRuntime, closes [#12109](https://github.com/jaworldwideorg/OneJA-Bot/issues/12109) ([71064fd](https://github.com/jaworldwideorg/OneJA-Bot/commit/71064fd))
+
+#### What's fixed
+
+- **model-runtime**: Fix moonshot interleaved thinking and circular dependency, closes [#12112](https://github.com/jaworldwideorg/OneJA-Bot/issues/12112) ([3f1a198](https://github.com/jaworldwideorg/OneJA-Bot/commit/3f1a198))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version 2.1.19](https://github.com/jaworldwideorg/OneJA-Bot/compare/v2.1.18...v2.1.19)
 
 <sup>Released on **2026-02-04**</sup>
