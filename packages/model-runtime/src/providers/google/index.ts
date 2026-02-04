@@ -7,6 +7,7 @@ import {
 } from '@google/genai';
 import debug from 'debug';
 
+import { requestWithQuotaRetry } from '../../_custom/googleQuotaRetry';
 import { LobeRuntimeAI } from '../../core/BaseAI';
 import { buildGoogleMessages, buildGoogleTools } from '../../core/contextBuilders/google';
 import { GoogleGenerativeAIStream, VertexAIStream } from '../../core/streams';
@@ -218,7 +219,17 @@ export class LobeGoogleAI implements LobeRuntimeAI {
         console.log(JSON.stringify(finalPayload), '\n');
       }
 
-      const geminiStreamResponse = await this.client.models.generateContentStream(finalPayload);
+      const geminiStreamResponse = await requestWithQuotaRetry(
+        () => this.client.models.generateContentStream(finalPayload),
+        {
+          isAbortError,
+          label: this.isVertexAi
+            ? 'vertexai.generateContentStream'
+            : 'google.generateContentStream',
+          logger: log,
+          signal: controller.signal,
+        },
+      );
 
       const googleStream = this.createEnhancedStream(geminiStreamResponse, controller.signal);
       const [prod, useForDebug] = googleStream.tee();
