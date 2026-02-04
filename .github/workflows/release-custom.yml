@@ -2,72 +2,49 @@ name: Release Custom Version
 
 permissions:
   contents: write
-  id-token: write # 用于可能的 Docker 构建或其他身份验证
 
 on:
   push:
     branches:
-      - main
+      - main  # 只有 main 分支变动才触发发布
     paths:
-      - 'package.json' # 只有当版本号文件变动时才触发检测
+      - 'package.json' # 且只有当版本号变了才发
 
 jobs:
-  check_and_release:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }} # 用于推送 Tag 和创建 Release
+          token: ${{ secrets.PAT }}
 
-      - name: Read Version from package.json
+      - name: Get Version
         id: version
         run: |
-          # 读取 package.json 中的 version 字段
           VERSION=$(jq -r .version package.json)
-          # 构造 v 前缀的 tag，例如 v1.19.0
-          TAG_NAME="v$VERSION"
-          echo "Current version: $TAG_NAME"
-          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "tag_name=v$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Check if Release Exists
-        id: check_tag
+      - name: Check & Create Tag
+        id: release_check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.version.outputs.tag_name }}"
-          # 检查这个 tag 是否已经存在于远程
           if git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists. Skipping release."
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Tag $TAG does not exist. Proceeding to release."
             echo "exists=false" >> "$GITHUB_OUTPUT"
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Custom Release $TAG"
+            git push origin "$TAG"
           fi
 
-      - name: Create Tag
-        if: steps.check_tag.outputs.exists == 'false'
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          TAG="${{ steps.version.outputs.tag_name }}"
-          git tag -a "$TAG" -m "Release $TAG (Custom Build)"
-          git push origin "$TAG"
-
-      - name: Create GitHub Release
-        if: steps.check_tag.outputs.exists == 'false'
+      - name: GitHub Release
+        if: steps.release_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.PAT }}
           tag_name: ${{ steps.version.outputs.tag_name }}
-          name: ${{ steps.version.outputs.tag_name }} 
-          body: |
-            ## 🚀 Custom Release ${{ steps.version.outputs.tag_name }}
-            
-            基于官方版本构建，包含以下自定义修改。
-            
-            Synced from upstream.
-          draft: false
-          prerelease: false
-          generate_release_notes: true # 自动生成变更日志（基于你的 commit 历史）
+          name: ${{ steps.version.outputs.tag_name }}
+          generate_release_notes: true
