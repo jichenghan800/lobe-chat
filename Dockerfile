@@ -155,7 +155,22 @@ RUN set -e && \
         addgroup -S -g 22 sshd && \
         adduser -D -G sshd -H -S -h /var/empty -u 74 sshd && \
         echo "root:Docker!" | chpasswd && \
-        mkdir -p /var/run/sshd /run/sshd; \
+        mkdir -p /var/run/sshd /run/sshd /etc/ssh && \
+        cat > /etc/ssh/sshd_config <<EOF
+Port 			2222
+ListenAddress 		0.0.0.0
+LoginGraceTime 		180
+X11Forwarding 		yes
+Ciphers aes128-cbc,3des-cbc,aes256-cbc,aes128-ctr,aes192-ctr,aes256-ctr
+MACs hmac-sha1,hmac-sha1-96
+StrictModes 		yes
+SyslogFacility 		DAEMON
+PasswordAuthentication 	yes
+PermitEmptyPasswords 	no
+PermitRootLogin 	yes
+Subsystem sftp internal-sftp
+EOF
+; \
     fi && \
     chown -R nextjs:nodejs /app /etc/proxychains4.conf
 
@@ -167,8 +182,7 @@ ARG ENABLE_AZURE_SSH
 # Copy all the files from app, set the correct permission for prerender cache
 COPY --from=app / /
 
-# Copy Azure SSH configuration if enabled
-COPY scripts/azureSSH/sshd_config.sh /scripts/azureSSH/sshd_config.sh
+# Copy Azure SSH entrypoint script
 COPY scripts/azureSSH/entrypoint.sh /entrypoint.sh
 
 ENV NODE_ENV="production" \
