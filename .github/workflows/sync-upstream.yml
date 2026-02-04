@@ -3,11 +3,16 @@ name: Sync Upstream Logic
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天运行
-  workflow_dispatch:
+    - cron: '0 0 * * *' # 每天 UTC 0点 运行
+  workflow_dispatch:    # 允许手动触发
+
+concurrency:
+  group: sync-upstream-logic
+  cancel-in-progress: true
 
 jobs:
   sync_and_pr:
@@ -16,7 +21,7 @@ jobs:
       - name: Checkout upstream-sync
         uses: actions/checkout@v4
         with:
-          ref: upstream-sync  # <--- 关键：先切到同步分支
+          ref: upstream-sync
           fetch-depth: 0
           token: ${{ secrets.PAT }}
 
@@ -27,41 +32,58 @@ jobs:
 
       - name: Sync with Upstream
         id: sync
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          git remote add upstream https://github.com/lobehub/lobe-chat.git
+          # 防御性设置远程仓库
+          git remote add upstream https://github.com/lobehub/lobe-chat.git || git remote set-url upstream https://github.com/lobehub/lobe-chat.git
           git fetch upstream --tags -f
-          
-          # 获取上游最新 release tag
-          # 注意：这里我们使用 rest api 获取准确的 release tag
-          LATEST_TAG=$(curl -sSL https://api.github.com/repos/lobehub/lobe-chat/releases/latest | jq -r '.tag_name')
-          
-          echo "Syncing upstream-sync branch with $LATEST_TAG..."
 
-          # --- 核心操作 ---
-          # 强制将 upstream-sync 分支重置为官方的最新 Tag
-          # 这样保证 upstream-sync 永远是纯净的官方镜像
+          # 获取最新 Release Tag (带规范头)
+          LATEST_TAG=$(curl -sSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/lobehub/lobe-chat/releases/latest | jq -r '.tag_name')
+
+          # 严格判空
+          if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
+            echo "❌ Error: Failed to fetch latest release tag."
+            exit 1
+          fi
+
+          echo "🚀 Syncing upstream-sync branch with $LATEST_TAG..."
+          
+          # 执行同步
           git reset --hard "$LATEST_TAG"
-          
-          # 强制推送到你仓库的 upstream-sync 分支
-          git push origin upstream-sync --force
-          
+          git push origin upstream-sync --force-with-lease
           echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Create Pull Request to Main
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.PAT }}
-          branch: upstream-sync      #以此分支为源
-          base: main                 #合并到 main
-          title: 'chore: merge upstream release ${{ steps.sync.outputs.tag }}'
-          body: |
-            ## 🔄 上游版本同步 ${{ steps.sync.outputs.tag }}
-            
-            根据三分支模型自动同步：
-            `Official` -> `upstream-sync` -> `main`
-            
-            此 PR 将官方最新代码合并入生产分支。
-            如果出现冲突，请在合并前解决。
-          labels: 'sync, upstream'
-          # 如果已经有一个同样的 PR 开着，通过设置 update-only 防止重复开单
-          # 但通常我们需要新的 PR，默认设置即可
+      - name: Create or Update Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          TAG="${{ steps.sync.outputs.tag }}"
+          TITLE="chore: sync upstream release $TAG"
+          BODY="## 🔄 上游版本同步 $TAG\n\n根据三分支模型自动同步：\n`Official` -> `upstream-sync` -> `main`\n\n此 PR 将官方最新代码合并入生产分支。"
+          HEAD="upstream-sync"
+          BASE="main"
+
+          # 预检查：如果 main 已经包含该版本，直接跳过
+          git fetch origin main
+          if git merge-base --is-ancestor HEAD origin/main; then
+             echo "✅ Main branch already contains release $TAG. Skipping PR."
+             exit 0
+          fi
+
+          # 检查是否存在 PR 并处理
+          EXISTING_PR=$(gh pr list --head $HEAD --base $BASE --state open --json number -q '.[0].number')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "🔄 PR #$EXISTING_PR already exists, updating title..."
+            gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
+            echo "✅ PR updated."
+          else
+            echo "🆕 Creating new PR..."
+            gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE --label "sync,upstream"
+            echo "✅ PR created."
+          fi
