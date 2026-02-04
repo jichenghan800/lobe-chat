@@ -5,6 +5,9 @@ set -e
 if [ "${ENABLE_AZURE_SSH}" = "true" ]; then
     echo "Azure SSH enabled - starting SSH service..."
 
+    # Set root password (required by Azure: "Docker!")
+    echo "root:Docker!" | /usr/sbin/chpasswd
+
     # Generate SSH config using the script
     if [ -f /scripts/azureSSH/sshd_config.sh ]; then
         /bin/sh /scripts/azureSSH/sshd_config.sh
