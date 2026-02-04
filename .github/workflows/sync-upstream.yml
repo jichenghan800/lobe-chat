@@ -1,0 +1,100 @@
+name: Sync Upstream
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每天运行一次
+  workflow_dispatch:
+
+jobs:
+  check_and_sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }} # 必须使用 PAT 以触发后续的 Release Workflow
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check latest upstream version
+        id: check
+        run: |
+          # 获取上游最新 release tag
+          UPSTREAM_TAG=$(curl -sSL https://api.github.com/repos/lobehub/lobe-chat/releases/latest | jq -r '.tag_name')
+          echo "Upstream tag: $UPSTREAM_TAG"
+          
+          # 检查本地是否有该 tag (即使我们不推 tag，作为一个检测机制也可以用)
+          # 或者更简单的：检查 package.json 版本是否已落后 TODO
+          # 这里采用简单的 Tag 比较逻辑
+          
+          if git rev-parse "$UPSTREAM_TAG" >/dev/null 2>&1; then
+            echo "Already synced with $UPSTREAM_TAG"
+            echo "has_update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New version detected: $UPSTREAM_TAG"
+            echo "tag=$UPSTREAM_TAG" >> "$GITHUB_OUTPUT"
+            echo "has_update=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sync and Merge
+        if: steps.check.outputs.has_update == 'true'
+        id: merge
+        run: |
+          TAG="${{ steps.check.outputs.tag }}"
+          BRANCH="sync/$TAG"
+          
+          git remote add upstream https://github.com/lobehub/lobe-chat.git
+          git fetch upstream --tags -f
+          
+          # 基于当前 main 创建同步分支
+          git checkout -b "$BRANCH" main
+          
+          # 尝试合并上游 Tag
+          # 使用 --no-edit 自动提交合并信息
+          # 重点：处理 lockfile 冲突风险。
+          # 策略：如果 automatic merge 失败，脚本会报错并在下一步创建 issue 通知人工处理
+          if git merge upstream/"$TAG" --no-edit; then
+            echo "Merge successful"
+            echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+            echo "success=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Merge conflict detected"
+            git merge --abort
+            echo "success=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Pull Request
+        if: steps.check.outputs.has_update == 'true' && steps.merge.outputs.success == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PAT }}
+          branch: ${{ steps.merge.outputs.branch }}
+          base: main
+          title: 'cb: sync upstream release ${{ steps.check.outputs.tag }}'
+          body: |
+            ## 🔄 同步上游版本 ${{ steps.check.outputs.tag }}
+            
+            检测到 LobeChat 官方发布了新版本。
+            此 PR 已自动合并上游代码，包含官方更新 + 你的本地修改。
+            
+            ✅ **请检查 CI 通过后再合并。**
+          labels: 'sync, upstream'
+
+      - name: Create Conflict Issue
+        if: steps.check.outputs.has_update == 'true' && steps.merge.outputs.success == 'false'
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'create-issue'
+          title: '🚨 同步冲突通知: ${{ steps.check.outputs.tag }}'
+          body: |
+            在尝试自动合并上游版本 `${{ steps.check.outputs.tag }}` 时发生代码冲突。
+            请手动在本地拉取 `upstream` 并解决冲突。
