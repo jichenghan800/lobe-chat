@@ -46,6 +46,13 @@
       "fixes": ["Add the preview publish to market button preview check."]
     },
     "date": "2026-02-04",
+    "version": "2.1.19"
+  },
+  {
+    "children": {
+      "fixes": ["Add the preview publish to market button preview check."]
+    },
+    "date": "2026-02-04",
     "version": "2.1.16"
   },
   {
