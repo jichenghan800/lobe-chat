@@ -1,6 +1,6 @@
 {
   "name": "@lobehub/lobehub",
-  "version": "2.1.11",
+  "version": "2.1.14",
   "description": "LobeHub - an open-source,comprehensive AI Agent framework that supports speech synthesis, multimodal, and extensible Function Call plugin system. Supports one-click free deployment of your private ChatGPT/LLM web application.",
   "keywords": [
     "framework",
@@ -144,7 +144,6 @@
     "@anthropic-ai/sdk": "^0.67.1",
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
     "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
-    "@aws-sdk/client-bedrock-runtime": "^3.941.0",
     "@aws-sdk/client-s3": "~3.932.0",
     "@aws-sdk/s3-request-presigner": "~3.932.0",
     "@azure-rest/ai-inference": "1.0.0-beta.5",
@@ -158,7 +157,7 @@
     "@emotion/react": "^11.14.0",
     "@fal-ai/client": "^1.8.4",
     "@formkit/auto-animate": "^0.9.0",
-    "@google/genai": "^1.37.0",
+    "@google/genai": "^1.38.0",
     "@henrygd/queue": "^1.2.0",
     "@huggingface/inference": "^4.13.10",
     "@icons-pack/react-simple-icons": "^13.8.0",

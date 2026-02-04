@@ -48,6 +48,30 @@ export const messageRouter = router({
       return ctx.messageService.addFilesToMessage(id, fileIds, resolved);
     }),
 
+  /**
+   * Cancel compression by deleting the compression group and restoring original messages
+   */
+  cancelCompression: messageProcedure
+    .input(
+      z.object({
+        agentId: z.string(),
+        groupId: z.string().nullable().optional(),
+        messageGroupId: z.string(),
+        threadId: z.string().nullable().optional(),
+        topicId: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { messageGroupId, agentId, groupId, threadId, topicId } = input;
+
+      return ctx.messageService.cancelCompression(messageGroupId, {
+        agentId,
+        groupId,
+        threadId,
+        topicId,
+      });
+    }),
+
   count: messageProcedure
     .input(
       z
