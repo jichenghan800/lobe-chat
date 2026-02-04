@@ -26,9 +26,11 @@ RUN set -e && \
     cp /etc/ssl/certs/ca-certificates.crt /distroless/etc/ssl/certs/ca-certificates.crt && \
     mkdir -p /distroless/usr/sbin /distroless/usr/lib /distroless/etc/ssh && \
     cp /usr/sbin/sshd /distroless/usr/sbin/sshd && \
+    cp /usr/sbin/chpasswd /distroless/usr/sbin/chpasswd && \
     cp /bin/sh /distroless/bin/sh && \
     cp /bin/cat /distroless/bin/cat && \
     cp /bin/mkdir /distroless/bin/mkdir && \
+    cp /bin/grep /distroless/bin/grep && \
     cp -r /usr/lib/$(arch)-linux-gnu/libcrypto.so* /distroless/usr/lib/ && \
     cp -r /usr/lib/$(arch)-linux-gnu/libz.so* /distroless/usr/lib/ && \
     ssh-keygen -A && \
@@ -147,7 +149,6 @@ RUN set -e && \
     adduser -D -G nodejs -H -S -h /app -u 1001 nextjs && \
     addgroup -S -g 22 sshd && \
     adduser -D -G sshd -H -S -h /var/empty -u 74 sshd && \
-    echo "root:Docker!" | chpasswd && \
     mkdir -p /var/run/sshd /run/sshd /etc/ssh /scripts/azureSSH && \
     chown -R nextjs:nodejs /app /etc/proxychains4.conf
 
