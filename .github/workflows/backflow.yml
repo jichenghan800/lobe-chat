@@ -1,0 +1,76 @@
+name: Backflow Main -> Dev
+
+permissions:
+  contents: write
+  issues: write
+
+on:
+  push:
+    branches:
+      - main  # 监听 main 的变动（包括上游同步 和 你的发版）
+  workflow_dispatch:
+
+# 🔒 并发控制：如果上游连续更新，只运行最新的一个，避免 dev 分支被多线程写坏
+concurrency:
+  group: backflow-main-dev
+  cancel-in-progress: true
+
+jobs:
+  sync_back:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev             # <--- 修正点1：直接切到目标分支 dev
+          fetch-depth: 0       # <--- 修正点2：抓取完整历史，否则无法 merge
+          token: ${{ secrets.PAT }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge Main into Dev
+        id: merge
+        run: |
+          # 修正点3：显式获取两个分支的最新状态
+          git fetch origin main dev --tags
+          
+          # 确保当前就在 dev 分支且是干净的
+          git checkout dev
+          git reset --hard origin/dev
+
+          echo "🦁 Trying to merge main into dev..."
+          
+          # 尝试合并 (main -> dev)
+          if git merge origin/main --no-edit; then
+            echo "✅ Merge successful."
+            git push origin dev
+            echo "status=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "❌ Merge conflict detected."
+            # 遇到冲突立刻停止，不产生脏代码
+            git merge --abort
+            echo "status=conflict" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Conflict Issue
+        if: steps.merge.outputs.status == 'conflict'
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'create-issue'
+          token: ${{ secrets.PAT }}
+          title: '🚨 同步失败: Main -> Dev 冲突警告'
+          body: |
+            ### ⚠️ 自动回流失败
+
+            `main` 分支有更新，但在尝试自动合并到 `dev` 时发生了代码冲突。
+
+            **这意味着你的 `dev` 环境已经不再包含最新的官方修补。**
+
+            #### 请立即采取行动：
+            1. 在本地拉取最新代码: `git checkout dev && git pull`
+            2. 手动合并 main: `git merge main`
+            3. 在 IDE 中解决冲突并提交推送。
+          labels: 'conflict, help wanted'
