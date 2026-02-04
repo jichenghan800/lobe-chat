@@ -30,6 +30,8 @@ const buildHiddenKeys = () => {
 
 const HIDDEN_KEYS = buildHiddenKeys();
 
+export const isNavHidden = (key: string) => HIDDEN_KEYS.has(key);
+
 const filterByHiddenKeys = <T extends KeyedItem>(items: T[]) => {
   if (HIDDEN_KEYS.size === 0) return items;
 
