@@ -7,7 +7,12 @@ import type {
 import { GoogleGenAI } from '@google/genai';
 import debug from 'debug';
 
+<<<<<<< HEAD
 import type { LobeRuntimeAI } from '../../core/BaseAI';
+=======
+import { requestWithQuotaRetry } from '../../_custom/googleQuotaRetry';
+import { LobeRuntimeAI } from '../../core/BaseAI';
+>>>>>>> e6aed77f1f (🎨 custom: quota retry and nav feature filters)
 import { buildGoogleMessages, buildGoogleTools } from '../../core/contextBuilders/google';
 import { GoogleGenerativeAIStream, VertexAIStream } from '../../core/streams';
 import { LOBE_ERROR_KEY } from '../../core/streams/google';
@@ -218,7 +223,17 @@ export class LobeGoogleAI implements LobeRuntimeAI {
         console.log(JSON.stringify(finalPayload), '\n');
       }
 
-      const geminiStreamResponse = await this.client.models.generateContentStream(finalPayload);
+      const geminiStreamResponse = await requestWithQuotaRetry(
+        () => this.client.models.generateContentStream(finalPayload),
+        {
+          isAbortError,
+          label: this.isVertexAi
+            ? 'vertexai.generateContentStream'
+            : 'google.generateContentStream',
+          logger: log,
+          signal: controller.signal,
+        },
+      );
 
       const googleStream = this.createEnhancedStream(geminiStreamResponse, controller.signal);
       const [prod, useForDebug] = googleStream.tee();

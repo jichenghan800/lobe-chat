@@ -31,7 +31,7 @@ const modeConfig = {
 
 const ModeHeader = memo(() => {
   const { t } = useTranslation('home');
-  const { showAiImage } = useServerConfigStore(featureFlagsSelectors);
+  const { isAgentEditable, showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   const [inputActiveMode, clearInputMode] = useHomeStore((s) => [
     s.inputActiveMode,
@@ -44,7 +44,7 @@ const ModeHeader = memo(() => {
     }
   }, [clearInputMode, inputActiveMode, showAiImage]);
 
-  if (!isHomeStarterModeVisible(inputActiveMode, { showAiImage })) return null;
+  if (!isHomeStarterModeVisible(inputActiveMode, { isAgentEditable, showAiImage })) return null;
 
   if (!inputActiveMode) return null;
 
