@@ -4,6 +4,28 @@
 
 ---
 
+### \[2026-02-03] Google GenAI 配额限流指数退避重试
+
+- 类型: custom
+- 涉及文件: packages/model-runtime/src/\_custom/googleQuotaRetry.ts; packages/model-runtime/src/providers/google/index.ts
+- 原因：Google/Vertex AI 遇到 429 配额限流时，提升稳定性与成功率
+- 方案：为 generateContentStream 增加指数退避 + 抖动重试，仅对 429 类错误生效，支持 AbortSignal 中断
+- 回滚：移除 quota retry helper 与调用
+- 影响：仅在配额限流时重试，不改变其他错误行为
+
+---
+
+### \[2026-02-03] Docker 构建 type-check 兼容 vitest-canvas-mock
+
+- 类型: custom
+- 涉及文件: src/\_custom/types/vitest-canvas-mock.d.ts
+- 原因：Docker 构建 type-check 引用 `vitest-canvas-mock` 时缺少类型声明导致失败
+- 方案：添加全局模块声明以避免 type-check 阻塞
+- 回滚：删除该 d.ts
+- 影响：仅影响类型检查，不影响运行时
+
+---
+
 ### \[2026-02-02] 隐藏指定模型提供商（不影响服务端能力）
 
 - 类型: custom
@@ -232,6 +254,28 @@
 - 方案：撤销 handoff / 手动回调 / 直连 token 代理相关改动
 - 回滚：重新引入 Market/OIDC 兜底逻辑
 - 影响：Market 登录链路回到官方默认实现
+
+---
+
+### \[2026-02-02] Docker Compose 部署调整（外部依赖）
+
+- 类型: custom
+- 涉及文件: docker-compose/deploy/docker-compose.yml; docker-compose/deploy/.env.example; docker-compose/deploy/.env.zh-CN.example; .gitignore; package.json
+- 原因：使用外部数据库 / Redis / 对象存储（B 方案）
+- 方案: deploy compose 仅启动 LobeChat，依赖改为从 .env 读取 DATABASE_URL / REDIS_URL / S3\_\*；模板更新为外部连接示例；compose 改为本地 build 使用二开镜像；为保证 docker build 通过，将 @aws-sdk/client-bedrock-runtime 提升到根依赖；.gitignore 增加 Dockerfile 和 compose 文件忽略规则
+- 回滚：恢复 deploy compose 中内置 postgresql/redis/rustfs 服务与原始 env 模板
+- 影响：使用 deploy 方案时需要提前准备外部依赖并正确填写 .env
+
+---
+
+### \[2026-02-02] 首页模块与 Starter 入口按导航 / 权限隐藏
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/homeSections.ts; src/\_custom/registry/homeStarter.ts; src/\_custom/registry/navigation.ts; src/app/\[variants]/(main)/home/features/index.tsx; src/app/\[variants]/(main)/home/features/InputArea/StarterList.tsx; src/app/\[variants]/(main)/home/features/InputArea/ModeHeader.tsx
+- 原因：需要在首页联动导航隐藏与权限开关，避免仍展示不可达入口
+- 方案: Community/RecentPage/RecentResource 根据导航隐藏与 market flag 控制；Starter 入口根据导航隐藏与 edit_agent 控制
+- 回滚：移除 homeSections/homeStarter 增强逻辑并恢复原始 Home 组件渲染
+- 影响：仅影响首页展示，不改变路由与功能权限
 
 ---
 
