@@ -13,7 +13,7 @@ RUN set -e && \
         sed -i "s/deb.debian.org/mirrors.ustc.edu.cn/g" "/etc/apt/sources.list.d/debian.sources"; \
     fi && \
     apt update && \
-    apt install ca-certificates proxychains-ng -qy && \
+    apt install ca-certificates proxychains-ng openssh-server -qy && \
     mkdir -p /distroless/bin /distroless/etc /distroless/etc/ssl/certs /distroless/lib && \
     cp /usr/lib/$(arch)-linux-gnu/libproxychains.so.4 /distroless/lib/libproxychains.so.4 && \
     cp /usr/lib/$(arch)-linux-gnu/libdl.so.2 /distroless/lib/libdl.so.2 && \
@@ -24,6 +24,15 @@ RUN set -e && \
     cp /usr/lib/$(arch)-linux-gnu/librt.so.1 /distroless/lib/librt.so.1 && \
     cp /usr/local/bin/node /distroless/bin/node && \
     cp /etc/ssl/certs/ca-certificates.crt /distroless/etc/ssl/certs/ca-certificates.crt && \
+    mkdir -p /distroless/usr/sbin /distroless/usr/lib /distroless/etc/ssh && \
+    cp /usr/sbin/sshd /distroless/usr/sbin/sshd && \
+    cp /bin/sh /distroless/bin/sh && \
+    cp /bin/cat /distroless/bin/cat && \
+    cp /bin/mkdir /distroless/bin/mkdir && \
+    cp -r /usr/lib/$(arch)-linux-gnu/libcrypto.so* /distroless/usr/lib/ && \
+    cp -r /usr/lib/$(arch)-linux-gnu/libz.so* /distroless/usr/lib/ && \
+    ssh-keygen -A && \
+    cp -r /etc/ssh/ssh_host_* /distroless/etc/ssh/ && \
     rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/*
 
 ## Builder image, install all the dependencies and build the app
@@ -136,6 +145,10 @@ COPY --from=builder /app/scripts/_shared /app/scripts/_shared
 RUN set -e && \
     addgroup -S -g 1001 nodejs && \
     adduser -D -G nodejs -H -S -h /app -u 1001 nextjs && \
+    addgroup -S -g 22 sshd && \
+    adduser -D -G sshd -H -S -h /var/empty -u 74 sshd && \
+    echo "root:Docker!" | chpasswd && \
+    mkdir -p /var/run/sshd /run/sshd /etc/ssh /scripts/azureSSH && \
     chown -R nextjs:nodejs /app /etc/proxychains4.conf
 
 ## Production image, copy all the files and run next
@@ -144,11 +157,16 @@ FROM scratch
 # Copy all the files from app, set the correct permission for prerender cache
 COPY --from=app / /
 
+# Copy Azure SSH scripts
+COPY scripts/azureSSH/sshd_config.sh /scripts/azureSSH/sshd_config.sh
+COPY scripts/azureSSH/entrypoint.sh /entrypoint.sh
+
 ENV NODE_ENV="production" \
     NODE_OPTIONS="--dns-result-order=ipv4first --use-openssl-ca" \
     NODE_EXTRA_CA_CERTS="" \
     NODE_TLS_REJECT_UNAUTHORIZED="" \
-    SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
+    SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt" \
+    ENABLE_AZURE_SSH="false"
 
 # Make the middleware rewrite through local as default
 # refs: https://github.com/lobehub/lobe-chat/issues/5876
@@ -344,7 +362,8 @@ ENV \
 USER nextjs
 
 EXPOSE 3210/tcp
+EXPOSE 2222/tcp
 
-ENTRYPOINT ["/bin/node"]
+ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["/app/startServer.js"]
