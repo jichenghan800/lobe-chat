@@ -59,7 +59,15 @@ jobs:
         run: |
           TAG="${{ steps.sync.outputs.tag }}"
           TITLE="chore: sync upstream release $TAG"
-          BODY="## 🔄 上游版本同步 $TAG\n\n根据三分支模型自动同步：\n`Official` -> `upstream-sync` -> `main`\n\n此 PR 将官方最新代码合并入生产分支。"
+          BODY=$(cat <<EOF
+          ## 🔄 上游版本同步 ${TAG}
+
+          根据三分支模型自动同步：
+          \`Official\` -> \`upstream-sync\` -> \`main\`
+
+          此 PR 将官方最新代码合并入生产分支。
+          EOF
+          )
           HEAD="upstream-sync"
           BASE="main"
 
