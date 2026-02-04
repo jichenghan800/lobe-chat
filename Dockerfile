@@ -1,10 +1,12 @@
 ## Set global build ENV
 ARG NODEJS_VERSION="24"
+ARG ENABLE_AZURE_SSH="true"
 
 ## Base image for all building stages
 FROM node:${NODEJS_VERSION}-slim AS base
 
 ARG USE_CN_MIRROR
+ARG ENABLE_AZURE_SSH
 
 ENV DEBIAN_FRONTEND="noninteractive"
 
@@ -14,6 +16,9 @@ RUN set -e && \
     fi && \
     apt update && \
     apt install ca-certificates proxychains-ng -qy && \
+    if [ "${ENABLE_AZURE_SSH}" = "true" ]; then \
+        apt install openssh-server -qy; \
+    fi && \
     mkdir -p /distroless/bin /distroless/etc /distroless/etc/ssl/certs /distroless/lib && \
     cp /usr/lib/$(arch)-linux-gnu/libproxychains.so.4 /distroless/lib/libproxychains.so.4 && \
     cp /usr/lib/$(arch)-linux-gnu/libdl.so.2 /distroless/lib/libdl.so.2 && \
@@ -24,6 +29,14 @@ RUN set -e && \
     cp /usr/lib/$(arch)-linux-gnu/librt.so.1 /distroless/lib/librt.so.1 && \
     cp /usr/local/bin/node /distroless/bin/node && \
     cp /etc/ssl/certs/ca-certificates.crt /distroless/etc/ssl/certs/ca-certificates.crt && \
+    if [ "${ENABLE_AZURE_SSH}" = "true" ]; then \
+        mkdir -p /distroless/usr/sbin /distroless/usr/lib /distroless/etc/ssh && \
+        cp /usr/sbin/sshd /distroless/usr/sbin/sshd && \
+        cp -r /usr/lib/$(arch)-linux-gnu/libcrypto.so* /distroless/usr/lib/ && \
+        cp -r /usr/lib/$(arch)-linux-gnu/libz.so* /distroless/usr/lib/ && \
+        ssh-keygen -A && \
+        cp -r /etc/ssh/ssh_host_* /distroless/etc/ssh/; \
+    fi && \
     rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/*
 
 ## Builder image, install all the dependencies and build the app
@@ -111,6 +124,8 @@ RUN set -e && \
 ## Application image, copy all the files for production
 FROM busybox:latest AS app
 
+ARG ENABLE_AZURE_SSH
+
 COPY --from=base /distroless/ /
 
 # Automatically leverage output traces to reduce image size
@@ -134,35 +149,34 @@ COPY --from=builder /app/scripts/serverLauncher/startServer.js /app/startServer.
 COPY --from=builder /app/scripts/_shared /app/scripts/_shared
 
 RUN set -e && \
-    apt update && \
-    apt install -y shadow-utils || apt install -y passwd || true && \
-    groupadd -g 1001 nodejs || addgroup -g 1001 nodejs && \
-    useradd -r -g nodejs -d /app -u 1001 nextjs || adduser -D -G nodejs -H -h /app -u 1001 nextjs && \
+    addgroup -S -g 1001 nodejs && \
+    adduser -D -G nodejs -H -S -h /app -u 1001 nextjs && \
+    if [ "${ENABLE_AZURE_SSH}" = "true" ]; then \
+        addgroup -S -g 22 sshd && \
+        adduser -D -G sshd -H -S -h /var/empty -u 74 sshd && \
+        echo "root:Docker!" | chpasswd && \
+        mkdir -p /var/run/sshd /run/sshd; \
+    fi && \
     chown -R nextjs:nodejs /app /etc/proxychains4.conf
 
 ## Production image, copy all the files and run next
-FROM node:${NODEJS_VERSION}-slim
+FROM scratch
 
-# Install OpenSSH server in the final stage
-RUN apt update && \
-    apt install -y openssh-server ca-certificates && \
-    echo "root:Docker!" | chpasswd && \
-    ssh-keygen -A && \
-    mkdir -p /var/run/sshd && \
-    rm -rf /var/lib/apt/lists/*
+ARG ENABLE_AZURE_SSH
 
-# Copy all the files from app
+# Copy all the files from app, set the correct permission for prerender cache
 COPY --from=app / /
 
-COPY sshd_config /etc/ssh/
-COPY entrypoint.sh ./
-RUN chmod +x ./entrypoint.sh
+# Copy Azure SSH configuration if enabled
+COPY scripts/azureSSH/sshd_config.sh /scripts/azureSSH/sshd_config.sh
+COPY scripts/azureSSH/entrypoint.sh /entrypoint.sh
 
 ENV NODE_ENV="production" \
     NODE_OPTIONS="--dns-result-order=ipv4first --use-openssl-ca" \
     NODE_EXTRA_CA_CERTS="" \
     NODE_TLS_REJECT_UNAUTHORIZED="" \
-    SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
+    SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt" \
+    ENABLE_AZURE_SSH="${ENABLE_AZURE_SSH}"
 
 # Make the middleware rewrite through local as default
 # refs: https://github.com/lobehub/lobe-chat/issues/5876
@@ -193,6 +207,7 @@ ENV AUTH_SECRET="" \
     AUTH_DISABLE_EMAIL_PASSWORD="" \
     AUTH_EMAIL_VERIFICATION="" \
     AUTH_ENABLE_MAGIC_LINK="" \
+    # Google
     AUTH_GOOGLE_ID="" \
     AUTH_GOOGLE_SECRET="" \
     # GitHub
@@ -354,7 +369,13 @@ ENV \
     # Cerebras
     CEREBRAS_API_KEY="" CEREBRAS_MODEL_LIST=""
 
-USER root
-EXPOSE 3210/tcp 2222
+USER nextjs
 
-ENTRYPOINT ["./entrypoint.sh"]
+EXPOSE 3210/tcp
+
+# Conditionally expose SSH port
+EXPOSE 2222/tcp
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["/app/startServer.js"]
