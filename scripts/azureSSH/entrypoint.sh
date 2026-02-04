@@ -5,12 +5,7 @@ set -e
 if [ "${ENABLE_AZURE_SSH}" = "true" ]; then
     echo "Azure SSH enabled - starting SSH service..."
 
-    # Generate SSH config
-    if [ -f /scripts/azureSSH/sshd_config.sh ]; then
-        /bin/sh /scripts/azureSSH/sshd_config.sh
-    fi
-
-    # Start SSH daemon in background
+    # Start SSH daemon in background (config already created during build)
     /usr/sbin/sshd
 
     echo "SSH service started on port 2222"
