@@ -61,6 +61,7 @@ jobs:
           TITLE="chore: sync upstream release $TAG"
           HEAD="upstream-sync"
           BASE="main"
+          REPO="${GITHUB_REPOSITORY}"
 
           git fetch origin $BASE
           if git merge-base --is-ancestor upstream-sync origin/$BASE; then
@@ -74,16 +75,28 @@ jobs:
           **Official** -> \`upstream-sync\` -> \`main\`
           EOF
           )
-
-          # 防御性创建标签，忽略已存在的错误
-          gh label create sync --color 0052cc --description "Sync from upstream" || true
-          gh label create upstream --color 0052cc --description "Upstream updates" || true
+          
+          # Resolve optional labels if they exist; skip silently if missing
+          LABELS=()
+          for label in sync upstream; do
+            if gh api -H "Accept: application/vnd.github+json" \
+              "/repos/${REPO}/labels/${label}" >/dev/null 2>&1; then
+              LABELS+=("${label}")
+            else
+              echo "ℹ️ Label '${label}' not found, skipping."
+            fi
+          done
+          LABEL_ARGS=()
+          if [ "${#LABELS[@]}" -gt 0 ]; then
+            LABEL_ARGS=(--label "$(IFS=,; echo "${LABELS[*]}")")
+          fi
 
           EXISTING_PR=$(gh pr list --head $HEAD --base $BASE --state open --json number -q '.[0].number')
 
           if [ -n "$EXISTING_PR" ]; then
             gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
           else
-            gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE --label "sync,upstream" || \
-            gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE
+            echo "🆕 Creating new PR..."
+            gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE "${LABEL_ARGS[@]}"
+            echo "✅ PR created."
           fi
