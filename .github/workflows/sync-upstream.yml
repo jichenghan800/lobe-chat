@@ -59,44 +59,24 @@ jobs:
         run: |
           TAG="${{ steps.sync.outputs.tag }}"
           TITLE="chore: sync upstream release $TAG"
+          BODY="## 🔄 上游版本同步 $TAG\n\n根据三分支模型自动同步：\n`Official` -> `upstream-sync` -> `main`\n\n此 PR 将官方最新代码合并入生产分支。"
           HEAD="upstream-sync"
           BASE="main"
-          REPO="${GITHUB_REPOSITORY}"
 
-          git fetch origin $BASE
-          if git merge-base --is-ancestor upstream-sync origin/$BASE; then
-             echo "✅ Already up to date."
+          # 预检查：如果 main 已经包含该版本，直接跳过
+          git fetch origin main
+          if git merge-base --is-ancestor HEAD origin/main; then
+             echo "✅ Main branch already contains release $TAG. Skipping PR."
              exit 0
           fi
 
-          BODY=$(cat <<EOF
-          ## 🔄 上游版本同步 $TAG
-          根据三分支模型自动同步：
-          **Official** -> \`upstream-sync\` -> \`main\`
-          EOF
-          )
-          
-          # Resolve optional labels if they exist; skip silently if missing
-          LABELS=()
-          for label in sync upstream; do
-            if gh api -H "Accept: application/vnd.github+json" \
-              "/repos/${REPO}/labels/${label}" >/dev/null 2>&1; then
-              LABELS+=("${label}")
-            else
-              echo "ℹ️ Label '${label}' not found, skipping."
-            fi
-          done
-          LABEL_ARGS=()
-          if [ "${#LABELS[@]}" -gt 0 ]; then
-            LABEL_ARGS=(--label "$(IFS=,; echo "${LABELS[*]}")")
-          fi
-
+          # 检查是否存在 PR 并处理
           EXISTING_PR=$(gh pr list --head $HEAD --base $BASE --state open --json number -q '.[0].number')
 
           if [ -n "$EXISTING_PR" ]; then
             gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
           else
             echo "🆕 Creating new PR..."
-            gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE "${LABEL_ARGS[@]}"
+            gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE
             echo "✅ PR created."
           fi
