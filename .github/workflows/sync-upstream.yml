@@ -36,14 +36,14 @@ jobs:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
           # 防御性设置远程仓库
-          git remote add upstream https://github.com/lobehub/lobe-chat.git || git remote set-url upstream https://github.com/lobehub/lobe-chat.git
+          git remote add upstream https://github.com/lobehub/lobehub.git || git remote set-url upstream https://github.com/lobehub/lobehub.git
           git fetch upstream --tags -f
 
           # 获取最新 Release Tag (带规范头)
           LATEST_TAG=$(curl -sSL \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/lobehub/lobe-chat/releases/latest | jq -r '.tag_name')
+            https://api.github.com/repos/lobehub/lobehub/releases/latest | jq -r '.tag_name')
 
           # 严格判空
           if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
