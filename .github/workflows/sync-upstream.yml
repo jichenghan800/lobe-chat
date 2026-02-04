@@ -7,8 +7,8 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天 UTC 0点 运行
-  workflow_dispatch:    # 允许手动触发
+    - cron: '0 0 * * *' # 每天 UTC 0点 自动运行
+  workflow_dispatch:    # 支持手动触发
 
 concurrency:
   group: sync-upstream-logic
@@ -35,27 +35,31 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          # 防御性设置远程仓库
+          # 1. 动态配置远程仓库
           git remote add upstream https://github.com/lobehub/lobehub.git || git remote set-url upstream https://github.com/lobehub/lobehub.git
           git fetch upstream --tags -f
 
-          # 获取最新 Release Tag (带规范头)
+          # 2. 从官方 API 获取最新的 Release Tag
           LATEST_TAG=$(curl -sSL \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/lobehub/lobehub/releases/latest | jq -r '.tag_name')
 
-          # 严格判空
+          # 3. 严格校验 Tag
           if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
-            echo "❌ Error: Failed to fetch latest release tag."
+            echo "❌ Error: Failed to fetch latest release tag from upstream."
             exit 1
           fi
 
-          echo "🚀 Syncing upstream-sync branch with $LATEST_TAG..."
-          
-          # 执行同步
+          echo "🚀 Latest upstream tag found: $LATEST_TAG"
+
+          # 4. 同步分支：强制重置 upstream-sync 到官方最新 Tag 状态
+          echo "🚀 Force syncing upstream-sync branch to $LATEST_TAG..."
           git reset --hard "$LATEST_TAG"
-          git push origin upstream-sync --force-with-lease
+          
+          # 使用 --force 推送，确保 upstream-sync 分支始终是官方镜像
+          git push origin upstream-sync --force
+          
           echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create or Update Pull Request
@@ -64,26 +68,37 @@ jobs:
         run: |
           TAG="${{ steps.sync.outputs.tag }}"
           TITLE="chore: sync upstream release $TAG"
-          BODY="## 🔄 上游版本同步 $TAG\n\n根据三分支模型自动同步：\n`Official` -> `upstream-sync` -> `main`\n\n此 PR 将官方最新代码合并入生产分支。"
           HEAD="upstream-sync"
           BASE="main"
 
-          # 预检查：如果 main 已经包含该版本，直接跳过
-          git fetch origin main
-          if git merge-base --is-ancestor HEAD origin/main; then
-             echo "✅ Main branch already contains release $TAG. Skipping PR."
+          # 1. 预检查：如果 main 已经包含该版本，则无需提 PR
+          git fetch origin $BASE
+          if git merge-base --is-ancestor upstream-sync origin/$BASE; then
+             echo "✅ Success: Main branch already contains release $TAG. Skipping PR."
              exit 0
           fi
 
-          # 检查是否存在 PR 并处理
+          # 2. 准备 PR 描述（修复了之前报错的格式问题）
+          BODY=$(cat <<EOF
+          ## 🔄 上游版本同步 $TAG
+
+          根据三分支模型自动触发同步：
+          **Official (lobehub/lobehub)** -> \`upstream-sync\` -> \`main\`
+
+          此 PR 已由 GitHub Actions 自动生成，旨在将官方最新发布的代码合并入生产分支。
+          请在合并前检查是否有自定义逻辑冲突。
+          EOF
+          )
+
+          # 3. 搜索是否存在已开启的同步 PR
           EXISTING_PR=$(gh pr list --head $HEAD --base $BASE --state open --json number -q '.[0].number')
 
           if [ -n "$EXISTING_PR" ]; then
-            echo "🔄 PR #$EXISTING_PR already exists, updating title..."
+            echo "🔄 Updating existing PR #$EXISTING_PR..."
             gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
-            echo "✅ PR updated."
+            echo "✅ PR successfully updated."
           else
-            echo "🆕 Creating new PR..."
+            echo "🆕 Creating new synchronization PR..."
             gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE --label "sync,upstream"
-            echo "✅ PR created."
+            echo "✅ PR successfully created."
           fi
