@@ -1,4 +1,59 @@
-- name: Create or Update Pull Request
+name: Sync Upstream Logic
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: sync-upstream-logic
+  cancel-in-progress: true
+
+jobs:
+  sync_and_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout upstream-sync
+        uses: actions/checkout@v4
+        with:
+          ref: upstream-sync
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync with Upstream
+        id: sync
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          git remote add upstream https://github.com/lobehub/lobehub.git || git remote set-url upstream https://github.com/lobehub/lobehub.git
+          git fetch upstream --tags -f
+
+          LATEST_TAG=$(curl -sSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/lobehub/lobehub/releases/latest | jq -r '.tag_name')
+
+          if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
+            echo "❌ Error: Failed to fetch latest release tag."
+            exit 1
+          fi
+
+          echo "🚀 Syncing with $LATEST_TAG..."
+          git reset --hard "$LATEST_TAG"
+          git push origin upstream-sync --force
+          echo "tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Create or Update Pull Request
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
@@ -7,40 +62,28 @@
           HEAD="upstream-sync"
           BASE="main"
 
-          # 1. 预检查：如果 main 已经包含该版本，则无需提 PR
           git fetch origin $BASE
           if git merge-base --is-ancestor upstream-sync origin/$BASE; then
-             echo "✅ Success: Main branch already contains release $TAG. Skipping PR."
+             echo "✅ Already up to date."
              exit 0
           fi
 
-          # 2. 准备 PR 描述
           BODY=$(cat <<EOF
           ## 🔄 上游版本同步 $TAG
-
-          根据三分支模型自动触发同步：
-          **Official (lobehub/lobehub)** -> \`upstream-sync\` -> \`main\`
-
-          此 PR 已由 GitHub Actions 自动生成，旨在将官方最新发布的代码合并入生产分支。
-          请在合并前检查是否有自定义逻辑冲突。
+          根据三分支模型自动同步：
+          **Official** -> \`upstream-sync\` -> \`main\`
           EOF
           )
 
-          # 【新增步骤】防御性创建标签：如果不存在则创建，已存在则忽略错误
+          # 防御性创建标签，忽略已存在的错误
           gh label create sync --color 0052cc --description "Sync from upstream" || true
           gh label create upstream --color 0052cc --description "Upstream updates" || true
 
-          # 3. 搜索是否存在已开启的同步 PR
           EXISTING_PR=$(gh pr list --head $HEAD --base $BASE --state open --json number -q '.[0].number')
 
           if [ -n "$EXISTING_PR" ]; then
-            echo "🔄 Updating existing PR #$EXISTING_PR..."
             gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
-            echo "✅ PR successfully updated."
           else
-            echo "🆕 Creating new synchronization PR..."
-            # 如果此时依然报标签错，它会直接创建 PR 而不挂掉
             gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE --label "sync,upstream" || \
             gh pr create --title "$TITLE" --body "$BODY" --head $HEAD --base $BASE
-            echo "✅ PR successfully created."
           fi
