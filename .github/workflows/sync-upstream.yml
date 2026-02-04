@@ -71,7 +71,7 @@ jobs:
           HEAD="upstream-sync"
           BASE="main"
           REPO="${GITHUB_REPOSITORY}"
-          HEAD_REF="${GITHUB_REPOSITORY_OWNER}:${HEAD}"
+          HEAD_REF="${HEAD}"
 
           # 预检查：如果没有差异，直接跳过
           COMPARE_STATUS=$(gh api "/repos/${REPO}/compare/${BASE}...${HEAD}" -q '.status' || echo "unknown")
@@ -81,12 +81,12 @@ jobs:
           fi
 
           # 检查是否存在 PR 并处理
-          EXISTING_PR=$(gh pr list --head $HEAD --base $BASE --state open --json number -q '.[0].number')
+          EXISTING_PR=$(gh pr list --repo "$REPO" --head $HEAD --base $BASE --state open --json number -q '.[0].number')
 
           if [ -n "$EXISTING_PR" ]; then
-            gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
+            gh pr edit "$EXISTING_PR" --repo "$REPO" --title "$TITLE" --body "$BODY"
           else
             echo "🆕 Creating new PR..."
-            gh pr create --title "$TITLE" --body "$BODY" --head "$HEAD_REF" --base $BASE
+            gh pr create --repo "$REPO" --title "$TITLE" --body "$BODY" --head "$HEAD_REF" --base $BASE
             echo "✅ PR created."
           fi
