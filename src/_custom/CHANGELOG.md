@@ -4,6 +4,28 @@
 
 ---
 
+### \[2026-02-06] 上游同步至 v2.1.20
+
+- 类型: sync
+- 涉及文件: n/a
+- 原因：对齐官方最新 Release 版本，作为后续二次开发基线
+- 方案：upstream-sync 重置到 v2.1.20，dev 基于该基线 rebase 并更新 main
+- 回滚：回退到上一次基线版本（如 v2.1.18）并重新同步
+- 影响：基线版本变化，功能以官方 Release 为准
+
+---
+
+### \[2026-02-06] 升级 @google/genai 至 1.40.0 并锁定相关依赖
+
+- 类型: custom
+- 涉及文件: package.json; packages/model-runtime/package.json; pnpm-lock.yaml
+- 原因：升级 GenAI SDK 版本，并规避 @lobehub/editor 多实例导致的类型冲突
+- 方案：将 @google/genai 固定到 1.40.0；在 pnpm overrides 中锁定 @lobehub/editor/@lobehub/ui/@types/react/@types/react-dom/antd/motion 版本
+- 回滚：恢复 @google/genai 旧版本并移除 overrides
+- 影响：仅影响依赖解析与构建类型检查，不改变运行时逻辑
+
+---
+
 ### \[2026-02-03] Google GenAI 配额限流指数退避重试
 
 - 类型: custom
