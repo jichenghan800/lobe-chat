@@ -2,6 +2,41 @@
 
 # Changelog
 
+### [Version 2.1.21](https://github.com/jaworldwideorg/OneJA-Bot/compare/v2.1.20...v2.1.21)
+
+<sup>Released on **2026-02-06**</sup>
+
+#### ♻ Code Refactoring
+
+- **docker-compose**: Restructure dev environment.
+- **misc**: Upgrade agents/group detail pages tabs、hidden like button.
+
+#### 🐛 Bug Fixes
+
+- **misc**: Fixed in community pluings tab the lobehub skills not display.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Code refactoring
+
+- **docker-compose**: Restructure dev environment, closes [#12132](https://github.com/jaworldwideorg/OneJA-Bot/issues/12132) ([7ba15cc](https://github.com/jaworldwideorg/OneJA-Bot/commit/7ba15cc))
+- **misc**: Upgrade agents/group detail pages tabs、hidden like button, closes [#12127](https://github.com/jaworldwideorg/OneJA-Bot/issues/12127) ([e402c51](https://github.com/jaworldwideorg/OneJA-Bot/commit/e402c51))
+
+#### What's fixed
+
+- **misc**: Fixed in community pluings tab the lobehub skills not display, closes [#12141](https://github.com/jaworldwideorg/OneJA-Bot/issues/12141) ([193c96f](https://github.com/jaworldwideorg/OneJA-Bot/commit/193c96f))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version 2.1.20](https://github.com/jaworldwideorg/OneJA-Bot/compare/v2.1.19...v2.1.20)
 
 <sup>Released on **2026-02-04**</sup>
