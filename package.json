@@ -158,7 +158,7 @@
     "@emotion/react": "^11.14.0",
     "@fal-ai/client": "^1.8.4",
     "@formkit/auto-animate": "^0.9.0",
-    "@google/genai": "^1.37.0",
+    "@google/genai": "1.40.0",
     "@henrygd/queue": "^1.2.0",
     "@huggingface/inference": "^4.13.10",
     "@icons-pack/react-simple-icons": "^13.8.0",
@@ -458,8 +458,14 @@
   },
   "pnpm": {
     "overrides": {
+      "@lobehub/editor": "3.14.1",
+      "@lobehub/ui": "4.32.2",
+      "@types/react": "19.2.10",
+      "@types/react-dom": "19.2.3",
+      "antd": "6.2.2",
       "better-auth": "1.4.6",
-      "better-call": "1.1.8"
+      "better-call": "1.1.8",
+      "motion": "12.29.2"
     }
   }
 }
