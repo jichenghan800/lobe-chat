@@ -2,6 +2,31 @@
 
 # Changelog
 
+### [Version 2.1.22](https://github.com/jaworldwideorg/OneJA-Bot/compare/v2.1.21...v2.1.22)
+
+<sup>Released on **2026-02-06**</sup>
+
+#### 💄 Styles
+
+- **model-runtime**: Add Claude Opus 4.6 support for Bedrock runtime.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Styles
+
+- **model-runtime**: Add Claude Opus 4.6 support for Bedrock runtime, closes [#12155](https://github.com/jaworldwideorg/OneJA-Bot/issues/12155) ([90a75af](https://github.com/jaworldwideorg/OneJA-Bot/commit/90a75af))
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ### [Version 2.1.21](https://github.com/jaworldwideorg/OneJA-Bot/compare/v2.1.20...v2.1.21)
 
 <sup>Released on **2026-02-06**</sup>
