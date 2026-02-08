@@ -868,6 +868,94 @@ describe('google contextBuilders', () => {
       ]);
     });
 
+    it('should merge parallel tool responses into one user turn', async () => {
+      const messages: OpenAIChatMessage[] = [
+        {
+          content: 'Need weather and time',
+          role: 'user',
+        },
+        {
+          content: '',
+          role: 'assistant',
+          tool_calls: [
+            {
+              function: {
+                arguments: JSON.stringify({ location: 'London' }),
+                name: 'get_current_weather',
+              },
+              id: 'call_weather',
+              type: 'function',
+            },
+            {
+              function: {
+                arguments: JSON.stringify({ timezone: 'Europe/London' }),
+                name: 'get_current_time',
+              },
+              id: 'call_time',
+              type: 'function',
+            },
+          ],
+        },
+        {
+          content: '{"temperature":"14°C"}',
+          name: 'get_current_weather',
+          role: 'tool',
+          tool_call_id: 'call_weather',
+        },
+        {
+          content: '{"time":"10:00"}',
+          name: 'get_current_time',
+          role: 'tool',
+          tool_call_id: 'call_time',
+        },
+      ];
+
+      const contents = await buildGoogleMessages(messages);
+
+      expect(contents).toEqual([
+        {
+          parts: [{ text: 'Need weather and time', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          role: 'user',
+        },
+        {
+          parts: [
+            {
+              functionCall: {
+                args: { location: 'London' },
+                name: 'get_current_weather',
+              },
+              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+            },
+            {
+              functionCall: {
+                args: { timezone: 'Europe/London' },
+                name: 'get_current_time',
+              },
+              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+            },
+          ],
+          role: 'model',
+        },
+        {
+          parts: [
+            {
+              functionResponse: {
+                name: 'get_current_weather',
+                response: { result: '{"temperature":"14°C"}' },
+              },
+            },
+            {
+              functionResponse: {
+                name: 'get_current_time',
+                response: { result: '{"time":"10:00"}' },
+              },
+            },
+          ],
+          role: 'user',
+        },
+      ]);
+    });
+
     it('should filter out function role messages', async () => {
       const messages: OpenAIChatMessage[] = [
         { content: 'Hello', role: 'user' },

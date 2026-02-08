@@ -7,6 +7,7 @@ import {
 } from '@google/genai';
 import { imageUrlToBase64 } from '@lobechat/utils';
 
+import { mergeGoogleFunctionResponses } from '../../_custom/mergeGoogleFunctionResponses';
 import { ChatCompletionTool, OpenAIChatMessage, UserMessageContentPart } from '../../types';
 import { safeParseJSON } from '../../utils/safeParseJSON';
 import { parseDataUri } from '../../utils/uriParser';
@@ -191,17 +192,19 @@ export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promis
     (content: Content) => content.parts && content.parts.length > 0,
   );
 
+  const mergedContents = mergeGoogleFunctionResponses(filteredContents);
+
   // Check if the last message is a tool message
   const lastMessage = messages.at(-1);
   const shouldAddMagicSignature = lastMessage?.role === 'tool';
 
   if (shouldAddMagicSignature) {
-    // Find the last user message index in filtered contents
+    // Find the last user message index in merged contents
     let lastUserIndex = -1;
-    for (let i = filteredContents.length - 1; i >= 0; i--) {
-      if (filteredContents[i].role === 'user') {
+    for (let i = mergedContents.length - 1; i >= 0; i--) {
+      if (mergedContents[i].role === 'user') {
         // Skip if it's a functionResponse (tool result)
-        const hasFunctionResponse = filteredContents[i].parts?.some((p) => p.functionResponse);
+        const hasFunctionResponse = mergedContents[i].parts?.some((p) => p.functionResponse);
         if (!hasFunctionResponse) {
           lastUserIndex = i;
           break;
@@ -210,8 +213,8 @@ export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promis
     }
 
     // Add magic signature to all function calls after last user message that don't have thoughtSignature
-    for (let i = lastUserIndex + 1; i < filteredContents.length; i++) {
-      const content = filteredContents[i];
+    for (let i = lastUserIndex + 1; i < mergedContents.length; i++) {
+      const content = mergedContents[i];
       if (content.role === 'model' && content.parts) {
         for (const part of content.parts) {
           if (part.functionCall && !part.thoughtSignature) {
@@ -223,7 +226,7 @@ export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promis
     }
   }
 
-  return filteredContents;
+  return mergedContents;
 };
 
 /**

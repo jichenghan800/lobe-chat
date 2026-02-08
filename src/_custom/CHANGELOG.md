@@ -4,6 +4,28 @@
 
 ---
 
+### [2026-02-08] 增加关键 Hotfix 防回归校验脚本
+
+- 类型: custom
+- 涉及文件: scripts/checkCustomHotfixes.mts; package.json; src/_custom/SECONDARY_DEV_GUIDE.md
+- 原因：reset/rebase/upstream-sync 后关键 hotfix 可能被历史重写导致丢失，发布时难以及时发现
+- 方案：新增 `custom:verify-hotfixes` 校验命令，支持检查 HEAD 或指定 refs（如 origin/dev、origin/main）中的关键补丁标记
+- 回滚：删除脚本与 package.json 对应命令，并移除文档说明
+- 影响：仅新增发布前校验能力，不影响运行时
+
+---
+
+### [2026-02-08] 修复 Vertex/Gemini 并行工具调用 400（functionResponse 对齐）
+
+- 类型: hotfix
+- 涉及文件: packages/model-runtime/src/_custom/mergeGoogleFunctionResponses.ts; packages/model-runtime/src/_custom/mergeGoogleFunctionResponses.test.ts; packages/model-runtime/src/core/contextBuilders/google.ts; packages/model-runtime/src/core/contextBuilders/google.test.ts
+- 原因：Google/Vertex 在单轮并行 functionCall 后要求下一轮为同一条 user 消息且 functionResponse parts 数量严格对齐；分成多条 tool 回包会触发 400 INVALID_ARGUMENT
+- 方案：在 Google context builder 中合并连续的 functionResponse user turn，确保并行工具结果以单条 user + 多 parts 回传
+- 回滚：删除 mergeGoogleFunctionResponses 注入与相关测试
+- 影响：仅影响 Google/Vertex 工具调用消息拼装；普通文本与单工具调用行为不变
+
+---
+
 ### \[2026-02-06] 上游同步至 v2.1.20
 
 - 类型: sync

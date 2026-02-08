@@ -238,6 +238,18 @@ import Avatar from '@/_custom/wrappers/CustomAvatar';
 
 ---
 
+### 9.5 关键 Hotfix 防回归校验（建议发布前执行）
+
+针对容易在 reset/rebase/sync 过程中丢失的修复（例如 Vertex/Gemini 并行 tool response 合并），在发布前执行：
+
+```bash
+bun run custom:verify-hotfixes
+# 或显式检查多个 ref
+bun scripts/checkCustomHotfixes.mts HEAD origin/dev origin/main
+```
+
+若命令返回非 0，说明关键补丁在某个分支/引用中缺失，需要先补回再发布。
+
 ## 10. Commit 规范
 
 - 二次开发提交请统一前缀：`🎨 custom:`
