@@ -152,6 +152,8 @@ export default {
 
   'fork.failed': 'Fork failed. Please try again.',
 
+  'fork.unauthorized': 'Authorization required. Sign in to Community and try again.',
+
   // Fork related
   'fork.forkAndChat': 'Fork & Chat',
 

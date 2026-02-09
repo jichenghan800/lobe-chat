@@ -163,7 +163,7 @@ export const buildDefaultAnthropicPayload = async (
   }
 
   if (!!thinking && (thinking.type === 'enabled' || thinking.type === 'adaptive')) {
-    const resolvedThinking: Anthropic.MessageCreateParams['thinking'] =
+    const resolvedThinking =
       thinking.type === 'enabled'
         ? {
             budget_tokens: Math.min(
@@ -180,7 +180,7 @@ export const buildDefaultAnthropicPayload = async (
       model,
       system: systemPrompts,
       ...(thinking.type === 'adaptive' && effort ? { output_config: { effort } } : {}),
-      thinking: resolvedThinking,
+      thinking: resolvedThinking as Anthropic.MessageCreateParams['thinking'],
       tools: postTools as Anthropic.MessageCreateParams['tools'],
     } as Anthropic.MessageCreateParams;
   }
