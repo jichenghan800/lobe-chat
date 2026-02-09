@@ -4,6 +4,17 @@
 
 ---
 
+### [2026-02-09] 支持通过环境变量自定义浏览器 Tab 品牌名称
+
+- 类型: custom
+- 涉及文件: src/components/PageTitle/index.tsx; src/app/[variants]/metadata.ts
+- 原因：默认 Tab 标题使用 business const 中的 BRANDING_NAME（OneAI），与部署环境中的 `NEXT_PUBLIC_BRAND_NAME` 不一致
+- 方案：标题计算优先读取 `getBrandName()`（来自 `NEXT_PUBLIC_BRAND_NAME`），为空时回退到 BRANDING_NAME
+- 回滚：移除 `@/_custom/registry/branding` 注入并恢复 BRANDING_NAME 直读
+- 影响：仅影响浏览器标题与 metadata 标题展示，不影响运行时业务逻辑
+
+---
+
 ### [2026-02-08] 增加关键 Hotfix 防回归校验脚本
 
 - 类型: custom
