@@ -40,7 +40,7 @@ const ForkAndChat = memo<{ mobile?: boolean }>(({ mobile }) => {
   const refreshAgentList = useHomeStore((s) => s.refreshAgentList);
   const { message } = App.useApp();
   const navigate = useNavigate();
-  const { t } = useTranslation('discover');
+  const { t, i18n } = useTranslation('discover');
 
   const meta = {
     avatar,
@@ -110,7 +110,15 @@ const ForkAndChat = memo<{ mobile?: boolean }>(({ mobile }) => {
       navigate(SESSION_CHAT_URL(result!.agentId || result!.sessionId, mobile));
     } catch (error: any) {
       console.error('Fork failed:', error);
-      message.error(t('fork.failed'));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Unauthorized')) {
+        const fallback = i18n.language?.startsWith('zh')
+          ? '请先登录社区后重试。'
+          : 'Authorization required. Sign in to Community and try again.';
+        message.error(t('fork.unauthorized', { defaultValue: fallback }));
+      } else {
+        message.error(t('fork.failed'));
+      }
     } finally {
       setIsLoading(false);
     }

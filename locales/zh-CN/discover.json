@@ -146,6 +146,7 @@
   "fork.forksCount": "{{count}} 个派生",
   "fork.forksCount_other": "{{count}} 个派生",
   "fork.success": "派生成功！",
+  "fork.unauthorized": "请先登录社区后重试。",
   "fork.viewAllForks": "查看所有派生版本",
   "groupAgents.tag": "群组",
   "groupAgents.underReview": "审核中",
