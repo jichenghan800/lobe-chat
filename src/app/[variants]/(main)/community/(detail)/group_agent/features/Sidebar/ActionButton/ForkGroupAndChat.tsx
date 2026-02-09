@@ -44,7 +44,7 @@ const ForkGroupAndChat = memo<{ mobile?: boolean }>(() => {
   } = useDetailContext();
   const [isLoading, setIsLoading] = useState(false);
   const { message } = App.useApp();
-  const { t } = useTranslation('discover');
+  const { t, i18n } = useTranslation('discover');
   const navigate = useNavigate();
   const loadGroups = useAgentGroupStore((s) => s.loadGroups);
 
@@ -190,7 +190,15 @@ const ForkGroupAndChat = memo<{ mobile?: boolean }>(() => {
       navigate(urlJoin('/group', result.groupId));
     } catch (error: any) {
       console.error('Fork group failed:', error);
-      message.error(t('fork.failed'));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Unauthorized')) {
+        const fallback = i18n.language?.startsWith('zh')
+          ? '请先登录社区后重试。'
+          : 'Authorization required. Sign in to Community and try again.';
+        message.error(t('fork.unauthorized', { defaultValue: fallback }));
+      } else {
+        message.error(t('fork.failed'));
+      }
     } finally {
       setIsLoading(false);
     }

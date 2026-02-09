@@ -15,6 +15,17 @@
 
 ---
 
+### [2026-02-09] Fork 未授权时提示重新登录社区
+
+- 类型: custom
+- 涉及文件: src/app/[variants]/(main)/community/(detail)/agent/features/Sidebar/ActionButton/ForkAndChat.tsx; src/app/[variants]/(main)/community/(detail)/group_agent/features/Sidebar/ActionButton/ForkGroupAndChat.tsx; src/locales/default/discover.ts
+- 原因：Market 访问令牌失效/缺失时 fork 会返回 Unauthorized，原逻辑只显示通用失败提示
+- 方案：捕获 Unauthorized 文案并提示用户先登录社区后重试
+- 回滚：移除 Unauthorized 分支提示逻辑与对应文案
+- 影响：仅影响 fork 失败提示，不改变后端调用逻辑
+
+---
+
 ### [2026-02-08] 增加关键 Hotfix 防回归校验脚本
 
 - 类型: custom

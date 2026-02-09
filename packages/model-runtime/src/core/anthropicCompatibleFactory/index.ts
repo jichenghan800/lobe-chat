@@ -164,7 +164,7 @@ export const buildDefaultAnthropicPayload = async (
   }
 
   if (!!thinking && (thinking.type === 'enabled' || thinking.type === 'adaptive')) {
-    const resolvedThinking: Anthropic.MessageCreateParams['thinking'] =
+    const resolvedThinking =
       thinking.type === 'enabled'
         ? {
             budget_tokens: Math.min(thinking?.budget_tokens || 1024, resolvedMaxTokens - 1),
