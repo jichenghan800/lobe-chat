@@ -106,6 +106,9 @@ vertex-ai-key.json
 CLAUDE.local.md
 .agent/
 
+# Backups
+backups/
+
 # MCP tools
 .serena/**
 
