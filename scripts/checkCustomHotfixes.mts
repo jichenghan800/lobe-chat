@@ -4,8 +4,15 @@ import { readFileSync } from 'node:fs';
 interface HotfixCheck {
   file: string;
   name: string;
+  /**
+   * If provided, at least this many matches should be found in the file.
+   * Useful for "auto-growing" guardrails (e.g., all P0 regression tests).
+   */
+  minMatches?: number;
   needles: string[];
 }
+
+const HOTFIX_REGRESSION_TITLE = "[HOTFIX-P0]";
 
 const checks: HotfixCheck[] = [
   {
@@ -25,7 +32,15 @@ const checks: HotfixCheck[] = [
   {
     file: 'packages/model-runtime/src/core/contextBuilders/google.test.ts',
     name: 'Parallel tool response regression test',
-    needles: ["it('should merge parallel tool responses into one user turn'"],
+    // Auto-growing: require the presence of HOTFIX-P0 regression titles.
+    needles: [HOTFIX_REGRESSION_TITLE],
+    minMatches: 3,
+  },
+  {
+    file: 'packages/model-runtime/src/_custom/mergeGoogleFunctionResponses.test.ts',
+    name: 'Helper-level merge guardrail tests',
+    needles: [HOTFIX_REGRESSION_TITLE],
+    minMatches: 2,
   },
 ];
 
@@ -37,6 +52,14 @@ const run = (command: string): string => execSync(command, { encoding: 'utf8' })
 const failures: string[] = [];
 
 const validateContent = (refLabel: string, check: HotfixCheck, content: string) => {
+  const matchCount = check.needles.reduce((count, needle) => count + content.split(needle).length - 1, 0);
+
+  if (check.minMatches !== undefined && matchCount < check.minMatches) {
+    failures.push(
+      `[${refLabel}] ${check.name} expected >= ${check.minMatches} matches, got ${matchCount} in ${check.file}: ${check.needles.join(', ')}`,
+    );
+  }
+
   for (const needle of check.needles) {
     if (!content.includes(needle)) {
       failures.push(`[${refLabel}] ${check.name} not found in ${check.file}: ${needle}`);
@@ -82,6 +105,7 @@ for (const ref of targetRefs) {
 }
 
 if (failures.length > 0) {
+  console.error('\n=== Hotfix Regression Failed ===');
   console.error('Hotfix verification failed:');
   for (const failure of failures) {
     console.error(`- ${failure}`);

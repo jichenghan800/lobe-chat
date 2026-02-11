@@ -244,11 +244,41 @@ import Avatar from '@/_custom/wrappers/CustomAvatar';
 
 ```bash
 bun run custom:verify-hotfixes
-# 或显式检查多个 ref
+bun run custom:test-hotfix-regressions
+# 或一键执行
+bun run custom:verify-hotfix-gate
+```
+
+可选：显式检查多个 ref（便于对比分支是否丢补丁）
+
+```bash
 bun scripts/checkCustomHotfixes.mts HEAD origin/dev origin/main
 ```
 
 若命令返回非 0，说明关键补丁在某个分支/引用中缺失，需要先补回再发布。
+
+**P0 用例自动增长约定**：
+
+- 与关键 hotfix 相关的回归测试标题统一加前缀：`[HOTFIX-P0]`。
+- `scripts/checkCustomHotfixes.mts` 会自动扫描该前缀并进行数量守卫；新增 P0 用例只要带该前缀即可自动纳入守卫，无需逐条改脚本。
+- CI Merge Gate（`upstream-sync -> main`、`dev -> main`）会强制执行上述校验，并在失败时输出 `Hotfix Regression Failed`。
+
+### 9.6 公开仓库发布前安全门禁（方案 B）
+
+若仓库将改为公开，同步启用以下检查：
+
+```bash
+bun run custom:verify-public-safety
+```
+
+校验内容：
+
+- 禁止跟踪运行时 `.env` 文件（仅允许 `.env.example*` / `.env.desktop` 模板）。
+- 禁止在跟踪模板中出现真实密钥（如 `.env.desktop`）。
+- 禁止在跟踪模板中默认开启 `DEV_AUTH_BYPASS_ENABLED=1` 或 `DEV_AUTH_BYPASS_ALLOW_PROD=1`。
+
+CI 会在失败时输出 `Public Security Gate Failed`，用于快速定位高风险配置。
+
 
 ## 10. Commit 规范
 
