@@ -11,6 +11,7 @@ const DEV_BYPASS_EMAIL = process.env.DEV_AUTH_BYPASS_EMAIL || 'dev@local.test';
 const DEV_BYPASS_NAME = process.env.DEV_AUTH_BYPASS_NAME || 'Dev User';
 const DEV_BYPASS_PASSWORD = process.env.DEV_AUTH_BYPASS_PASSWORD || DEV_BYPASS_SECRET;
 const DEV_BYPASS_ALLOW_PROD = process.env.DEV_AUTH_BYPASS_ALLOW_PROD === '1';
+const DEV_BYPASS_ALLOW_QUERY_TOKEN = process.env.DEV_AUTH_BYPASS_ALLOW_QUERY_TOKEN === '1';
 
 const isEnabled = () => {
   if (!DEV_BYPASS_ENABLED) return false;
@@ -21,7 +22,13 @@ const isEnabled = () => {
 };
 
 const readToken = (req: NextRequest) => {
-  return req.headers.get('x-dev-auth-token') || req.nextUrl.searchParams.get('token') || '';
+  const tokenFromHeader = req.headers.get('x-dev-auth-token') || '';
+
+  // Default deny for query token to avoid accidental leak via URL logs/history.
+  if (tokenFromHeader) return tokenFromHeader;
+  if (!DEV_BYPASS_ALLOW_QUERY_TOKEN) return '';
+
+  return req.nextUrl.searchParams.get('token') || '';
 };
 
 const forbid = (status: number, message: string) => {

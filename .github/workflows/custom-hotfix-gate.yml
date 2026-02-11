@@ -1,0 +1,53 @@
+name: Custom Hotfix Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hotfix-regression-gate:
+    name: Hotfix Regression Gate
+    if: ${{ !github.event.pull_request.draft && (github.head_ref == 'upstream-sync' || github.head_ref == 'dev') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Verify custom hotfix integrity
+        run: |
+          set -euo pipefail
+          if ! bun run custom:verify-hotfixes; then
+            echo "::error title=Hotfix Regression Failed::custom:verify-hotfixes failed. Hotfix markers or wiring may have been lost during sync/merge."
+            exit 1
+          fi
+
+      - name: Run hotfix P0 regression tests
+        run: |
+          set -euo pipefail
+          if ! bun run custom:test-hotfix-regressions; then
+            echo "::error title=Hotfix Regression Failed::Google/Vertex 400 hotfix P0 tests failed. Check mergeGoogleFunctionResponses and google context builder behavior."
+            exit 1
+          fi
