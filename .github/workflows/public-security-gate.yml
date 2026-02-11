@@ -1,0 +1,42 @@
+name: Public Security Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-security-gate:
+    name: Public Security Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Verify public repo safety
+        run: |
+          set -euo pipefail
+          if ! bun run custom:verify-public-safety; then
+            echo "::error title=Public Security Gate Failed::Repository contains risky tracked env/secrets settings. See job logs for details."
+            exit 1
+          fi

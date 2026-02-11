@@ -868,7 +868,7 @@ describe('google contextBuilders', () => {
       ]);
     });
 
-    it('should merge parallel tool responses into one user turn', async () => {
+    it('[HOTFIX-P0] should merge parallel tool responses into one user turn', async () => {
       const messages: OpenAIChatMessage[] = [
         {
           content: 'Need weather and time',
@@ -948,6 +948,263 @@ describe('google contextBuilders', () => {
               functionResponse: {
                 name: 'get_current_time',
                 response: { result: '{"time":"10:00"}' },
+              },
+            },
+          ],
+          role: 'user',
+        },
+      ]);
+    });
+
+    
+
+    it('[HOTFIX-P0] should merge three parallel tool responses into one user turn', async () => {
+      const messages: OpenAIChatMessage[] = [
+        { content: 'Need weather, time, and news', role: 'user' },
+        {
+          content: '',
+          role: 'assistant',
+          tool_calls: [
+            {
+              function: {
+                arguments: JSON.stringify({ location: 'London' }),
+                name: 'get_current_weather',
+              },
+              id: 'call_weather',
+              type: 'function',
+            },
+            {
+              function: {
+                arguments: JSON.stringify({ timezone: 'Europe/London' }),
+                name: 'get_current_time',
+              },
+              id: 'call_time',
+              type: 'function',
+            },
+            {
+              function: {
+                arguments: JSON.stringify({ topic: 'technology' }),
+                name: 'get_latest_news',
+              },
+              id: 'call_news',
+              type: 'function',
+            },
+          ],
+        },
+        {
+          content: '{"temperature":"14°C"}',
+          name: 'get_current_weather',
+          role: 'tool',
+          tool_call_id: 'call_weather',
+        },
+        {
+          content: '{"time":"10:00"}',
+          name: 'get_current_time',
+          role: 'tool',
+          tool_call_id: 'call_time',
+        },
+        {
+          content: '{"headline":"Example"}',
+          name: 'get_latest_news',
+          role: 'tool',
+          tool_call_id: 'call_news',
+        },
+      ];
+
+      const contents = await buildGoogleMessages(messages);
+
+      expect(contents).toEqual([
+        {
+          parts: [
+            {
+              text: 'Need weather, time, and news',
+              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+            },
+          ],
+          role: 'user',
+        },
+        {
+          parts: [
+            {
+              functionCall: {
+                args: { location: 'London' },
+                name: 'get_current_weather',
+              },
+              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+            },
+            {
+              functionCall: {
+                args: { timezone: 'Europe/London' },
+                name: 'get_current_time',
+              },
+              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+            },
+            {
+              functionCall: {
+                args: { topic: 'technology' },
+                name: 'get_latest_news',
+              },
+              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+            },
+          ],
+          role: 'model',
+        },
+        {
+          parts: [
+            {
+              functionResponse: {
+                name: 'get_current_weather',
+                response: { result: '{"temperature":"14°C"}' },
+              },
+            },
+            {
+              functionResponse: {
+                name: 'get_current_time',
+                response: { result: '{"time":"10:00"}' },
+              },
+            },
+            {
+              functionResponse: {
+                name: 'get_latest_news',
+                response: { result: '{"headline":"Example"}' },
+              },
+            },
+          ],
+          role: 'user',
+        },
+      ]);
+    });
+
+    it('[HOTFIX-P0] should not merge tool responses across a normal user message boundary', async () => {
+      const messages: OpenAIChatMessage[] = [
+        { content: 'Need weather and time', role: 'user' },
+        {
+          content: '',
+          role: 'assistant',
+          tool_calls: [
+            {
+              function: {
+                arguments: JSON.stringify({ location: 'London' }),
+                name: 'get_current_weather',
+              },
+              id: 'call_weather',
+              type: 'function',
+            },
+            {
+              function: {
+                arguments: JSON.stringify({ timezone: 'Europe/London' }),
+                name: 'get_current_time',
+              },
+              id: 'call_time',
+              type: 'function',
+            },
+          ],
+        },
+        {
+          content: '{"temperature":"14°C"}',
+          name: 'get_current_weather',
+          role: 'tool',
+          tool_call_id: 'call_weather',
+        },
+        {
+          content: '{"time":"10:00"}',
+          name: 'get_current_time',
+          role: 'tool',
+          tool_call_id: 'call_time',
+        },
+        { content: 'Thanks, now just weather again', role: 'user' },
+        {
+          content: '',
+          role: 'assistant',
+          tool_calls: [
+            {
+              function: {
+                arguments: JSON.stringify({ location: 'London' }),
+                name: 'get_current_weather',
+              },
+              id: 'call_weather_2',
+              type: 'function',
+            },
+          ],
+        },
+        {
+          content: '{"temperature":"15°C"}',
+          name: 'get_current_weather',
+          role: 'tool',
+          tool_call_id: 'call_weather_2',
+        },
+      ];
+
+      const contents = await buildGoogleMessages(messages);
+
+      expect(contents).toEqual([
+        {
+          parts: [{ text: 'Need weather and time', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          role: 'user',
+        },
+        {
+          parts: [
+            {
+              functionCall: {
+                args: { location: 'London' },
+                name: 'get_current_weather',
+              },
+              thoughtSignature: undefined,
+            },
+            {
+              functionCall: {
+                args: { timezone: 'Europe/London' },
+                name: 'get_current_time',
+              },
+              thoughtSignature: undefined,
+            },
+          ],
+          role: 'model',
+        },
+        {
+          parts: [
+            {
+              functionResponse: {
+                name: 'get_current_weather',
+                response: { result: '{"temperature":"14°C"}' },
+              },
+            },
+            {
+              functionResponse: {
+                name: 'get_current_time',
+                response: { result: '{"time":"10:00"}' },
+              },
+            },
+          ],
+          role: 'user',
+        },
+        {
+          parts: [
+            {
+              text: 'Thanks, now just weather again',
+              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+            },
+          ],
+          role: 'user',
+        },
+        {
+          parts: [
+            {
+              functionCall: {
+                args: { location: 'London' },
+                name: 'get_current_weather',
+              },
+              thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+            },
+          ],
+          role: 'model',
+        },
+        {
+          parts: [
+            {
+              functionResponse: {
+                name: 'get_current_weather',
+                response: { result: '{"temperature":"15°C"}' },
               },
             },
           ],

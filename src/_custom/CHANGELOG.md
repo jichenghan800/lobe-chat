@@ -4,6 +4,28 @@
 
 ---
 
+### [2026-02-10] 公开仓库安全门禁（方案 B）
+
+- 类型: custom
+- 涉及文件: .github/workflows/public-security-gate.yml; scripts/checkPublicRepoSafety.mts; package.json; .env.desktop; src/_custom/routes/dev-login.ts; src/_custom/SECONDARY_DEV_GUIDE.md
+- 原因：仓库公开后需要降低凭据误提交与 dev bypass 配置误放开的风险
+- 方案：新增 `custom:verify-public-safety` 与 `Public Security Gate` workflow；将 `.env.desktop` 脱敏；`/api/dev/login` 默认仅接受请求头 token，关闭 query token（需显式开启 `DEV_AUTH_BYPASS_ALLOW_QUERY_TOKEN=1`）
+- 回滚：删除 public-security-gate workflow 与校验脚本，恢复 `.env.desktop` 与 dev-login token 读取逻辑
+- 影响：仅影响配置安全门禁与 dev-login 默认安全策略，不影响主业务流程
+
+---
+
+### [2026-02-09] Google/Vertex 400 Hotfix 回归门禁（P0 自动增长）
+
+- 类型: custom
+- 涉及文件: .github/workflows/custom-hotfix-gate.yml; scripts/checkCustomHotfixes.mts; package.json; packages/model-runtime/src/core/contextBuilders/google.test.ts; packages/model-runtime/src/_custom/mergeGoogleFunctionResponses.test.ts; src/_custom/SECONDARY_DEV_GUIDE.md
+- 原因：upstream-sync/dev 合并到 main 时，关键 400 hotfix 容易被冲掉或行为回归，需要强制门禁与快速定位
+- 方案：新增 `Custom Hotfix Gate` 工作流，仅对 `upstream-sync -> main` 与 `dev -> main` PR 强制执行；失败输出 `Hotfix Regression Failed`；P0 回归用例采用 `[HOTFIX-P0]` 前缀并由脚本自动识别，实现守卫自动增长
+- 回滚：删除 `custom-hotfix-gate.yml` 与新增脚本命令，并移除测试标题前缀与脚本前缀扫描逻辑
+- 影响：仅影响 CI 发布门禁与测试守卫，不影响运行时逻辑
+
+---
+
 ### [2026-02-09] 支持通过环境变量自定义浏览器 Tab 品牌名称
 
 - 类型: custom

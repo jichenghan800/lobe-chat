@@ -110,7 +110,10 @@
     "workflow:mdx": "tsx ./scripts/mdxWorkflow/index.ts",
     "workflow:readme": "tsx ./scripts/readmeWorkflow/index.ts",
     "workflow:set-desktop-version": "tsx ./scripts/electronWorkflow/setDesktopVersion.ts",
-    "custom:verify-hotfixes": "bun scripts/checkCustomHotfixes.mts"
+    "custom:verify-hotfixes": "bun scripts/checkCustomHotfixes.mts",
+    "custom:test-hotfix-regressions": "cd packages/model-runtime && bunx vitest run --silent='passed-only' 'src/_custom/mergeGoogleFunctionResponses.test.ts' 'src/core/contextBuilders/google.test.ts'",
+    "custom:verify-hotfix-gate": "bun run custom:verify-hotfixes && bun run custom:test-hotfix-regressions",
+    "custom:verify-public-safety": "bun scripts/checkPublicRepoSafety.mts"
   },
   "lint-staged": {
     "*.md": [
