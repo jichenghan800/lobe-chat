@@ -1,12 +1,7 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix, typescript-sort-keys/interface */
-<<<<<<< HEAD
 import { env } from 'node:process';
 
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
-=======
-import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api';
-// @ts-expect-error tsgo cannot resolve this module in Docker build
->>>>>>> ba05203e2e (🎨 custom: apply local type-check and deploy compose fixes)
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';

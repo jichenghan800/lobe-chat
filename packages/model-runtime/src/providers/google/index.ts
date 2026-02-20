@@ -7,8 +7,8 @@ import {
 import { GoogleGenAI } from '@google/genai';
 import debug from 'debug';
 
-import { type LobeRuntimeAI } from '../../core/BaseAI';
 import { requestWithQuotaRetry } from '../../_custom/googleQuotaRetry';
+import type { LobeRuntimeAI } from '../../core/BaseAI';
 import { buildGoogleMessages, buildGoogleTools } from '../../core/contextBuilders/google';
 import { GoogleGenerativeAIStream, VertexAIStream } from '../../core/streams';
 import { LOBE_ERROR_KEY } from '../../core/streams/google';
