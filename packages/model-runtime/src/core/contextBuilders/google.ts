@@ -7,12 +7,8 @@ import type {
 import { Type as SchemaType } from '@google/genai';
 import { imageUrlToBase64 } from '@lobechat/utils';
 
-<<<<<<< HEAD
-import type { ChatCompletionTool, OpenAIChatMessage, UserMessageContentPart } from '../../types';
-=======
 import { mergeGoogleFunctionResponses } from '../../_custom/mergeGoogleFunctionResponses';
-import { ChatCompletionTool, OpenAIChatMessage, UserMessageContentPart } from '../../types';
->>>>>>> a808cd6b9f (🐛 fix: restore vertex function response parity hotfix)
+import type { ChatCompletionTool, OpenAIChatMessage, UserMessageContentPart } from '../../types';
 import { safeParseJSON } from '../../utils/safeParseJSON';
 import { parseDataUri } from '../../utils/uriParser';
 

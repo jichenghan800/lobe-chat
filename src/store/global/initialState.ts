@@ -1,12 +1,8 @@
 import { type NavigateFunction } from 'react-router-dom';
 
-<<<<<<< HEAD
+import { getDefaultModelSwitchPanelGroupMode } from '@/_custom/registry/modelSwitchPanel';
 import { type MigrationSQL, type MigrationTableItem } from '@/types/clientDB';
 import { DatabaseLoadingState } from '@/types/clientDB';
-=======
-import { getDefaultModelSwitchPanelGroupMode } from '@/_custom/registry/modelSwitchPanel';
-import { DatabaseLoadingState, type MigrationSQL, type MigrationTableItem } from '@/types/clientDB';
->>>>>>> 40223e8d24 (✨ feat: map provider display names and force model grouping)
 import { type LocaleMode } from '@/types/locale';
 import { SessionDefaultGroup } from '@/types/session';
 import { AsyncLocalStorage } from '@/utils/localStorage';

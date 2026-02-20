@@ -376,27 +376,17 @@ export class AiProviderActionImpl {
       {
         fallbackData: [],
         onSuccess: (data) => {
-<<<<<<< HEAD
+          const mapped = mapProviderListName(data);
           if (!this.#get().initAiProviderList) {
             this.#set(
-              { aiProviderList: data, initAiProviderList: true },
-=======
-          const mapped = mapProviderListName(data);
-          if (!get().initAiProviderList) {
-            set(
               { aiProviderList: mapped, initAiProviderList: true },
->>>>>>> 40223e8d24 (✨ feat: map provider display names and force model grouping)
               false,
               'useFetchAiProviderList/init',
             );
             return;
           }
 
-<<<<<<< HEAD
-          this.#set({ aiProviderList: data }, false, 'useFetchAiProviderList/refresh');
-=======
-          set({ aiProviderList: mapped }, false, 'useFetchAiProviderList/refresh');
->>>>>>> 40223e8d24 (✨ feat: map provider display names and force model grouping)
+          this.#set({ aiProviderList: mapped }, false, 'useFetchAiProviderList/refresh');
         },
       },
     );

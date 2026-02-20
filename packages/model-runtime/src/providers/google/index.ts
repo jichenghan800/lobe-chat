@@ -7,12 +7,8 @@ import type {
 import { GoogleGenAI } from '@google/genai';
 import debug from 'debug';
 
-<<<<<<< HEAD
-import type { LobeRuntimeAI } from '../../core/BaseAI';
-=======
 import { requestWithQuotaRetry } from '../../_custom/googleQuotaRetry';
-import { LobeRuntimeAI } from '../../core/BaseAI';
->>>>>>> e6aed77f1f (🎨 custom: quota retry and nav feature filters)
+import type { LobeRuntimeAI } from '../../core/BaseAI';
 import { buildGoogleMessages, buildGoogleTools } from '../../core/contextBuilders/google';
 import { GoogleGenerativeAIStream, VertexAIStream } from '../../core/streams';
 import { LOBE_ERROR_KEY } from '../../core/streams/google';
