@@ -1,7 +1,8 @@
 'use client';
 
 import { BRANDING_NAME } from '@lobechat/business-const';
-import { Block, Button, Flexbox, Icon, type IconProps, Text } from '@lobehub/ui';
+import { type IconProps } from '@lobehub/ui';
+import { Block, Button, Flexbox, Icon, Text } from '@lobehub/ui';
 import { TypewriterEffect } from '@lobehub/ui/awesome';
 import { LoadingDots } from '@lobehub/ui/chat';
 import { Steps, Switch } from 'antd';
@@ -41,11 +42,11 @@ const TelemetryStep = memo<TelemetryStepProps>(({ onNext }) => {
   const IconAvatar = useCallback(({ icon }: { icon: IconProps['icon'] }) => {
     return (
       <Block
+        shadow
         align="center"
         height={32}
         justify="center"
         padding={4}
-        shadow
         variant="outlined"
         width={32}
       >
@@ -67,12 +68,12 @@ const TelemetryStep = memo<TelemetryStepProps>(({ onNext }) => {
             hideCursorWhileTyping={'afterTyping'}
             key={locale}
             pauseDuration={16_000}
+            typingSpeed={64}
             sentences={[
               t('telemetry.title', { name: getBrandAssistantName() }),
               t('telemetry.title2'),
               t('telemetry.title3'),
             ]}
-            typingSpeed={64}
           />
         </Text>
         <Text as={'p'}>{t('telemetry.desc')}</Text>
@@ -126,8 +127,8 @@ const TelemetryStep = memo<TelemetryStepProps>(({ onNext }) => {
         <Text as={'p'} color={cssVar.colorTextSecondary}>
           {t('telemetry.rows.privacy.desc', { appName: BRANDING_NAME })}
         </Text>
-        <Flexbox align="center" gap={8} horizontal>
-          <Switch checked={check} onChange={(v) => setCheck(v)} size={'small'} />
+        <Flexbox horizontal align="center" gap={8}>
+          <Switch checked={check} size={'small'} onChange={(v) => setCheck(v)} />
           <Text fontSize={12} type={check ? undefined : 'secondary'}>
             {t('telemetry.rows.privacy.title', { appName: BRANDING_NAME })}
           </Text>
@@ -135,18 +136,18 @@ const TelemetryStep = memo<TelemetryStepProps>(({ onNext }) => {
       </Flexbox>
       <Button
         disabled={isNavigating}
-        onClick={() => handleChoice(check)}
         size={'large'}
+        type="primary"
         style={{
           marginBlock: 8,
           maxWidth: 240,
         }}
-        type="primary"
+        onClick={() => handleChoice(check)}
       >
         {t('telemetry.next')}
       </Button>
       {check && (
-        <Block align="flex-start" gap={8} horizontal variant={'borderless'}>
+        <Block horizontal align="flex-start" gap={8} variant={'borderless'}>
           <Icon
             icon={ShieldCheck}
             size={16}
@@ -154,6 +155,8 @@ const TelemetryStep = memo<TelemetryStepProps>(({ onNext }) => {
           />
           <Text fontSize={12} type="secondary">
             <Trans
+              i18nKey={'telemetry.agreement'}
+              ns={'onboarding'}
               components={{
                 privacy: (
                   <a
@@ -172,8 +175,6 @@ const TelemetryStep = memo<TelemetryStepProps>(({ onNext }) => {
                   </a>
                 ),
               }}
-              i18nKey={'telemetry.agreement'}
-              ns={'onboarding'}
             />
           </Text>
         </Block>

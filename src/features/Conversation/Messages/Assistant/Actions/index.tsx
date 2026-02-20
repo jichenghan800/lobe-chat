@@ -1,8 +1,9 @@
 import { type UIChatMessage } from '@lobechat/types';
-import { ActionIconGroup, createRawModal } from '@lobehub/ui';
+import { ActionIconGroup, Flexbox, createRawModal } from '@lobehub/ui';
 import type { ActionIconGroupEvent, ActionIconGroupItemType } from '@lobehub/ui';
 import { memo, useCallback, useMemo } from 'react';
 
+import { ReactionPicker } from '../../../components/Reaction';
 import ShareMessageModal, { type ShareModalProps } from '../../../components/ShareMessageModal';
 import {
   Provider,
@@ -48,7 +49,10 @@ const buildActionsMap = (items: MessageActionItemOrDivider[]): Map<string, Messa
       if ('children' in item && item.children) {
         for (const child of item.children) {
           if (child.key) {
-            map.set(`${item.key}.${child.key}`, child as unknown as MessageActionItem);
+            map.set(
+              `${String(item.key)}.${String(child.key)}`,
+              child as unknown as MessageActionItem,
+            );
           }
         }
       }
@@ -209,7 +213,12 @@ export const AssistantActionsBar = memo<AssistantActionsBarProps>(
 
     if (error) return <ErrorActionsBar actions={defaultActions} onActionClick={handleAction} />;
 
-    return <ActionIconGroup items={items} menu={menu} onActionClick={handleAction} />;
+    return (
+      <Flexbox align={'center'} gap={8} horizontal>
+        <ReactionPicker messageId={id} />
+        <ActionIconGroup items={items} menu={menu} onActionClick={handleAction} />
+      </Flexbox>
+    );
   },
 );
 

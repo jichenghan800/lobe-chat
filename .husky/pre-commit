@@ -1,5 +1,5 @@
-# .husky/post-merge
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-npm run type-check || echo "Type check failed, please fix issues!"
+BRANCH=$(git branch --show-current)
+if [ "$BRANCH" = "dev" ] || [ "$BRANCH" = "main" ]; then
+  npm run type-check
+fi
+npx --no-install lint-staged

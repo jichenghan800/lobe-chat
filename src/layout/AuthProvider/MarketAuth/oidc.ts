@@ -98,6 +98,9 @@ export class MarketOIDC {
     authUrl.searchParams.set('state', pkceParams.state);
     authUrl.searchParams.set('code_challenge', pkceParams.codeChallenge);
     authUrl.searchParams.set('code_challenge_method', 'S256');
+    if (this.config.useHandoff) {
+      authUrl.searchParams.set('client', MarketOIDC.DESKTOP_HANDOFF_CLIENT);
+    }
 
     console.log('[MarketOIDC] Authorization URL built:', authUrl.toString());
     return authUrl.toString();
@@ -182,6 +185,19 @@ export class MarketOIDC {
       throw new MarketAuthError('stateMissing', {
         message: 'Authorization state not found. Please try again.',
       });
+    }
+
+    if (this.config.useHandoff) {
+      const popup = window.open(
+        authUrl,
+        'market_auth',
+        'width=580,height=720,scrollbars=yes,resizable=yes',
+      );
+      try {
+        return await this.pollDesktopHandoff(state);
+      } finally {
+        popup?.close();
+      }
     }
 
     // 在新窗口中打开授权页面

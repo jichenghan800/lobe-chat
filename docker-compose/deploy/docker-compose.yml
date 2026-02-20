@@ -13,4 +13,11 @@ services:
       - '${LOBE_PORT}:3210'
     env_file:
       - .env
+    networks:
+      - default
+      - deploy_default
     restart: always
+
+networks:
+  deploy_default:
+    external: true

@@ -1,9 +1,9 @@
+import { type SlashOptions } from '@lobehub/editor';
 import {
   INSERT_HEADING_COMMAND,
   INSERT_HORIZONTAL_RULE_COMMAND,
   INSERT_MATH_COMMAND,
   INSERT_TABLE_COMMAND,
-  type SlashOptions,
 } from '@lobehub/editor';
 import { Text } from '@lobehub/ui';
 import {
@@ -83,7 +83,7 @@ export const useSlashItems = (): SlashOptions['items'] => {
         ...item,
         extra: (
           <Text code fontSize={12} type={'secondary'}>
-            {item.key}
+            {String(item.key)}
           </Text>
         ),
       };

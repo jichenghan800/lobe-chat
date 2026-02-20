@@ -29,7 +29,7 @@ const ChatHeaderTitle = memo(() => {
   return (
     <ChatHeader.Title
       desc={
-        <Flexbox align={'center'} gap={4} horizontal onClick={() => toggleConfig()}>
+        <Flexbox horizontal align={'center'} gap={4} onClick={() => toggleConfig()}>
           <span
             style={{
               maxWidth: '60vw',
@@ -53,7 +53,6 @@ const ChatHeaderTitle = memo(() => {
       }
       title={
         <div
-          onClick={() => toggleConfig()}
           style={{
             marginRight: '8px',
             maxWidth: '64vw',
@@ -61,6 +60,7 @@ const ChatHeaderTitle = memo(() => {
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
           }}
+          onClick={() => toggleConfig()}
         >
           {displayTitle}
           {topicLength > 1 ? `(${topicLength + 1})` : ''}

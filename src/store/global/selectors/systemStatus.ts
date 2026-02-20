@@ -1,6 +1,7 @@
 import { getForcedModelSwitchPanelGroupMode } from '@/_custom/registry/modelSwitchPanel';
 
-import { type GlobalState, INITIAL_STATUS } from '../initialState';
+import { type GlobalState } from '../initialState';
+import { INITIAL_STATUS } from '../initialState';
 
 export const systemStatus = (s: GlobalState) => s.status;
 

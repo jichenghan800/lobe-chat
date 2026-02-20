@@ -1,7 +1,7 @@
 'use client';
 
-import { Form, type FormGroupItemType, HotkeyInput, Icon } from '@lobehub/ui';
-import { Skeleton } from '@lobehub/ui';
+import { type FormGroupItemType } from '@lobehub/ui';
+import { Form, HotkeyInput, Icon, Skeleton } from '@lobehub/ui';
 import { App } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { Loader2Icon } from 'lucide-react';
@@ -23,6 +23,7 @@ const HotkeySetting = memo(() => {
   const assistantName = getBrandAssistantName();
 
   const hotkeys = useElectronStore(desktopHotkeysSelectors.hotkeys, isEqual);
+
   const [isHotkeysInit, updateDesktopHotkey, useFetchDesktopHotkeys] = useElectronStore((s) => [
     desktopHotkeysSelectors.isHotkeysInit(s),
     s.updateDesktopHotkey,
@@ -39,6 +40,9 @@ const HotkeySetting = memo(() => {
     children: (
       <HotkeyInput
         disabled={item.nonEditable}
+        placeholder={t('hotkey.record')}
+        resetValue={item.keys}
+        value={hotkeys[item.id]}
         onChange={async (value) => {
           setLoading(true);
           try {
@@ -56,9 +60,6 @@ const HotkeySetting = memo(() => {
             setLoading(false);
           }
         }}
-        placeholder={t('hotkey.record')}
-        resetValue={item.keys}
-        value={hotkeys[item.id]}
       />
     ),
 
@@ -77,7 +78,7 @@ const HotkeySetting = memo(() => {
 
   const desktop: FormGroupItemType = {
     children: DESKTOP_HOTKEYS_REGISTRATION.map((item) => mapHotkeyItem(item)),
-    extra: loading && <Icon icon={Loader2Icon} size={16} spin style={{ opacity: 0.5 }} />,
+    extra: loading && <Icon spin icon={Loader2Icon} size={16} style={{ opacity: 0.5 }} />,
     title: t('hotkey.group.desktop'),
   };
 
