@@ -4,6 +4,17 @@
 
 ---
 
+### [2026-02-16] Docker 构建 type-check 修复（slash/menu key 与 OTel 类型）
+
+- 类型: custom
+- 涉及文件: src/app/[variants]/(main)/agent/profile/features/EditorCanvas/useSlashItems.tsx; src/features/ChatInput/InputEditor/useSlashItems.tsx; src/features/PageEditor/EditorCanvas/useSlashItems.tsx; src/features/Conversation/Messages/Assistant/Actions/index.tsx; src/features/Conversation/Messages/AssistantGroup/Actions/index.tsx; src/features/Conversation/Messages/Supervisor/Actions/index.tsx; src/features/Conversation/Messages/Task/Actions/index.tsx; src/features/Conversation/Messages/User/Actions/index.tsx; packages/observability-otel/src/node.ts
+- 原因：Docker build 阶段 tsgo 因 symbol key 拼接与 `@opentelemetry/auto-instrumentations-node` 类型解析失败而中断
+- 方案：slash items 展示 key 使用 `String()` 显式转换；Actions 子项 key 拼接统一 `String()`；在 OTel import 上添加 `@ts-expect-error` 以避免 Docker 构建中 tsgo 解析失败
+- 回滚：恢复 key 直接使用并移除 `@ts-expect-error`
+- 影响：仅影响类型检查与 UI 中 key 的字符串展示，运行时逻辑不变
+
+---
+
 ### [2026-02-10] 公开仓库安全门禁（方案 B）
 
 - 类型: custom
