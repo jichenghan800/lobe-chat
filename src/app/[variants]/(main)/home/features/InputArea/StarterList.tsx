@@ -55,7 +55,6 @@ const StarterList = memo(() => {
 
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.agentBuilder);
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.groupAgentBuilder);
-  useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.pageAgent);
 
   const [inputActiveMode, setInputActiveMode, navigate] = useHomeStore((s) => [
     s.inputActiveMode,
@@ -128,21 +127,21 @@ const StarterList = memo(() => {
   );
 
   return (
-    <Center horizontal gap={8}>
+    <Center gap={8} horizontal>
       {items.map((item) => {
         const button = (
           <Button
             className={cx(styles.button, inputActiveMode === item.key && styles.active)}
             disabled={item.disabled}
             icon={item.icon}
-            key={item.key}
-            shape={'round'}
-            variant={'outlined'}
             iconProps={{
               color: inputActiveMode === item.key ? cssVar.colorText : cssVar.colorTextSecondary,
               size: 18,
             }}
+            key={item.key}
             onClick={() => handleClick(item.key)}
+            shape={'round'}
+            variant={'outlined'}
           >
             {t(item.titleKey)}
             {item.hot && ' 🔥'}
