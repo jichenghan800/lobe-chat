@@ -1,10 +1,11 @@
 import { SidebarTabKey } from '@/store/global/initialState';
 import type { StarterMode } from '@/store/home';
-
 import { isNavHidden } from './navigation';
 
+type HomeStarterMode = Exclude<StarterMode, null> | 'image';
+
 interface StarterItemLike {
-  key: StarterMode;
+  key: HomeStarterMode;
 }
 
 interface StarterVisibilityOptions {
@@ -33,7 +34,7 @@ export const filterHomeStarterItems = <T extends StarterItemLike>(
 };
 
 export const isHomeStarterModeVisible = (
-  mode: StarterMode | null | undefined,
+  mode: HomeStarterMode | null | undefined,
   options: StarterVisibilityOptions,
 ) => {
   if (!mode) return false;

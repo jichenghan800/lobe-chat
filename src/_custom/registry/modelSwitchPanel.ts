@@ -5,7 +5,6 @@ const isTruthy = (value: string | undefined) => {
   const normalized = value.trim().toLowerCase();
   return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
 };
-
 const normalizeGroupMode = (value?: string): ModelSwitchPanelGroupMode | undefined => {
   if (!value) return;
   const normalized = value.trim();

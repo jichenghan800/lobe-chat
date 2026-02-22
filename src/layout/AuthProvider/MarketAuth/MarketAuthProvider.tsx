@@ -13,10 +13,10 @@ import { serverConfigSelectors } from '@/store/serverConfig/selectors';
 import { useUserStore } from '@/store/user';
 import { settingsSelectors } from '@/store/user/slices/settings/selectors/settings';
 
-import { MarketAuthError } from './errors';
 import MarketAuthConfirmModal from './MarketAuthConfirmModal';
-import { MarketOIDC } from './oidc';
 import ProfileSetupModal from './ProfileSetupModal';
+import { MarketAuthError } from './errors';
+import { MarketOIDC } from './oidc';
 import {
   type MarketAuthContextType,
   type MarketAuthSession,

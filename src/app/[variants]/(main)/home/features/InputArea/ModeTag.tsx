@@ -1,7 +1,7 @@
 import { ActionIcon, Block, Text } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { createStaticStyles, cssVar } from 'antd-style';
-import { BotIcon, FilePenIcon, ImageIcon, PenLineIcon, X } from 'lucide-react';
+import { BotIcon, FilePenIcon, ImageIcon, PenLineIcon, VideoIcon, X } from 'lucide-react';
 import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -26,6 +26,7 @@ const modeConfig = {
   group: { icon: GroupBotSquareIcon, titleKey: 'starter.createGroup' },
   image: { icon: ImageIcon, titleKey: 'starter.image' },
   research: { icon: FilePenIcon, titleKey: 'starter.deepResearch' },
+  video: { icon: VideoIcon, titleKey: 'starter.seedance' },
   write: { icon: PenLineIcon, titleKey: 'starter.write' },
 } as const;
 
@@ -38,17 +39,18 @@ const ModeHeader = memo(() => {
     s.clearInputMode,
   ]);
 
+  const activeMode = inputActiveMode as keyof typeof modeConfig | null;
+
   useEffect(() => {
-    if (inputActiveMode === 'image' && !showAiImage) {
+    if (activeMode === 'image' && !showAiImage) {
       clearInputMode();
     }
-  }, [clearInputMode, inputActiveMode, showAiImage]);
+  }, [activeMode, clearInputMode, showAiImage]);
 
-  if (!isHomeStarterModeVisible(inputActiveMode, { isAgentEditable, showAiImage })) return null;
+  if (!isHomeStarterModeVisible(activeMode, { isAgentEditable, showAiImage })) return null;
+  if (!activeMode) return null;
 
-  if (!inputActiveMode) return null;
-
-  const config = modeConfig[inputActiveMode];
+  const config = modeConfig[activeMode];
   const Icon = config.icon;
 
   return (

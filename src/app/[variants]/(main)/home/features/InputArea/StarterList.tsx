@@ -2,7 +2,7 @@ import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
 import { Button, type ButtonProps, Center, Tooltip } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
-import { BotIcon, FilePenIcon, ImageIcon } from 'lucide-react';
+import { BotIcon, ImageIcon, PenLineIcon } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -35,26 +35,31 @@ type StarterTitleKey =
   | 'starter.createGroup'
   | 'starter.write'
   | 'starter.image'
+  | 'starter.seedance'
   | 'starter.deepResearch';
+
+type StarterItemKey = Exclude<StarterMode, null> | 'image';
 
 interface StarterItem {
   disabled?: boolean;
+  hot?: boolean;
   icon?: ButtonProps['icon'];
-  key: StarterMode;
+  key: StarterItemKey;
   titleKey: StarterTitleKey;
 }
 
 const StarterList = memo(() => {
-  const navigate = useNavigate();
+  const routeNavigate = useNavigate();
   const { t } = useTranslation('home');
   const { isAgentEditable, showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.agentBuilder);
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.groupAgentBuilder);
 
-  const [inputActiveMode, setInputActiveMode] = useHomeStore((s) => [
+  const [inputActiveMode, setInputActiveMode, navigate] = useHomeStore((s) => [
     s.inputActiveMode,
     s.setInputActiveMode,
+    s.navigate,
   ]);
 
   const items: StarterItem[] = useMemo(
@@ -72,7 +77,7 @@ const StarterList = memo(() => {
             titleKey: 'starter.createGroup',
           },
           {
-            icon: FilePenIcon,
+            icon: PenLineIcon,
             key: 'write',
             titleKey: 'starter.write',
           },
@@ -81,6 +86,12 @@ const StarterList = memo(() => {
             key: 'image',
             titleKey: 'starter.image',
           },
+          // {
+          //   hot: true,
+          //   icon: VideoIcon,
+          //   key: 'video',
+          //   titleKey: 'starter.seedance',
+          // },
           // {
           //   disabled: true,
           //   icon: MicroscopeIcon,
@@ -94,16 +105,14 @@ const StarterList = memo(() => {
   );
 
   const handleClick = useCallback(
-    (key: StarterMode) => {
-      // Special case: image mode navigates to /image page
+    (key: StarterItemKey) => {
       if (key === 'image') {
-        navigate('/image');
+        routeNavigate('/image');
         return;
       }
 
-      // Special case: write mode navigates to /page
-      if (key === 'write') {
-        navigate('/page');
+      if (key === 'video') {
+        navigate?.('/video');
         return;
       }
 
@@ -114,7 +123,7 @@ const StarterList = memo(() => {
         setInputActiveMode(key);
       }
     },
-    [inputActiveMode, setInputActiveMode, navigate],
+    [inputActiveMode, navigate, routeNavigate, setInputActiveMode],
   );
 
   return (
@@ -135,6 +144,7 @@ const StarterList = memo(() => {
             variant={'outlined'}
           >
             {t(item.titleKey)}
+            {item.hot && ' 🔥'}
           </Button>
         );
 
