@@ -4,8 +4,6 @@ import { isNavHidden } from './navigation';
 
 type HomeStarterMode = Exclude<StarterMode, null> | 'image';
 
-import { isNavHidden } from './navigation';
-
 interface StarterItemLike {
   key: HomeStarterMode;
 }
