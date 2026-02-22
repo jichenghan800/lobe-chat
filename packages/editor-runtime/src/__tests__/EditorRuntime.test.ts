@@ -35,9 +35,9 @@ describe('EditorRuntime', () => {
       expect(result.nodeCount).toBeGreaterThanOrEqual(0);
       expect(result.extractedTitle).toBeUndefined();
 
-      // Verify editor state - full text match (editor adds trailing space)
+      // Verify editor state
       const editorMarkdown = editor.getDocument('markdown') as unknown as string;
-      expect(editorMarkdown).toBe('Hello world\n\nThis is a paragraph. \n\n');
+      expect(editorMarkdown).toBe('Hello world\n\nThis is a paragraph.\n');
 
       // Verify XML structure
       const editorXml = editor.getDocument('litexml') as unknown as string;
@@ -54,9 +54,9 @@ describe('EditorRuntime', () => {
       expect(result.extractedTitle).toBe('My Document Title');
       expect(mockTitleSetter).toHaveBeenCalledWith('My Document Title');
 
-      // Verify editor state - only content without title (editor adds trailing space)
+      // Verify editor state - only content without title
       const editorMarkdown = editor.getDocument('markdown') as unknown as string;
-      expect(editorMarkdown).toBe('This is the content. \n\n');
+      expect(editorMarkdown).toBe('This is the content.\n');
     });
 
     it('should handle markdown with multiple headings', async () => {
@@ -68,10 +68,10 @@ describe('EditorRuntime', () => {
       // Verify title extraction (only first h1)
       expect(result.extractedTitle).toBe('Main Title');
 
-      // Verify editor state - content after title extraction (editor adds trailing space)
+      // Verify editor state - content after title extraction
       const editorMarkdown = editor.getDocument('markdown') as unknown as string;
       expect(editorMarkdown).toBe(
-        '## Section 1\n\nContent here. \n\n## Section 2\n\nMore content. \n\n',
+        '## Section 1\n\nContent here.\n\n## Section 2\n\nMore content.\n',
       );
     });
 

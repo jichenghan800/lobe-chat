@@ -1,5 +1,4 @@
 import type { PageContentContext } from '@lobechat/prompts';
-import type { IEditor } from '@lobehub/editor';
 import { LITEXML_APPLY_COMMAND, LITEXML_MODIFY_COMMAND } from '@lobehub/editor';
 import debug from 'debug';
 
@@ -20,6 +19,18 @@ import type {
 const log = debug('lobe:editor-runtime');
 
 /**
+ * Keep the runtime/editor contract minimal to avoid hard coupling to a specific
+ * @lobehub/editor package instance/version in downstream apps.
+ */
+type EditorFn = (...args: any[]) => any;
+
+interface EditorInstance {
+  dispatchCommand: EditorFn;
+  getDocument: EditorFn;
+  setDocument: EditorFn;
+}
+
+/**
  * Editor Execution Runtime
  * Handles the execution logic for editor operations including:
  * - Document initialization
@@ -29,7 +40,7 @@ const log = debug('lobe:editor-runtime');
  * - Text replacement
  */
 export class EditorRuntime {
-  private editor: IEditor | null = null;
+  private editor: EditorInstance | null = null;
   private titleSetter: ((title: string) => void) | null = null;
   private titleGetter: (() => string) | null = null;
   private currentDocId: string | undefined = undefined;
@@ -37,7 +48,7 @@ export class EditorRuntime {
   /**
    * Set the current editor instance
    */
-  setEditor(editor: IEditor | null) {
+  setEditor(editor: EditorInstance | null) {
     this.editor = editor;
   }
 
@@ -67,7 +78,7 @@ export class EditorRuntime {
   /**
    * Get the current editor instance
    */
-  private getEditor(): IEditor {
+  private getEditor(): EditorInstance {
     if (!this.editor) {
       throw new Error('Editor not initialized. Please set the editor instance first.');
     }
@@ -97,11 +108,24 @@ export class EditorRuntime {
     let extractedTitle: string | undefined;
 
     // Check if markdown starts with a # title heading
-    const titleMatch = /^#\s+(.+)(?:\r?\n|$)/.exec(markdown);
-    if (titleMatch) {
-      extractedTitle = titleMatch[1].trim();
+    const firstLineBreak = markdown.search(/\r?\n/);
+    const firstLineEnd = firstLineBreak === -1 ? markdown.length : firstLineBreak;
+    const firstLine = markdown.slice(0, firstLineEnd).replace(/\r$/, '');
+    const titleCandidate = firstLine.slice(1);
+    const isH1Title =
+      firstLine.startsWith('#') &&
+      (titleCandidate.startsWith(' ') || titleCandidate.startsWith('\t'));
+
+    if (isH1Title) {
+      extractedTitle = titleCandidate.trim();
+
       // Remove the title line from markdown
-      markdown = markdown.slice(titleMatch[0].length).trimStart();
+      if (firstLineBreak === -1) {
+        markdown = '';
+      } else {
+        const lineBreakLength = markdown[firstLineBreak] === '\r' ? 2 : 1;
+        markdown = markdown.slice(firstLineBreak + lineBreakLength).trimStart();
+      }
 
       // Set the title separately if title handlers are available
       if (this.titleSetter) {
@@ -531,8 +555,20 @@ export class EditorRuntime {
 
         // Build the updated LiteXML for this node
         // Extract attributes from the original fullMatch
-        const attrMatch = /<\w+\s+([^>]*)>/.exec(node.fullMatch);
-        const attributes = attrMatch ? attrMatch[1] : `id="${node.id}"`;
+        let attributes = `id="${node.id}"`;
+        const tagEnd = node.fullMatch.indexOf('>');
+
+        if (tagEnd > 0) {
+          const openingTag = node.fullMatch.slice(0, tagEnd);
+          const firstSpace = openingTag.indexOf(' ');
+
+          if (firstSpace > 0) {
+            const extractedAttributes = openingTag.slice(firstSpace + 1).trim();
+            if (extractedAttributes) {
+              attributes = extractedAttributes;
+            }
+          }
+        }
 
         const updatedLitexml = `<${node.tagName} ${attributes}>${newContent}</${node.tagName}>`;
         litexmlUpdates.push(updatedLitexml);
