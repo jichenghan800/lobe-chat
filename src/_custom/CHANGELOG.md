@@ -14,6 +14,16 @@
 - 回滚：移除 `buildGoogleTools` 去重逻辑、对应测试与 `checkCustomHotfixes` 中的 dedupe guard 检查
 - 影响：仅影响 Google/Vertex 的 tool 声明构建；无重复函数名时行为不变
 
+### \[2026-03-09] 修复模型别名描述与 thinkingLevel3 默认值的回归风险
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/modelCustomization.ts; src/\_custom/registry/modelCustomization.test.ts; src/features/ModelSwitchPanel/components/ModelDetailPanel.tsx; src/services/chat/mecha/modelParamsResolver.ts; src/services/chat/mecha/modelParamsResolver.test.ts
+- 原因：模型详情描述优先使用 runtime description 会覆盖本地化文案；`thinkingLevel3` 默认值在混合扩展参数场景下会覆盖用户已设置的 `thinkingLevel`
+- 方案：`resolveModelDetailDescription` 改为 “有本地化文案则优先本地化，无本地化才回退 runtime description”；`resolveModelExtendParams` 改为仅在未设置其他 thinkingLevel 时才应用 `thinkingLevel3` 默认值，且显式 `thinkingLevel3` 仍优先
+- 验证：`bunx vitest run --silent='passed-only' 'src/_custom/registry/modelCustomization.test.ts'` 通过；`bunx vitest run --silent='passed-only' 'src/services/chat/mecha/modelParamsResolver.test.ts'` 通过
+- 回滚：恢复 `resolveModelDetailDescription` 直接优先 `modelDescription`，并恢复 `thinkingLevel3` 分支无条件写默认值逻辑
+- 影响：仅影响模型详情描述展示优先级与 thinkingLevel 参数合并策略；不改变单一 `thinkingLevel3` 模型的默认 `low` 行为
+
 ### \[2026-03-09] 默认 inbox agent 新话题时清空 “关联文件” 勾选
 
 - 类型: custom
