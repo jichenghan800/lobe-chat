@@ -4,6 +4,16 @@
 
 ---
 
+### \[2026-03-09] 默认 inbox agent 新话题时清空 “关联文件” 勾选
+
+- 类型: custom
+- 涉及文件: src/app/\[variants]/(main)/home/\_layout/HomeAgentIdSync.tsx; src/store/agent/slices/knowledge/action.ts; src/store/agent/slices/knowledge/action.test.ts; src/store/chat/slices/topic/action.ts; src/store/chat/slices/topic/action.test.ts
+- 原因：默认 `cotti ai` /inbox agent 更接近 “临时聊天” 心智，用户开启新话题时，预期之前勾选的 “关联文件” 不应自动延续；但用户自定义 agent 仍需要保留该配置
+- 方案：新增 agent store `clearEnabledFiles` 动作，仅在 `switchTopic(null)` 且当前 agent 为 inbox agent 时批量关闭已启用的关联文件；首页 `HomeAgentIdSync` 仅负责在默认 agent 初始化后同步可用状态，不再额外改变已确认的刷新行为
+- 验证：`bunx vitest run --silent='passed-only' 'src/store/agent/slices/knowledge/action.test.ts'` 通过；`bunx vitest run --silent='passed-only' 'src/store/chat/slices/topic/action.test.ts'` 通过；页面实测当前行为为 “刷新不清空，新话题清空”
+- 回滚：删除 `clearEnabledFiles` 动作及 `switchTopic` 中对 inbox agent 的调用，恢复所有 agent 新话题时均保留关联文件勾选
+- 影响：仅影响默认 inbox agent 的 “新话题” 行为；刷新页面不清空；自定义 agent 保持原行为
+
 ### \[2026-03-09] Vertex 当前聊天上传 PDF 原生输入接线（v1）
 
 - 类型: custom
