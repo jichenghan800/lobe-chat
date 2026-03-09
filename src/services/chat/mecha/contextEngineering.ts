@@ -276,8 +276,29 @@ export const contextEngineering = async ({
   const agentKnowledgeBases = agentSelectors.currentAgentKnowledgeBases(agentStoreState);
 
   const fileContents = agentFiles
-    .filter((file) => file.enabled && file.content)
-    .map((file) => ({ content: file.content!, fileId: file.id, filename: file.name }));
+    .filter((file) => {
+      if (!file.enabled) return false;
+
+      const fileType = file.type || (file as typeof file & { fileType?: string }).fileType;
+      const hasNativePdfMetadata =
+        fileType?.toLowerCase() === 'application/pdf' &&
+        typeof file.url === 'string' &&
+        file.url.length > 0;
+
+      return !!file.content || hasNativePdfMetadata;
+    })
+    .map((file) => {
+      const fileType = file.type || (file as typeof file & { fileType?: string }).fileType;
+
+      return {
+        content: file.content || '',
+        fileId: file.id,
+        fileType,
+        filename: file.name,
+        size: file.size,
+        url: file.url,
+      };
+    });
 
   const knowledgeBases = agentKnowledgeBases
     .filter((kb) => kb.enabled)

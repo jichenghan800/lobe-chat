@@ -1,11 +1,12 @@
 import type { ChatImageItem, ChatVideoItem, UIChatMessage } from '@lobechat/types';
+import type * as ImageToBase64Module from '@lobechat/utils/imageToBase64';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { PipelineContext } from '../../types';
 import { MessageContentProcessor } from '../MessageContent';
 
 vi.mock('@lobechat/utils/imageToBase64', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@lobechat/utils/imageToBase64')>();
+  const actual = (await importOriginal()) as typeof ImageToBase64Module;
   return {
     ...actual,
     imageUrlToBase64: vi.fn().mockResolvedValue({
@@ -286,6 +287,91 @@ describe('MessageContentProcessor', () => {
 
       // Should not include file context
       expect(result.messages[0].content).toBe('Hello');
+    });
+
+    it('should append native PDF file parts for Vertex while keeping text fallback', async () => {
+      mockIsCanUseVision.mockReturnValue(false);
+
+      const processor = new MessageContentProcessor({
+        model: 'gemini-2.5-flash',
+        provider: 'vertexai',
+        isCanUseVision: mockIsCanUseVision,
+        fileContext: { enabled: true },
+      });
+
+      const messages: UIChatMessage[] = [
+        {
+          id: 'test',
+          role: 'user',
+          content: 'Read the attached PDF',
+          fileList: [
+            {
+              id: 'file-pdf-1',
+              name: 'test.pdf',
+              fileType: 'application/pdf',
+              size: 123,
+              url: 'https://example.com/test.pdf',
+            },
+          ],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ];
+
+      const result = await processor.process(createContext(messages));
+
+      expect(Array.isArray(result.messages[0].content)).toBe(true);
+      const content = result.messages[0].content as any[];
+      expect(content).toHaveLength(2);
+      expect(content[0].type).toBe('text');
+      expect(content[0].text).toContain('SYSTEM CONTEXT');
+      expect(content[1]).toEqual({
+        file_url: {
+          id: 'file-pdf-1',
+          mimeType: 'application/pdf',
+          name: 'test.pdf',
+          size: 123,
+          url: 'https://example.com/test.pdf',
+        },
+        type: 'file_url',
+      });
+    });
+
+    it('should not append native file parts for non-Vertex providers', async () => {
+      mockIsCanUseVision.mockReturnValue(false);
+
+      const processor = new MessageContentProcessor({
+        model: 'gpt-4o',
+        provider: 'openai',
+        isCanUseVision: mockIsCanUseVision,
+        fileContext: { enabled: true },
+      });
+
+      const messages: UIChatMessage[] = [
+        {
+          id: 'test',
+          role: 'user',
+          content: 'Read the attached PDF',
+          fileList: [
+            {
+              id: 'file-pdf-1',
+              name: 'test.pdf',
+              fileType: 'application/pdf',
+              size: 123,
+              url: 'https://example.com/test.pdf',
+            },
+          ],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ];
+
+      const result = await processor.process(createContext(messages));
+
+      expect(Array.isArray(result.messages[0].content)).toBe(true);
+      const content = result.messages[0].content as any[];
+      expect(content).toHaveLength(1);
+      expect(content[0].type).toBe('text');
     });
   });
 

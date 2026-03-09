@@ -4,10 +4,83 @@
 
 ---
 
-### [2026-02-16] Docker 构建 type-check 修复（slash/menu key 与 OTel 类型）
+### \[2026-03-09] Vertex 当前聊天上传 PDF 原生输入接线（v1）
 
 - 类型: custom
-- 涉及文件: src/app/[variants]/(main)/agent/profile/features/EditorCanvas/useSlashItems.tsx; src/features/ChatInput/InputEditor/useSlashItems.tsx; src/features/PageEditor/EditorCanvas/useSlashItems.tsx; src/features/Conversation/Messages/Assistant/Actions/index.tsx; src/features/Conversation/Messages/AssistantGroup/Actions/index.tsx; src/features/Conversation/Messages/Supervisor/Actions/index.tsx; src/features/Conversation/Messages/Task/Actions/index.tsx; src/features/Conversation/Messages/User/Actions/index.tsx; packages/observability-otel/src/node.ts
+- 涉及文件: src/\_custom/services/vertexNativePdf.ts; src/app/(backend)/webapi/chat/\[provider]/route.ts; packages/context-engine/src/processors/MessageContent.ts; packages/context-engine/src/processors/**tests**/MessageContent.test.ts; packages/model-runtime/src/types/chat.ts; packages/model-runtime/src/core/contextBuilders/google.ts; packages/model-runtime/src/core/contextBuilders/google.test.ts; packages/model-runtime/src/providers/google/index.ts; packages/types/src/openai/chat.ts
+- 原因：v1 决定只覆盖 “当前聊天上传 PDF” 路径，需要在不改 Agent 关联文件 / 知识库流程的前提下，为 Vertex 增加原生 PDF `fileData` 输入，并保留现有文本解析注入作为 fallback
+- 方案：聊天上下文工程阶段仅对 `vertexai + application/pdf` 追加 `file_url` content part，继续保留原有 `<file>...</file>` 文本注入；服务端 `/webapi/chat/[provider]` 在进入 model-runtime 前对这些 PDF part 按需同步到 GCS 并改写成 `gs://...`；Google/Vertex context builder 仅在 `vertexai` 且 URI 为 `gs://` 时生成 `Part.fileData`
+- 验证：`cd packages/context-engine && bunx vitest run --silent='passed-only' 'src/processors/__tests__/MessageContent.test.ts'` 通过；`cd packages/model-runtime && bunx vitest run --silent='passed-only' 'src/core/contextBuilders/google.test.ts'` 通过；`bunx tsx src/_custom/vertexPdfNativePoc.ts` 仍返回 `123` 且 `promptTokensDetails` 含 `DOCUMENT`
+- 回滚：删除 `src/_custom/services/vertexNativePdf.ts` 与 `/webapi/chat/[provider]` 注入；移除 `file_url` schema 扩展与 `MessageContentProcessor` / `google` builder 对应分支
+- 影响：仅对 Vertex 当前聊天上传的 PDF 增加原生输入尝试；若 GCS 同步失败会退回现有文本注入；Agent 关联文件、知识库检索路径保持不变
+
+### \[2026-03-09] Vertex native PDF 成功后移除误导性的空文本 `<file>` 注入
+
+- 类型: custom
+- 涉及文件: src/\_custom/services/vertexNativePdf.ts; src/\_custom/services/vertexNativePdf.test.ts
+- 原因：页面实测发现扫描版 PDF 虽已通过 Vertex native `fileData` 能力可被正确识别，但聊天链路仍同时注入旧的 `<file ...></file>` 文本 fallback。对无文本层 PDF，这段 fallback 会把 “提取内容为空” 显式暴露给模型，导致回答错误地退回 “无法分析附件”
+- 方案：在 `/webapi/chat/[provider]` 的 `prepareVertexNativePdfMessages(...)` 中，仅当 native PDF part 成功转换为 `gs://` 时，移除同条消息里对应 PDF 的文本 `<file>` fallback；若 native 准备失败，则继续保留旧 fallback
+- 验证：`bunx vitest run --silent='passed-only' 'src/_custom/services/vertexNativePdf.test.ts'` 通过；使用根目录 `增值电信业务经营许可证-正文及附页-20250418.pdf` 运行 `bunx tsx src/_custom/vertexPdfNativePoc.ts --file ... --prompt '帮我分析附件内容和实际的边框样式情况。请直接基于PDF视觉内容回答。'`，`gemini-2.5-flash` 已正确识别许可证正文与边框花纹，且 `usageMetadata.promptTokensDetails` 含 `DOCUMENT`
+- 回滚：删除 `stripNativePdfFallbackPrompt(...)` 清理逻辑与对应测试
+- 影响：仅在 Vertex native PDF 成功生效时清掉误导性的空文本 fallback；不改变 native 失败时的兼容行为
+
+### \[2026-03-09] Vertex Agent 关联文件 PDF 复用原生输入链路
+
+- 类型: custom
+- 涉及文件: src/services/chat/mecha/contextEngineering.ts; packages/context-engine/src/providers/KnowledgeInjector.ts; packages/context-engine/src/engine/messages/MessagesEngine.ts; packages/context-engine/src/providers/**tests**/KnowledgeInjector.test.ts; src/\_custom/services/vertexNativePdf.ts; src/\_custom/services/vertexNativePdf.test.ts; packages/prompts/src/prompts/knowledgeBaseQA/formatFileContents.ts
+- 原因：用户侧会把 “当前聊天上传 PDF” 和 “勾选关联文件中的 PDF” 视为同一能力，但现状只有前者会进入 Vertex native `fileData` 链路；Agent 关联文件仍只有文本注入，扫描件 / 无文本层 PDF 体感上等于未生效
+- 方案：上下文工程阶段为已启用的 Agent 关联 PDF 保留 `url/type/size` 元数据；`KnowledgeInjector` 在 `vertexai` 下除了原有文本知识注入外，额外向 system injection message 追加 `file_url` part；服务端继续复用既有 GCS 改写与 native fallback 清理逻辑
+- 验证：补充 `KnowledgeInjector` 与 `vertexNativePdf` 单测，验证关联 PDF 会生成 `file_url` part，且 native 成功后可清理关联文件 XML fallback
+- 回滚：移除 `KnowledgeInjector` 中的 `file_url` 追加逻辑，并恢复 `contextEngineering` 对 agent files 的旧过滤条件
+- 影响：仅对 Vertex 下 Agent 关联文件中的 PDF 增加原生输入尝试；知识库检索与非 PDF 文件保持原行为
+
+### \[2026-03-09] Docker 运行层补齐 @napi-rs/canvas optional native package 暴露
+
+- 涉及文件: Dockerfile
+- 原因：页面实测上传 PDF 时，运行容器仍报 `DOMMatrix is not defined`。进一步确认 `@napi-rs/canvas` 主包已在 `/app/node_modules/@napi-rs/canvas`，但与其版本匹配的 optional native package `@napi-rs/canvas-linux-x64-gnu` 没有暴露到 `/app/node_modules/@napi-rs/`，导致 Node 解析 `require('@napi-rs/canvas-linux-x64-gnu')` 失败
+- 方案：在 Docker app stage 不再遍历目录名猜测链接，而是读取顶层 `@napi-rs/canvas/package.json` 的 `optionalDependencies`，按声明版本为每个 `@napi-rs/canvas-*` 平台包建立符号链接
+- 影响：修复 Docker 部署环境下 `pdfjs-dist` 对 `DOMMatrix` polyfill 的 native binding 解析，恢复 PDF 解析链路
+
+---
+
+### \[2026-03-09] Vertex 原生 PDF 输入 PoC（独立脚本验证）
+
+- 类型: custom
+- 涉及文件: src/\_custom/vertexPdfNativePoc.ts; src/\_custom/CHANGELOG.md
+- 原因：在接入主流程前，需要先确认当前 Vertex 配置 + `gs://lobechat-cotti` 能否通过 `@google/genai` 的原生 `fileData` 路径稳定读取 PDF，而不是继续依赖现有文本解析注入
+- 方案：新增独立脚本 `src/_custom/vertexPdfNativePoc.ts`，按 `.env` 读取 `VERTEXAI_CREDENTIALS` / `VERTEXAI_PROJECT` / `VERTEXAI_LOCATION`，将本地 PDF 上传或复用到 GCS，再以 `vertexai: true` + PDF `fileData.fileUri=gs://...` 发起一次 `generateContent`
+- 验证：2026-03-09 本地执行 `bunx tsx src/_custom/vertexPdfNativePoc.ts`，使用仓库测试文件 `packages/file-loaders/test/fixtures/test.pdf` 上传到 `gs://lobechat-cotti/vertex-pdf-poc/67e85b9398030030-test.pdf`；`gemini-2.5-flash` 返回 `123`，脚本输出 `Verification: PASS`，且 `usageMetadata.promptTokensDetails` 中出现 `DOCUMENT` token 计数
+- 回滚：删除 `src/_custom/vertexPdfNativePoc.ts` 与本条记录
+- 影响：仅新增 Phase 1 验证工具，不改聊天上传、Agent 关联文件、知识库或 `packages/model-runtime` 主流程
+
+---
+
+### \[2026-03-09] Docker 运行镜像补齐 @napi-rs/canvas 平台绑定
+
+- 类型: custom
+- 涉及文件: Dockerfile; src/store/file/slices/chat/action.ts; src/store/file/slices/chat/action.test.ts
+- 原因：聊天上传 PDF 后，`document.parseFileContent` 在容器内失败，日志显示 `DOMMatrix is not defined`。进一步定位为运行镜像中的 `@napi-rs/canvas` 顶层包存在，但其 optional native binding `@napi-rs/canvas-linux-x64-gnu` 未暴露到 Node 可解析路径，导致 `pdfjs-dist` 的 DOMMatrix polyfill 失效
+- 方案：在 Docker app stage 为 `.pnpm` 中的 `@napi-rs/canvas-*` 平台包建立到 `/app/node_modules/@napi-rs/` 的符号链接，确保 `require('@napi-rs/canvas')` 可加载 native binding；聊天侧继续保留 `parseFileContent` 完成前阻塞发送的修复，避免只有 URL 无正文的竞态
+- 回滚：删除 Dockerfile 中新增的 `@napi-rs/canvas-*` 链接逻辑，并回退聊天文件上传状态流转改动
+- 影响：修复 Docker 部署环境下的 PDF 解析能力；仅影响文件解析与聊天附件注入时序，不改变其他业务流程
+
+---
+
+### \[2026-02-22] Gemini 3.1 别名描述与默认思考等级（注入式改造）
+
+- 类型: custom
+- 涉及文件: src/\_custom/registry/modelCustomization.ts; src/store/aiInfra/slices/aiProvider/action.ts; src/features/ModelSwitchPanel/components/ModelDetailPanel.tsx; src/features/ChatInput/ActionBar/Model/ThinkingLevel3Slider.tsx; src/services/chat/mecha/modelParamsResolver.ts; src/app/\[variants]/(main)/settings/provider/features/ModelList/CreateNewModelModal/ExtendParamsSelect.tsx; src/store/aiInfra/slices/aiProvider/**tests**/action.test.ts; src/services/chat/mecha/modelParamsResolver.test.ts
+- 原因：`gemini-3.1-pro-preview` 在重命名为 `Cotti-Pro` 后，模型详情描述仍显示官方名（含 `Gemini 3 Pro` / `Gemini 3 Flash` 变体）；且 `thinkingLevel3` 期望默认 `low`
+- 方案：将别名描述替换与 thinkingLevel3 默认值逻辑收敛到 `src/_custom/registry/modelCustomization.ts`；上游文件仅做 import + 调用注入。`ModelDetailPanel` 优先使用运行时模型描述（支持别名替换），并新增 `NEXT_PUBLIC_MODEL_ALIAS_DESCRIPTION_REWRITE` 开关（默认开启，`0` 可关闭扩展替换）
+- 回滚：移除上述注入 import/call，并删除 `modelCustomization.ts`
+- 影响：仅影响模型展示文案与 Gemini 3.1 的默认思考等级，不改变其他模型能力
+
+---
+
+### \[2026-02-16] Docker 构建 type-check 修复（slash/menu key 与 OTel 类型）
+
+- 类型: custom
+- 涉及文件: src/app/\[variants]/(main)/agent/profile/features/EditorCanvas/useSlashItems.tsx; src/features/ChatInput/InputEditor/useSlashItems.tsx; src/features/PageEditor/EditorCanvas/useSlashItems.tsx; src/features/Conversation/Messages/Assistant/Actions/index.tsx; src/features/Conversation/Messages/AssistantGroup/Actions/index.tsx; src/features/Conversation/Messages/Supervisor/Actions/index.tsx; src/features/Conversation/Messages/Task/Actions/index.tsx; src/features/Conversation/Messages/User/Actions/index.tsx; packages/observability-otel/src/node.ts
 - 原因：Docker build 阶段 tsgo 因 symbol key 拼接与 `@opentelemetry/auto-instrumentations-node` 类型解析失败而中断
 - 方案：slash items 展示 key 使用 `String()` 显式转换；Actions 子项 key 拼接统一 `String()`；在 OTel import 上添加 `@ts-expect-error` 以避免 Docker 构建中 tsgo 解析失败
 - 回滚：恢复 key 直接使用并移除 `@ts-expect-error`
@@ -15,10 +88,10 @@
 
 ---
 
-### [2026-02-10] 公开仓库安全门禁（方案 B）
+### \[2026-02-10] 公开仓库安全门禁（方案 B）
 
 - 类型: custom
-- 涉及文件: .github/workflows/public-security-gate.yml; scripts/checkPublicRepoSafety.mts; package.json; .env.desktop; src/_custom/routes/dev-login.ts; src/_custom/SECONDARY_DEV_GUIDE.md
+- 涉及文件: .github/workflows/public-security-gate.yml; scripts/checkPublicRepoSafety.mts; package.json; .env.desktop; src/\_custom/routes/dev-login.ts; src/\_custom/SECONDARY_DEV_GUIDE.md
 - 原因：仓库公开后需要降低凭据误提交与 dev bypass 配置误放开的风险
 - 方案：新增 `custom:verify-public-safety` 与 `Public Security Gate` workflow；将 `.env.desktop` 脱敏；`/api/dev/login` 默认仅接受请求头 token，关闭 query token（需显式开启 `DEV_AUTH_BYPASS_ALLOW_QUERY_TOKEN=1`）
 - 回滚：删除 public-security-gate workflow 与校验脚本，恢复 `.env.desktop` 与 dev-login token 读取逻辑
@@ -26,10 +99,10 @@
 
 ---
 
-### [2026-02-09] Google/Vertex 400 Hotfix 回归门禁（P0 自动增长）
+### \[2026-02-09] Google/Vertex 400 Hotfix 回归门禁（P0 自动增长）
 
 - 类型: custom
-- 涉及文件: .github/workflows/custom-hotfix-gate.yml; scripts/checkCustomHotfixes.mts; package.json; packages/model-runtime/src/core/contextBuilders/google.test.ts; packages/model-runtime/src/_custom/mergeGoogleFunctionResponses.test.ts; src/_custom/SECONDARY_DEV_GUIDE.md
+- 涉及文件: .github/workflows/custom-hotfix-gate.yml; scripts/checkCustomHotfixes.mts; package.json; packages/model-runtime/src/core/contextBuilders/google.test.ts; packages/model-runtime/src/\_custom/mergeGoogleFunctionResponses.test.ts; src/\_custom/SECONDARY_DEV_GUIDE.md
 - 原因：upstream-sync/dev 合并到 main 时，关键 400 hotfix 容易被冲掉或行为回归，需要强制门禁与快速定位
 - 方案：新增 `Custom Hotfix Gate` 工作流，仅对 `upstream-sync -> main` 与 `dev -> main` PR 强制执行；失败输出 `Hotfix Regression Failed`；P0 回归用例采用 `[HOTFIX-P0]` 前缀并由脚本自动识别，实现守卫自动增长
 - 回滚：删除 `custom-hotfix-gate.yml` 与新增脚本命令，并移除测试标题前缀与脚本前缀扫描逻辑
@@ -37,10 +110,10 @@
 
 ---
 
-### [2026-02-09] 支持通过环境变量自定义浏览器 Tab 品牌名称
+### \[2026-02-09] 支持通过环境变量自定义浏览器 Tab 品牌名称
 
 - 类型: custom
-- 涉及文件: src/components/PageTitle/index.tsx; src/app/[variants]/metadata.ts
+- 涉及文件: src/components/PageTitle/index.tsx; src/app/\[variants]/metadata.ts
 - 原因：默认 Tab 标题使用 business const 中的 BRANDING_NAME（OneAI），与部署环境中的 `NEXT_PUBLIC_BRAND_NAME` 不一致
 - 方案：标题计算优先读取 `getBrandName()`（来自 `NEXT_PUBLIC_BRAND_NAME`），为空时回退到 BRANDING_NAME
 - 回滚：移除 `@/_custom/registry/branding` 注入并恢复 BRANDING_NAME 直读
@@ -48,21 +121,21 @@
 
 ---
 
-### [2026-02-09] Fork 未授权时提示重新登录社区
+### \[2026-02-09] Fork 未授权时提示重新登录社区
 
 - 类型: custom
-- 涉及文件: src/app/[variants]/(main)/community/(detail)/agent/features/Sidebar/ActionButton/ForkAndChat.tsx; src/app/[variants]/(main)/community/(detail)/group_agent/features/Sidebar/ActionButton/ForkGroupAndChat.tsx; src/locales/default/discover.ts
-- 原因：Market 访问令牌失效/缺失时 fork 会返回 Unauthorized，原逻辑只显示通用失败提示
+- 涉及文件: src/app/\[variants]/(main)/community/(detail)/agent/features/Sidebar/ActionButton/ForkAndChat.tsx; src/app/\[variants]/(main)/community/(detail)/group_agent/features/Sidebar/ActionButton/ForkGroupAndChat.tsx; src/locales/default/discover.ts
+- 原因：Market 访问令牌失效 / 缺失时 fork 会返回 Unauthorized，原逻辑只显示通用失败提示
 - 方案：捕获 Unauthorized 文案并提示用户先登录社区后重试
 - 回滚：移除 Unauthorized 分支提示逻辑与对应文案
 - 影响：仅影响 fork 失败提示，不改变后端调用逻辑
 
 ---
 
-### [2026-02-08] 增加关键 Hotfix 防回归校验脚本
+### \[2026-02-08] 增加关键 Hotfix 防回归校验脚本
 
 - 类型: custom
-- 涉及文件: scripts/checkCustomHotfixes.mts; package.json; src/_custom/SECONDARY_DEV_GUIDE.md
+- 涉及文件: scripts/checkCustomHotfixes.mts; package.json; src/\_custom/SECONDARY_DEV_GUIDE.md
 - 原因：reset/rebase/upstream-sync 后关键 hotfix 可能被历史重写导致丢失，发布时难以及时发现
 - 方案：新增 `custom:verify-hotfixes` 校验命令，支持检查 HEAD 或指定 refs（如 origin/dev、origin/main）中的关键补丁标记
 - 回滚：删除脚本与 package.json 对应命令，并移除文档说明
@@ -70,10 +143,10 @@
 
 ---
 
-### [2026-02-08] 修复 Vertex/Gemini 并行工具调用 400（functionResponse 对齐）
+### \[2026-02-08] 修复 Vertex/Gemini 并行工具调用 400（functionResponse 对齐）
 
 - 类型: hotfix
-- 涉及文件: packages/model-runtime/src/_custom/mergeGoogleFunctionResponses.ts; packages/model-runtime/src/_custom/mergeGoogleFunctionResponses.test.ts; packages/model-runtime/src/core/contextBuilders/google.ts; packages/model-runtime/src/core/contextBuilders/google.test.ts
+- 涉及文件: packages/model-runtime/src/\_custom/mergeGoogleFunctionResponses.ts; packages/model-runtime/src/\_custom/mergeGoogleFunctionResponses.test.ts; packages/model-runtime/src/core/contextBuilders/google.ts; packages/model-runtime/src/core/contextBuilders/google.test.ts
 - 原因：Google/Vertex 在单轮并行 functionCall 后要求下一轮为同一条 user 消息且 functionResponse parts 数量严格对齐；分成多条 tool 回包会触发 400 INVALID_ARGUMENT
 - 方案：在 Google context builder 中合并连续的 functionResponse user turn，确保并行工具结果以单条 user + 多 parts 回传
 - 回滚：删除 mergeGoogleFunctionResponses 注入与相关测试
