@@ -9,6 +9,7 @@ import { UPLOAD_NETWORK_ERROR } from '@/services/upload';
 import { type UploadFileListDispatch } from '@/store/file/reducers/uploadFileList';
 import { uploadFileListReducer } from '@/store/file/reducers/uploadFileList';
 import { type StoreSetter } from '@/store/types';
+import { AsyncTaskStatus, type IAsyncTaskError } from '@/types/asyncTask';
 import { type FileListItem } from '@/types/files';
 import { type UploadFileItem } from '@/types/files/upload';
 import { isChunkingUnsupported } from '@/utils/isChunkingUnsupported';
@@ -18,6 +19,20 @@ import { setNamespace } from '@/utils/storeDebug';
 import { type FileStore } from '../../store';
 
 const n = setNamespace('chat');
+
+const toAsyncTaskError = (error: unknown): IAsyncTaskError => {
+  const reason =
+    typeof error === 'string'
+      ? error
+      : error instanceof Error
+        ? error.message
+        : t('upload.unknownError', { ns: 'error', reason: 'Unknown error' });
+
+  return {
+    body: { detail: reason },
+    name: error instanceof Error ? error.name : 'ParseFileContentError',
+  };
+};
 
 type Setter = StoreSetter<FileStore>;
 export const createFileSlice = (set: Setter, get: () => FileStore, _api?: unknown) =>
@@ -163,8 +178,49 @@ export class FileActionImpl {
       // image don't need to be chunked and embedding
       if (isChunkingUnsupported(file.type)) return;
 
-      const data = await ragService.parseFileContent(fileResult.id);
-      console.log('parseFileContent data:', data);
+      dispatchChatUploadFileList({
+        id: fileResult.id,
+        type: 'updateFile',
+        value: {
+          status: 'processing',
+          tasks: undefined,
+          uploadState: { progress: 100, restTime: 0, speed: 0 },
+        },
+      });
+
+      try {
+        await ragService.parseFileContent(fileResult.id);
+
+        dispatchChatUploadFileList({
+          id: fileResult.id,
+          type: 'updateFile',
+          value: {
+            status: 'success',
+            tasks: undefined,
+          },
+        });
+      } catch (error) {
+        notification.error({
+          description:
+            typeof error === 'string'
+              ? error
+              : t('upload.unknownError', { ns: 'error', reason: (error as Error).message }),
+          message: t('upload.uploadFailed', { ns: 'error' }),
+        });
+
+        dispatchChatUploadFileList({
+          id: fileResult.id,
+          type: 'updateFile',
+          value: {
+            status: 'success',
+            tasks: {
+              chunkingError: toAsyncTaskError(error),
+              chunkingStatus: AsyncTaskStatus.Error,
+              finishEmbedding: false,
+            },
+          },
+        });
+      }
     });
 
     await Promise.all(pools);

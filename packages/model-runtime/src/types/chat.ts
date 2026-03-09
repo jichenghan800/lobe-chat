@@ -33,6 +33,17 @@ interface UserMessageContentPartImage {
   type: 'image_url';
 }
 
+interface UserMessageContentPartFile {
+  file_url: {
+    id?: string;
+    mimeType?: string;
+    name?: string;
+    size?: number;
+    url: string;
+  };
+  type: 'file_url';
+}
+
 interface UserMessageContentPartVideo {
   type: 'video_url';
   video_url: { url: string };
@@ -41,6 +52,7 @@ interface UserMessageContentPartVideo {
 export type UserMessageContentPart =
   | UserMessageContentPartText
   | UserMessageContentPartImage
+  | UserMessageContentPartFile
   | UserMessageContentPartVideo
   | UserMessageContentPartThinking;
 

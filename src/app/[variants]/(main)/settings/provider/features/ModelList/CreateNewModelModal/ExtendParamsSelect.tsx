@@ -5,6 +5,7 @@ import { type ReactNode } from 'react';
 import { memo, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
+import { getThinkingLevel3Default } from '@/_custom/registry/modelCustomization';
 import EffortSlider from '@/features/ChatInput/ActionBar/Model/EffortSlider';
 import GPT5ReasoningEffortSlider from '@/features/ChatInput/ActionBar/Model/GPT5ReasoningEffortSlider';
 import GPT51ReasoningEffortSlider from '@/features/ChatInput/ActionBar/Model/GPT51ReasoningEffortSlider';
@@ -250,7 +251,7 @@ const ExtendParamsSelect = memo<ExtendParamsSelectProps>(({ value, onChange }) =
       thinkingBudget: <ThinkingBudgetSlider defaultValue={2 * 1024} />,
       thinkingLevel: <ThinkingLevelSlider value="high" />,
       thinkingLevel2: <ThinkingLevel2Slider value="high" />,
-      thinkingLevel3: <ThinkingLevel3Slider value="high" />,
+      thinkingLevel3: <ThinkingLevel3Slider value={getThinkingLevel3Default()} />,
       urlContext: <Switch checked disabled />,
     }),
     [],

@@ -1,3 +1,4 @@
+import { INBOX_SESSION_ID } from '@lobechat/const';
 import { type UIChatMessage } from '@lobechat/types';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { type Mock } from 'vitest';
@@ -8,6 +9,7 @@ import { mutate } from '@/libs/swr';
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
 import { topicService } from '@/services/topic';
+import { useAgentStore } from '@/store/agent';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { topicMapKey } from '@/store/chat/utils/topicMapKey';
 import { useSessionStore } from '@/store/session';
@@ -82,6 +84,16 @@ beforeEach(() => {
       pinnedSessions: [],
       sessions: [],
       isSessionsFirstFetchFinished: false,
+    },
+    false,
+  );
+  useAgentStore.setState(
+    {
+      activeAgentId: undefined,
+      agentMap: {},
+      builtinAgentIdMap: {},
+      updateAgentConfigSignal: undefined,
+      updateAgentMetaSignal: undefined,
     },
     false,
   );
@@ -592,6 +604,58 @@ describe('topic action', () => {
 
       // Verify activeTopicId is now null
       expect(useChatStore.getState().activeTopicId).toBeNull();
+    });
+
+    it('should clear enabled related files when switching to a new topic for inbox agent', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const activeAgentId = 'inbox-agent-id';
+
+      await act(async () => {
+        useChatStore.setState({
+          activeAgentId,
+          activeTopicId: 'existing-topic',
+        });
+        useAgentStore.setState({
+          activeAgentId,
+          builtinAgentIdMap: { [INBOX_SESSION_ID]: activeAgentId },
+        });
+      });
+
+      const clearEnabledFilesSpy = vi
+        .spyOn(useAgentStore.getState(), 'clearEnabledFiles')
+        .mockResolvedValue(undefined);
+
+      await act(async () => {
+        await result.current.switchTopic(null, { skipRefreshMessage: true });
+      });
+
+      expect(clearEnabledFilesSpy).toHaveBeenCalledWith(activeAgentId);
+    });
+
+    it('should not clear enabled related files when switching to a new topic for custom agent', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const activeAgentId = 'custom-agent-id';
+
+      await act(async () => {
+        useChatStore.setState({
+          activeAgentId,
+          activeTopicId: 'existing-topic',
+        });
+        useAgentStore.setState({
+          activeAgentId,
+          builtinAgentIdMap: { [INBOX_SESSION_ID]: 'inbox-agent-id' },
+        });
+      });
+
+      const clearEnabledFilesSpy = vi
+        .spyOn(useAgentStore.getState(), 'clearEnabledFiles')
+        .mockResolvedValue(undefined);
+
+      await act(async () => {
+        await result.current.switchTopic(null, { skipRefreshMessage: true });
+      });
+
+      expect(clearEnabledFilesSpy).not.toHaveBeenCalled();
     });
 
     it('should clear new key data when switching to null (group scope)', async () => {

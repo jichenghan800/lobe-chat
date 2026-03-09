@@ -1,5 +1,5 @@
 import { filesPrompts } from '@lobechat/prompts';
-import type { MessageContentPart } from '@lobechat/types';
+import type { ChatFileItem, MessageContentPart } from '@lobechat/types';
 import { imageUrlToBase64 } from '@lobechat/utils/imageToBase64';
 import { parseDataUri } from '@lobechat/utils/uriParser';
 import { isDesktopLocalStaticServerUrl } from '@lobechat/utils/url';
@@ -48,6 +48,13 @@ export interface MessageContentConfig {
 }
 
 export interface UserMessageContentPart {
+  file_url?: {
+    id?: string;
+    mimeType?: string;
+    name?: string;
+    size?: number;
+    url: string;
+  };
   googleThoughtSignature?: string;
   image_url?: {
     detail?: string;
@@ -56,7 +63,7 @@ export interface UserMessageContentPart {
   signature?: string;
   text?: string;
   thinking?: string;
-  type: 'text' | 'image_url' | 'thinking' | 'video_url';
+  type: 'text' | 'image_url' | 'thinking' | 'video_url' | 'file_url';
   video_url?: {
     url: string;
   };
@@ -170,6 +177,11 @@ export class MessageContentProcessor extends BaseProcessor {
       });
     }
 
+    // Keep native PDF parts for Vertex while preserving text injection fallback.
+    if (hasFiles) {
+      contentParts.push(...this.processNativeFileParts(message.fileList || []));
+    }
+
     // Process image content
     if (hasImages && this.config.isCanUseVision?.(this.config.model, this.config.provider)) {
       const imageContentParts = await this.processImageList(message.imageList || []);
@@ -226,6 +238,23 @@ export class MessageContentProcessor extends BaseProcessor {
       ...(message.tool_call_id && { tool_call_id: message.tool_call_id }),
       ...(message.name && { name: message.name }),
     };
+  }
+
+  private processNativeFileParts(fileList: ChatFileItem[]): UserMessageContentPart[] {
+    if (this.config.provider !== 'vertexai') return [];
+
+    return fileList
+      .filter((file) => file.fileType?.toLowerCase() === 'application/pdf' && !!file.url)
+      .map<UserMessageContentPart>((file) => ({
+        file_url: {
+          id: file.id,
+          mimeType: file.fileType,
+          name: file.name,
+          size: file.size,
+          url: file.url,
+        },
+        type: 'file_url',
+      }));
   }
 
   /**

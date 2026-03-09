@@ -10,6 +10,7 @@ import {
 } from 'model-bank';
 import { type SWRResponse } from 'swr';
 
+import { resolveCustomizedModelDescription } from '@/_custom/registry/modelCustomization';
 import { mapProviderListName, resolveProviderName } from '@/_custom/registry/providerName';
 import { filterHiddenProviders } from '@/_custom/registry/providerVisibility';
 import { mutate, useClientDataSWR } from '@/libs/swr';
@@ -65,10 +66,11 @@ const createProviderModelCollector = (
 };
 
 export const normalizeChatModel = async (model: EnabledAiModel): Promise<ProviderModelListItem> => {
-  const [description, pricing] = await Promise.all([
+  const [fallbackDescription, pricing] = await Promise.all([
     getModelPropertyWithFallback<string | undefined>(model.id, 'description', model.providerId),
     getModelPropertyWithFallback<Pricing | undefined>(model.id, 'pricing', model.providerId),
   ]);
+  const description = await resolveCustomizedModelDescription({ fallbackDescription, model });
 
   return {
     abilities: (model.abilities || {}) as ModelAbilities,

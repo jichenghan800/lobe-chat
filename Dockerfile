@@ -95,7 +95,11 @@ RUN set -e && \
 COPY . .
 
 # run build standalone for docker version
-RUN npm run build:docker
+# Avoid triggering the full lint pipeline in Docker build, which can fail on
+# workspace-only type checks unrelated to runtime bundles.
+RUN ./node_modules/.bin/tsx scripts/prebuild.mts && \
+    NODE_OPTIONS=--max-old-space-size=8192 DOCKER=true ./node_modules/.bin/next build --webpack && \
+    npm run build-sitemap
 
 # Prepare desktop export assets for Electron packaging (if generated)
 RUN set -e && \
@@ -136,6 +140,8 @@ COPY --from=builder /app/scripts/_shared /app/scripts/_shared
 RUN set -e && \
     addgroup -S -g 1001 nodejs && \
     adduser -D -G nodejs -H -S -h /app -u 1001 nextjs && \
+    mkdir -p /app/node_modules/@napi-rs && \
+    node -e "const fs=require('node:fs'); const path=require('node:path'); const root='/app/node_modules'; const scopeDir=path.join(root,'@napi-rs'); const canvasDir=path.join(scopeDir,'canvas'); if (fs.existsSync(canvasDir)) { const canvasPkg=JSON.parse(fs.readFileSync(path.join(canvasDir,'package.json'),'utf8')); for (const [depName, version] of Object.entries(canvasPkg.optionalDependencies || {})) { if (!depName.startsWith('@napi-rs/canvas-')) continue; const shortName=depName.split('/')[1]; const targetDir=path.join(root,'.pnpm','@napi-rs+' + shortName + '@' + version,'node_modules','@napi-rs',shortName); if (!fs.existsSync(targetDir)) continue; const linkPath=path.join(scopeDir,shortName); fs.rmSync(linkPath,{ force:true, recursive:true }); fs.symlinkSync(path.relative(scopeDir,targetDir),linkPath,'dir'); } }" && \
     chown -R nextjs:nodejs /app /etc/proxychains4.conf
 
 ## Production image, copy all the files and run next

@@ -134,6 +134,86 @@ describe('KnowledgeInjector', () => {
     });
   });
 
+  describe('vertex native pdf', () => {
+    it('should append native pdf file parts for vertex agent files', async () => {
+      const provider = new KnowledgeInjector({
+        fileContents: [
+          {
+            content: 'Extracted PDF text',
+            fileId: 'file-pdf-1',
+            fileType: 'application/pdf',
+            filename: 'license.pdf',
+            size: 2048,
+            url: 'https://example.com/license.pdf',
+          },
+        ],
+        provider: 'vertexai',
+      });
+
+      const context = createContext([{ content: 'Analyze the file', id: 'user-1', role: 'user' }]);
+
+      const result = await provider.process(context);
+
+      expect(Array.isArray(result.messages[0].content)).toBe(true);
+      expect(result.messages[0].content).toEqual([
+        {
+          text: `<agent_knowledge>
+<instruction>The following files are available. Refer to their content directly to answer questions. No knowledge bases are associated.</instruction>
+<files totalCount="1">
+<file id="file-pdf-1" name="license.pdf">
+Extracted PDF text
+</file>
+</files>
+</agent_knowledge>`,
+          type: 'text',
+        },
+        {
+          file_url: {
+            id: 'file-pdf-1',
+            mimeType: 'application/pdf',
+            name: 'license.pdf',
+            size: 2048,
+            url: 'https://example.com/license.pdf',
+          },
+          type: 'file_url',
+        },
+      ]);
+    });
+
+    it('should inject native pdf parts without empty xml fallback when extracted text is empty', async () => {
+      const provider = new KnowledgeInjector({
+        fileContents: [
+          {
+            content: '',
+            fileId: 'file-pdf-1',
+            fileType: 'application/pdf',
+            filename: 'scan.pdf',
+            size: 1024,
+            url: 'https://example.com/scan.pdf',
+          },
+        ],
+        provider: 'vertexai',
+      });
+
+      const context = createContext([{ content: 'Analyze the file', id: 'user-1', role: 'user' }]);
+
+      const result = await provider.process(context);
+
+      expect(result.messages[0].content).toEqual([
+        {
+          file_url: {
+            id: 'file-pdf-1',
+            mimeType: 'application/pdf',
+            name: 'scan.pdf',
+            size: 1024,
+            url: 'https://example.com/scan.pdf',
+          },
+          type: 'file_url',
+        },
+      ]);
+    });
+  });
+
   describe('integration with BaseFirstUserContentProvider', () => {
     it('should append to existing system injection message', async () => {
       const provider = new KnowledgeInjector({

@@ -3,6 +3,9 @@ export interface FileContent {
   error?: string;
   fileId: string;
   filename: string;
+  fileType?: string;
+  size?: number;
+  url?: string;
 }
 
 /**

@@ -1,3 +1,5 @@
+import { getThinkingLevel3Default } from '@/_custom/registry/modelCustomization';
+
 import { type CreatedLevelSliderProps } from './createLevelSlider';
 import { createLevelSliderComponent } from './createLevelSlider';
 
@@ -8,7 +10,7 @@ export type ThinkingLevel3SliderProps = CreatedLevelSliderProps<ThinkingLevel3>;
 
 const ThinkingLevel3Slider = createLevelSliderComponent<ThinkingLevel3>({
   configKey: 'thinkingLevel',
-  defaultValue: 'high',
+  defaultValue: getThinkingLevel3Default(),
   levels: THINKING_LEVELS_3,
   style: { minWidth: 160 },
 });

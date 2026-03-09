@@ -150,6 +150,46 @@ describe('google contextBuilders', () => {
       });
     });
 
+    it('should convert gs:// PDF file parts for Vertex AI', async () => {
+      const content: UserMessageContentPart = {
+        file_url: {
+          id: 'file-1',
+          mimeType: 'application/pdf',
+          name: 'test.pdf',
+          size: 123,
+          url: 'gs://lobechat-cotti/vertex-native-pdf/chat-upload/hash/test.pdf',
+        },
+        type: 'file_url',
+      };
+
+      const result = await buildGooglePart(content, { isVertexAi: true });
+
+      expect(result).toEqual({
+        fileData: {
+          fileUri: 'gs://lobechat-cotti/vertex-native-pdf/chat-upload/hash/test.pdf',
+          mimeType: 'application/pdf',
+        },
+        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+      });
+    });
+
+    it('should ignore non-gs PDF file parts for Vertex AI fallback', async () => {
+      const content: UserMessageContentPart = {
+        file_url: {
+          id: 'file-1',
+          mimeType: 'application/pdf',
+          name: 'test.pdf',
+          size: 123,
+          url: 'https://example.com/test.pdf',
+        },
+        type: 'file_url',
+      };
+
+      const result = await buildGooglePart(content, { isVertexAi: true });
+
+      expect(result).toBeUndefined();
+    });
+
     it('should return undefined for unsupported SVG image (base64)', async () => {
       const svgBase64 =
         'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==';
@@ -244,6 +284,41 @@ describe('google contextBuilders', () => {
           { text: 'Check this image:', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE },
           {
             inlineData: { data: '...', mimeType: 'image/png' },
+            thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+          },
+        ],
+        role: 'user',
+      });
+    });
+
+    it('should include Vertex PDF fileData parts in user messages', async () => {
+      const message: OpenAIChatMessage = {
+        content: [
+          { text: 'Read this PDF', type: 'text' },
+          {
+            file_url: {
+              id: 'file-1',
+              mimeType: 'application/pdf',
+              name: 'test.pdf',
+              size: 123,
+              url: 'gs://lobechat-cotti/vertex-native-pdf/chat-upload/hash/test.pdf',
+            },
+            type: 'file_url',
+          },
+        ],
+        role: 'user',
+      };
+
+      const converted = await buildGoogleMessage(message, undefined, { isVertexAi: true });
+
+      expect(converted).toEqual({
+        parts: [
+          { text: 'Read this PDF', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE },
+          {
+            fileData: {
+              fileUri: 'gs://lobechat-cotti/vertex-native-pdf/chat-upload/hash/test.pdf',
+              mimeType: 'application/pdf',
+            },
             thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
           },
         ],
@@ -913,7 +988,9 @@ describe('google contextBuilders', () => {
 
       expect(contents).toEqual([
         {
-          parts: [{ text: 'Need weather and time', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          parts: [
+            { text: 'Need weather and time', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE },
+          ],
           role: 'user',
         },
         {
@@ -954,8 +1031,6 @@ describe('google contextBuilders', () => {
         },
       ]);
     });
-
-    
 
     it('[HOTFIX-P0] should merge three parallel tool responses into one user turn', async () => {
       const messages: OpenAIChatMessage[] = [
@@ -1138,7 +1213,9 @@ describe('google contextBuilders', () => {
 
       expect(contents).toEqual([
         {
-          parts: [{ text: 'Need weather and time', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }],
+          parts: [
+            { text: 'Need weather and time', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE },
+          ],
           role: 'user',
         },
         {
@@ -1571,6 +1648,42 @@ describe('google contextBuilders', () => {
         type: 'string',
       });
     });
+
+    it('should strip unsupported JSON Schema keywords for Google compatibility', () => {
+      const tool: ChatCompletionTool = {
+        function: {
+          description: 'A tool with unsupported schema keywords',
+          name: 'schemaTool',
+          parameters: {
+            properties: {
+              query: {
+                default: 'hello',
+                examples: ['hello', 'world'],
+                type: 'string',
+              },
+              nested: {
+                properties: {
+                  mode: {
+                    default: 'strict',
+                    examples: ['strict'],
+                    type: 'string',
+                  },
+                },
+                type: 'object',
+              },
+            },
+            type: 'object',
+          },
+        },
+        type: 'function',
+      };
+
+      const result = buildGoogleTool(tool);
+      const properties = result.parameters?.properties as any;
+
+      expect(properties.query).toEqual({ type: 'string' });
+      expect(properties.nested.properties.mode).toEqual({ type: 'string' });
+    });
   });
 
   describe('buildGoogleTools', () => {
@@ -1656,6 +1769,57 @@ describe('google contextBuilders', () => {
       expect(googleTools![0].functionDeclarations).toHaveLength(2);
       expect(googleTools![0].functionDeclarations![0].name).toBe('get_weather');
       expect(googleTools![0].functionDeclarations![1].name).toBe('get_time');
+    });
+
+    it('[HOTFIX-P0] should deduplicate tools with the same function name', () => {
+      const tools: ChatCompletionTool[] = [
+        {
+          function: {
+            description: 'Search the web',
+            name: 'lobe-web-browsing____search____builtin',
+            parameters: {
+              properties: { query: { type: 'string' } },
+              required: ['query'],
+              type: 'object',
+            },
+          },
+          type: 'function',
+        },
+        {
+          function: {
+            description: 'Get weather',
+            name: 'get_weather',
+            parameters: {
+              properties: { city: { type: 'string' } },
+              required: ['city'],
+              type: 'object',
+            },
+          },
+          type: 'function',
+        },
+        {
+          function: {
+            description: 'Search the web (duplicate)',
+            name: 'lobe-web-browsing____search____builtin',
+            parameters: {
+              properties: { query: { type: 'string' } },
+              required: ['query'],
+              type: 'object',
+            },
+          },
+          type: 'function',
+        },
+      ];
+
+      const googleTools = buildGoogleTools(tools);
+
+      expect(googleTools).toHaveLength(1);
+      expect(googleTools![0].functionDeclarations).toHaveLength(2);
+      expect(googleTools![0].functionDeclarations![0].name).toBe(
+        'lobe-web-browsing____search____builtin',
+      );
+      expect(googleTools![0].functionDeclarations![0].description).toBe('Search the web');
+      expect(googleTools![0].functionDeclarations![1].name).toBe('get_weather');
     });
   });
 });

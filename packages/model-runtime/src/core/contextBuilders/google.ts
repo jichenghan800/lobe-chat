@@ -26,16 +26,20 @@ const isImageTypeSupported = (mimeType: string | null): boolean => {
 };
 
 /**
- * Magic thoughtSignature
- * @see https://ai.google.dev/gemini-api/docs/thought-signatures#model-behavior:~:text=context_engineering_is_the_way_to_go
+ * Magic thoughtSignature to bypass Gemini thought signature validation.
+ * Use `skip_thought_signature_validator` instead of `context_engineering_is_the_way_to_go`
+ * because Vertex AI only accepts `skip_thought_signature_validator`.
+ * @see https://ai.google.dev/gemini-api/docs/thought-signatures
+ * @see https://github.com/pydantic/pydantic-ai/issues/3881
  */
-export const GEMINI_MAGIC_THOUGHT_SIGNATURE = 'context_engineering_is_the_way_to_go';
+export const GEMINI_MAGIC_THOUGHT_SIGNATURE = 'skip_thought_signature_validator';
 
 /**
  * Convert OpenAI content part to Google Part format
  */
 export const buildGooglePart = async (
   content: UserMessageContentPart,
+  options: { isVertexAi?: boolean } = {},
 ): Promise<Part | undefined> => {
   switch (content.type) {
     default: {
@@ -106,6 +110,22 @@ export const buildGooglePart = async (
 
       throw new TypeError(`currently we don't support video url: ${content.video_url.url}`);
     }
+
+    case 'file_url': {
+      if (!options.isVertexAi) return undefined;
+
+      const { mimeType, url } = content.file_url;
+
+      if (!url?.startsWith('gs://')) return undefined;
+
+      return {
+        fileData: {
+          fileUri: url,
+          mimeType: mimeType || 'application/octet-stream',
+        },
+        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+      };
+    }
   }
 };
 
@@ -115,6 +135,7 @@ export const buildGooglePart = async (
 export const buildGoogleMessage = async (
   message: OpenAIChatMessage,
   toolCallNameMap?: Map<string, string>,
+  options: { isVertexAi?: boolean } = {},
 ): Promise<Content> => {
   const content = message.content as string | UserMessageContentPart[];
 
@@ -154,7 +175,7 @@ export const buildGoogleMessage = async (
     if (typeof content === 'string')
       return [{ text: content, thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }];
 
-    const parts = await Promise.all(content.map(async (c) => await buildGooglePart(c)));
+    const parts = await Promise.all(content.map(async (c) => await buildGooglePart(c, options)));
     return parts.filter(Boolean) as Part[];
   };
 
@@ -167,7 +188,10 @@ export const buildGoogleMessage = async (
 /**
  * Convert messages from the OpenAI format to Google GenAI SDK format
  */
-export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promise<Content[]> => {
+export const buildGoogleMessages = async (
+  messages: OpenAIChatMessage[],
+  options: { isVertexAi?: boolean } = {},
+): Promise<Content[]> => {
   const toolCallNameMap = new Map<string, string>();
 
   // Build tool call id to name mapping
@@ -183,7 +207,7 @@ export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promis
 
   const pools = messages
     .filter((message) => message.role !== 'function')
-    .map(async (msg) => await buildGoogleMessage(msg, toolCallNameMap));
+    .map(async (msg) => await buildGoogleMessage(msg, toolCallNameMap, options));
 
   const contents = await Promise.all(pools);
 
@@ -230,6 +254,12 @@ export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promis
 };
 
 /**
+ * JSON Schema keywords that cause Google GenAI / Vertex AI SDK validation errors.
+ * Other unsupported keywords are silently ignored by the API, so only strip these.
+ */
+const UNSUPPORTED_SCHEMA_KEYS = new Set(['examples', 'default']);
+
+/**
  * Sanitize JSON Schema for Google GenAI compatibility
  * Google's API doesn't support certain JSON Schema keywords like 'const'
  * This function recursively processes the schema and converts unsupported keywords
@@ -245,6 +275,9 @@ const sanitizeSchemaForGoogle = (schema: Record<string, any>): Record<string, an
   const result: Record<string, any> = {};
 
   for (const [key, value] of Object.entries(schema)) {
+    // Strip unsupported JSON Schema keywords (e.g. examples, default, $schema)
+    if (UNSUPPORTED_SCHEMA_KEYS.has(key)) continue;
+
     // Convert 'const' to 'enum' with single value (Google doesn't support 'const')
     if (key === 'const') {
       result['enum'] = [value];
@@ -292,7 +325,7 @@ export const buildGoogleTool = (tool: ChatCompletionTool): FunctionDeclaration =
     name: functionDeclaration.name,
     parameters: {
       description: parameters?.description,
-      properties: properties,
+      properties,
       required: parameters?.required,
       type: SchemaType.OBJECT,
     },
@@ -307,9 +340,19 @@ export const buildGoogleTools = (
 ): GoogleFunctionCallTool[] | undefined => {
   if (!tools || tools.length === 0) return;
 
+  // Deduplicate by function name to prevent Vertex AI 400 error:
+  // "Duplicate function declaration found: xxx"
+  const seenToolNames = new Set<string>();
+  const uniqueTools = tools.filter((tool) => {
+    const name = tool.function.name;
+    if (seenToolNames.has(name)) return false;
+    seenToolNames.add(name);
+    return true;
+  });
+
   return [
     {
-      functionDeclarations: tools.map((tool) => buildGoogleTool(tool)),
+      functionDeclarations: uniqueTools.map((tool) => buildGoogleTool(tool)),
     },
   ];
 };

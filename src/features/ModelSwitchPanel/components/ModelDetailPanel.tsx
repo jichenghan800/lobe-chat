@@ -29,6 +29,7 @@ import { type FC, type ReactNode } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { resolveModelDetailDescription } from '@/_custom/registry/modelCustomization';
 import { formatTokenNumber } from '@/utils/format';
 import { formatPriceByCurrency, getTextInputUnitRate, getTextOutputUnitRate } from '@/utils/index';
 
@@ -242,7 +243,13 @@ const ModelDetailPanel: FC<ModelDetailPanelProps> = memo(({ extraControls, model
           </Text>
         </Flexbox>
         {model.description && (
-          <div className={styles.description}>{tModels(`${model.id}.description`)}</div>
+          <div className={styles.description}>
+            {resolveModelDetailDescription({
+              fallbackDescription: tModels(`${model.id}.description`),
+              modelId: model.id,
+              modelDescription: model.description,
+            })}
+          </div>
         )}
       </Flexbox>
       <Divider size="small" />

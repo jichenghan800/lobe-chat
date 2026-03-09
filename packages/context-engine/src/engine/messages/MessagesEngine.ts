@@ -185,6 +185,7 @@ export class MessagesEngine {
       new KnowledgeInjector({
         fileContents: knowledge?.fileContents,
         knowledgeBases: knowledge?.knowledgeBases,
+        provider,
       }),
 
       // =============================================
@@ -228,9 +229,9 @@ export class MessagesEngine {
       new PageEditorContextInjector({
         enabled: isPageEditorEnabled,
         // Use direct pageContentContext if provided (server-side), otherwise build from initialContext + stepContext (frontend)
-        pageContentContext: pageContentContext
-          ? pageContentContext
-          : initialContext?.pageEditor
+        pageContentContext:
+          pageContentContext ||
+          (initialContext?.pageEditor
             ? {
                 markdown: initialContext.pageEditor.markdown,
                 metadata: {
@@ -241,7 +242,7 @@ export class MessagesEngine {
                 // Use latest XML from stepContext if available, otherwise fallback to initial XML
                 xml: stepContext?.stepPageEditor?.xml || initialContext.pageEditor.xml,
               }
-            : undefined,
+            : undefined),
       }),
 
       // 11. GTD Todo injection (conditionally added, at end of last user message)

@@ -15,6 +15,8 @@ import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
 import { topicService } from '@/services/topic';
+import { getAgentStoreState } from '@/store/agent';
+import { builtinAgentSelectors } from '@/store/agent/selectors';
 import { type ChatStore } from '@/store/chat';
 import { topicMapKey } from '@/store/chat/utils/topicMapKey';
 import { useGlobalStore } from '@/store/global';
@@ -495,6 +497,7 @@ export class ChatTopicActionImpl {
     const opts = options ?? {};
 
     const { activeAgentId, activeGroupId } = this.#get();
+    const shouldClearRelatedFiles = !id && !!activeAgentId && !activeGroupId;
 
     // Clear the _new key data in the following cases:
     // 1. When id is null or undefined (switching to empty topic state)
@@ -523,6 +526,14 @@ export class ChatTopicActionImpl {
       false,
       n('toggleTopic'),
     );
+
+    if (shouldClearRelatedFiles) {
+      const agentStore = getAgentStoreState();
+
+      if (builtinAgentSelectors.inboxAgentId(agentStore) === activeAgentId) {
+        void agentStore.clearEnabledFiles(activeAgentId);
+      }
+    }
 
     if (id) {
       this.#get().clearUnreadCompletedTopic(id);

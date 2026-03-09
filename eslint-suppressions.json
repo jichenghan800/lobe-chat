@@ -773,11 +773,6 @@
       "count": 1
     }
   },
-  "src/store/file/slices/chat/action.ts": {
-    "no-console": {
-      "count": 1
-    }
-  },
   "src/store/file/slices/chunk/action.ts": {
     "no-unused-private-class-members": {
       "count": 1
