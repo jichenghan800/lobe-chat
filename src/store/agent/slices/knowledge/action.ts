@@ -49,6 +49,26 @@ export class KnowledgeSliceActionImpl {
     await internal_refreshAgentKnowledge();
   };
 
+  clearEnabledFiles = async (agentId = this.#get().activeAgentId): Promise<void> => {
+    const { internal_refreshAgentConfig, agentMap } = this.#get();
+    if (!agentId) return;
+
+    const files =
+      (agentMap[agentId] as { files?: Array<{ enabled?: boolean; id: string }> } | undefined)
+        ?.files || [];
+
+    const enabledFileIds = files
+      .filter((file: { enabled?: boolean; id: string }) => file.enabled)
+      .map((file: { id: string }) => file.id);
+
+    if (enabledFileIds.length === 0) return;
+
+    await Promise.all(
+      enabledFileIds.map((id: string) => agentService.toggleFile(agentId, id, false)),
+    );
+    await internal_refreshAgentConfig(agentId);
+  };
+
   internal_refreshAgentKnowledge = async (): Promise<void> => {
     await mutate([FETCH_AGENT_KNOWLEDGE_KEY, this.#get().activeAgentId]);
   };

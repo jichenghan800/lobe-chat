@@ -266,6 +266,74 @@ describe('KnowledgeSlice Actions', () => {
     });
   });
 
+  describe('clearEnabledFiles', () => {
+    it('should not call service if no activeAgentId', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      await act(async () => {
+        await result.current.clearEnabledFiles();
+      });
+
+      expect(agentService.toggleFile).not.toHaveBeenCalled();
+    });
+
+    it('should not call service if there are no enabled files', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      act(() => {
+        useAgentStore.setState({
+          activeAgentId: 'agent-1',
+          agentMap: {
+            'agent-1': {
+              files: [{ enabled: false, id: 'file-1', name: 'file-1.pdf' }],
+            } as any,
+          },
+        });
+      });
+
+      await act(async () => {
+        await result.current.clearEnabledFiles();
+      });
+
+      expect(agentService.toggleFile).not.toHaveBeenCalled();
+    });
+
+    it('should disable all enabled files and refresh config once', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      vi.mocked(agentService.toggleFile).mockResolvedValue(undefined as any);
+
+      act(() => {
+        useAgentStore.setState({
+          activeAgentId: 'agent-1',
+          agentMap: {
+            'agent-1': {
+              files: [
+                { enabled: true, id: 'file-1', name: 'file-1.pdf' },
+                { enabled: false, id: 'file-2', name: 'file-2.pdf' },
+                { enabled: true, id: 'file-3', name: 'file-3.pdf' },
+              ],
+            } as any,
+          },
+        });
+      });
+
+      const refreshSpy = vi
+        .spyOn(result.current, 'internal_refreshAgentConfig')
+        .mockResolvedValue(undefined);
+
+      await act(async () => {
+        await result.current.clearEnabledFiles();
+      });
+
+      expect(agentService.toggleFile).toHaveBeenCalledTimes(2);
+      expect(agentService.toggleFile).toHaveBeenCalledWith('agent-1', 'file-1', false);
+      expect(agentService.toggleFile).toHaveBeenCalledWith('agent-1', 'file-3', false);
+      expect(refreshSpy).toHaveBeenCalledWith('agent-1');
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('useFetchFilesAndKnowledgeBases', () => {
     it('should fetch files and knowledge bases for active agent', async () => {
       const mockData = [
