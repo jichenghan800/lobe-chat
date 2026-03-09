@@ -30,11 +30,38 @@ const checks: HotfixCheck[] = [
     ],
   },
   {
+    file: 'packages/model-runtime/src/core/contextBuilders/google.ts',
+    name: 'Google tool declaration dedupe guard',
+    needles: ['const seenToolNames = new Set<string>();', 'functionDeclarations: uniqueTools.map'],
+  },
+  {
+    file: 'packages/model-runtime/src/core/contextBuilders/google.ts',
+    name: 'Google schema sanitizer guard',
+    needles: [
+      "const UNSUPPORTED_SCHEMA_KEYS = new Set(['examples', 'default']);",
+      'if (UNSUPPORTED_SCHEMA_KEYS.has(key)) continue;',
+    ],
+  },
+  {
     file: 'packages/model-runtime/src/core/contextBuilders/google.test.ts',
     name: 'Parallel tool response regression test',
     // Auto-growing: require the presence of HOTFIX-P0 regression titles.
     needles: [HOTFIX_REGRESSION_TITLE],
     minMatches: 3,
+  },
+  {
+    file: 'packages/model-runtime/src/providers/google/thinkingResolver.ts',
+    name: 'Google includeThoughts safety guard',
+    needles: [
+      'if (!thinkingBudget && !thinkingLevel && !isThinkingEnabledModel(model)) return undefined;',
+      "if (typeof resolvedBudget === 'number') return resolvedBudget !== 0 ? true : undefined;",
+      'return thinkingLevel ? true : undefined;',
+    ],
+  },
+  {
+    file: 'packages/model-runtime/src/providers/google/thinkingResolver.test.ts',
+    name: 'Google includeThoughts regression test',
+    needles: ['should not enable includeThoughts when thinkingLevel is set but budget defaults to 0'],
   },
   {
     file: 'packages/model-runtime/src/_custom/mergeGoogleFunctionResponses.test.ts',

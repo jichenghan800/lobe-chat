@@ -4,6 +4,16 @@
 
 ---
 
+### \[2026-03-09] 对齐上游 Vertex 400 修复：去重重复 function declaration
+
+- 类型: custom
+- 涉及文件: packages/model-runtime/src/core/contextBuilders/google.ts; packages/model-runtime/src/core/contextBuilders/google.test.ts; packages/model-runtime/src/providers/google/thinkingResolver.ts; packages/model-runtime/src/providers/google/thinkingResolver.test.ts; packages/model-runtime/src/providers/google/index.test.ts; scripts/checkCustomHotfixes.mts
+- 原因：合并上游稳定版时发现当前分支缺少 PR #12604 的关键修复，`buildGoogleTools` 会原样透传重复函数声明，可能触发 Vertex `400 Duplicate function declaration found`
+- 方案：按上游实现在 `buildGoogleTools` 内按 `tool.function.name` 去重，并将 Google `thoughtSignature` 回退到 `skip_thought_signature_validator`；同时补回 `UNSUPPORTED_SCHEMA_KEYS` 过滤（`examples/default`）与 `thinkingResolver` 中 `includeThoughts` 安全判断（避免未启用 thinking 时仍传 `includeThoughts: true`）；补充 `[HOTFIX-P0]` 回归用例覆盖重复函数名场景；热修复门禁脚本新增相关检查
+- 验证：`cd packages/model-runtime && bunx vitest run --silent='passed-only' 'src/core/contextBuilders/google.test.ts'` 通过；`cd packages/model-runtime && bunx vitest run --silent='passed-only' 'src/_custom/mergeGoogleFunctionResponses.test.ts'` 通过；`cd packages/model-runtime && bunx vitest run --silent='passed-only' 'src/providers/google/thinkingResolver.test.ts'` 通过；`cd packages/model-runtime && bunx vitest run --silent='passed-only' 'src/providers/google/index.test.ts'` 通过；`bun run custom:verify-hotfixes` 通过
+- 回滚：移除 `buildGoogleTools` 去重逻辑、对应测试与 `checkCustomHotfixes` 中的 dedupe guard 检查
+- 影响：仅影响 Google/Vertex 的 tool 声明构建；无重复函数名时行为不变
+
 ### \[2026-03-09] 默认 inbox agent 新话题时清空 “关联文件” 勾选
 
 - 类型: custom

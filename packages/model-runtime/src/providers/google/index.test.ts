@@ -73,7 +73,7 @@ describe('LobeGoogleAI', () => {
     });
 
     it('should withGrounding', () => {
-      const data = [
+      const _data = [
         {
           candidates: [{ content: { parts: [{ text: 'As' }], role: 'model' } }],
           usageMetadata: { promptTokenCount: 8, totalTokenCount: 8 },
@@ -440,10 +440,10 @@ describe('LobeGoogleAI', () => {
         const enhancedStream = instance['createEnhancedStream'](mockStream, abortController.signal);
 
         const reader = enhancedStream.getReader();
-        const chunks: any[] = [];
 
         // Read first value then cancel to trigger error chunk
-        chunks.push((await reader.read()).value);
+        const firstChunk = (await reader.read()).value;
+        const chunks: any[] = [firstChunk];
         abortController.abort();
 
         // Read all remaining chunks
@@ -494,10 +494,10 @@ describe('LobeGoogleAI', () => {
         const enhancedStream = instance['createEnhancedStream'](mockStream, abortController.signal);
 
         const reader = enhancedStream.getReader();
-        const chunks: any[] = [];
 
         // Read first value then collect remaining chunks (error included)
-        chunks.push((await reader.read()).value);
+        const firstChunk = (await reader.read()).value;
+        const chunks: any[] = [firstChunk];
         let result;
         while (!(result = await reader.read()).done) {
           chunks.push(result.value);
@@ -518,9 +518,15 @@ describe('LobeGoogleAI', () => {
       });
 
       it('should handle AbortError without data', async () => {
-        const mockStream = (async function* () {
-          throw new Error('aborted');
-        })();
+        const mockStream: AsyncIterable<any> = {
+          [Symbol.asyncIterator]() {
+            return {
+              async next() {
+                throw new Error('aborted');
+              },
+            };
+          },
+        };
 
         const abortController = new AbortController();
         const enhancedStream = instance['createEnhancedStream'](mockStream, abortController.signal);
@@ -559,10 +565,10 @@ describe('LobeGoogleAI', () => {
         const enhancedStream = instance['createEnhancedStream'](mockStream, abortController.signal);
 
         const reader = enhancedStream.getReader();
-        const chunks: any[] = [];
 
         // Read first value then collect remaining chunks (parsing error)
-        chunks.push((await reader.read()).value);
+        const firstChunk = (await reader.read()).value;
+        const chunks: any[] = [firstChunk];
         let result;
         while (!(result = await reader.read()).done) {
           chunks.push(result.value);
@@ -617,7 +623,7 @@ describe('thinkingConfig includeThoughts logic', () => {
     expect(config.thinkingConfig?.includeThoughts).toBe(true);
   });
 
-  it('should enable thinking for gemini-3-pro-image models', async () => {
+  it('should not force includeThoughts for gemini-3-pro-image models by default', async () => {
     const mockStreamData = (async function* (): AsyncGenerator<GenerateContentResponse> {})();
     vi.spyOn(instance['client'].models, 'generateContentStream').mockResolvedValue(mockStreamData);
 
@@ -629,7 +635,7 @@ describe('thinkingConfig includeThoughts logic', () => {
 
     const callArgs = (instance['client'].models.generateContentStream as any).mock.calls[0];
     const config = callArgs[0].config;
-    expect(config.thinkingConfig?.includeThoughts).toBe(true);
+    expect(config.thinkingConfig?.includeThoughts).toBeUndefined();
   });
 
   it('should enable thinking for thinking-enabled models', async () => {
