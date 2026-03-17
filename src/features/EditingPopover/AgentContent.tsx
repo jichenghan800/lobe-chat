@@ -39,7 +39,6 @@ const AgentContent = memo<AgentContentProps>(({ id, title, avatar, onClose }) =>
         if (newAvatar && currentAvatar !== newAvatar) updates.avatar = newAvatar;
 
         await useAgentStore.getState().optimisticUpdateAgentMeta(id, updates);
-        await useHomeStore.getState().refreshAgentList();
       } finally {
         useHomeStore.getState().setAgentUpdatingId(null);
       }

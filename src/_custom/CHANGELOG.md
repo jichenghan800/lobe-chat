@@ -4,6 +4,16 @@
 
 ---
 
+### \[2026-03-17] 修复 Agent 元数据更新后左侧助手列表未同步刷新
+
+- 类型: custom
+- 涉及文件: src/store/agent/slices/agent/action.ts; src/features/EditingPopover/AgentContent.tsx; src/store/agent/slices/agent/action.test.ts
+- 原因：官方实现中，Agent 标题 / 头像等元数据更新会写入 `agentStore`，但左侧助手列表读取的是 `homeStore` 的 sidebar 数据；保存元数据后未统一触发 `refreshAgentList()`，导致 Agent Builder、资料页编辑等场景下左侧列表可能仍显示旧标题 / 旧头像
+- 方案：在 `optimisticUpdateAgentMeta(...)` 成功后统一触发 `homeStore.refreshAgentList()`，将 sidebar 刷新下沉到公共元数据保存路径；同时移除 `EditingPopover/AgentContent` 中重复的手动刷新，避免一次编辑触发两次 revalidate；补充单测覆盖 “成功刷新 / 失败不刷新”
+- 验证：`bunx vitest run --silent='passed-only' 'src/store/agent/slices/agent/action.test.ts'` 通过
+- 回滚：移除 `optimisticUpdateAgentMeta(...)` 中的 `refreshAgentList()` 调用，恢复 `EditingPopover/AgentContent` 的手动刷新逻辑，并删除对应测试
+- 影响：仅影响 Agent 元数据保存后的左侧助手列表同步时机，不改变 Agent 配置、会话路由、数据库结构或接口协议
+
 ### \[2026-03-09] 对齐上游 Vertex 400 修复：去重重复 function declaration
 
 - 类型: custom

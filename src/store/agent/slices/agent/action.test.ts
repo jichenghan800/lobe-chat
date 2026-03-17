@@ -29,6 +29,14 @@ vi.mock('@/store/session', () => ({
   },
 }));
 
+const refreshAgentList = vi.fn();
+
+vi.mock('@/store/home', () => ({
+  getHomeStoreState: vi.fn(() => ({
+    refreshAgentList,
+  })),
+}));
+
 // Mock SWR mutate
 vi.mock('swr', async (importOriginal) => {
   const modules = await importOriginal();
@@ -205,6 +213,35 @@ describe('AgentSlice Actions', () => {
         { title: 'New Title' },
         expect.any(AbortSignal),
       );
+    });
+  });
+
+  describe('optimisticUpdateAgentMeta', () => {
+    it('should refresh sidebar agent list after successful meta update', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      vi.mocked(agentService.updateAgentMeta).mockResolvedValue({
+        agent: { title: 'New Title' } as any,
+        success: true,
+      });
+
+      await act(async () => {
+        await result.current.optimisticUpdateAgentMeta('agent-1', { title: 'New Title' });
+      });
+
+      expect(refreshAgentList).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not refresh sidebar agent list when meta update fails', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      vi.mocked(agentService.updateAgentMeta).mockRejectedValue(new Error('save failed'));
+
+      await act(async () => {
+        await result.current.optimisticUpdateAgentMeta('agent-1', { title: 'New Title' });
+      });
+
+      expect(refreshAgentList).not.toHaveBeenCalled();
     });
   });
 

@@ -314,6 +314,16 @@ export class AgentSliceActionImpl {
       if (result?.success && result.agent) {
         internal_dispatchAgentMap(id, result.agent);
       }
+
+      if (result?.success) {
+        try {
+          const { getHomeStoreState } = await import('@/store/home');
+          await getHomeStoreState().refreshAgentList();
+        } catch (error) {
+          console.error('[AgentStore] Failed to refresh sidebar agent list:', error);
+        }
+      }
+
       updateSaveStatus('saved');
     } catch (error: any) {
       if (error?.name === 'AbortError' || error?.message?.includes('aborted')) {
