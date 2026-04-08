@@ -682,6 +682,68 @@ describe('thinkingConfig includeThoughts logic', () => {
 });
 
 describe('buildGoogleToolsWithSearch', () => {
+  it('should prioritize function declarations over urlContext when function tools are present', async () => {
+    const mockStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue({
+          text: 'test',
+          candidates: [
+            {
+              content: { parts: [{ text: 'test' }], role: 'model' },
+              finishReason: 'STOP',
+              index: 0,
+            },
+          ],
+          usageMetadata: { promptTokenCount: 1, totalTokenCount: 2 },
+          modelVersion: 'gemini-3.1-pro-preview',
+        });
+        controller.close();
+      },
+    });
+    vi.spyOn(instance['client'].models, 'generateContentStream').mockResolvedValue(
+      mockStream as any,
+    );
+
+    await instance.chat({
+      messages: [{ content: 'Hello', role: 'user' }],
+      model: 'gemini-3.1-pro-preview',
+      temperature: 0,
+      tools: [
+        {
+          function: {
+            description: 'Activate tools',
+            name: 'lobe-activator____activateTools____builtin',
+            parameters: {
+              properties: {
+                identifiers: {
+                  items: { type: 'string' },
+                  type: 'array',
+                },
+              },
+              required: ['identifiers'],
+              type: 'object',
+            },
+          },
+          type: 'function',
+        },
+      ],
+      urlContext: true,
+    });
+
+    const callArgs = (instance['client'].models.generateContentStream as any).mock.calls[0];
+    const config = callArgs[0].config as any;
+
+    expect(config.tools).toEqual([
+      {
+        functionDeclarations: [
+          expect.objectContaining({
+            name: 'lobe-activator____activateTools____builtin',
+          }),
+        ],
+      },
+    ]);
+  });
+
   it('should include imageSearch searchTypes for models in modelsWithImageSearch when search is enabled', async () => {
     const mockStream = new ReadableStream({
       start(controller) {

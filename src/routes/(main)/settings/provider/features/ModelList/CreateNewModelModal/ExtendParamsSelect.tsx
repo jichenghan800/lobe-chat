@@ -5,6 +5,7 @@ import { type ReactNode } from 'react';
 import { memo, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
+import { getThinkingLevel3Default } from '@/_custom/registry/modelCustomization';
 import CodexMaxReasoningEffortSlider from '@/features/ModelSwitchPanel/components/ControlsForm/CodexMaxReasoningEffortSlider';
 import EffortSlider from '@/features/ModelSwitchPanel/components/ControlsForm/EffortSlider';
 import GPT5ReasoningEffortSlider from '@/features/ModelSwitchPanel/components/ControlsForm/GPT5ReasoningEffortSlider';
@@ -327,7 +328,7 @@ const ExtendParamsSelect = memo<ExtendParamsSelectProps>(({ value, onChange }) =
       thinkingBudget: <ThinkingBudgetSlider defaultValue={2 * 1024} />,
       thinkingLevel: <ThinkingLevelSlider value="high" />,
       thinkingLevel2: <ThinkingLevel2Slider value="high" />,
-      thinkingLevel3: <ThinkingLevel3Slider value="high" />,
+      thinkingLevel3: <ThinkingLevel3Slider value={getThinkingLevel3Default()} />,
       thinkingLevel4: <ThinkingLevel4Slider value="minimal" />,
       thinkingLevel5: <ThinkingLevel5Slider value="minimal" />,
       urlContext: <Switch checked disabled />,

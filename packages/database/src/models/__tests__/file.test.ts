@@ -1,10 +1,11 @@
 // @vitest-environment node
-import { FilesTabs, SortType } from '@lobechat/types';
+import { AsyncTaskStatus, AsyncTaskType, FilesTabs, SortType } from '@lobechat/types';
 import { eq, inArray } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getTestDB } from '../../core/getTestDB';
 import {
+  asyncTasks,
   chunks,
   embeddings,
   fileChunks,
@@ -109,6 +110,143 @@ describe('FileModel', () => {
 
       const result = await fileModel.createGlobalFile(globalFile);
       expect(result[0]).toMatchObject(globalFile);
+    });
+  });
+
+  describe('overwrite', () => {
+    it('should overwrite a file in place and remove the previous global file when unused', async () => {
+      await fileModel.createGlobalFile({
+        creator: userId,
+        fileType: 'image/png',
+        hashId: 'old-hash',
+        size: 100,
+        url: 'https://example.com/old.png',
+      });
+
+      const { id } = await fileModel.create({
+        fileHash: 'old-hash',
+        fileType: 'image/png',
+        name: 'image.png',
+        size: 100,
+        url: 'https://example.com/old.png',
+      });
+
+      await serverDB.insert(asyncTasks).values([
+        {
+          id: '00000000-0000-0000-0000-000000000001',
+          status: AsyncTaskStatus.Processing,
+          type: AsyncTaskType.Chunking,
+          userId,
+        },
+        {
+          id: '00000000-0000-0000-0000-000000000002',
+          status: AsyncTaskStatus.Processing,
+          type: AsyncTaskType.Embedding,
+          userId,
+        },
+      ]);
+
+      await serverDB
+        .update(files)
+        .set({
+          chunkTaskId: '00000000-0000-0000-0000-000000000001',
+          embeddingTaskId: '00000000-0000-0000-0000-000000000002',
+        })
+        .where(eq(files.id, id));
+
+      const result = await fileModel.overwrite(
+        id,
+        {
+          fileHash: 'new-hash',
+          fileType: 'image/png',
+          metadata: { width: 400 },
+          name: 'image.png',
+          size: 200,
+          url: 'https://example.com/new.png',
+        },
+        true,
+      );
+
+      expect(result.file.id).toBe(id);
+      expect(result.previousFile.fileHash).toBe('old-hash');
+      expect(result.shouldRemovePreviousGlobalFile).toBe(true);
+
+      const updatedFile = await serverDB.query.files.findFirst({ where: eq(files.id, id) });
+      expect(updatedFile).toMatchObject({
+        chunkTaskId: null,
+        embeddingTaskId: null,
+        fileHash: 'new-hash',
+        metadata: { width: 400 },
+        size: 200,
+        url: 'https://example.com/new.png',
+      });
+
+      const oldGlobalFile = await serverDB.query.globalFiles.findFirst({
+        where: eq(globalFiles.hashId, 'old-hash'),
+      });
+      const newGlobalFile = await serverDB.query.globalFiles.findFirst({
+        where: eq(globalFiles.hashId, 'new-hash'),
+      });
+
+      expect(oldGlobalFile).toBeUndefined();
+      expect(newGlobalFile).toMatchObject({
+        fileType: 'image/png',
+        hashId: 'new-hash',
+        metadata: { width: 400 },
+        size: 200,
+        url: 'https://example.com/new.png',
+      });
+    });
+
+    it('should keep the previous global file when it is still referenced by other files', async () => {
+      await fileModel.createGlobalFile({
+        creator: userId,
+        fileType: 'image/png',
+        hashId: 'shared-hash',
+        size: 100,
+        url: 'https://example.com/shared.png',
+      });
+
+      const { id } = await fileModel.create({
+        fileHash: 'shared-hash',
+        fileType: 'image/png',
+        name: 'image-1.png',
+        size: 100,
+        url: 'https://example.com/shared.png',
+      });
+
+      await fileModel.create({
+        fileHash: 'shared-hash',
+        fileType: 'image/png',
+        name: 'image-2.png',
+        size: 100,
+        url: 'https://example.com/shared.png',
+      });
+
+      const result = await fileModel.overwrite(
+        id,
+        {
+          fileHash: 'new-hash-2',
+          fileType: 'image/png',
+          name: 'image-1.png',
+          size: 150,
+          url: 'https://example.com/new-2.png',
+        },
+        true,
+      );
+
+      expect(result.file.id).toBe(id);
+      expect(result.shouldRemovePreviousGlobalFile).toBe(false);
+
+      const sharedGlobalFile = await serverDB.query.globalFiles.findFirst({
+        where: eq(globalFiles.hashId, 'shared-hash'),
+      });
+      const newGlobalFile = await serverDB.query.globalFiles.findFirst({
+        where: eq(globalFiles.hashId, 'new-hash-2'),
+      });
+
+      expect(sharedGlobalFile).toBeDefined();
+      expect(newGlobalFile).toBeDefined();
     });
   });
 

@@ -1,6 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { FileModel } from '@/database/models/file';
 import { TempFileManager } from '@/server/utils/tempFileManager';
 
@@ -30,10 +31,12 @@ vi.mock('../impls', () => ({
     getFullFileUrl: vi.fn(),
     getKeyFromFullUrl: vi.fn(),
     uploadMedia: vi.fn(),
+    uploadBuffer: vi.fn(),
   }),
 }));
 
 vi.mock('@/database/models/file');
+vi.mock('@/database/models/asyncTask');
 
 vi.mock('@/server/utils/tempFileManager');
 
@@ -47,19 +50,28 @@ describe('FileService', () => {
   const mockUserId = 'test-user';
   let mockFileModel: any;
   let mockTempManager: any;
+  let mockAsyncTaskModel: any;
   let consoleErrorSpy: any;
 
   beforeEach(() => {
     mockFileModel = {
+      checkHash: vi.fn(),
+      create: vi.fn(),
       findById: vi.fn(),
       delete: vi.fn(),
+      findByName: vi.fn(),
+      overwrite: vi.fn(),
       updateGlobalFile: vi.fn(),
     };
     mockTempManager = {
       writeTempFile: vi.fn(),
       cleanup: vi.fn(),
     };
+    mockAsyncTaskModel = {
+      delete: vi.fn(),
+    };
     vi.mocked(FileModel).mockImplementation(() => mockFileModel);
+    vi.mocked(AsyncTaskModel).mockImplementation(() => mockAsyncTaskModel);
     vi.mocked(TempFileManager).mockImplementation(() => mockTempManager);
 
     // Mock console.error to test error logging
@@ -258,7 +270,34 @@ describe('FileService', () => {
   describe('createFileRecord', () => {
     beforeEach(() => {
       mockFileModel.checkHash = vi.fn();
+      mockFileModel.findByName = vi.fn().mockResolvedValue(undefined);
       mockFileModel.create = vi.fn();
+    });
+
+    it('should overwrite existing file with same name in the same directory', async () => {
+      mockFileModel.findByName.mockResolvedValue({ id: 'existing-file-id' });
+      mockFileModel.checkHash.mockResolvedValue({ isExist: false });
+      mockFileModel.overwrite.mockResolvedValue({
+        file: { id: 'existing-file-id', url: 'files/new.txt' },
+        previousFile: { chunkTaskId: null, embeddingTaskId: null, url: 'files/old.txt' },
+        shouldRemovePreviousGlobalFile: false,
+      });
+
+      const result = await service.createFileRecord({
+        fileHash: 'hash-1',
+        fileType: 'text/plain',
+        name: 'same.txt',
+        parentId: 'folder-1',
+        size: 10,
+        url: 'files/new.txt',
+      });
+
+      expect(mockFileModel.findByName).toHaveBeenCalledWith('same.txt', 'folder-1');
+      expect(mockFileModel.overwrite).toHaveBeenCalled();
+      expect(result).toEqual({
+        fileId: 'existing-file-id',
+        url: 'https://lobehub.com/f/existing-file-id',
+      });
     });
 
     it('should return proxy URL format ${APP_URL}/f/:id', async () => {
@@ -336,6 +375,39 @@ describe('FileService', () => {
         }),
         false, // insertToGlobalFiles = false when hash exists
       );
+    });
+  });
+
+  describe('overwriteFileRecord', () => {
+    it('should clear related async tasks and delete previous storage object when old global file is removed', async () => {
+      mockFileModel.checkHash.mockResolvedValue({ isExist: false });
+      mockFileModel.overwrite.mockResolvedValue({
+        file: { id: 'file-1', url: 'files/new.txt' },
+        previousFile: {
+          chunkTaskId: 'task-1',
+          embeddingTaskId: 'task-2',
+          url: 'files/old.txt',
+        },
+        shouldRemovePreviousGlobalFile: true,
+      });
+      vi.mocked(service['impl'].deleteFile).mockResolvedValue(undefined);
+
+      const result = await service.overwriteFileRecord({
+        existingFileId: 'file-1',
+        fileHash: 'hash-2',
+        fileType: 'text/plain',
+        name: 'same.txt',
+        size: 12,
+        url: 'files/new.txt',
+      });
+
+      expect(mockAsyncTaskModel.delete).toHaveBeenCalledWith('task-1');
+      expect(mockAsyncTaskModel.delete).toHaveBeenCalledWith('task-2');
+      expect(service['impl'].deleteFile).toHaveBeenCalledWith('files/old.txt');
+      expect(result).toEqual({
+        fileId: 'file-1',
+        url: 'https://lobehub.com/f/file-1',
+      });
     });
   });
 

@@ -1,6 +1,20 @@
 import type { QueryFileListParams } from '@lobechat/types';
 import { FilesTabs, SortType } from '@lobechat/types';
-import { and, asc, count, desc, eq, ilike, inArray, like, notExists, or, sum } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  like,
+  notExists,
+  or,
+  sql,
+  sum,
+} from 'drizzle-orm';
 import type { PgTransaction } from 'drizzle-orm/pg-core';
 
 import type { FileItem, NewFile, NewGlobalFile } from '../schemas';
@@ -84,6 +98,77 @@ export class FileModel {
       ? executeInTransaction(trx)
       : this.db.transaction(executeInTransaction));
     return { id: result.id };
+  };
+
+  overwrite = async (
+    id: string,
+    params: Omit<NewFile, 'id' | 'userId' | 'chunkTaskId' | 'embeddingTaskId'> & {
+      parentId?: string | null;
+    },
+    insertToGlobalFiles?: boolean,
+    removePreviousGlobalFile: boolean = true,
+    trx?: Transaction,
+  ): Promise<{
+    file: FileItem;
+    previousFile: FileItem;
+    shouldRemovePreviousGlobalFile: boolean;
+  }> => {
+    const executeInTransaction = async (tx: Transaction) => {
+      const previousFile = await this.findById(id, tx);
+
+      if (!previousFile) throw new Error('File not found');
+
+      if (insertToGlobalFiles && params.fileHash) {
+        await tx
+          .insert(globalFiles)
+          .values({
+            creator: this.userId,
+            fileType: params.fileType,
+            hashId: params.fileHash,
+            metadata: params.metadata,
+            size: params.size,
+            url: params.url,
+          })
+          .onConflictDoNothing();
+      }
+
+      await this.deleteFileChunks(tx as any, [id]);
+
+      const result = await tx
+        .update(files)
+        .set({
+          ...params,
+          chunkTaskId: null,
+          embeddingTaskId: null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(files.id, id), eq(files.userId, this.userId)))
+        .returning();
+
+      const updatedFile = result[0] as FileItem;
+
+      let shouldRemovePreviousGlobalFile = false;
+
+      if (
+        removePreviousGlobalFile &&
+        previousFile.fileHash &&
+        previousFile.fileHash !== params.fileHash
+      ) {
+        const remainingFiles = await tx
+          .select({ count: count() })
+          .from(files)
+          .where(eq(files.fileHash, previousFile.fileHash));
+
+        if (remainingFiles[0].count === 0) {
+          await tx.delete(globalFiles).where(eq(globalFiles.hashId, previousFile.fileHash));
+          shouldRemovePreviousGlobalFile = true;
+        }
+      }
+
+      return { file: updatedFile, previousFile, shouldRemovePreviousGlobalFile };
+    };
+
+    return await (trx ? executeInTransaction(trx) : this.db.transaction(executeInTransaction));
   };
 
   createGlobalFile = async (file: Omit<NewGlobalFile, 'id' | 'userId'>) => {
@@ -358,6 +443,16 @@ export class FileModel {
         or(...fileNames.map((name) => like(files.name, `${name}%`))),
         eq(files.userId, this.userId),
       ),
+    });
+
+  findByName = async (name: string, parentId?: string | null) =>
+    this.db.query.files.findFirst({
+      where: and(
+        eq(files.name, name),
+        eq(files.userId, this.userId),
+        parentId ? eq(files.parentId, parentId) : isNull(files.parentId),
+      ),
+      orderBy: [desc(files.updatedAt), desc(files.createdAt), desc(sql<number>`LENGTH(${files.id})`)],
     });
 
   // Abstract common method for deleting chunks

@@ -4,6 +4,7 @@ import { TRPCError } from '@trpc/server';
 import { sha256 } from 'js-sha256';
 
 import { serverDBEnv } from '@/config/db';
+import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { FileModel } from '@/database/models/file';
 import { type FileItem } from '@/database/schemas';
 import { appEnv } from '@/envs/app';
@@ -18,12 +19,14 @@ import { type FileServiceImpl } from './impls/type';
  */
 export class FileService {
   private userId: string;
+  private asyncTaskModel: AsyncTaskModel;
   private fileModel: FileModel;
 
   private impl: FileServiceImpl;
 
   constructor(db: LobeChatDatabase, userId: string) {
     this.userId = userId;
+    this.asyncTaskModel = new AsyncTaskModel(db, userId);
     this.fileModel = new FileModel(db, userId);
     this.impl = createFileServiceModule(db);
   }
@@ -132,9 +135,23 @@ export class FileService {
     fileType: string;
     id?: string;
     name: string;
+    parentId?: string;
     size: number;
     url: string;
   }): Promise<{ fileId: string; url: string }> {
+    const existingFile = await this.fileModel.findByName(params.name, params.parentId);
+    if (existingFile) {
+      return this.overwriteFileRecord({
+        existingFileId: existingFile.id,
+        fileHash: params.fileHash,
+        fileType: params.fileType,
+        name: params.name,
+        parentId: params.parentId,
+        size: params.size,
+        url: params.url,
+      });
+    }
+
     // Check if hash already exists in globalFiles
     const { isExist } = await this.fileModel.checkHash(params.fileHash);
 
@@ -146,6 +163,7 @@ export class FileService {
         fileType: params.fileType,
         id: params.id, // Use custom ID if provided
         name: params.name,
+        parentId: params.parentId,
         size: params.size,
         url: params.url,
       },
@@ -156,6 +174,54 @@ export class FileService {
     return {
       fileId: id,
       url: `${appEnv.APP_URL}/f/${id}`,
+    };
+  }
+
+  public async overwriteFileRecord(params: {
+    existingFileId: string;
+    fileHash: string;
+    fileType: string;
+    metadata?: Record<string, any> | null;
+    name: string;
+    parentId?: string | null;
+    size: number;
+    url: string;
+  }): Promise<{ fileId: string; url: string }> {
+    const { isExist } = await this.fileModel.checkHash(params.fileHash);
+
+    const { file, previousFile, shouldRemovePreviousGlobalFile } = await this.fileModel.overwrite(
+      params.existingFileId,
+      {
+        fileHash: params.fileHash,
+        fileType: params.fileType,
+        metadata: params.metadata,
+        name: params.name,
+        parentId: params.parentId,
+        size: params.size,
+        url: params.url,
+      },
+      !isExist,
+      serverDBEnv.REMOVE_GLOBAL_FILE,
+    );
+
+    await Promise.all(
+      [previousFile.chunkTaskId, previousFile.embeddingTaskId]
+        .filter(Boolean)
+        .map((taskId) => this.asyncTaskModel.delete(taskId!)),
+    );
+
+    if (
+      shouldRemovePreviousGlobalFile &&
+      previousFile.url &&
+      previousFile.url !== file.url &&
+      !previousFile.url.startsWith('internal://')
+    ) {
+      await this.deleteFile(previousFile.url);
+    }
+
+    return {
+      fileId: file.id,
+      url: `${appEnv.APP_URL}/f/${file.id}`,
     };
   }
 

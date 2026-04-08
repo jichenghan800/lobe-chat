@@ -2,6 +2,7 @@ import { type ChatCompletionErrorPayload, type ModelRuntime } from '@lobechat/mo
 import { AGENT_RUNTIME_ERROR_SET } from '@lobechat/model-runtime';
 import { ChatErrorType } from '@lobechat/types';
 
+import { prepareVertexNativePdfMessages } from '@/_custom/services/vertexNativePdf';
 import { checkAuth } from '@/app/(backend)/middleware/auth';
 import { createTraceOptions, initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { type ChatStreamPayload } from '@/types/openai/chat';
@@ -30,6 +31,14 @@ export const POST = checkAuth(
       // ============  2. create chat completion   ============ //
 
       const data = (await req.json()) as ChatStreamPayload;
+
+      if (provider === 'vertexai') {
+        data.messages = await prepareVertexNativePdfMessages({
+          messages: data.messages,
+          serverDB,
+          userId,
+        });
+      }
 
       const tracePayload = getTracePayload(req);
 

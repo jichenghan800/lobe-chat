@@ -14,6 +14,7 @@ import { emailHarmony } from 'better-auth-harmony';
 import { validateEmail } from 'better-auth-harmony/email';
 import { ProxyAgent, setGlobalDispatcher } from 'undici';
 
+import { normalizeEmailIdentity } from '@/_custom/services/emailAlias';
 import { businessEmailValidator } from '@/business/server/better-auth';
 import { appEnv } from '@/envs/app';
 import { authEnv } from '@/envs/auth';
@@ -108,8 +109,9 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
 
     emailAndPassword: {
       autoSignIn: true,
-      disableSignUp: authEnv.AUTH_DISABLE_EMAIL_PASSWORD,
-      enabled: !authEnv.AUTH_DISABLE_EMAIL_PASSWORD,
+      // In the custom deployment, enabling magic link means email auth should only use the link flow.
+      disableSignUp: authEnv.AUTH_DISABLE_EMAIL_PASSWORD || enableMagicLink,
+      enabled: !authEnv.AUTH_DISABLE_EMAIL_PASSWORD && !enableMagicLink,
       maxPasswordLength: 64,
       minPasswordLength: 8,
       requireEmailVerification: authEnv.AUTH_EMAIL_VERIFICATION,
@@ -263,7 +265,11 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
       ...customOptions.plugins,
       emailWhitelist(),
       expo(),
-      emailHarmony({ allowNormalizedSignin: false, validator: customEmailValidator }),
+      emailHarmony({
+        allowNormalizedSignin: true,
+        normalizer: normalizeEmailIdentity,
+        validator: customEmailValidator,
+      }),
       admin(),
       // Email OTP plugin for mobile verification
       emailOTP({

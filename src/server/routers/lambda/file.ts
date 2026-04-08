@@ -55,7 +55,12 @@ export const fileRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { isExist } = await ctx.fileModel.checkHash(input.hash!);
+      const fileHash = input.hash;
+      if (!fileHash) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'File hash is required' });
+      }
+
+      const { isExist } = await ctx.fileModel.checkHash(fileHash);
 
       // Resolve parentId if it's a slug
       let resolvedParentId = input.parentId;
@@ -65,6 +70,8 @@ export const fileRouter = router({
           resolvedParentId = docBySlug.id;
         }
       }
+
+      const existingFile = await ctx.fileModel.findByName(input.name, resolvedParentId);
 
       let actualSize = input.size;
       try {
@@ -88,9 +95,24 @@ export const fileRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'File size cannot be negative' });
       }
 
+      if (existingFile) {
+        const overwritten = await ctx.fileService.overwriteFileRecord({
+          existingFileId: existingFile.id,
+          fileHash,
+          fileType: input.fileType,
+          metadata: input.metadata,
+          name: input.name,
+          parentId: resolvedParentId,
+          size: actualSize,
+          url: input.url,
+        });
+
+        return { id: overwritten.fileId, url: overwritten.url };
+      }
+
       const { id } = await ctx.fileModel.create(
         {
-          fileHash: input.hash,
+          fileHash,
           fileType: input.fileType,
           knowledgeBaseId: input.knowledgeBaseId,
           metadata: input.metadata,

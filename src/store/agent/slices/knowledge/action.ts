@@ -9,6 +9,22 @@ import { type AgentStore } from '../../store';
 
 const FETCH_AGENT_KNOWLEDGE_KEY = 'FETCH_AGENT_KNOWLEDGE';
 
+interface AgentFileRef {
+  enabled?: boolean;
+  id: string;
+}
+
+interface AgentKnowledgeBaseRef {
+  id: string;
+}
+
+interface AgentKnowledgeRelations {
+  files?: AgentFileRef[];
+  knowledgeBases?: AgentKnowledgeBaseRef[];
+}
+
+type AgentMapItem = AgentStore['agentMap'][string];
+
 /**
  * Knowledge Slice Actions
  * Handles knowledge base and file operations
@@ -20,10 +36,11 @@ export const createKnowledgeSlice = (set: Setter, get: () => AgentStore, _api?: 
 
 export class KnowledgeSliceActionImpl {
   readonly #get: () => AgentStore;
+  readonly #set: Setter;
 
   constructor(set: Setter, get: () => AgentStore, _api?: unknown) {
     void _api;
-    void set;
+    this.#set = set;
     this.#get = get;
   }
 
@@ -58,6 +75,26 @@ export class KnowledgeSliceActionImpl {
     if (!activeAgentId) return;
 
     await agentService.deleteAgentFile(activeAgentId, fileId);
+    this.#set(
+      (state) => {
+        const currentAgent = state.agentMap[activeAgentId] as
+          | (AgentMapItem & AgentKnowledgeRelations)
+          | undefined;
+        if (!currentAgent?.files) return state;
+
+        return {
+          agentMap: {
+            ...state.agentMap,
+            [activeAgentId]: {
+              ...currentAgent,
+              files: currentAgent.files.filter((file) => file.id !== fileId),
+            } as AgentMapItem,
+          },
+        };
+      },
+      false,
+      'removeFileFromAgent',
+    );
     await internal_refreshAgentConfig(activeAgentId);
     await internal_refreshAgentKnowledge();
   };
@@ -68,6 +105,28 @@ export class KnowledgeSliceActionImpl {
     if (!activeAgentId) return;
 
     await agentService.deleteAgentKnowledgeBase(activeAgentId, knowledgeBaseId);
+    this.#set(
+      (state) => {
+        const currentAgent = state.agentMap[activeAgentId] as
+          | (AgentMapItem & AgentKnowledgeRelations)
+          | undefined;
+        if (!currentAgent?.knowledgeBases) return state;
+
+        return {
+          agentMap: {
+            ...state.agentMap,
+            [activeAgentId]: {
+              ...currentAgent,
+              knowledgeBases: currentAgent.knowledgeBases.filter(
+                (knowledgeBase) => knowledgeBase.id !== knowledgeBaseId,
+              ),
+            } as AgentMapItem,
+          },
+        };
+      },
+      false,
+      'removeKnowledgeBaseFromAgent',
+    );
     await internal_refreshAgentConfig(activeAgentId);
     await internal_refreshAgentKnowledge();
   };

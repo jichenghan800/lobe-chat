@@ -10,6 +10,7 @@ function createCallerWithCtx(partialCtx: any = {}) {
   const fileModel = {
     checkHash: vi.fn().mockResolvedValue({ isExist: true }),
     create: vi.fn().mockResolvedValue({ id: 'test-id' }),
+    findByName: vi.fn().mockResolvedValue(undefined),
     findById: vi.fn().mockResolvedValue(undefined),
     query: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockResolvedValue(undefined),
@@ -22,6 +23,10 @@ function createCallerWithCtx(partialCtx: any = {}) {
     getFileMetadata: vi.fn().mockResolvedValue({ contentLength: 2048, contentType: 'text/plain' }),
     deleteFile: vi.fn().mockResolvedValue(undefined),
     deleteFiles: vi.fn().mockResolvedValue(undefined),
+    overwriteFileRecord: vi.fn().mockResolvedValue({
+      fileId: 'existing-file-id',
+      url: 'https://lobehub.com/f/existing-file-id',
+    }),
   };
 
   const chunkModel = {
@@ -99,6 +104,7 @@ const mockFileModelCreate = vi.fn();
 const mockFileModelDelete = vi.fn();
 const mockFileModelDeleteMany = vi.fn();
 const mockFileModelFindById = vi.fn();
+const mockFileModelFindByName = vi.fn();
 const mockFileModelQuery = vi.fn();
 const mockFileModelClear = vi.fn();
 
@@ -109,6 +115,7 @@ vi.mock('@/database/models/file', () => ({
     delete: mockFileModelDelete,
     deleteMany: mockFileModelDeleteMany,
     findById: mockFileModelFindById,
+    findByName: mockFileModelFindByName,
     query: mockFileModelQuery,
     clear: mockFileModelClear,
   })),
@@ -116,6 +123,9 @@ vi.mock('@/database/models/file', () => ({
 
 const mockFileServiceGetFullFileUrl = vi.fn();
 const mockFileServiceGetFileMetadata = vi.fn();
+const mockFileServiceOverwriteFileRecord = vi
+  .fn()
+  .mockResolvedValue({ fileId: 'existing-file-id', url: 'https://lobehub.com/f/existing-file-id' });
 
 vi.mock('@/server/services/file', () => ({
   FileService: vi.fn(() => ({
@@ -123,6 +133,7 @@ vi.mock('@/server/services/file', () => ({
     deleteFiles: vi.fn(),
     getFullFileUrl: mockFileServiceGetFullFileUrl,
     getFileMetadata: mockFileServiceGetFileMetadata,
+    overwriteFileRecord: mockFileServiceOverwriteFileRecord,
   })),
 }));
 
@@ -168,6 +179,7 @@ describe('fileRouter', () => {
       contentLength: 100,
       contentType: 'text/plain',
     });
+    mockFileModelFindByName.mockResolvedValue(undefined);
 
     // Use actual context with default mocks
     ({ ctx, caller } = createCallerWithCtx());
@@ -181,6 +193,20 @@ describe('fileRouter', () => {
   });
 
   describe('createFile', () => {
+    it('should throw bad request when hash is missing', async () => {
+      await expect(
+        caller.createFile({
+          fileType: 'text',
+          name: 'test.txt',
+          size: 100,
+          url: 'test-url',
+          metadata: {},
+        } as any),
+      ).rejects.toThrow('File hash is required');
+
+      expect(mockFileModelCheckHash).not.toHaveBeenCalled();
+    });
+
     it('should throw if fileModel.checkHash returns undefined', async () => {
       ctx.fileModel.checkHash.mockResolvedValue(undefined);
       await expect(
@@ -193,6 +219,39 @@ describe('fileRouter', () => {
           metadata: {},
         }),
       ).rejects.toThrow();
+    });
+
+    it('should overwrite existing file when same name file already exists in the same location', async () => {
+      mockFileModelCheckHash.mockResolvedValue({ isExist: false });
+      mockFileModelFindByName.mockResolvedValue({
+        id: 'existing-file-id',
+        name: 'test.txt',
+      });
+
+      const result = await caller.createFile({
+        hash: 'test-hash',
+        fileType: 'text',
+        name: 'test.txt',
+        size: 100,
+        url: 'files/test.txt',
+        metadata: {},
+      });
+
+      expect(result).toEqual({
+        id: 'existing-file-id',
+        url: 'https://lobehub.com/f/existing-file-id',
+      });
+      expect(mockFileServiceOverwriteFileRecord).toHaveBeenCalledWith({
+        existingFileId: 'existing-file-id',
+        fileHash: 'test-hash',
+        fileType: 'text',
+        metadata: {},
+        name: 'test.txt',
+        parentId: undefined,
+        size: 100,
+        url: 'files/test.txt',
+      });
+      expect(mockFileModelCreate).not.toHaveBeenCalled();
     });
 
     it('should return proxy URL format ${APP_URL}/f/:id', async () => {

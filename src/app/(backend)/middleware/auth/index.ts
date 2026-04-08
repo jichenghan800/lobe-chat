@@ -49,6 +49,7 @@ export const checkAuth =
     }
 
     let jwtPayload: ClientSecretPayload;
+    let sessionUserId: string | undefined;
 
     try {
       // get Authorization from header
@@ -60,7 +61,8 @@ export const checkAuth =
         headers: req.headers,
       });
 
-      const betterAuthAuthorized = !!session?.user?.id;
+      sessionUserId = session?.user?.id || undefined;
+      const betterAuthAuthorized = !!sessionUserId;
 
       if (!authorization) throw AgentRuntimeError.createError(ChatErrorType.Unauthorized);
 
@@ -112,7 +114,16 @@ export const checkAuth =
       return createErrorResponse(errorType, { error, ...res, provider: params?.provider });
     }
 
-    const userId = jwtPayload.userId || '';
+    const userId = sessionUserId || jwtPayload.userId;
+
+    if (!userId) {
+      const params = await options.params;
+
+      return createErrorResponse(ChatErrorType.Unauthorized, {
+        error: AgentRuntimeError.createError(ChatErrorType.Unauthorized),
+        provider: params?.provider,
+      });
+    }
 
     const extractedContext = extractTraceContext(req.headers);
 

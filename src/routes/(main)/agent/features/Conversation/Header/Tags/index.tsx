@@ -1,16 +1,32 @@
 import { Flexbox } from '@lobehub/ui';
+import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 
-import { useChatStore } from '@/store/chat';
-import { topicSelectors } from '@/store/chat/selectors';
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
+import ModelSwitchPanel from '@/features/ModelSwitchPanel';
+import PluginTag from '@/features/PluginTag';
+import { useAgentEnableSearch } from '@/hooks/useAgentEnableSearch';
+import { useModelSupportToolUse } from '@/hooks/useModelSupportToolUse';
+import { useAgentStore } from '@/store/agent';
+import { agentSelectors } from '@/store/agent/selectors';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
 
+import KnowledgeTag from './KnowledgeTag';
 import MemberCountTag from './MemberCountTag';
+import SearchTags from './SearchTags';
 
 const TitleTags = memo(() => {
-  const topicTitle = useChatStore((s) => topicSelectors.currentActiveTopic(s)?.title);
+  const [model, provider, hasKnowledge] = useAgentStore((s) => [
+    agentSelectors.currentAgentModel(s),
+    agentSelectors.currentAgentModelProvider(s),
+    agentSelectors.hasKnowledge(s),
+  ]);
+  const plugins = useAgentStore(agentSelectors.displayableAgentPlugins, isEqual);
+  const enabledKnowledge = useAgentStore(agentSelectors.currentEnabledKnowledge, isEqual);
   const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
+  const showPlugin = useModelSupportToolUse(model, provider);
+  const isAgentEnableSearch = useAgentEnableSearch();
 
   if (isGroupSession) {
     return (
@@ -20,22 +36,14 @@ const TitleTags = memo(() => {
     );
   }
 
-  if (!topicTitle) return null;
-
   return (
     <Flexbox horizontal align={'center'} gap={4}>
-      <span
-        style={{
-          fontSize: 14,
-          marginLeft: 8,
-          opacity: 0.6,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {topicTitle}
-      </span>
+      <ModelSwitchPanel>
+        <ModelDisplayNameTag model={model} provider={provider} />
+      </ModelSwitchPanel>
+      {isAgentEnableSearch && <SearchTags />}
+      {showPlugin && plugins?.length > 0 && <PluginTag plugins={plugins} />}
+      {hasKnowledge && <KnowledgeTag data={enabledKnowledge} />}
     </Flexbox>
   );
 });

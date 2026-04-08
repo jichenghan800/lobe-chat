@@ -1,7 +1,8 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import { type NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { normalizeEmailIdentity, normalizeEmailInput } from '@/_custom/services/emailAlias';
 import { account } from '@/database/schemas/betterAuth';
 import { users } from '@/database/schemas/user';
 import { serverDB } from '@/database/server';
@@ -25,14 +26,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email is required', exists: false }, { status: 400 });
     }
 
-    // Query database for user with this email
+    const normalizedEmail = normalizeEmailInput(email);
+    const normalizedIdentity = normalizeEmailIdentity(normalizedEmail);
+
+    // Query database for user with this email or an equivalent normalized identity
     const [user] = await serverDB
       .select({
         emailVerified: users.emailVerified,
         id: users.id,
       })
       .from(users)
-      .where(eq(users.email, email.toLowerCase().trim()))
+      .where(or(eq(users.email, normalizedEmail), eq(users.normalizedEmail, normalizedIdentity)))
       .limit(1);
 
     if (!user) {

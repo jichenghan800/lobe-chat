@@ -1,7 +1,6 @@
 'use client';
 
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { ModelTag } from '@lobehub/icons';
 import { ActionIconGroup, Block, Flexbox, Grid, Image, Markdown, Tag, Text } from '@lobehub/ui';
 import { App } from 'antd';
 import { createStaticStyles } from 'antd-style';
@@ -12,6 +11,7 @@ import { type RuntimeImageGenParams } from 'model-bank';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import useRenderBusinessBatchItem from '@/business/client/hooks/useRenderBusinessBatchItem';
 import { GenerationInvalidAPIKey } from '@/routes/(main)/(create)/features/GenerationInput';
 import { useImageStore } from '@/store/image';
@@ -143,7 +143,7 @@ export const GenerationBatchItem = memo<GenerationBatchItemProps>(({ batch }) =>
         </Grid>
       </Image.PreviewGroup>
       <Flexbox horizontal gap={4} style={{ opacity: 0.66 }}>
-        <ModelTag model={batch.model} variant={'borderless'} />
+        <ModelDisplayNameTag model={batch.model} provider={batch.provider} variant={'borderless'} />
         {batch.width && batch.height && (
           <Tag variant={'borderless'}>
             {batch.width} × {batch.height}

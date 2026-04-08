@@ -158,6 +158,46 @@ describe('google contextBuilders', () => {
       });
     });
 
+    it('should convert gs:// PDF file parts for Vertex AI', async () => {
+      const content: UserMessageContentPart = {
+        file_url: {
+          id: 'file-1',
+          mimeType: 'application/pdf',
+          name: 'test.pdf',
+          size: 123,
+          url: 'gs://lobechat-cotti/vertex-native-pdf/chat-upload/hash/test.pdf',
+        },
+        type: 'file_url',
+      };
+
+      const result = await buildGooglePart(content, { isVertexAi: true });
+
+      expect(result).toEqual({
+        fileData: {
+          fileUri: 'gs://lobechat-cotti/vertex-native-pdf/chat-upload/hash/test.pdf',
+          mimeType: 'application/pdf',
+        },
+        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+      });
+    });
+
+    it('should ignore non-gs PDF file parts for Vertex AI fallback', async () => {
+      const content: UserMessageContentPart = {
+        file_url: {
+          id: 'file-1',
+          mimeType: 'application/pdf',
+          name: 'test.pdf',
+          size: 123,
+          url: 'https://example.com/test.pdf',
+        },
+        type: 'file_url',
+      };
+
+      const result = await buildGooglePart(content, { isVertexAi: true });
+
+      expect(result).toBeUndefined();
+    });
+
     it('should return undefined for unsupported SVG image (base64)', async () => {
       const svgBase64 =
         'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==';
@@ -252,6 +292,41 @@ describe('google contextBuilders', () => {
           { text: 'Check this image:', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE },
           {
             inlineData: { data: '...', mimeType: 'image/png' },
+            thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+          },
+        ],
+        role: 'user',
+      });
+    });
+
+    it('should include Vertex PDF fileData parts in user messages', async () => {
+      const message: OpenAIChatMessage = {
+        content: [
+          { text: 'Read this PDF', type: 'text' },
+          {
+            file_url: {
+              id: 'file-1',
+              mimeType: 'application/pdf',
+              name: 'test.pdf',
+              size: 123,
+              url: 'gs://lobechat-cotti/vertex-native-pdf/chat-upload/hash/test.pdf',
+            },
+            type: 'file_url',
+          },
+        ],
+        role: 'user',
+      };
+
+      const converted = await buildGoogleMessage(message, undefined, { isVertexAi: true });
+
+      expect(converted).toEqual({
+        parts: [
+          { text: 'Read this PDF', thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE },
+          {
+            fileData: {
+              fileUri: 'gs://lobechat-cotti/vertex-native-pdf/chat-upload/hash/test.pdf',
+              mimeType: 'application/pdf',
+            },
             thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
           },
         ],

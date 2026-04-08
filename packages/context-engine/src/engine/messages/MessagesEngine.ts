@@ -270,6 +270,7 @@ export class MessagesEngine {
       new KnowledgeInjector({
         fileContents: knowledge?.fileContents,
         knowledgeBases: knowledge?.knowledgeBases,
+        provider,
       }),
       // Agent documents → before first user message
       new AgentDocumentContextInjector(agentDocConfig),

@@ -21,6 +21,7 @@ const SignInPage = () => {
     isSocialOnly,
     lastAuthProvider,
     loading,
+    magicLinkOnly,
     oAuthSSOProviders,
     serverConfigInit,
     socialLoading,
@@ -36,6 +37,7 @@ const SignInPage = () => {
           isSocialOnly={isSocialOnly}
           lastAuthProvider={lastAuthProvider}
           loading={loading}
+          magicLinkOnly={magicLinkOnly}
           oAuthSSOProviders={oAuthSSOProviders}
           serverConfigInit={serverConfigInit}
           socialLoading={socialLoading}

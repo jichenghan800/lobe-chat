@@ -7,9 +7,11 @@ import { BotIcon, ImageIcon, PenLineIcon, VideoIcon } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { filterHomeStarterItems } from '@/_custom/registry/homeStarter';
 import { useInitBuiltinAgent } from '@/hooks/useInitBuiltinAgent';
 import { type StarterMode } from '@/store/home';
 import { useHomeStore } from '@/store/home';
+import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   active: css`
@@ -37,16 +39,19 @@ type StarterTitleKey =
   | 'starter.videoGeneration'
   | 'starter.deepResearch';
 
+type VisibleStarterMode = Exclude<StarterMode, null>;
+
 interface StarterItem {
   disabled?: boolean;
   hot?: boolean;
   icon?: ButtonProps['icon'];
-  key: StarterMode;
+  key: VisibleStarterMode;
   titleKey: StarterTitleKey;
 }
 
 const StarterList = memo(() => {
   const { t } = useTranslation('home');
+  const { isAgentEditable, showAiImage } = useServerConfigStore(featureFlagsSelectors);
 
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.agentBuilder);
   useInitBuiltinAgent(BUILTIN_AGENT_SLUGS.groupAgentBuilder);
@@ -59,44 +64,42 @@ const StarterList = memo(() => {
   ]);
 
   const items: StarterItem[] = useMemo(
-    () => [
-      {
-        icon: BotIcon,
-        key: 'agent',
-        titleKey: 'starter.createAgent',
-      },
-      {
-        icon: GroupBotSquareIcon,
-        key: 'group',
-        titleKey: 'starter.createGroup',
-      },
-      {
-        icon: PenLineIcon,
-        key: 'write',
-        titleKey: 'starter.write',
-      },
-      {
-        icon: ImageIcon,
-        key: 'image',
-        titleKey: 'starter.imageGeneration',
-      },
-      {
-        icon: VideoIcon,
-        key: 'video',
-        titleKey: 'starter.videoGeneration',
-      },
-      // {
-      //   disabled: true,
-      //   icon: MicroscopeIcon,
-      //   key: 'research',
-      //   titleKey: 'starter.deepResearch',
-      // },
-    ],
-    [],
+    () => {
+      const defaultItems: StarterItem[] = [
+        {
+          icon: BotIcon,
+          key: 'agent',
+          titleKey: 'starter.createAgent',
+        },
+        {
+          icon: GroupBotSquareIcon,
+          key: 'group',
+          titleKey: 'starter.createGroup',
+        },
+        {
+          icon: PenLineIcon,
+          key: 'write',
+          titleKey: 'starter.write',
+        },
+        {
+          icon: ImageIcon,
+          key: 'image',
+          titleKey: 'starter.imageGeneration',
+        },
+        {
+          icon: VideoIcon,
+          key: 'video',
+          titleKey: 'starter.videoGeneration',
+        },
+      ];
+
+      return filterHomeStarterItems(defaultItems, { isAgentEditable, showAiImage });
+    },
+    [isAgentEditable, showAiImage],
   );
 
   const handleClick = useCallback(
-    (key: StarterMode) => {
+    (key: VisibleStarterMode) => {
       if (key === 'video') {
         navigate?.('/video');
         return;

@@ -6,6 +6,7 @@ import { type CSSProperties } from 'react';
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
 
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import NavItem from '@/features/NavPanel/components/NavItem';
 import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors';
@@ -21,7 +22,7 @@ const InboxItem = memo<InboxItemProps>(({ className, style }) => {
   const inboxAgentId = useAgentStore(builtinAgentSelectors.inboxAgentId);
 
   const isLoading = useChatStore(operationSelectors.isAgentRuntimeRunning);
-  const inboxAgentTitle = 'Lobe AI';
+  const inboxAgentTitle = getBrandAssistantName();
 
   return (
     <Link aria-label={inboxAgentTitle} to={SESSION_CHAT_URL(inboxAgentId, false)}>

@@ -7,6 +7,7 @@ import type {
 import { Type as SchemaType } from '@google/genai';
 import { imageUrlToBase64 } from '@lobechat/utils';
 
+import { mergeGoogleFunctionResponses } from '../../_custom/mergeGoogleFunctionResponses';
 import type { ChatCompletionTool, OpenAIChatMessage, UserMessageContentPart } from '../../types';
 import { safeParseJSON } from '../../utils/safeParseJSON';
 import { parseDataUri } from '../../utils/uriParser';
@@ -38,6 +39,7 @@ export const GEMINI_MAGIC_THOUGHT_SIGNATURE = 'skip_thought_signature_validator'
  */
 export const buildGooglePart = async (
   content: UserMessageContentPart,
+  options: { isVertexAi?: boolean } = {},
 ): Promise<Part | undefined> => {
   switch (content.type) {
     default: {
@@ -108,6 +110,22 @@ export const buildGooglePart = async (
 
       throw new TypeError(`currently we don't support video url: ${content.video_url.url}`);
     }
+
+    case 'file_url': {
+      if (!options.isVertexAi) return undefined;
+
+      const { mimeType, url } = content.file_url;
+
+      if (!url?.startsWith('gs://')) return undefined;
+
+      return {
+        fileData: {
+          fileUri: url,
+          mimeType: mimeType || 'application/octet-stream',
+        },
+        thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE,
+      };
+    }
   }
 };
 
@@ -117,6 +135,7 @@ export const buildGooglePart = async (
 export const buildGoogleMessage = async (
   message: OpenAIChatMessage,
   toolCallNameMap?: Map<string, string>,
+  options: { isVertexAi?: boolean } = {},
 ): Promise<Content> => {
   const content = message.content as string | UserMessageContentPart[];
 
@@ -156,7 +175,7 @@ export const buildGoogleMessage = async (
     if (typeof content === 'string')
       return [{ text: content, thoughtSignature: GEMINI_MAGIC_THOUGHT_SIGNATURE }];
 
-    const parts = await Promise.all(content.map(async (c) => await buildGooglePart(c)));
+    const parts = await Promise.all(content.map(async (c) => await buildGooglePart(c, options)));
     return parts.filter(Boolean) as Part[];
   };
 
@@ -169,7 +188,10 @@ export const buildGoogleMessage = async (
 /**
  * Convert messages from the OpenAI format to Google GenAI SDK format
  */
-export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promise<Content[]> => {
+export const buildGoogleMessages = async (
+  messages: OpenAIChatMessage[],
+  options: { isVertexAi?: boolean } = {},
+): Promise<Content[]> => {
   const toolCallNameMap = new Map<string, string>();
 
   // Build tool call id to name mapping
@@ -185,7 +207,7 @@ export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promis
 
   const pools = messages
     .filter((message) => message.role !== 'function')
-    .map(async (msg) => await buildGoogleMessage(msg, toolCallNameMap));
+    .map(async (msg) => await buildGoogleMessage(msg, toolCallNameMap, options));
 
   const contents = await Promise.all(pools);
 
@@ -194,24 +216,7 @@ export const buildGoogleMessages = async (messages: OpenAIChatMessage[]): Promis
     (content: Content) => content.parts && content.parts.length > 0,
   );
 
-  // Merge consecutive functionResponse contents into a single Content.
-  // Vertex AI requires the number of functionResponse parts to equal
-  // the number of functionCall parts in the preceding model turn.
-  const filteredContents: Content[] = [];
-  for (const content of nonEmptyContents) {
-    const isFunctionResponse =
-      content.role === 'user' && content.parts?.every((p) => p.functionResponse);
-
-    const last = filteredContents.at(-1);
-    const lastIsFunctionResponse =
-      last?.role === 'user' && last.parts?.every((p) => p.functionResponse);
-
-    if (isFunctionResponse && lastIsFunctionResponse) {
-      last!.parts = [...(last!.parts || []), ...(content.parts || [])];
-    } else {
-      filteredContents.push(content);
-    }
-  }
+  const filteredContents = mergeGoogleFunctionResponses(nonEmptyContents);
 
   // Check if the last message is a tool message
   const lastMessage = messages.at(-1);

@@ -9,6 +9,7 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { filterMobileNavItems } from '@/_custom/registry/navigation';
 import { MOBILE_TABBAR_HEIGHT } from '@/const/layoutTokens';
 import { useActiveTabKey } from '@/hooks/useActiveTabKey';
 import { SidebarTabKey } from '@/store/global/initialState';
@@ -37,7 +38,7 @@ const NavBar = memo(() => {
 
   const items: TabBarProps['items'] = useMemo(
     () =>
-      [
+      filterMobileNavItems([
         {
           icon: (active: boolean) => (
             <Icon className={active ? styles.active : undefined} icon={MessageSquare} />
@@ -68,8 +69,8 @@ const NavBar = memo(() => {
           },
           title: t('tab.me'),
         },
-      ].filter(Boolean) as TabBarProps['items'],
-    [t],
+      ].filter(Boolean) as TabBarProps['items']),
+    [navigate, showMarket, t],
   );
 
   return (

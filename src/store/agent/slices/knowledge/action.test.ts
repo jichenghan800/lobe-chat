@@ -148,6 +148,70 @@ describe('KnowledgeSlice Actions', () => {
 
       expect(agentService.deleteAgentFile).toHaveBeenCalledWith('agent-1', 'file-1');
     });
+
+    it('should remove file from local agentMap after delete', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      vi.mocked(agentService.deleteAgentFile).mockResolvedValue(undefined as any);
+
+      act(() => {
+        useAgentStore.setState({
+          activeAgentId: 'agent-1',
+          agentMap: {
+            'agent-1': {
+              files: [
+                { enabled: true, id: 'file-1', name: 'file-1.pdf' },
+                { enabled: true, id: 'file-2', name: 'file-2.pdf' },
+              ],
+            } as any,
+          },
+        });
+      });
+
+      await act(async () => {
+        await result.current.removeFileFromAgent('file-1');
+      });
+
+      const files = (
+        useAgentStore.getState().agentMap['agent-1'] as
+          | { files?: Array<{ id: string }> }
+          | undefined
+      )?.files;
+      expect(files?.map((item) => item.id)).toEqual(['file-2']);
+    });
+
+    it('should not mutate local agentMap when deleteAgentFile fails', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      vi.mocked(agentService.deleteAgentFile).mockRejectedValue(new Error('delete failed'));
+
+      act(() => {
+        useAgentStore.setState({
+          activeAgentId: 'agent-1',
+          agentMap: {
+            'agent-1': {
+              files: [
+                { enabled: true, id: 'file-1', name: 'file-1.pdf' },
+                { enabled: true, id: 'file-2', name: 'file-2.pdf' },
+              ],
+            } as any,
+          },
+        });
+      });
+
+      await expect(
+        act(async () => {
+          await result.current.removeFileFromAgent('file-1');
+        }),
+      ).rejects.toThrow('delete failed');
+
+      const files = (
+        useAgentStore.getState().agentMap['agent-1'] as
+          | { files?: Array<{ id: string }> }
+          | undefined
+      )?.files;
+      expect(files?.map((item) => item.id)).toEqual(['file-1', 'file-2']);
+    });
   });
 
   describe('removeKnowledgeBaseFromAgent', () => {
@@ -175,6 +239,72 @@ describe('KnowledgeSlice Actions', () => {
       });
 
       expect(agentService.deleteAgentKnowledgeBase).toHaveBeenCalledWith('agent-1', 'kb-1');
+    });
+
+    it('should remove knowledge base from local agentMap after delete', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      vi.mocked(agentService.deleteAgentKnowledgeBase).mockResolvedValue(undefined as any);
+
+      act(() => {
+        useAgentStore.setState({
+          activeAgentId: 'agent-1',
+          agentMap: {
+            'agent-1': {
+              knowledgeBases: [
+                { enabled: true, id: 'kb-1', name: 'KB 1' },
+                { enabled: true, id: 'kb-2', name: 'KB 2' },
+              ],
+            } as any,
+          },
+        });
+      });
+
+      await act(async () => {
+        await result.current.removeKnowledgeBaseFromAgent('kb-1');
+      });
+
+      const knowledgeBases = (
+        useAgentStore.getState().agentMap['agent-1'] as
+          | { knowledgeBases?: Array<{ id: string }> }
+          | undefined
+      )?.knowledgeBases;
+      expect(knowledgeBases?.map((item) => item.id)).toEqual(['kb-2']);
+    });
+
+    it('should not mutate local knowledge base state when deleteAgentKnowledgeBase fails', async () => {
+      const { result } = renderHook(() => useAgentStore());
+
+      vi.mocked(agentService.deleteAgentKnowledgeBase).mockRejectedValue(
+        new Error('delete knowledge failed'),
+      );
+
+      act(() => {
+        useAgentStore.setState({
+          activeAgentId: 'agent-1',
+          agentMap: {
+            'agent-1': {
+              knowledgeBases: [
+                { enabled: true, id: 'kb-1', name: 'KB 1' },
+                { enabled: true, id: 'kb-2', name: 'KB 2' },
+              ],
+            } as any,
+          },
+        });
+      });
+
+      await expect(
+        act(async () => {
+          await result.current.removeKnowledgeBaseFromAgent('kb-1');
+        }),
+      ).rejects.toThrow('delete knowledge failed');
+
+      const knowledgeBases = (
+        useAgentStore.getState().agentMap['agent-1'] as
+          | { knowledgeBases?: Array<{ id: string }> }
+          | undefined
+      )?.knowledgeBases;
+      expect(knowledgeBases?.map((item) => item.id)).toEqual(['kb-1', 'kb-2']);
     });
   });
 

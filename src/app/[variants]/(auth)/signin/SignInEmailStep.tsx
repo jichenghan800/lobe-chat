@@ -29,6 +29,7 @@ export interface SignInEmailStepProps {
   isSocialOnly: boolean;
   lastAuthProvider?: string | null;
   loading: boolean;
+  magicLinkOnly: boolean;
   oAuthSSOProviders: string[];
   onCheckUser: (values: { email: string }) => Promise<void>;
   onSetPassword: () => void;
@@ -43,6 +44,7 @@ export const SignInEmailStep = ({
   isSocialOnly,
   lastAuthProvider,
   loading,
+  magicLinkOnly,
   oAuthSSOProviders,
   serverConfigInit,
   socialLoading,
@@ -155,13 +157,13 @@ export const SignInEmailStep = ({
               button
             );
           })}
-          {!disableEmailPassword && divider}
+          {(magicLinkOnly || !disableEmailPassword) && divider}
         </Flexbox>
       )}
-      {serverConfigInit && disableEmailPassword && oAuthSSOProviders.length === 0 && (
+      {serverConfigInit && disableEmailPassword && !magicLinkOnly && oAuthSSOProviders.length === 0 && (
         <Alert showIcon description={t('betterAuth.signin.ssoOnlyNoProviders')} type="warning" />
       )}
-      {!disableEmailPassword && (
+      {(magicLinkOnly || !disableEmailPassword) && (
         <Form
           form={form}
           layout="vertical"
@@ -176,7 +178,10 @@ export const SignInEmailStep = ({
                 validator: (_, value) => {
                   if (!value) return Promise.resolve();
                   const trimmedValue = (value as string).trim();
-                  if (EMAIL_REGEX.test(trimmedValue) || USERNAME_REGEX.test(trimmedValue)) {
+                  if (magicLinkOnly && EMAIL_REGEX.test(trimmedValue)) {
+                    return Promise.resolve();
+                  }
+                  if (!magicLinkOnly && (EMAIL_REGEX.test(trimmedValue) || USERNAME_REGEX.test(trimmedValue))) {
                     return Promise.resolve();
                   }
                   return Promise.reject(new Error(t('betterAuth.errors.emailInvalid')));
@@ -185,7 +190,11 @@ export const SignInEmailStep = ({
             ]}
           >
             <Input
-              placeholder={t('betterAuth.signin.emailPlaceholder')}
+              placeholder={
+                magicLinkOnly
+                  ? t('betterAuth.signup.emailPlaceholder')
+                  : t('betterAuth.signin.emailPlaceholder')
+              }
               ref={emailInputRef}
               size="large"
               prefix={
@@ -203,7 +212,11 @@ export const SignInEmailStep = ({
                 <Button
                   icon={ChevronRight}
                   loading={loading}
-                  title={t('betterAuth.signin.nextStep')}
+                  title={
+                    magicLinkOnly
+                      ? t('betterAuth.signin.magicLinkButton')
+                      : t('betterAuth.signin.nextStep')
+                  }
                   variant={'filled'}
                   onClick={() => form.submit()}
                 />
@@ -212,7 +225,7 @@ export const SignInEmailStep = ({
           </Form.Item>
         </Form>
       )}
-      {isSocialOnly && (
+      {!magicLinkOnly && isSocialOnly && (
         <Alert
           showIcon
           style={{ marginTop: 12 }}

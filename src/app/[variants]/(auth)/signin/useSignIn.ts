@@ -29,13 +29,14 @@ interface ResolvedEmailResult {
 }
 
 export const useSignIn = () => {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation(['auth', 'authError']);
   const router = useRouter();
   const searchParams = useSearchParams();
   const enableMagicLink = useAuthServerConfigStore((s) => s.serverConfig.enableMagicLink || false);
   const disableEmailPassword = useAuthServerConfigStore(
     (s) => s.serverConfig.disableEmailPassword || false,
   );
+  const magicLinkOnly = enableMagicLink;
   const [form] = Form.useForm<SignInFormValues>();
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
@@ -58,6 +59,15 @@ export const useSignIn = () => {
     if (emailParam) form.setFieldValue('email', emailParam);
   }, [searchParams, form]);
 
+  const getTranslatedAuthError = (error?: { code?: string; message?: string }) => {
+    if (error?.code) {
+      const translated = t(`authError:codes.${error.code}`, { defaultValue: '' });
+      if (translated) return translated;
+    }
+
+    return error?.message;
+  };
+
   const handleSendMagicLink = async (targetEmail?: string) => {
     try {
       const emailValue =
@@ -69,9 +79,15 @@ export const useSignIn = () => {
       if (!emailValue) return;
 
       const callbackUrl = searchParams.get('callbackUrl') || '/';
-      const { error } = await signIn.magicLink({ callbackURL: callbackUrl, email: emailValue });
+      const normalizedEmail = emailValue.trim().toLowerCase();
+      const { error } = await signIn.magicLink({ callbackURL: callbackUrl, email: normalizedEmail });
       if (error) {
-        message.error(error.message || t('betterAuth.signin.magicLinkError'));
+        if (error.code === 'INVALID_EMAIL' || error.message === 'Invalid email') {
+          message.error(t('betterAuth.errors.emailInvalid'));
+          return;
+        }
+
+        message.error(getTranslatedAuthError(error) || t('betterAuth.signin.magicLinkError'));
         return;
       }
       message.success(t('betterAuth.signin.magicLinkSent'));
@@ -120,6 +136,11 @@ export const useSignIn = () => {
   const handleCheckUser = async (values: Pick<SignInFormValues, 'email'>) => {
     setLoading(true);
     try {
+      if (magicLinkOnly) {
+        await handleSendMagicLink(values.email);
+        return;
+      }
+
       const resolvedEmail = await resolveEmailFromIdentifier(values.email);
       if (!resolvedEmail) return;
 
@@ -280,6 +301,7 @@ export const useSignIn = () => {
     isSocialOnly,
     lastAuthProvider,
     loading,
+    magicLinkOnly,
     oAuthSSOProviders: sortedProviders,
     serverConfigInit: ENABLE_BUSINESS_FEATURES ? true : serverConfigInit,
     socialLoading,

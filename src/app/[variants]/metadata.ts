@@ -1,6 +1,7 @@
 import { BRANDING_LOGO_URL, BRANDING_NAME, ORG_NAME } from '@lobechat/business-const';
 import { OG_URL } from '@lobechat/const';
 
+import { getBrandName } from '@/_custom/registry/branding';
 import { DEFAULT_LANG } from '@/const/locale';
 import { OFFICIAL_URL } from '@/const/url';
 import { isCustomBranding, isCustomORG } from '@/const/version';
@@ -9,6 +10,7 @@ import { type DynamicLayoutProps } from '@/types/next';
 import { RouteVariants } from '@/utils/server/routeVariants';
 
 const isDev = process.env.NODE_ENV === 'development';
+const METADATA_BRAND_NAME = getBrandName() || BRANDING_NAME;
 
 export const generateMetadata = async (props: DynamicLayoutProps) => {
   const locale = await RouteVariants.getLocale(props);
@@ -20,9 +22,9 @@ export const generateMetadata = async (props: DynamicLayoutProps) => {
     },
     appleWebApp: {
       statusBarStyle: 'black-translucent',
-      title: BRANDING_NAME,
+      title: METADATA_BRAND_NAME,
     },
-    description: t('chat.description', { appName: BRANDING_NAME }),
+    description: t('chat.description', { appName: METADATA_BRAND_NAME }),
     icons: isCustomBranding
       ? BRANDING_LOGO_URL
       : {
@@ -33,31 +35,31 @@ export const generateMetadata = async (props: DynamicLayoutProps) => {
     manifest: '/manifest.json',
     metadataBase: new URL(OFFICIAL_URL),
     openGraph: {
-      description: t('chat.description', { appName: BRANDING_NAME }),
+      description: t('chat.description', { appName: METADATA_BRAND_NAME }),
       images: [
         {
-          alt: t('chat.title', { appName: BRANDING_NAME }),
+          alt: t('chat.title', { appName: METADATA_BRAND_NAME }),
           height: 640,
           url: OG_URL,
           width: 1200,
         },
       ],
       locale: DEFAULT_LANG,
-      siteName: BRANDING_NAME,
-      title: BRANDING_NAME,
+      siteName: METADATA_BRAND_NAME,
+      title: METADATA_BRAND_NAME,
       type: 'website',
       url: OFFICIAL_URL,
     },
     title: {
-      default: t('chat.title', { appName: BRANDING_NAME }),
-      template: `%s · ${BRANDING_NAME}`,
+      default: t('chat.title', { appName: METADATA_BRAND_NAME }),
+      template: `%s · ${METADATA_BRAND_NAME}`,
     },
     twitter: {
       card: 'summary_large_image',
-      description: t('chat.description', { appName: BRANDING_NAME }),
+      description: t('chat.description', { appName: METADATA_BRAND_NAME }),
       images: [OG_URL],
       site: isCustomORG ? `@${ORG_NAME}` : '@lobehub',
-      title: t('chat.title', { appName: BRANDING_NAME }),
+      title: t('chat.title', { appName: METADATA_BRAND_NAME }),
     },
   };
 };

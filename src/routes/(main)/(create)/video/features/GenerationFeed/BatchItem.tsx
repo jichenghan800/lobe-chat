@@ -1,6 +1,5 @@
 'use client';
 
-import { ModelTag } from '@lobehub/icons';
 import { ActionIconGroup, Block, Flexbox, Markdown, Tag, Text } from '@lobehub/ui';
 import { App } from 'antd';
 import { createStaticStyles } from 'antd-style';
@@ -10,6 +9,7 @@ import { type RuntimeVideoGenParamsKeys, type RuntimeVideoGenParamsValue } from 
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
 import useRenderBusinessVideoBatchItem from '@/business/client/hooks/useRenderBusinessVideoBatchItem';
 import { GenerationInvalidAPIKey } from '@/routes/(main)/(create)/features/GenerationInput';
 import { useVideoStore } from '@/store/video';
@@ -229,7 +229,7 @@ export const VideoGenerationBatchItem = memo<VideoGenerationBatchItemProps>(({ b
       </Flexbox>
       {renderContent()}
       <Flexbox horizontal gap={4} style={{ opacity: 0.66 }}>
-        <ModelTag model={batch.model} variant={'borderless'} />
+        <ModelDisplayNameTag model={batch.model} provider={batch.provider} variant={'borderless'} />
         {batch.config?.resolution && <Tag variant={'borderless'}>{batch.config.resolution}</Tag>}
       </Flexbox>
       <Flexbox

@@ -1,5 +1,6 @@
 import { type NavigateFunction } from 'react-router-dom';
 
+import { getDefaultModelSwitchPanelGroupMode } from '@/_custom/registry/modelSwitchPanel';
 import { type MigrationSQL, type MigrationTableItem } from '@/types/clientDB';
 import { DatabaseLoadingState } from '@/types/clientDB';
 import { type LocaleMode } from '@/types/locale';
@@ -238,7 +239,7 @@ export const INITIAL_STATUS = {
   knowledgeBaseModalViewMode: 'list' as const,
   leftPanelWidth: 320,
   mobileShowTopic: false,
-  modelSwitchPanelGroupMode: 'byProvider',
+  modelSwitchPanelGroupMode: getDefaultModelSwitchPanelGroupMode(),
   modelSwitchPanelWidth: 460,
   noWideScreen: true,
   pageAgentPanelWidth: 360,

@@ -1,5 +1,6 @@
 import { type LobeAgentChatConfig } from '@lobechat/types';
 
+import { getThinkingLevel3Default } from '@/_custom/registry/modelCustomization';
 import { aiModelSelectors, getAiInfraStoreState } from '@/store/aiInfra';
 
 /**
@@ -177,8 +178,12 @@ export const resolveModelExtendParams = (ctx: ModelParamsContext): ModelExtendPa
     extendParams.thinkingLevel = chatConfig.thinkingLevel2;
   }
 
-  if (modelExtendParams.includes('thinkingLevel3') && chatConfig.thinkingLevel3) {
-    extendParams.thinkingLevel = chatConfig.thinkingLevel3;
+  if (modelExtendParams.includes('thinkingLevel3')) {
+    if (chatConfig.thinkingLevel3) {
+      extendParams.thinkingLevel = chatConfig.thinkingLevel3;
+    } else if (!extendParams.thinkingLevel) {
+      extendParams.thinkingLevel = getThinkingLevel3Default();
+    }
   }
 
   if (modelExtendParams.includes('thinkingLevel4') && chatConfig.thinkingLevel4) {

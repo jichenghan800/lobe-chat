@@ -1,9 +1,10 @@
 import { type ConversationContext, type UIChatMessage } from '@lobechat/types';
-import { ModelTag } from '@lobehub/icons';
 import { Avatar, Flexbox, Markdown, Text } from '@lobehub/ui';
 import { cx } from 'antd-style';
 import { memo } from 'react';
 
+import ModelDisplayNameTag from '@/_custom/components/ModelDisplayNameTag';
+import { getBrandAssistantName } from '@/_custom/registry/branding';
 import { ProductLogo } from '@/components/Branding';
 import PluginTag from '@/features/PluginTag';
 import { useAgentStore } from '@/store/agent';
@@ -24,17 +25,19 @@ interface PreviewProps extends FieldType {
 
 const Preview = memo<PreviewProps>(
   ({ context, messages, title, withSystemRole, withBackground, withFooter, widthMode }) => {
-    const [model, plugins, systemRole, isInbox, avatar, backgroundColor] = useAgentStore((s) => [
-      agentSelectors.currentAgentModel(s),
-      agentSelectors.displayableAgentPlugins(s),
-      agentSelectors.currentAgentSystemRole(s),
-      builtinAgentSelectors.isInboxAgent(s),
-      agentSelectors.currentAgentDescription(s),
-      agentSelectors.currentAgentAvatar(s),
-      agentSelectors.currentAgentBackgroundColor(s),
-    ]);
+    const [model, provider, plugins, systemRole, isInbox, avatar, backgroundColor] = useAgentStore(
+      (s) => [
+        agentSelectors.currentAgentModel(s),
+        agentSelectors.currentAgentModelProvider(s),
+        agentSelectors.displayableAgentPlugins(s),
+        agentSelectors.currentAgentSystemRole(s),
+        builtinAgentSelectors.isInboxAgent(s),
+        agentSelectors.currentAgentAvatar(s),
+        agentSelectors.currentAgentBackgroundColor(s),
+      ],
+    );
 
-    const displayTitle = isInbox ? 'Lobe AI' : title;
+    const displayTitle = isInbox ? getBrandAssistantName() : title;
 
     return (
       <div
@@ -63,7 +66,7 @@ const Preview = memo<PreviewProps>(
                   {displayTitle}
                 </Text>
                 <Flexbox horizontal gap={4}>
-                  <ModelTag model={model} />
+                  <ModelDisplayNameTag model={model} provider={provider} />
                   {plugins?.length > 0 && <PluginTag plugins={plugins} />}
                 </Flexbox>
               </Flexbox>

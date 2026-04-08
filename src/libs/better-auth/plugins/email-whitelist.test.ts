@@ -44,9 +44,9 @@ describe('isEmailAllowed', () => {
       expect(isEmailAllowed('user@other.com')).toBe(false);
     });
 
-    it('should be case-sensitive for domain', () => {
-      expect(isEmailAllowed('user@Example.com')).toBe(false);
-      expect(isEmailAllowed('user@EXAMPLE.COM')).toBe(false);
+    it('should normalize case for domain', () => {
+      expect(isEmailAllowed('user@Example.com')).toBe(true);
+      expect(isEmailAllowed('user@EXAMPLE.COM')).toBe(true);
     });
   });
 
@@ -65,8 +65,26 @@ describe('isEmailAllowed', () => {
       expect(isEmailAllowed('user@special.com')).toBe(false);
     });
 
-    it('should be case-sensitive for email', () => {
-      expect(isEmailAllowed('Admin@special.com')).toBe(false);
+    it('should normalize case for email', () => {
+      expect(isEmailAllowed('Admin@special.com')).toBe(true);
+    });
+  });
+
+  describe('enterprise domain aliases', () => {
+    it('should treat aliased domains as the same whitelisted domain', () => {
+      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS = 'abite.com';
+
+      expect(isEmailAllowed('user@abite.com')).toBe(true);
+      expect(isEmailAllowed('user@cotticoffee.com')).toBe(true);
+    });
+
+    it('should treat aliased domains as the same whitelisted email identity', () => {
+      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS =
+        'jicheng.han@abite.com';
+
+      expect(isEmailAllowed('jicheng.han@abite.com')).toBe(true);
+      expect(isEmailAllowed('jicheng.han@cotticoffee.com')).toBe(true);
+      expect(isEmailAllowed('other@cotticoffee.com')).toBe(false);
     });
   });
 

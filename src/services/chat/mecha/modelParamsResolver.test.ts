@@ -552,17 +552,17 @@ describe('resolveModelExtendParams', () => {
         expect(result.thinkingLevel).toBe('medium');
       });
 
-      it('should not set thinkingLevel when thinkingLevel3 is not configured', () => {
+      it('should default thinkingLevel to low when thinkingLevel3 is not configured', () => {
         const result = resolveModelExtendParams({
           chatConfig: {} as any,
           model: 'gemini-3.1-pro-preview',
           provider: 'google',
         });
 
-        expect(result.thinkingLevel).toBeUndefined();
+        expect(result.thinkingLevel).toBe('low');
       });
 
-      it('should not read from thinkingLevel config key', () => {
+      it('should ignore thinkingLevel config key and still use low default', () => {
         const result = resolveModelExtendParams({
           chatConfig: {
             thinkingLevel: 'high',
@@ -571,7 +571,42 @@ describe('resolveModelExtendParams', () => {
           provider: 'google',
         });
 
-        expect(result.thinkingLevel).toBeUndefined();
+        expect(result.thinkingLevel).toBe('low');
+      });
+
+      it('should not override explicit thinkingLevel when both thinkingLevel and thinkingLevel3 are enabled', () => {
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'thinkingLevel',
+          'thinkingLevel3',
+        ]);
+
+        const result = resolveModelExtendParams({
+          chatConfig: {
+            thinkingLevel: 'high',
+          } as any,
+          model: 'gemini-3.1-pro-preview',
+          provider: 'google',
+        });
+
+        expect(result.thinkingLevel).toBe('high');
+      });
+
+      it('should prioritize explicit thinkingLevel3 over thinkingLevel when both are enabled', () => {
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'thinkingLevel',
+          'thinkingLevel3',
+        ]);
+
+        const result = resolveModelExtendParams({
+          chatConfig: {
+            thinkingLevel: 'low',
+            thinkingLevel3: 'medium',
+          } as any,
+          model: 'gemini-3.1-pro-preview',
+          provider: 'google',
+        });
+
+        expect(result.thinkingLevel).toBe('medium');
       });
     });
   });

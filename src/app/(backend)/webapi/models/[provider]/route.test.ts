@@ -5,6 +5,7 @@ import { ChatErrorType } from '@lobechat/types';
 import { getXorPayload } from '@lobechat/utils/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { auth } from '@/auth';
 import type * as EnvsAuthModule from '@/envs/auth';
 import { LOBE_CHAT_AUTH_HEADER } from '@/envs/auth';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
@@ -60,6 +61,7 @@ describe('GET handler', () => {
 
       vi.mocked(getXorPayload).mockReturnValueOnce({
         apiKey: 'test-api-key',
+        userId: 'test-user-id',
       });
 
       const errorWithStack = new Error('Something went wrong');
@@ -94,6 +96,7 @@ describe('GET handler', () => {
 
       vi.mocked(getXorPayload).mockReturnValueOnce({
         apiKey: 'test-api-key',
+        userId: 'test-user-id',
       });
 
       class CustomError extends Error {
@@ -126,6 +129,7 @@ describe('GET handler', () => {
 
       vi.mocked(getXorPayload).mockReturnValueOnce({
         apiKey: 'test-api-key',
+        userId: 'test-user-id',
       });
 
       const structuredError = {
@@ -153,6 +157,7 @@ describe('GET handler', () => {
 
       vi.mocked(getXorPayload).mockReturnValueOnce({
         apiKey: 'test-api-key',
+        userId: 'test-user-id',
       });
 
       const mockRuntime: LobeRuntimeAI = {
@@ -172,6 +177,7 @@ describe('GET handler', () => {
 
       vi.mocked(getXorPayload).mockReturnValueOnce({
         apiKey: 'test-api-key',
+        userId: 'test-user-id',
       });
 
       const mockRuntime: LobeRuntimeAI = {
@@ -189,11 +195,38 @@ describe('GET handler', () => {
   });
 
   describe('success cases', () => {
+    it('should use better-auth session userId when header payload userId is missing', async () => {
+      const mockParams = Promise.resolve({ provider: 'vertexai' });
+
+      vi.mocked(auth.api.getSession).mockResolvedValueOnce({
+        user: { id: 'session-user-id' },
+      } as any);
+      vi.mocked(getXorPayload).mockReturnValueOnce({
+        apiKey: 'test-api-key',
+      });
+
+      const mockRuntime: LobeRuntimeAI = {
+        baseURL: 'abc',
+        chat: vi.fn(),
+        models: vi.fn().mockResolvedValue([]),
+      };
+      vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
+
+      await GET(request, { params: mockParams });
+
+      expect(initModelRuntimeFromDB).toHaveBeenCalledWith(
+        expect.anything(),
+        'session-user-id',
+        'vertexai',
+      );
+    });
+
     it('should return model list on success', async () => {
       const mockParams = Promise.resolve({ provider: 'openai' });
 
       vi.mocked(getXorPayload).mockReturnValueOnce({
         apiKey: 'test-api-key',
+        userId: 'test-user-id',
       });
 
       const mockModelList = [

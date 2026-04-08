@@ -5,6 +5,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { filterDesktopHeaderNavItems } from '@/_custom/registry/navigation';
 import { type NavItemProps } from '@/features/NavPanel/components/NavItem';
 import NavItem from '@/features/NavPanel/components/NavItem';
 import { useActiveTabKey } from '@/hooks/useActiveTabKey';
@@ -15,7 +16,8 @@ const Nav = memo(() => {
   const tab = useActiveTabKey();
   const navigate = useNavigate();
   const { t } = useTranslation('common');
-  const { topNavItems: items } = useNavLayout();
+  const { topNavItems } = useNavLayout();
+  const items = filterDesktopHeaderNavItems(topNavItems);
 
   const newBadge = (
     <Tag color="blue" size="small">

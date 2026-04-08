@@ -7,6 +7,7 @@ import {
 import { GoogleGenAI } from '@google/genai';
 import debug from 'debug';
 
+import { requestWithQuotaRetry } from '../../_custom/googleQuotaRetry';
 import { type LobeRuntimeAI } from '../../core/BaseAI';
 import { buildGoogleMessages, buildGoogleTools } from '../../core/contextBuilders/google';
 import { GoogleGenerativeAIStream } from '../../core/streams';
@@ -151,7 +152,9 @@ export class LobeGoogleAI implements LobeRuntimeAI {
         thinkingLevel,
       }) as ThinkingConfig;
 
-      const contents = await buildGoogleMessages(payload.messages);
+      const contents = await buildGoogleMessages(payload.messages, {
+        isVertexAi: this.isVertexAi,
+      });
 
       const controller = new AbortController();
       const originalSignal = options?.signal;
@@ -223,7 +226,17 @@ export class LobeGoogleAI implements LobeRuntimeAI {
         log(JSON.stringify(finalPayload), '\n');
       }
 
-      const geminiStreamResponse = await this.client.models.generateContentStream(finalPayload);
+      const geminiStreamResponse = await requestWithQuotaRetry(
+        () => this.client.models.generateContentStream(finalPayload),
+        {
+          isAbortError,
+          label: this.isVertexAi
+            ? 'vertexai.generateContentStream'
+            : 'google.generateContentStream',
+          logger: log,
+          signal: controller.signal,
+        },
+      );
 
       const googleStream = this.createEnhancedStream(geminiStreamResponse, controller.signal);
       const [prod, useForDebug] = googleStream.tee();
@@ -278,7 +291,9 @@ export class LobeGoogleAI implements LobeRuntimeAI {
    */
   async generateObject(payload: GenerateObjectPayload, options?: GenerateObjectOptions) {
     // Convert OpenAI messages to Google format
-    const contents = await buildGoogleMessages(payload.messages);
+    const contents = await buildGoogleMessages(payload.messages, {
+      isVertexAi: this.isVertexAi,
+    });
     const pricing = await getModelPricing(payload.model, this.provider);
 
     // Handle tools-based structured output
@@ -463,8 +478,13 @@ export class LobeGoogleAI implements LobeRuntimeAI {
     const hasUrlContext = payload?.urlContext;
     const hasFunctionTools = tools && tools.length > 0;
 
-    // If tool_calls already exist, prioritize handling function declarations
+    // Gemini/Vertex requests cannot reliably combine search/urlContext tools with
+    // function declarations in a single request. When agent tools are present,
+    // prioritize function declarations so the model can actually emit tool calls.
     if (hasToolCalls && hasFunctionTools) {
+      return buildGoogleTools(tools);
+    }
+    if (hasFunctionTools) {
       return buildGoogleTools(tools);
     }
 
