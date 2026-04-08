@@ -345,6 +345,9 @@ export function createCallbacksTransformer(cb: ChatStreamCallbacks | undefined) 
           case 'content_part': {
             // data format: StreamPartChunkData
             const partData = data as StreamPartChunkData;
+            if (partData.partType === 'text') {
+              aggregatedText += partData.content;
+            }
             await callbacks.onContentPart?.({
               content: partData.content,
               mimeType: partData.mimeType,
@@ -357,6 +360,10 @@ export function createCallbacksTransformer(cb: ChatStreamCallbacks | undefined) 
           case 'reasoning_part': {
             // data format: StreamPartChunkData
             const partData = data as StreamPartChunkData;
+            if (partData.partType === 'text') {
+              if (!aggregatedThinking) aggregatedThinking = '';
+              aggregatedThinking += partData.content;
+            }
             await callbacks.onReasoningPart?.({
               content: partData.content,
               mimeType: partData.mimeType,

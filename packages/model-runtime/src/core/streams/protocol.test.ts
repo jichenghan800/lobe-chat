@@ -592,6 +592,44 @@ describe('createCallbacksTransformer', () => {
     expect(onFinal).toHaveBeenCalledWith(expectedData);
   });
 
+  it('should aggregate text from content_part and reasoning_part into final callbacks', async () => {
+    const onCompletion = vi.fn();
+    const onFinal = vi.fn();
+    const transformer = createCallbacksTransformer({ onCompletion, onFinal });
+
+    const chunks = [
+      'event: content_part\n',
+      `data: ${JSON.stringify({ content: 'Hello', partType: 'text' })}\n\n`,
+      'event: content_part\n',
+      `data: ${JSON.stringify({ content: ' World', partType: 'text' })}\n\n`,
+      'event: reasoning_part\n',
+      `data: ${JSON.stringify({ content: 'Think', inReasoning: true, partType: 'text' })}\n\n`,
+      'event: reasoning_part\n',
+      `data: ${JSON.stringify({ content: 'ing', inReasoning: true, partType: 'text' })}\n\n`,
+    ];
+
+    await processChunks(transformer, chunks);
+
+    expect(onCompletion).toHaveBeenCalledWith({
+      error: undefined,
+      grounding: undefined,
+      speed: undefined,
+      text: 'Hello World',
+      thinking: 'Thinking',
+      toolsCalling: undefined,
+      usage: undefined,
+    });
+    expect(onFinal).toHaveBeenCalledWith({
+      error: undefined,
+      grounding: undefined,
+      speed: undefined,
+      text: 'Hello World',
+      thinking: 'Thinking',
+      toolsCalling: undefined,
+      usage: undefined,
+    });
+  });
+
   it('should handle speed chunks and include in final data', async () => {
     const onFinal = vi.fn();
     const transformer = createCallbacksTransformer({ onFinal });

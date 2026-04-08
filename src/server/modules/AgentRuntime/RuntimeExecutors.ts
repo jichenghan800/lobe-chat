@@ -246,8 +246,24 @@ export const createRuntimeExecutors = (
       type ContentPart = { text: string; type: 'text' } | { image: string; type: 'image' };
       const contentParts: ContentPart[] = [];
       const reasoningParts: ContentPart[] = [];
-      const hasContentImages = false;
-      const hasReasoningImages = false;
+      let hasContentImages = false;
+      let hasReasoningImages = false;
+
+      const appendTextPart = (parts: ContentPart[], text: string) => {
+        const lastPart = parts.at(-1);
+
+        if (lastPart?.type === 'text') {
+          lastPart.text += text;
+          return;
+        }
+
+        parts.push({ text, type: 'text' });
+      };
+
+      const appendImagePart = (parts: ContentPart[], content: string, mimeType?: string) => {
+        const image = mimeType ? `data:${mimeType};base64,${content}` : content;
+        parts.push({ image, type: 'image' });
+      };
 
       // Process messages through serverMessagesEngine to inject system role, knowledge, etc.
       // Rebuild params from agentConfig at execution time (capabilities built dynamically)
@@ -504,6 +520,7 @@ export const createRuntimeExecutors = (
               text.length,
             );
             content += text;
+            appendTextPart(contentParts, text);
 
             textBuffer += text;
 
@@ -523,11 +540,60 @@ export const createRuntimeExecutors = (
               reasoning.length,
             );
             thinkingContent += reasoning;
+            appendTextPart(reasoningParts, reasoning);
 
             // Buffer reasoning content
             reasoningBuffer += reasoning;
 
             // If no timer exists, create one
+            if (!reasoningBufferTimer) {
+              reasoningBufferTimer = setTimeout(async () => {
+                await flushReasoningBuffer();
+                reasoningBufferTimer = null;
+              }, BUFFER_INTERVAL);
+            }
+          },
+          onContentPart: async (part) => {
+            if (part.partType === 'image') {
+              hasContentImages = true;
+              appendImagePart(contentParts, part.content, part.mimeType);
+              return;
+            }
+
+            timing(
+              '[%s] onContentPart received text chunk at %d, length: %d',
+              operationLogId,
+              Date.now(),
+              part.content.length,
+            );
+            content += part.content;
+            appendTextPart(contentParts, part.content);
+            textBuffer += part.content;
+
+            if (!textBufferTimer) {
+              textBufferTimer = setTimeout(async () => {
+                await flushTextBuffer();
+                textBufferTimer = null;
+              }, BUFFER_INTERVAL);
+            }
+          },
+          onReasoningPart: async (part) => {
+            if (part.partType === 'image') {
+              hasReasoningImages = true;
+              appendImagePart(reasoningParts, part.content, part.mimeType);
+              return;
+            }
+
+            timing(
+              '[%s] onReasoningPart received text chunk at %d, length: %d',
+              operationLogId,
+              Date.now(),
+              part.content.length,
+            );
+            thinkingContent += part.content;
+            appendTextPart(reasoningParts, part.content);
+            reasoningBuffer += part.content;
+
             if (!reasoningBufferTimer) {
               reasoningBufferTimer = setTimeout(async () => {
                 await flushReasoningBuffer();

@@ -286,6 +286,81 @@ describe('RuntimeExecutors', () => {
       );
     });
 
+    it('should persist text emitted via content_part and reasoning_part callbacks', async () => {
+      const mockChat = vi.fn().mockImplementation(async (_payload, options) => {
+        await options?.callback?.onReasoningPart?.({
+          content: '思考中',
+          partType: 'text',
+        });
+        await options?.callback?.onContentPart?.({
+          content: 'QUEUE_OK',
+          partType: 'text',
+        });
+        await options?.callback?.onCompletion?.({
+          text: 'QUEUE_OK',
+          thinking: '思考中',
+          usage: {
+            inputTextTokens: 10,
+            outputReasoningTokens: 5,
+            outputTextTokens: 3,
+            totalInputTokens: 10,
+            totalOutputTokens: 8,
+            totalTokens: 18,
+          },
+        });
+        return new Response('done');
+      });
+      vi.mocked(initModelRuntimeFromDB).mockResolvedValueOnce({ chat: mockChat } as any);
+
+      const executors = createRuntimeExecutors(ctx);
+      const state = createMockState({
+        modelRuntimeConfig: {
+          model: 'gemini-2.5-pro',
+          provider: 'vertexai',
+        },
+      });
+
+      const instruction = {
+        payload: {
+          messages: [{ content: 'Hello', role: 'user' }],
+          model: 'gemini-2.5-pro',
+          provider: 'vertexai',
+          tools: [],
+        },
+        type: 'call_llm' as const,
+      };
+
+      const result = await executors.call_llm!(instruction, state);
+
+      expect(mockMessageModel.update).toHaveBeenCalledWith(
+        'msg-123',
+        expect.objectContaining({
+          content: 'QUEUE_OK',
+          reasoning: { content: '思考中' },
+        }),
+      );
+
+      expect(mockStreamManager.publishStreamEvent).toHaveBeenCalledWith(
+        'op-123',
+        expect.objectContaining({
+          data: expect.objectContaining({
+            finalContent: 'QUEUE_OK',
+            reasoning: '思考中',
+          }),
+          type: 'stream_end',
+        }),
+      );
+
+      expect(result.newState.messages.at(-1)).toEqual({
+        content: 'QUEUE_OK',
+        role: 'assistant',
+        tool_calls: undefined,
+      });
+      expect(result.nextContext?.payload).toMatchObject({
+        result: { content: 'QUEUE_OK', tool_calls: [] },
+      });
+    });
+
     it('should execute compress_context and return compression_result', async () => {
       const mockChat = vi.fn().mockImplementation(async (_payload, options) => {
         await options?.callback?.onText?.('summary');
