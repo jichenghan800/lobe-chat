@@ -73,7 +73,7 @@ describe('LobeGoogleAI', () => {
     });
 
     it('should withGrounding', () => {
-      const data = [
+      const _data = [
         {
           candidates: [{ content: { parts: [{ text: 'As' }], role: 'model' } }],
           usageMetadata: { promptTokenCount: 8, totalTokenCount: 8 },
@@ -440,10 +440,9 @@ describe('LobeGoogleAI', () => {
         const enhancedStream = instance['createEnhancedStream'](mockStream, abortController.signal);
 
         const reader = enhancedStream.getReader();
-        const chunks: any[] = [];
-
         // Read first value then cancel to trigger error chunk
-        chunks.push((await reader.read()).value);
+        const firstChunk = (await reader.read()).value;
+        const chunks: any[] = [firstChunk];
         abortController.abort();
 
         // Read all remaining chunks
@@ -494,10 +493,9 @@ describe('LobeGoogleAI', () => {
         const enhancedStream = instance['createEnhancedStream'](mockStream, abortController.signal);
 
         const reader = enhancedStream.getReader();
-        const chunks: any[] = [];
-
         // Read first value then collect remaining chunks (error included)
-        chunks.push((await reader.read()).value);
+        const firstChunk = (await reader.read()).value;
+        const chunks: any[] = [firstChunk];
         let result;
         while (!(result = await reader.read()).done) {
           chunks.push(result.value);
@@ -519,6 +517,7 @@ describe('LobeGoogleAI', () => {
 
       it('should handle AbortError without data', async () => {
         const mockStream = (async function* () {
+          for (const item of [] as any[]) yield item;
           throw new Error('aborted');
         })();
 
@@ -559,10 +558,9 @@ describe('LobeGoogleAI', () => {
         const enhancedStream = instance['createEnhancedStream'](mockStream, abortController.signal);
 
         const reader = enhancedStream.getReader();
-        const chunks: any[] = [];
-
         // Read first value then collect remaining chunks (parsing error)
-        chunks.push((await reader.read()).value);
+        const firstChunk = (await reader.read()).value;
+        const chunks: any[] = [firstChunk];
         let result;
         while (!(result = await reader.read()).done) {
           chunks.push(result.value);
@@ -682,7 +680,7 @@ describe('thinkingConfig includeThoughts logic', () => {
 });
 
 describe('buildGoogleToolsWithSearch', () => {
-  it('should prioritize function declarations over urlContext when function tools are present', async () => {
+  it('should prioritize function declarations over urlContext when both are enabled', async () => {
     const mockStream = new ReadableStream({
       start(controller) {
         controller.enqueue({
@@ -736,9 +734,21 @@ describe('buildGoogleToolsWithSearch', () => {
     expect(config.tools).toEqual([
       {
         functionDeclarations: [
-          expect.objectContaining({
+          {
+            description: 'Activate tools',
             name: 'lobe-activator____activateTools____builtin',
-          }),
+            parameters: {
+              description: undefined,
+              properties: {
+                identifiers: {
+                  items: { type: 'string' },
+                  type: 'array',
+                },
+              },
+              required: ['identifiers'],
+              type: 'OBJECT',
+            },
+          },
         ],
       },
     ]);
@@ -812,6 +822,155 @@ describe('buildGoogleToolsWithSearch', () => {
     const callArgs = (instance['client'].models.generateContentStream as any).mock.calls[0];
     const config = callArgs[0].config as any;
     expect(config.tools).toEqual([{ googleSearch: {} }]);
+  });
+
+  it('should combine googleSearch and function declarations when search is enabled', async () => {
+    const mockStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue({
+          text: 'test',
+          candidates: [
+            {
+              content: { parts: [{ text: 'test' }], role: 'model' },
+              finishReason: 'STOP',
+              index: 0,
+            },
+          ],
+          usageMetadata: { promptTokenCount: 1, totalTokenCount: 2 },
+          modelVersion: 'gemini-3.1-pro-preview',
+        });
+        controller.close();
+      },
+    });
+    vi.spyOn(instance['client'].models, 'generateContentStream').mockResolvedValue(
+      mockStream as any,
+    );
+
+    await instance.chat({
+      messages: [{ content: '杭州今天的天气', role: 'user' }],
+      model: 'gemini-3.1-pro-preview',
+      temperature: 0,
+      enabledSearch: true,
+      tools: [
+        {
+          function: {
+            description: 'Activate tools',
+            name: 'lobe-activator____activateTools____builtin',
+            parameters: {
+              properties: {
+                identifiers: {
+                  items: { type: 'string' },
+                  type: 'array',
+                },
+              },
+              required: ['identifiers'],
+              type: 'object',
+            },
+          },
+          type: 'function',
+        },
+      ],
+    });
+
+    const callArgs = (instance['client'].models.generateContentStream as any).mock.calls[0];
+    const config = callArgs[0].config as any;
+    expect(config.tools).toEqual([
+      { googleSearch: {} },
+      {
+        functionDeclarations: [
+          {
+            description: 'Activate tools',
+            name: 'lobe-activator____activateTools____builtin',
+            parameters: {
+              description: undefined,
+              properties: {
+                identifiers: {
+                  items: { type: 'string' },
+                  type: 'array',
+                },
+              },
+              required: ['identifiers'],
+              type: 'OBJECT',
+            },
+          },
+        ],
+      },
+    ]);
+    expect(config.toolConfig).toEqual({ includeServerSideToolInvocations: true });
+  });
+
+  it('should combine googleSearch and function declarations without tool context circulation on Vertex', async () => {
+    const vertexInstance = new LobeGoogleAI({ apiKey: 'test', isVertexAi: true });
+    const mockStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue({
+          text: 'test',
+          candidates: [
+            {
+              content: { parts: [{ text: 'test' }], role: 'model' },
+              finishReason: 'STOP',
+              index: 0,
+            },
+          ],
+          usageMetadata: { promptTokenCount: 1, totalTokenCount: 2 },
+          modelVersion: 'gemini-3.5-flash',
+        });
+        controller.close();
+      },
+    });
+    vi.spyOn(vertexInstance['client'].models, 'generateContentStream').mockResolvedValue(
+      mockStream as any,
+    );
+
+    await vertexInstance.chat({
+      messages: [{ content: '生成一份关于 Gemini 3.5 Flash 的介绍 PPT', role: 'user' }],
+      model: 'gemini-3.5-flash',
+      temperature: 0,
+      enabledSearch: true,
+      tools: [
+        {
+          function: {
+            description: 'Create a PPTX file',
+            name: 'lobe-sandbox____createPptx____builtin',
+            parameters: {
+              properties: {
+                title: {
+                  type: 'string',
+                },
+              },
+              required: ['title'],
+              type: 'object',
+            },
+          },
+          type: 'function',
+        },
+      ],
+    });
+
+    const callArgs = (vertexInstance['client'].models.generateContentStream as any).mock.calls[0];
+    const config = callArgs[0].config as any;
+    expect(config.tools).toEqual([
+      { googleSearch: {} },
+      {
+        functionDeclarations: [
+          {
+            description: 'Create a PPTX file',
+            name: 'lobe-sandbox____createPptx____builtin',
+            parameters: {
+              description: undefined,
+              properties: {
+                title: {
+                  type: 'string',
+                },
+              },
+              required: ['title'],
+              type: 'OBJECT',
+            },
+          },
+        ],
+      },
+    ]);
+    expect(config.toolConfig).toBeUndefined();
   });
 });
 

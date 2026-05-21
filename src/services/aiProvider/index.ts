@@ -41,7 +41,9 @@ export class AiProviderService {
   };
 
   getAiProviderRuntimeState = async (isLogin?: boolean): Promise<AiProviderRuntimeState> => {
-    return lambdaClient.aiProvider.getAiProviderRuntimeState.query({ isLogin });
+    return lambdaClient.aiProvider.getAiProviderRuntimeState.query(
+      typeof isLogin === 'boolean' ? { isLogin } : {},
+    );
   };
 }
 

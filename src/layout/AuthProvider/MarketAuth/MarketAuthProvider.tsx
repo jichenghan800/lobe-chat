@@ -6,6 +6,7 @@ import { createContext, use, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mutate as globalMutate } from 'swr';
 
+import ManualCallbackModal from '@/_custom/components/marketAuth/ManualCallbackModal';
 import { lambdaClient } from '@/libs/trpc/client';
 import { MARKET_OIDC_ENDPOINTS } from '@/services/_url';
 import { useServerConfigStore } from '@/store/serverConfig';
@@ -13,7 +14,7 @@ import { serverConfigSelectors } from '@/store/serverConfig/selectors';
 import { useUserStore } from '@/store/user';
 import { settingsSelectors } from '@/store/user/slices/settings/selectors/settings';
 
-import { MarketAuthError } from './errors';
+import { MarketAuthError, resolveMarketAuthError } from './errors';
 import { marketAuthEvents } from './events';
 import MarketAuthConfirmModal from './MarketAuthConfirmModal';
 import { MarketOIDC } from './oidc';
@@ -24,6 +25,7 @@ import {
   type MarketUserInfo,
   type MarketUserProfile,
   type OIDCConfig,
+  type TokenResponse,
 } from './types';
 import { useMarketUserProfile } from './useMarketUserProfile';
 
@@ -100,6 +102,32 @@ const clearMarketTokensFromDB = async () => {
 };
 
 /**
+ * Extract OIDC callback `code` and `state` from a pasted URL or query fragment.
+ * Used by the manual fallback when the popup-based handoff fails.
+ */
+const parseMarketCallbackParams = (input: string) => {
+  const normalized = input.replaceAll(/\s+/g, '').trim();
+  if (!normalized) return null;
+
+  const queryIndex = normalized.indexOf('?');
+  const query = queryIndex >= 0 ? normalized.slice(queryIndex + 1) : normalized.replace(/^#/, '');
+  const params = new URLSearchParams(query);
+  const code = params.get('code');
+  const state = params.get('state');
+
+  if (code && state) return { code, state };
+
+  const codeMatch = normalized.match(/(?:^|[&?])code=([^&]+)/);
+  const stateMatch = normalized.match(/(?:^|[&?])state=([^&]+)/);
+  if (!codeMatch || !stateMatch) return null;
+
+  return {
+    code: decodeURIComponent(codeMatch[1]),
+    state: decodeURIComponent(stateMatch[1]),
+  };
+};
+
+/**
  * Get refresh token (prioritize DB)
  */
 const getRefreshToken = (): string | null => {
@@ -138,6 +166,8 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
   const [oidcClient, setOidcClient] = useState<MarketOIDC | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
+  const [showManualCallbackModal, setShowManualCallbackModal] = useState(false);
+  const [manualCallbackLoading, setManualCallbackLoading] = useState(false);
   const [isFirstTimeSetup, setIsFirstTimeSetup] = useState(false);
   const [pendingSignInResolve, setPendingSignInResolve] = useState<
     ((_value: number | null) => void) | null
@@ -145,6 +175,12 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
   const [pendingSignInReject, setPendingSignInReject] = useState<((_reason?: any) => void) | null>(
     null,
   );
+  const [pendingManualCallbackResolve, setPendingManualCallbackResolve] = useState<
+    ((_value: { code: string; state: string }) => void) | null
+  >(null);
+  const [pendingManualCallbackReject, setPendingManualCallbackReject] = useState<
+    ((_reason?: any) => void) | null
+  >(null);
   const [pendingProfileSuccessCallback, setPendingProfileSuccessCallback] = useState<
     ((_profile: MarketUserProfile) => void) | null
   >(null);
@@ -162,17 +198,24 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
     if (typeof window !== 'undefined') {
       const baseUrl = process.env.NEXT_PUBLIC_MARKET_BASE_URL || 'https://market.lobehub.com';
       const desktopRedirectUri = new URL(MARKET_OIDC_ENDPOINTS.desktopCallback, baseUrl).toString();
+      // Self-hosted web instances whose domain is not in Market's `lobechat-com`
+      // redirect_uris allowlist must reuse the desktop handoff path (Market-owned
+      // callback URL + local handoff polling). Toggle via env on those deploys.
+      const useHandoff = !isDesktop && process.env.NEXT_PUBLIC_MARKET_OIDC_HANDOFF === '1';
 
       // Desktop uses Market's manually maintained Web callback; Web uses the current domain
-      const redirectUri = isDesktop
-        ? desktopRedirectUri
-        : `${window.location.origin}/market-auth-callback`;
+      // unless the handoff fallback is enabled (then it also uses the desktop callback).
+      const redirectUri =
+        isDesktop || useHandoff
+          ? desktopRedirectUri
+          : `${window.location.origin}/market-auth-callback`;
 
       const oidcConfig: OIDCConfig = {
         baseUrl,
-        clientId: isDesktop ? 'lobehub-desktop' : 'lobechat-com',
+        clientId: isDesktop || useHandoff ? 'lobehub-desktop' : 'lobechat-com',
         redirectUri,
         scope: 'openid profile email',
+        useHandoff,
       };
       setOidcClient(new MarketOIDC(oidcConfig));
     }
@@ -312,6 +355,48 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
   };
 
   /**
+   * Materialize a session from a successful token response.
+   * Extracted so both the popup/handoff and manual-callback paths can reuse it.
+   */
+  const completeSignInWithToken = async (tokenResponse: TokenResponse): Promise<number | null> => {
+    const userInfo = await fetchUserInfo(tokenResponse.accessToken);
+
+    const expiresAt = Date.now() + tokenResponse.expiresIn * 1000;
+    const newSession: MarketAuthSession = {
+      accessToken: tokenResponse.accessToken,
+      expiresAt,
+      expiresIn: tokenResponse.expiresIn,
+      scope: tokenResponse.scope,
+      tokenType: tokenResponse.tokenType as 'Bearer',
+      userInfo: userInfo || undefined,
+    };
+
+    await saveMarketTokensToDB(tokenResponse.accessToken, tokenResponse.refreshToken, expiresAt);
+
+    setSession(newSession);
+    setStatus('authenticated');
+
+    if (userInfo?.sub) {
+      const needsSetup = await checkNeedsProfileSetup(userInfo.sub);
+      if (needsSetup) {
+        setTimeout(() => {
+          setIsFirstTimeSetup(true);
+          setShowProfileSetupModal(true);
+        }, 0);
+      }
+    }
+
+    return userInfo?.accountId ?? null;
+  };
+
+  const waitForManualCallback = () =>
+    new Promise<{ code: string; state: string }>((resolve, reject) => {
+      setPendingManualCallbackResolve(() => resolve);
+      setPendingManualCallbackReject(() => reject);
+      setShowManualCallbackModal(true);
+    });
+
+  /**
    * The actual sign-in method (internal use)
    */
   const handleActualSignIn = async (): Promise<number | null> => {
@@ -332,51 +417,32 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
         authResult.state,
       );
 
-      // Fetch user info
-      const userInfo = await fetchUserInfo(tokenResponse.accessToken);
+      return await completeSignInWithToken(tokenResponse);
+    } catch (error) {
+      const resolvedError = resolveMarketAuthError(error);
 
-      // Create session object
-      const expiresAt = Date.now() + tokenResponse.expiresIn * 1000;
-      const newSession: MarketAuthSession = {
-        accessToken: tokenResponse.accessToken,
-        expiresAt,
-        expiresIn: tokenResponse.expiresIn,
-        scope: tokenResponse.scope,
-        tokenType: tokenResponse.tokenType as 'Bearer',
-        userInfo: userInfo || undefined,
-      };
-
-      // Store tokens to DB
-      await saveMarketTokensToDB(tokenResponse.accessToken, tokenResponse.refreshToken, expiresAt);
-
-      setSession(newSession);
-      setStatus('authenticated');
-
-      // Check if user needs to set up profile (first-time login)
-      if (userInfo?.sub) {
-        const needsSetup = await checkNeedsProfileSetup(userInfo.sub);
-        if (needsSetup) {
-          // Wait for next tick to ensure session state is updated before opening modal
-          // This prevents the edge case where accessToken is null when modal opens
-          setTimeout(() => {
-            setIsFirstTimeSetup(true);
-            setShowProfileSetupModal(true);
-          }, 0);
+      // Last-resort fallback: when the popup-based handoff fails (e.g. Market's
+      // callback page errored out before persisting the code), let the user
+      // paste the callback URL by hand so we can still finish sign-in.
+      if (resolvedError.code === 'handoffFailed' || resolvedError.code === 'handoffTimeout') {
+        try {
+          const manualResult = await waitForManualCallback();
+          const manualToken = await oidcClient.exchangeCodeForToken(
+            manualResult.code,
+            manualResult.state,
+          );
+          return await completeSignInWithToken(manualToken);
+        } catch (manualError) {
+          const manualResolved = resolveMarketAuthError(manualError);
+          setStatus('unauthenticated');
+          message.error(t(`errors.${manualResolved.code}`) || t('errors.general'));
+          throw manualResolved;
         }
       }
 
-      return userInfo?.accountId ?? null;
-    } catch (error) {
       setStatus('unauthenticated');
-
-      // Display different error messages based on error type
-      if (error instanceof MarketAuthError) {
-        message.error(t(`errors.${error.code}`) || t('errors.general'));
-      } else {
-        message.error(t('errors.general'));
-      }
-
-      throw error;
+      message.error(t(`errors.${resolvedError.code}`) || t('errors.general'));
+      throw resolvedError;
     }
   };
 
@@ -435,6 +501,42 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
       pendingSignInReject(new Error('User cancelled authorization'));
       setPendingSignInResolve(null);
       setPendingSignInReject(null);
+    }
+  };
+
+  const handleManualCallbackSubmit = (value: string) => {
+    const parsed = parseMarketCallbackParams(value);
+    if (!parsed) {
+      message.error(t('manual.errors.invalidUrl'));
+      return;
+    }
+
+    setManualCallbackLoading(true);
+    setShowManualCallbackModal(false);
+    setManualCallbackLoading(false);
+
+    try {
+      // The OIDC client validates state via sessionStorage — keep them in sync
+      // so the manual code/state pair passes exchangeCodeForToken's state check.
+      sessionStorage.setItem('market_state', parsed.state);
+    } catch (error) {
+      console.warn('[MarketAuth] Failed to update market_state from manual callback', error);
+    }
+
+    if (pendingManualCallbackResolve) {
+      pendingManualCallbackResolve(parsed);
+      setPendingManualCallbackResolve(null);
+      setPendingManualCallbackReject(null);
+    }
+  };
+
+  const handleManualCallbackCancel = () => {
+    setShowManualCallbackModal(false);
+    setManualCallbackLoading(false);
+    if (pendingManualCallbackReject) {
+      pendingManualCallbackReject(new Error('Manual authorization cancelled'));
+      setPendingManualCallbackResolve(null);
+      setPendingManualCallbackReject(null);
     }
   };
 
@@ -693,6 +795,12 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
         open={showConfirmModal}
         onCancel={handleCancelAuth}
         onConfirm={handleConfirmAuth}
+      />
+      <ManualCallbackModal
+        loading={manualCallbackLoading}
+        open={showManualCallbackModal}
+        onCancel={handleManualCallbackCancel}
+        onSubmit={handleManualCallbackSubmit}
       />
       <ProfileSetupModal
         accessToken={session?.accessToken ?? null}

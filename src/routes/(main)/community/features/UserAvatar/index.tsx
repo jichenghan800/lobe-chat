@@ -1,7 +1,7 @@
 'use client';
 
-import { Avatar, Button, Skeleton } from '@lobehub/ui';
-import { UserCircleIcon } from 'lucide-react';
+import { Avatar, Button, DropdownMenu, Skeleton } from '@lobehub/ui';
+import { LogOutIcon, UserCircleIcon } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -38,7 +38,7 @@ const UserAvatar = memo(() => {
   const { t } = useTranslation('discover');
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { isAuthenticated, isLoading, getCurrentUserInfo, signIn } = useMarketAuth();
+  const { isAuthenticated, isLoading, getCurrentUserInfo, signIn, signOut } = useMarketAuth();
 
   const enableMarketTrustedClient = useServerConfigStore(
     serverConfigSelectors.enableMarketTrustedClient,
@@ -73,6 +73,16 @@ const UserAvatar = memo(() => {
     }
   }, [navigate, userProfile?.userName, userProfile?.namespace]);
 
+  const handleSignOut = useCallback(async () => {
+    try {
+      await signOut();
+    } catch {
+      // ignore: provider clears local state regardless
+    }
+  }, [signOut]);
+
+  const profileUserName = userProfile?.userName || userProfile?.namespace;
+
   if (isLoading) {
     return <Skeleton.Avatar active shape={'square'} size={28} style={{ borderRadius: 6 }} />;
   }
@@ -99,12 +109,33 @@ const UserAvatar = memo(() => {
   const avatarUrl = userProfile?.avatarUrl;
 
   return (
-    <Avatar
-      avatar={avatarUrl || userProfile?.userName || username}
-      shape={'square'}
-      size={28}
-      onClick={handleAvatarClick}
-    />
+    <DropdownMenu
+      trigger={['click']}
+      items={[
+        {
+          disabled: !profileUserName,
+          icon: <UserCircleIcon size={16} />,
+          key: 'myProfile',
+          label: t('user.myProfile'),
+          onClick: handleAvatarClick,
+        },
+        { type: 'divider' },
+        {
+          danger: true,
+          icon: <LogOutIcon size={16} />,
+          key: 'logout',
+          label: t('user.logout'),
+          onClick: handleSignOut,
+        },
+      ]}
+    >
+      <Avatar
+        avatar={avatarUrl || userProfile?.userName || username}
+        shape={'square'}
+        size={28}
+        style={{ cursor: 'pointer' }}
+      />
+    </DropdownMenu>
   );
 });
 

@@ -40,6 +40,9 @@ tmp/
 .env.local
 .env*.local
 .env.development
+env.cleaned
+env.cleaned.*
+backups/
 venv/
 .venv/
 

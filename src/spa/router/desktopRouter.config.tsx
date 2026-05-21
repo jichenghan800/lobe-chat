@@ -539,6 +539,7 @@ export const desktopRoutes: RouteObject[] = [
 
       // Default route - home page (handled by persistent layout)
       {
+        element: <></>,
         index: true,
       },
       // Catch-all route

@@ -16,6 +16,7 @@ import {
 import { type SWRResponse } from 'swr';
 
 import { resolveCustomizedModelDescription } from '@/_custom/registry/modelCustomization';
+import { filterVisibleProviderModelLists } from '@/_custom/registry/modelVisibility';
 import { mapProviderListName, resolveProviderName } from '@/_custom/registry/providerName';
 import { filterHiddenProviders } from '@/_custom/registry/providerVisibility';
 import { mutate, useClientDataSWR } from '@/libs/swr';
@@ -199,13 +200,15 @@ const buildProviderModelLists = async (
     providerId: string,
   ) => Promise<ProviderModelListItem[]>,
 ) => {
-  return Promise.all(
+  const providerModelLists = await Promise.all(
     providers.map(async (provider) => ({
       ...provider,
       children: await collector(enabledAiModels, provider.id),
       name: resolveProviderName(provider.id, provider.name || provider.id),
     })),
   );
+
+  return filterVisibleProviderModelLists(providerModelLists);
 };
 
 /**

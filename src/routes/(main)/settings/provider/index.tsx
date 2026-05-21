@@ -2,9 +2,11 @@
 
 import { Flexbox } from '@lobehub/ui';
 import { memo } from 'react';
-import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate, useParams } from 'react-router-dom';
 
+import { isSettingsTabHidden } from '@/_custom/registry/settingsVisibility';
 import { isCustomBranding } from '@/const/version';
+import { SettingsTabs } from '@/store/global/initialState';
 
 import DesktopLayoutContainer from './_layout/Desktop/Container';
 import Footer from './(list)/Footer';
@@ -14,6 +16,10 @@ import ProviderMenu from './ProviderMenu';
 // Layout component that wraps provider pages with navigation
 export const ProviderLayout = memo(() => {
   const navigate = useNavigate();
+
+  if (isSettingsTabHidden(SettingsTabs.Provider)) {
+    return <Navigate replace to={`/settings/${SettingsTabs.Profile}`} />;
+  }
 
   const handleProviderSelect = (providerKey: string) => {
     navigate(`/settings/provider/${providerKey}`);
@@ -43,6 +49,10 @@ export const ProviderDetailPage = memo(() => {
   const params = useParams<{ providerId: string }>();
   const navigate = useNavigate();
 
+  if (isSettingsTabHidden(SettingsTabs.Provider)) {
+    return <Navigate replace to={`/settings/${SettingsTabs.Profile}`} />;
+  }
+
   const handleProviderSelect = (providerKey: string) => {
     navigate(`/settings/provider/${providerKey}`);
   };
@@ -64,6 +74,10 @@ type ProviderPageType = {
 
 const ProviderPage = (props: ProviderPageType) => {
   const { mobile } = props;
+
+  if (isSettingsTabHidden(SettingsTabs.Provider)) {
+    return <Navigate replace to={`/settings/${SettingsTabs.Profile}`} />;
+  }
 
   // For mobile or when used via SettingsContent, use the old Page component
   // This is a fallback for non-router usage

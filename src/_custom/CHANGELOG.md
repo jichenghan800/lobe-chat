@@ -4,6 +4,42 @@
 
 ---
 
+### \[2026-05-21] 按 env 白名单顺序固定首页模型列表排序
+
+- 类型: custom
+- 涉及文件: `src/_custom/registry/modelVisibility.ts`; `.env`; `docker-compose/deploy/.env`
+- 原因：`NEXT_PUBLIC_MODEL_VISIBLE_ALLOW` 已按 `vertexai/gemini-3.5-flash,openai/gpt-5.5,anthropic/claude-opus-4-7` 配置展示顺序，但原二开只消费它做可见性过滤，未把顺序传递给首页模型列表，导致 UI 仍按 provider 原始顺序展示。
+- 方案：在 `modelVisibility` registry 内记录白名单条目顺序，过滤后同步排序 provider 与 provider 内 model，保持二开集中在 `_custom` 层。
+- 验证：`bunx tsc --noEmit --allowJs false --skipLibCheck --target ES2022 --moduleResolution bundler --module ESNext src/_custom/registry/modelVisibility.ts` 通过；后续随 Docker 镜像重建后在首页确认顺序为 `灵感探索`、`全能效率`、`深度思考`。
+- 回滚：移除 `modelVisibility.ts` 中 `order` 与排序逻辑，恢复只按白名单过滤。
+
+### \[2026-05-20] 隐藏 `Cotti-Pro Legacy` 模型展示
+
+- 类型: config
+- 涉及文件: `.env`; `docker-compose/deploy/.env`
+- 原因：当前对外模型列表需要临时收敛为 `Cotti-Pro` 与 `Cotti-Flash`，不再向用户展示 `Cotti-Pro Legacy`。
+- 方案：从 `NEXT_PUBLIC_MODEL_VISIBLE_ALLOW` 中移除 `vertexai/gemini-3.1-pro-preview`，并同步从 `VERTEXAI_MODEL_LIST` 中移除 `gemini-3.1-pro-preview=Cotti-Pro Legacy`，避免模型选择器与服务模型列表出现不一致。
+- 验证：随 Docker 镜像重建后在模型选择器中确认只剩 `Cotti-Pro` 与 `Cotti-Flash`。
+- 回滚：把 `vertexai/gemini-3.1-pro-preview` 与 `gemini-3.1-pro-preview=Cotti-Pro Legacy` 分别加回上述两个 env 配置。
+
+### \[2026-05-20] 回灌 Market OIDC handoff fallback，修复自托管域名 `invalid_redirect_uri`
+
+- 类型: custom
+- 涉及文件: `src/layout/AuthProvider/MarketAuth/MarketAuthProvider.tsx`; `src/layout/AuthProvider/MarketAuth/oidc.ts`; `src/layout/AuthProvider/MarketAuth/types.ts`; `src/_custom/components/marketAuth/ManualCallbackModal.tsx`; `src/locales/default/marketAuth.ts`; `locales/en-US/marketAuth.json`; `locales/zh-CN/marketAuth.json`; `docker-compose/deploy/.env`; `.gitignore`
+- 原因：`v2.1.47` 升级 rebase 时漏迁了 `210f1bfd6c (feat: add manual market oidc fallback)` 这一段二开补丁（上游随后 `a0759093cd` 把它从主线撤掉了）。重新 `docker build` 之后 web 端 redirect_uri 直接使用 `https://chatdev.cotticoffee.com/market-auth-callback` 发往 Market 上游，而该域不在 Market 的 `lobechat-com` client `redirect_uris` 白名单内，导致 `InvalidClientMetadata / invalid_redirect_uri` 报错弹窗，所有自托管域 Market 登录全部失败。Codex 之前误判为环境变量问题，实际上 rebase 后代码已经不读取该变量，删 env 无任何效果。
+- 方案：参照 `210f1bfd6c` 重新引入 `useHandoff` 分支 —— 在 `NEXT_PUBLIC_MARKET_OIDC_HANDOFF=1` 时 web 也使用 `lobehub-desktop` clientId + Market 自有 desktop callback URI，授权完成后走本地 `/market/oidc/handoff?id=&client=desktop` 代理把 code poll 回前端；poll 失败再弹出 `ManualCallbackModal` 让用户粘贴完整 callback URL 作为最终兜底；对应 6 条 i18n 文案补齐到 default/en-US/zh-CN；docker-compose `.env` 显式开启该开关；`.gitignore` 同步把 `env.cleaned*` 与 `backups/` 加入忽略，避免 secrets 误提交。
+- 验证：`bun run type-check`（待执行）；后续随镜像重建在 `https://chatdev.cotticoffee.com` 复现登录链路 —— 期望弹窗 OIDC `redirect_uri` 为 `https://market.lobehub.com/lobehub-oidc/callback/desktop`，`/market/oidc/handoff` 返回 200 `{ status: "success", code: ... }` 后主页自动登录态切换。
+- 回滚：删除 `src/_custom/components/marketAuth/ManualCallbackModal.tsx`，回退 `MarketAuthProvider.tsx`/`oidc.ts`/`types.ts` 中 `useHandoff` 与 manual fallback 相关分支，从 `docker-compose/deploy/.env` 删除 `NEXT_PUBLIC_MARKET_OIDC_HANDOFF=1`，恢复使用上游 `lobechat-com` clientId + 当前 origin 回调（届时需要联系 Market 团队把自托管域加入 redirect_uris 白名单或改走 Trusted Client 模式才能避免重新踩到本次的问题）。
+
+### \[2026-04-23] 补齐 dev 环境入口与设置菜单隐藏开关
+
+- 类型: custom
+- 涉及文件: `src/_custom/registry/navigation.ts`; `src/_custom/registry/homeStarter.ts`; `src/_custom/registry/settingsVisibility.ts`; `src/_custom/registry/modelVisibility.ts`; `src/routes/(main)/settings/hooks/useCategory.tsx`; `src/routes/(mobile)/me/settings/features/useCategory.tsx`; `src/routes/(main)/settings/features/SettingsContent.tsx`; `src/routes/(main)/settings/provider/index.tsx`; `src/store/aiInfra/slices/aiProvider/action.ts`; `.env`; `docker-compose/deploy/.env`
+- 原因：升级到 `v2.1.47` 后部分二开隐藏项只保留了配置，缺少实际消费点，导致视频导航、首页 group/image/video starter、设置页 AI 服务商 / 服务模型、模型切换面板管理入口未按 dev 配置隐藏。
+- 方案：继续采用 `_custom` registry 注入方式补齐导航、首页 starter、设置页 tab、模型可见白名单过滤；上游文件只保留 import 和函数调用；`.env` 中关闭 `ai_image/provider_settings`，并只暴露 Cotti 品牌模型白名单。
+- 验证：后续随 Docker 镜像重建后在 `https://chatdev.cotticoffee.com` 做 UI 走查。
+- 回滚：删除新增 `_custom/registry/settingsVisibility.ts` 与 `modelVisibility.ts`，移除对应 import / 调用，并恢复 `.env` 中相关 `NEXT_PUBLIC_*` 与 `FEATURE_FLAGS` 配置。
+
 ### \[2026-04-08] 冻结当前 `v2.1.47 + 二开` 交付基线并补充发布就绪说明
 
 - 类型: docs

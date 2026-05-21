@@ -18,6 +18,7 @@ const buildHiddenKeys = () => {
   if (isTruthy(process.env.NEXT_PUBLIC_NAV_HIDE_SEARCH)) hidden.add('search');
   if (isTruthy(process.env.NEXT_PUBLIC_NAV_HIDE_PAGE)) hidden.add(SidebarTabKey.Pages);
   if (isTruthy(process.env.NEXT_PUBLIC_NAV_HIDE_IMAGE)) hidden.add(SidebarTabKey.Image);
+  if (isTruthy(process.env.NEXT_PUBLIC_NAV_HIDE_VIDEO)) hidden.add(SidebarTabKey.Video);
   if (isTruthy(process.env.NEXT_PUBLIC_NAV_HIDE_COMMUNITY)) hidden.add(SidebarTabKey.Community);
   if (isTruthy(process.env.NEXT_PUBLIC_NAV_HIDE_SETTINGS)) hidden.add(SidebarTabKey.Setting);
   if (isTruthy(process.env.NEXT_PUBLIC_NAV_HIDE_RESOURCE)) hidden.add(SidebarTabKey.Resource);

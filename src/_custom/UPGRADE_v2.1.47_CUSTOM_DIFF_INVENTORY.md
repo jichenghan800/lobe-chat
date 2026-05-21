@@ -11,7 +11,7 @@
 说明：
 
 - `upstream-sync` 当前停留在 `v2.1.33`
-- 因此本清单描述的是“现网二开改动集合”
+- 因此本清单描述的是 “现网二开改动集合”
 - 升级目标底座不是 `upstream-sync`，而是 tag `v2.1.47`
 
 ---
@@ -111,13 +111,14 @@
 
 ### 4.1 `src/_custom` 注入能力
 
-当前已有 `21` 个二开文件：
+当前已有 `22` 个二开文件：
 
 - `src/_custom/CHANGELOG.md`
 - `src/_custom/SECONDARY_DEV_GUIDE.md`
 - `src/_custom/SESSION_HANDOFF_2026-03-09.md`
 - `src/_custom/VERTEX_PDF_HANDOFF.md`
 - `src/_custom/components/ModelDisplayNameTag.tsx`
+- `src/_custom/components/marketAuth/ManualCallbackModal.tsx`
 - `src/_custom/hooks/useModelDisplayName.ts`
 - `src/_custom/registry/branding.ts`
 - `src/_custom/registry/homeSections.ts`
@@ -140,16 +141,32 @@
 - 优先恢复这些注入点
 - 再反向补齐它们依赖的上游单行注入
 
+### 4.1.1 Market OIDC handoff fallback（必须显式迁移）
+
+> 2026-05-20 补登记：这块二开补丁在初版 v2.1.47 rebase 时被整体漏迁，导致自托管域名登录 Market 失败。下次大版本升级时**务必**重新核对。
+
+- 上游来源：`210f1bfd6c (feat: add manual market oidc fallback)` —— 主线已在 `a0759093cd (revert market oidc fallback)` 中撤回，二开必须保留。
+- 涉及文件：
+  - `src/_custom/components/marketAuth/ManualCallbackModal.tsx`（新增）
+  - `src/layout/AuthProvider/MarketAuth/MarketAuthProvider.tsx`（`useHandoff` 分支 + manual fallback 接线）
+  - `src/layout/AuthProvider/MarketAuth/oidc.ts`（`buildAuthUrl` 注入 `client=desktop` + `startAuthorization` 增加 web handoff 分支 + `resolveDesktopHandoffTimeout`）
+  - `src/layout/AuthProvider/MarketAuth/types.ts`（`OIDCConfig.useHandoff?: boolean`）
+  - `src/locales/default/marketAuth.ts`、`locales/{en-US,zh-CN}/marketAuth.json`（`manual.*` 6 条文案）
+  - `docker-compose/deploy/.env`（`NEXT_PUBLIC_MARKET_OIDC_HANDOFF=1`，否则代码默认走原始 `lobechat-com` 分支）
+- 触发条件：任何自托管域名（不在 Market 上游 `lobechat-com` client `redirect_uris` 白名单内的）。
+- 检测信号：登录弹窗报 `InvalidClientMetadata / invalid_redirect_uri / redirect_uris must only contain valid uris`。
+- 详见 `src/_custom/CHANGELOG.md` 2026-05-20 条目。
+
 ### 4.2 前端 UI / 交互定制
 
 涉及范围：
 
-- 首页导航 / branding / starter
+- 首页导航 /branding/starter
 - Model switch panel
 - 聊天消息 usage 展示
 - 文件 / 资源库操作菜单
 - 热键说明
-- Agent welcome / profile / tag 展示
+- Agent welcome /profile/tag 展示
 
 结论：
 

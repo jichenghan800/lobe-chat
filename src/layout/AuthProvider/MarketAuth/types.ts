@@ -76,6 +76,7 @@ export interface OIDCConfig {
   clientId: string;
   redirectUri: string;
   scope: string;
+  useHandoff?: boolean;
 }
 
 export interface PKCEParams {

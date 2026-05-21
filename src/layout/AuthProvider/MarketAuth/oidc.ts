@@ -11,6 +11,12 @@ import {
 } from './handoff';
 import { type OIDCConfig, type PKCEParams, type TokenResponse } from './types';
 
+const resolveDesktopHandoffTimeout = () => {
+  const raw = process.env.NEXT_PUBLIC_MARKET_OIDC_HANDOFF_TIMEOUT_MS;
+  const value = raw ? Number(raw) : Number.NaN;
+  return Number.isFinite(value) && value > 0 ? value : 5 * 60 * 1000;
+};
+
 /**
  * Market OIDC authorization utility class
  */
@@ -21,7 +27,7 @@ export class MarketOIDC {
 
   private static readonly DESKTOP_HANDOFF_POLL_INTERVAL = 1500;
 
-  private static readonly DESKTOP_HANDOFF_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  private static readonly DESKTOP_HANDOFF_TIMEOUT = resolveDesktopHandoffTimeout();
 
   private static readonly WEB_POPUP_CLOSE_GRACE_PERIOD = 1500;
 
@@ -111,6 +117,9 @@ export class MarketOIDC {
     authUrl.searchParams.set('state', pkceParams.state);
     authUrl.searchParams.set('code_challenge', pkceParams.codeChallenge);
     authUrl.searchParams.set('code_challenge_method', 'S256');
+    if (this.config.useHandoff) {
+      authUrl.searchParams.set('client', MarketOIDC.DESKTOP_HANDOFF_CLIENT);
+    }
 
     console.info('[MarketOIDC] Authorization URL built:', authUrl.toString());
     return authUrl.toString();
@@ -195,6 +204,34 @@ export class MarketOIDC {
       throw new MarketAuthError('stateMissing', {
         message: 'Authorization state not found. Please try again.',
       });
+    }
+
+    // Web + handoff mode: self-hosted instances reuse Market's desktop callback
+    // (which Market itself owns and trusts), then poll the local handoff proxy
+    // to retrieve the code. Avoids needing chatdev domain in Market's allowlist.
+    if (this.config.useHandoff) {
+      const popup = window.open(
+        authUrl,
+        'market_auth',
+        'width=580,height=720,scrollbars=yes,resizable=yes',
+      );
+
+      if (!popup) {
+        console.error('[MarketOIDC] Failed to open authorization popup');
+        throw new MarketAuthError('openPopupFailed', {
+          message: 'Failed to open authorization popup. Please check popup blocker settings.',
+        });
+      }
+
+      try {
+        return await this.pollDesktopHandoff(state);
+      } finally {
+        try {
+          popup.close();
+        } catch {
+          // Ignore cross-origin close failures.
+        }
+      }
     }
 
     // Open authorization page in a new window

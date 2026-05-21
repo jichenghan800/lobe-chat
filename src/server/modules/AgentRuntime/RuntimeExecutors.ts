@@ -23,6 +23,7 @@ import {
   ToolResolver,
 } from '@lobechat/context-engine';
 import { parse } from '@lobechat/conversation-flow';
+import type { ChatStreamPayload } from '@lobechat/model-runtime';
 import { consumeStreamUntilDone } from '@lobechat/model-runtime';
 import { chainCompressContext } from '@lobechat/prompts';
 import { type ChatToolPayload, type MessageToolCall, type UIChatMessage } from '@lobechat/types';
@@ -419,14 +420,25 @@ export const createRuntimeExecutors = (
 
       // Construct ChatStreamPayload
       const stream = ctx.stream ?? true;
+      const chatConfig = agentConfig?.chatConfig;
+      const enabledModelSearch =
+        chatConfig?.searchMode !== 'off' && chatConfig?.useModelBuiltinSearch === true;
 
-      const chatPayload = { messages: processedMessages, model, stream, tools };
+      const chatPayload: ChatStreamPayload = {
+        enabledSearch: enabledModelSearch ? true : undefined,
+        messages: processedMessages,
+        model,
+        stream,
+        tools,
+        urlContext: chatConfig?.urlContext ? true : undefined,
+      };
 
       log(
-        `${stagePrefix} calling model-runtime chat (model: %s, messages: %d, tools: %d)`,
+        `${stagePrefix} calling model-runtime chat (model: %s, messages: %d, tools: %d, modelSearch: %s)`,
         model,
         processedMessages.length,
         tools?.length ?? 0,
+        enabledModelSearch,
       );
 
       // Buffer: accumulate text and reasoning, send every 50ms

@@ -40,6 +40,7 @@ export interface ServerCreateAgentToolsEngineParams {
     chatConfig?: {
       runtimeEnv?: RuntimeEnvConfig;
       searchMode?: 'off' | 'on' | 'auto';
+      useModelBuiltinSearch?: boolean;
     };
     /** Plugin IDs enabled for this agent */
     plugins?: string[];

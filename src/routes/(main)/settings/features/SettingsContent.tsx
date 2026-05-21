@@ -3,6 +3,7 @@
 import { Fragment, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { isSettingsTabHidden } from '@/_custom/registry/settingsVisibility';
 import NavHeader from '@/features/NavHeader';
 import SettingContainer from '@/features/Setting/SettingContainer';
 import { SettingsTabs } from '@/store/global/initialState';
@@ -28,12 +29,19 @@ const SettingsContent = ({ mobile, activeTab }: SettingsContentProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (activeTab && isSettingsTabHidden(activeTab)) {
+      navigate(`/settings/${SettingsTabs.Profile}`, { replace: true });
+      return;
+    }
+
     if (activeTab && REDIRECT_MAP[activeTab]) {
       navigate(`/settings/${REDIRECT_MAP[activeTab]}`, { replace: true });
     }
   }, [activeTab, navigate]);
 
   const renderComponent = (tab: string) => {
+    if (isSettingsTabHidden(tab)) return null;
+
     const Component = componentMap[tab as keyof typeof componentMap] || componentMap.appearance;
     if (!Component) return null;
 

@@ -866,8 +866,9 @@ export class AiAgentService {
         name: s.name,
       }));
       const skillModel = new AgentSkillModel(this.db, this.userId);
-      const { data: dbSkills } = await skillModel.findAll();
+      const { data: dbSkills } = await skillModel.findAllItems();
       const dbMetas = dbSkills.map((s) => ({
+        content: s.content,
         description: s.description ?? '',
         identifier: s.identifier,
         name: s.name,

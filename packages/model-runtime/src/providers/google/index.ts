@@ -210,6 +210,9 @@ export class LobeGoogleAI implements LobeRuntimeAI {
           modelsDisableInstuction.has(model) || model.toLowerCase().includes('learnlm')
             ? undefined
             : thinkingConfig,
+        toolConfig: this.shouldEnableToolContextCirculation(payload)
+          ? { includeServerSideToolInvocations: true }
+          : undefined,
         tools: this.buildGoogleToolsWithSearch(payload.tools, payload),
         topP: payload.top_p,
       };
@@ -473,29 +476,25 @@ export class LobeGoogleAI implements LobeRuntimeAI {
     tools: ChatCompletionTool[] | undefined,
     payload?: ChatStreamPayload,
   ): GoogleFunctionCallTool[] | undefined {
-    const hasToolCalls = payload?.messages?.some((m) => m.tool_calls?.length);
     const hasSearch = payload?.enabledSearch;
     const hasUrlContext = payload?.urlContext;
     const hasFunctionTools = tools && tools.length > 0;
 
-    // Gemini/Vertex requests cannot reliably combine search/urlContext tools with
-    // function declarations in a single request. When agent tools are present,
-    // prioritize function declarations so the model can actually emit tool calls.
-    if (hasToolCalls && hasFunctionTools) {
-      return buildGoogleTools(tools);
-    }
-    if (hasFunctionTools) {
-      return buildGoogleTools(tools);
-    }
-
     // Build GoogleSearch tool config with optional image search support
-    const googleSearchTool = hasSearch
-      ? {
+    const googleSearchTool: GoogleFunctionCallTool | undefined = hasSearch
+      ? ({
           googleSearch: modelsWithImageSearch.has(payload?.model ?? '')
             ? { searchTypes: { imageSearch: {}, webSearch: {} } }
             : {},
-        }
+        } as GoogleFunctionCallTool)
       : undefined;
+
+    // Gemini 3 supports combining Google built-in search with function declarations.
+    // Keep model-native search available while preserving skills/sandbox tool calls.
+    if (hasFunctionTools) {
+      const functionTools = buildGoogleTools(tools);
+      return hasSearch && googleSearchTool ? [googleSearchTool, ...functionTools] : functionTools;
+    }
 
     // Build and return search-related tools (search tools cannot be used with FunctionCall simultaneously)
     if (hasUrlContext && hasSearch) {
@@ -510,6 +509,10 @@ export class LobeGoogleAI implements LobeRuntimeAI {
 
     // Finally consider function declarations
     return buildGoogleTools(tools);
+  }
+
+  private shouldEnableToolContextCirculation(payload: ChatStreamPayload): boolean {
+    return !this.isVertexAi && !!payload.enabledSearch && !!payload.tools?.length;
   }
 }
 

@@ -102,6 +102,8 @@ export const createServerAgentToolsEngine = (
   } = params;
   const searchMode = agentConfig.chatConfig?.searchMode ?? 'auto';
   const isSearchEnabled = searchMode !== 'off';
+  const useModelBuiltinSearch = agentConfig.chatConfig?.useModelBuiltinSearch === true;
+  const useApplicationSearchTool = isSearchEnabled && !useModelBuiltinSearch;
 
   // Determine runtime mode based on platform
   const isDesktopClient = !!deviceContext?.gatewayConfigured;
@@ -111,10 +113,11 @@ export const createServerAgentToolsEngine = (
     (isDesktopClient ? 'local' : 'none');
 
   log(
-    'Creating agent tools engine for model=%s, provider=%s, searchMode=%s, runtimeMode=%s, additionalManifests=%d, deviceGateway=%s',
+    'Creating agent tools engine for model=%s, provider=%s, searchMode=%s, modelBuiltinSearch=%s, runtimeMode=%s, additionalManifests=%d, deviceGateway=%s',
     model,
     provider,
     searchMode,
+    useModelBuiltinSearch,
     runtimeMode,
     additionalManifests?.length ?? 0,
     !!deviceContext?.gatewayConfigured,
@@ -143,7 +146,7 @@ export const createServerAgentToolsEngine = (
         [RemoteDeviceManifest.identifier]:
           !!deviceContext?.gatewayConfigured && !deviceContext?.autoActivated,
         [AgentDocumentsManifest.identifier]: hasAgentDocuments,
-        [WebBrowsingManifest.identifier]: isSearchEnabled,
+        [WebBrowsingManifest.identifier]: useApplicationSearchTool,
       },
     }),
   });

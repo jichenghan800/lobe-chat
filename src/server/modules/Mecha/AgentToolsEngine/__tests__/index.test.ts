@@ -211,6 +211,26 @@ describe('createServerAgentToolsEngine', () => {
     expect(result.enabledToolIds).not.toContain(WebBrowsingManifest.identifier);
   });
 
+  it('should disable WebBrowsing when model builtin search is enabled', () => {
+    const context = createMockContext();
+    const engine = createServerAgentToolsEngine(context, {
+      agentConfig: {
+        plugins: [WebBrowsingManifest.identifier],
+        chatConfig: { searchMode: 'on', useModelBuiltinSearch: true },
+      },
+      model: 'gemini-3.5-flash',
+      provider: 'vertexai',
+    });
+
+    const result = engine.generateToolsDetailed({
+      toolIds: [WebBrowsingManifest.identifier],
+      model: 'gemini-3.5-flash',
+      provider: 'vertexai',
+    });
+
+    expect(result.enabledToolIds).not.toContain(WebBrowsingManifest.identifier);
+  });
+
   it('should enable KnowledgeBase when hasEnabledKnowledgeBases is true', () => {
     const context = createMockContext();
     const engine = createServerAgentToolsEngine(context, {

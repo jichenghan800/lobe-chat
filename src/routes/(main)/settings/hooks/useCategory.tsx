@@ -24,6 +24,7 @@ import {
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { filterSettingsCategoryGroups } from '@/_custom/registry/settingsVisibility';
 import { useElectronStore } from '@/store/electron';
 import { electronSyncSelectors } from '@/store/electron/selectors';
 import { SettingsTabs } from '@/store/global/initialState';
@@ -84,7 +85,7 @@ export const useCategory = () => {
       {
         icon: avatarUrl ? <Avatar avatar={avatarUrl} shape={'square'} size={26} /> : undefined,
         key: SettingsTabs.Profile,
-        label: username ? username : tAuth('tab.profile'),
+        label: username || tAuth('tab.profile'),
       },
       {
         icon: ChartColumnBigIcon,
@@ -212,7 +213,7 @@ export const useCategory = () => {
       title: t('group.system'),
     });
 
-    return groups;
+    return filterSettingsCategoryGroups(groups);
   }, [
     t,
     tAuth,

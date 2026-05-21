@@ -2,7 +2,7 @@ import type { SkillItem, SkillListItem } from '@lobechat/types';
 import { merge } from '@lobechat/utils';
 import { and, desc, eq, ilike, inArray, or } from 'drizzle-orm';
 
-import type {NewAgentSkill } from '../schemas';
+import type { NewAgentSkill } from '../schemas';
 import { agentSkills } from '../schemas';
 import type { LobeChatDatabase } from '../type';
 
@@ -84,6 +84,16 @@ export class AgentSkillModel {
   findAll = async (): Promise<{ data: SkillListItem[]; total: number }> => {
     const data = await this.db
       .select(skillListColumns)
+      .from(agentSkills)
+      .where(eq(agentSkills.userId, this.userId))
+      .orderBy(desc(agentSkills.updatedAt));
+
+    return { data, total: data.length };
+  };
+
+  findAllItems = async (): Promise<{ data: SkillItem[]; total: number }> => {
+    const data = await this.db
+      .select(skillItemColumns)
       .from(agentSkills)
       .where(eq(agentSkills.userId, this.userId))
       .orderBy(desc(agentSkills.updatedAt));
