@@ -8,6 +8,7 @@ import { ListTodo } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantDisplayName } from '@/_custom/registry/branding';
 import { DEFAULT_AVATAR } from '@/const/meta';
 import { useAgentGroupStore } from '@/store/agentGroup';
 import { agentGroupSelectors } from '@/store/agentGroup/selectors';
@@ -93,7 +94,7 @@ const GroupTasksMessage = memo<GroupTasksMessageProps>(({ id, index }) => {
 
   // Build title: "Agent1 / Agent2 and N more agents tasks" (show max 2 agents)
   const title = useMemo(() => {
-    const agentNames = taskAgents.map((a) => a.title).filter(Boolean);
+    const agentNames = taskAgents.map((a) => getBrandAssistantDisplayName(a.title)).filter(Boolean);
     if (agentNames.length === 0) return '';
 
     const totalAgents = agentNames.length;

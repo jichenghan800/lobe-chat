@@ -6,6 +6,7 @@ import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantDisplayName } from '@/_custom/registry/branding';
 import { ChatItem } from '@/features/Conversation/ChatItem';
 import TaskAvatar from '@/features/Conversation/Messages/Tasks/shared/TaskAvatar';
 
@@ -28,6 +29,7 @@ const TasksMessage = memo<TasksMessageProps>(({ id, index }) => {
   // Use first task's agentId for avatar, or fallback to undefined
   const firstTaskAgentId = tasks?.[0]?.agentId;
   const avatar = useAgentMeta(firstTaskAgentId);
+  const displayAvatar = { ...avatar, title: getBrandAssistantDisplayName(avatar.title) };
 
   if (!tasks || tasks.length === 0) {
     return null;
@@ -39,7 +41,7 @@ const TasksMessage = memo<TasksMessageProps>(({ id, index }) => {
     <ChatItem
       showTitle
       aboveMessage={null}
-      avatar={avatar}
+      avatar={displayAvatar}
       customAvatarRender={(_, node) => <TaskAvatar>{node}</TaskAvatar>}
       id={id}
       message=""

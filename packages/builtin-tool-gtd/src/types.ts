@@ -3,7 +3,7 @@
  *
  * GTD Tools help users and agents manage tasks effectively.
  * These tools can be used by:
- * - LobeAI default assistant for user task management
+ * - Cotti AI default assistant for user task management
  * - Group Supervisor for multi-agent task orchestration
  *
  * MVP version focuses on Plan and Todo functionality.

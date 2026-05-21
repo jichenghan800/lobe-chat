@@ -6,6 +6,7 @@ import { AccordionItem, Block } from '@lobehub/ui';
 import isEqual from 'fast-deep-equal';
 import { memo, useMemo, useState } from 'react';
 
+import { getBrandAssistantDisplayName } from '@/_custom/registry/branding';
 import { useAgentGroupStore } from '@/store/agentGroup';
 import { agentGroupSelectors } from '@/store/agentGroup/selectors';
 
@@ -21,7 +22,7 @@ const ServerTaskItem = memo<ServerTaskItemProps>(({ item }) => {
   const { id, agentId, metadata, taskDetail, tasks } = item;
   const [expanded, setExpanded] = useState(false);
 
-  const title = taskDetail?.title || metadata?.taskTitle;
+  const title = getBrandAssistantDisplayName(taskDetail?.title || metadata?.taskTitle);
   const status = taskDetail?.status;
   const threadId = taskDetail?.threadId;
 

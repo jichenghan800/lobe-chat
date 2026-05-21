@@ -3,6 +3,7 @@
 import { AccordionItem, Block, Text } from '@lobehub/ui';
 import { memo, useMemo, useState } from 'react';
 
+import { getBrandAssistantDisplayName } from '@/_custom/registry/branding';
 import { useAgentGroupStore } from '@/store/agentGroup';
 import { agentGroupSelectors } from '@/store/agentGroup/selectors';
 import { useChatStore } from '@/store/chat';
@@ -28,7 +29,7 @@ const ClientTaskItem = memo<ClientTaskItemProps>(({ item }) => {
   const { id, agentId: itemAgentId, groupId: itemGroupId, metadata, taskDetail } = item;
   const [expanded, setExpanded] = useState(false);
 
-  const title = taskDetail?.title || metadata?.taskTitle;
+  const title = getBrandAssistantDisplayName(taskDetail?.title || metadata?.taskTitle);
   const instruction = metadata?.instruction;
   const status = taskDetail?.status;
   const threadId = taskDetail?.threadId;

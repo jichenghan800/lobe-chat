@@ -4,6 +4,7 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { getBrandAssistantDisplayName } from '@/_custom/registry/branding';
 import { DEFAULT_AVATAR, DEFAULT_INBOX_AVATAR } from '@/const/meta';
 import GroupAvatar from '@/features/GroupAvatar';
 import { type SharedTopicData } from '@/types/topic';
@@ -17,7 +18,8 @@ const ActionBar = memo<ActionBarProps>(({ data }) => {
   const isGroup = !!data?.groupId;
   const isInboxAgent = !isGroup && data?.agentMeta?.slug === 'inbox';
   const agentOrGroupTitle =
-    data?.groupMeta?.title || (isInboxAgent ? 'LobeAI' : data?.agentMeta?.title);
+    data?.groupMeta?.title ||
+    getBrandAssistantDisplayName(isInboxAgent ? 'LobeAI' : data?.agentMeta?.title);
   const agentMarketIdentifier = data?.agentMeta?.marketIdentifier;
 
   // Build group avatars for GroupAvatar component

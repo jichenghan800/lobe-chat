@@ -6,6 +6,7 @@ import isEqual from 'fast-deep-equal';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getBrandAssistantDisplayName } from '@/_custom/registry/branding';
 import { ChatItem } from '@/features/Conversation/ChatItem';
 import TaskAvatar from '@/features/Conversation/Messages/Tasks/shared/TaskAvatar';
 import { useOpenChatSettings } from '@/hooks/useInterceptingRoutes';
@@ -63,7 +64,7 @@ const TaskMessage = memo<TaskMessageProps>(({ id, index, disableEditing }) => {
   const onDoubleClick = useDoubleClickEdit({ disableEditing, error, id, role });
 
   // Use taskTitle from metadata if available, otherwise fall back to avatar title
-  const title = metadata?.taskTitle || avatar?.title;
+  const title = getBrandAssistantDisplayName(metadata?.taskTitle || avatar?.title);
 
   return (
     <ChatItem
