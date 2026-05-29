@@ -29,8 +29,10 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Runtime env sets SMTP sender display name to `灵枢AI`.
 - Boundary: this entry records env-level branding only; no source branding hook was changed here.
 
-### Docker Build Dependency
+### Docker Build Dependencies
 
-- Root app declares `dompurify` so Docker/Vite can resolve `packages/utils/src/client/sanitize.ts`
-  while compiling workspace source from the clean image build.
-- Boundary: no sanitizer behavior changed.
+- Root app declares workspace runtime dependencies needed by Docker/Vite while compiling package
+  source from the clean image build.
+- Covered packages: `packages/utils`, `packages/builtin-tool-calculator`,
+  `packages/file-loaders`, and `packages/openapi`.
+- Boundary: no runtime behavior changed.
