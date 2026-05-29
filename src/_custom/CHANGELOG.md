@@ -28,3 +28,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Runtime env sets `NEXT_PUBLIC_BRAND_NAME` and `NEXT_PUBLIC_BRAND_ASSISTANT_NAME` to `灵枢AI`.
 - Runtime env sets SMTP sender display name to `灵枢AI`.
 - Boundary: this entry records env-level branding only; no source branding hook was changed here.
+
+### Docker Build Dependency
+
+- Root app declares `dompurify` so Docker/Vite can resolve `packages/utils/src/client/sanitize.ts`
+  while compiling workspace source from the clean image build.
+- Boundary: no sanitizer behavior changed.
