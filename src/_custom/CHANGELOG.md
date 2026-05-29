@@ -22,3 +22,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Scope: chat model dropdown is filtered to the three public Cotti model aliases.
 - Boundary: provider runtime lists and service-model configuration are intentionally not filtered by
   this display-layer customization.
+
+### Brand Env
+
+- Runtime env sets `NEXT_PUBLIC_BRAND_NAME` and `NEXT_PUBLIC_BRAND_ASSISTANT_NAME` to `灵枢AI`.
+- Runtime env sets SMTP sender display name to `灵枢AI`.
+- Boundary: this entry records env-level branding only; no source branding hook was changed here.
