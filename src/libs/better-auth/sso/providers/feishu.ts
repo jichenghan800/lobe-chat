@@ -56,13 +56,22 @@ const isFeishuProfile = (value: unknown): value is FeishuUserProfile => {
 const parseScopes = (scope: string | undefined) =>
   scope ? scope.split(/[\s,]+/).filter(Boolean) : [];
 
-const provider: GenericProviderDefinition<{
-  AUTH_FEISHU_APP_ID: string;
-  AUTH_FEISHU_APP_SECRET: string;
-}> = {
+type FeishuEnvKey = 'AUTH_FEISHU_APP_ID' | 'AUTH_FEISHU_BLUE_APP_ID';
+type FeishuSecretKey = 'AUTH_FEISHU_APP_SECRET' | 'AUTH_FEISHU_BLUE_APP_SECRET';
+
+interface FeishuProviderConfig {
+  appIdEnvKey: FeishuEnvKey;
+  appSecretEnvKey: FeishuSecretKey;
+  emailDomain: string;
+  id: string;
+}
+
+export const createFeishuProvider = (
+  config: FeishuProviderConfig,
+): GenericProviderDefinition<{ appId: string; appSecret: string }> => ({
   build: (env) => {
-    const clientId = env.AUTH_FEISHU_APP_ID;
-    const clientSecret = env.AUTH_FEISHU_APP_SECRET;
+    const clientId = env.appId;
+    const clientSecret = env.appSecret;
 
     return {
       authorizationUrl: FEISHU_AUTHORIZATION_URL,
@@ -139,12 +148,9 @@ const provider: GenericProviderDefinition<{
         const unionId = profile.union_id ?? profile.open_id;
         if (!unionId) return null;
 
-        // Always use union_id to construct email for consistency
-        // This avoids issues when:
-        // 1. Admin hasn't enabled "Allow OpenAPI to access email field" in Feishu admin console
-        // 2. User hasn't bound an email in Feishu
-        // 3. User's email changes later (which would cause account mismatch)
-        const email = profile.email || profile.enterprise_email || `${unionId}@feishu.sso`;
+        // Always use union_id to construct email for consistency when Feishu email is unavailable.
+        const email =
+          profile.email || profile.enterprise_email || `${unionId}@${config.emailDomain}`;
 
         return {
           ...profile,
@@ -160,7 +166,7 @@ const provider: GenericProviderDefinition<{
         };
       },
       pkce: false,
-      providerId: 'feishu',
+      providerId: config.id,
       responseMode: 'query',
       scopes: ['contact:user.base:readonly', 'contact:user.email:readonly'],
       tokenUrl: FEISHU_TOKEN_URL,
@@ -168,15 +174,20 @@ const provider: GenericProviderDefinition<{
   },
 
   checkEnvs: () => {
-    return !!(authEnv.AUTH_FEISHU_APP_ID && authEnv.AUTH_FEISHU_APP_SECRET)
-      ? {
-          AUTH_FEISHU_APP_ID: authEnv.AUTH_FEISHU_APP_ID,
-          AUTH_FEISHU_APP_SECRET: authEnv.AUTH_FEISHU_APP_SECRET,
-        }
-      : false;
+    const appId = authEnv[config.appIdEnvKey];
+    const appSecret = authEnv[config.appSecretEnvKey];
+
+    return appId && appSecret ? { appId, appSecret } : false;
   },
-  id: 'feishu',
+  id: config.id,
   type: 'generic',
-};
+});
+
+const provider = createFeishuProvider({
+  appIdEnvKey: 'AUTH_FEISHU_APP_ID',
+  appSecretEnvKey: 'AUTH_FEISHU_APP_SECRET',
+  emailDomain: 'feishu.sso',
+  id: 'feishu',
+});
 
 export default provider;

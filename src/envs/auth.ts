@@ -42,6 +42,8 @@ declare global {
       AUTH_ENABLE_MAGIC_LINK?: string;
       AUTH_FEISHU_APP_ID?: string;
       AUTH_FEISHU_APP_SECRET?: string;
+      AUTH_FEISHU_BLUE_APP_ID?: string;
+      AUTH_FEISHU_BLUE_APP_SECRET?: string;
 
       AUTH_GENERIC_OIDC_ID?: string;
       AUTH_GENERIC_OIDC_ISSUER?: string;
@@ -161,6 +163,8 @@ export const getAuthConfig = () => {
 
       AUTH_FEISHU_APP_ID: z.string().optional(),
       AUTH_FEISHU_APP_SECRET: z.string().optional(),
+      AUTH_FEISHU_BLUE_APP_ID: z.string().optional(),
+      AUTH_FEISHU_BLUE_APP_SECRET: z.string().optional(),
 
       AUTH_GENERIC_OIDC_ID: z.string().optional(),
       AUTH_GENERIC_OIDC_SECRET: z.string().optional(),
@@ -254,6 +258,8 @@ export const getAuthConfig = () => {
 
       AUTH_FEISHU_APP_ID: process.env.AUTH_FEISHU_APP_ID,
       AUTH_FEISHU_APP_SECRET: process.env.AUTH_FEISHU_APP_SECRET,
+      AUTH_FEISHU_BLUE_APP_ID: process.env.AUTH_FEISHU_BLUE_APP_ID,
+      AUTH_FEISHU_BLUE_APP_SECRET: process.env.AUTH_FEISHU_BLUE_APP_SECRET,
 
       AUTH_GENERIC_OIDC_ID: process.env.AUTH_GENERIC_OIDC_ID,
       AUTH_GENERIC_OIDC_SECRET: process.env.AUTH_GENERIC_OIDC_SECRET,
