@@ -155,3 +155,10 @@ docs/superpowers/
 
 # Kagura agent runtime
 .kagura/
+
+# Local release/migration artifacts
+backups/
+env.cleaned
+demo0.png
+error.jpg
+error copy.jpg
