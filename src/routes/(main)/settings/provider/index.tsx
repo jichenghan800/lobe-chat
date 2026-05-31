@@ -2,8 +2,9 @@
 
 import { Flexbox } from '@lobehub/ui';
 import { memo } from 'react';
-import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate, useParams } from 'react-router-dom';
 
+import { isModelProviderSettingsHidden } from '@/_custom/registry/platformManagement';
 import { isCustomBranding } from '@/const/version';
 
 import DesktopLayoutContainer from './_layout/Desktop/Container';
@@ -14,6 +15,8 @@ import ProviderMenu from './ProviderMenu';
 // Layout component that wraps provider pages with navigation
 export const ProviderLayout = memo(() => {
   const navigate = useNavigate();
+
+  if (isModelProviderSettingsHidden()) return <Navigate replace to="/settings/profile" />;
 
   const handleProviderSelect = (providerKey: string) => {
     navigate(`/settings/provider/${providerKey}`);
@@ -42,6 +45,8 @@ ProviderLayout.displayName = 'ProviderLayout';
 export const ProviderDetailPage = memo(() => {
   const params = useParams<{ providerId: string }>();
   const navigate = useNavigate();
+
+  if (isModelProviderSettingsHidden()) return <Navigate replace to="/settings/profile" />;
 
   const handleProviderSelect = (providerKey: string) => {
     navigate(`/settings/provider/${providerKey}`);

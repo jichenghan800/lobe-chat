@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { getDefaultAssistantDisplayName } from '@/_custom/registry/branding';
 import NavItem from '@/features/NavPanel/components/NavItem';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors, builtinAgentSelectors } from '@/store/agent/selectors';
@@ -49,7 +50,7 @@ const InboxEntry = memo(() => {
     inboxAgentId ? operationSelectors.isAgentRunning(inboxAgentId) : () => false,
   );
 
-  const title = inboxMeta.title || 'Lobe AI';
+  const title = inboxMeta.title || getDefaultAssistantDisplayName();
   const avatar = inboxMeta.avatar || DEFAULT_INBOX_AVATAR;
   const url = SESSION_CHAT_URL(inboxAgentId, false);
 

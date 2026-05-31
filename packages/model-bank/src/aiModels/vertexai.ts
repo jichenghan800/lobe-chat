@@ -1,4 +1,4 @@
-import { nanoBananaParameters } from '../const/imageParameters';
+import { nanoBanana2Parameters, nanoBananaParameters } from '../const/imageParameters';
 import type { AIChatModelCard, AIImageModelCard } from '../types/aiModel';
 import { imagenGenParameters } from './google';
 
@@ -642,6 +642,25 @@ const vertexaiChatModels: AIChatModelCard[] = [
 ];
 
 const vertexaiImageModels: AIImageModelCard[] = [
+  {
+    description:
+      "Gemini 3.1 Flash Image (Nano Banana 2) is Google's fastest native image generation model with thinking support, conversational image generation and editing.",
+    displayName: 'Nano Banana 2',
+    enabled: true,
+    id: 'gemini-3.1-flash-image-preview:image',
+    parameters: nanoBanana2Parameters,
+    pricing: {
+      approximatePricePerImage: 0.067,
+      units: [
+        { name: 'imageOutput', rate: 60, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput', rate: 0.5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 0.5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 3, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    releasedAt: '2026-02-26',
+    type: 'image',
+  },
   {
     displayName: 'Nano Banana',
     id: 'gemini-2.5-flash-image:image',

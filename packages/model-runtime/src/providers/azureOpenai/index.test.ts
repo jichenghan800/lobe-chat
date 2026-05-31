@@ -33,6 +33,7 @@ describe('LobeAzureOpenAI', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   describe('constructor', () => {
@@ -440,6 +441,44 @@ describe('LobeAzureOpenAI', () => {
       expect(res).toEqual({ imageUrl: url });
     });
 
+    it('should use Azure deployment image generation API when apiVersion is provided', async () => {
+      const url = 'https://example.com/azure-image.png';
+      instance = new LobeAzureOpenAI({
+        apiKey: 'test_key',
+        apiVersion: '2025-04-01-preview',
+        baseURL: 'https://test.openai.azure.com/',
+      });
+      const generateSpy = vi.spyOn(instance['client'].images, 'generate');
+      const fetchSpy = vi.fn(async (requestUrl: string, init: RequestInit) => {
+        expect(requestUrl).toBe(
+          'https://test.openai.azure.com/openai/deployments/gpt-image-2/images/generations?api-version=2025-04-01-preview',
+        );
+        expect(init.method).toBe('POST');
+        expect(init.headers).toMatchObject({
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'api-key': 'test_key',
+        });
+        expect(JSON.parse(init.body as string)).toEqual({
+          n: 1,
+          prompt: 'a cat',
+          size: '1024x1024',
+        });
+
+        return new Response(JSON.stringify({ data: [{ url }] }), { status: 200 });
+      });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      const res = await instance.createImage({
+        model: 'gpt-image-2',
+        params: { prompt: 'a cat', size: '1024x1024' as any },
+      });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(generateSpy).not.toHaveBeenCalled();
+      expect(res).toEqual({ imageUrl: url });
+    });
+
     it('should parse string JSON response from images.generate', async () => {
       const url = 'https://example.com/str.png';
       const payload = JSON.stringify({ data: [{ url }] });
@@ -551,6 +590,51 @@ describe('LobeAzureOpenAI', () => {
       expect(editSpy).toHaveBeenCalledTimes(1);
       const arg = vi.mocked(editSpy).mock.calls[0][0] as any;
       expect(arg).not.toHaveProperty('input_fidelity');
+      expect(res).toEqual({ imageUrl: url });
+    });
+
+    it('should use Azure deployment image edit API when apiVersion is provided', async () => {
+      const url = 'https://example.com/azure-edited.png';
+      instance = new LobeAzureOpenAI({
+        apiKey: 'test_key',
+        apiVersion: '2025-04-01-preview',
+        baseURL: 'https://test.openai.azure.com/',
+      });
+      const editSpy = vi.spyOn(instance['client'].images, 'edit');
+      const helpers = await import('../../core/contextBuilders/openai');
+      vi.spyOn(helpers, 'convertImageUrlToFile').mockResolvedValue(
+        new File(['fake-image'], 'source.png', { type: 'image/png' }) as any,
+      );
+      const fetchSpy = vi.fn(async (requestUrl: string, init: RequestInit) => {
+        expect(requestUrl).toBe(
+          'https://test.openai.azure.com/openai/deployments/gpt-image-2/images/edits?api-version=2025-04-01-preview',
+        );
+        expect(init.method).toBe('POST');
+        expect(init.headers).toMatchObject({
+          'Accept': 'application/json',
+          'api-key': 'test_key',
+        });
+        expect((init.headers as Record<string, string>)['Content-Type']).toBeUndefined();
+        const body = init.body as FormData;
+        expect(body.get('prompt')).toBe('edit');
+        expect(body.get('size')).toBe('1024x1024');
+        expect(body.getAll('image[]')).toHaveLength(1);
+
+        return new Response(JSON.stringify({ data: [{ url }] }), { status: 200 });
+      });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      const res = await instance.createImage({
+        model: 'gpt-image-2',
+        params: {
+          imageUrl: 'https://example.com/in.png',
+          prompt: 'edit',
+          size: '1024x1024' as any,
+        },
+      });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(editSpy).not.toHaveBeenCalled();
       expect(res).toEqual({ imageUrl: url });
     });
 

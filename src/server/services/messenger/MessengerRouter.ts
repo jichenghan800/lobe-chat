@@ -10,6 +10,7 @@ import {
 import debug from 'debug';
 import { and, desc, eq, ne, or } from 'drizzle-orm';
 
+import { getDefaultAssistantDisplayName } from '@/_custom/registry/branding';
 import type { MessengerPlatform } from '@/config/messenger';
 import { getServerDB } from '@/database/core/db-adaptor';
 import { MessengerAccountLinkModel } from '@/database/models/messengerAccountLink';
@@ -1278,7 +1279,7 @@ export class MessengerRouter {
         slug: row.slug,
         title:
           (row.title && row.title.trim()) ||
-          (row.slug === INBOX_SESSION_ID ? 'LobeAI' : 'Custom Agent'),
+          (row.slug === INBOX_SESSION_ID ? getDefaultAssistantDisplayName() : 'Custom Agent'),
       }));
 
     const inboxIdx = mapped.findIndex((row) => row.slug === INBOX_SESSION_ID);

@@ -1,5 +1,6 @@
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
 
+import { getFixedImageGenerationCount } from '@/_custom/registry/imageGeneration';
 import { handleGenerationPromptModerationError } from '@/business/client/handleGenerationPromptModerationError';
 import { handleLobeHubModelDeprecatedError } from '@/business/client/handleLobeHubModelDeprecatedError';
 import { markUserValidAction } from '@/business/client/markUserValidAction';
@@ -36,7 +37,7 @@ export class CreateImageActionImpl {
     this.#set({ isCreating: true }, false, 'createImage/startCreateImage');
 
     const store = this.#get();
-    const imageNum = imageGenerationConfigSelectors.imageNum(store);
+    const imageNum = getFixedImageGenerationCount();
     const parameters = imageGenerationConfigSelectors.parameters(store);
     const provider = imageGenerationConfigSelectors.provider(store);
     const model = imageGenerationConfigSelectors.model(store);
@@ -137,8 +138,7 @@ export class CreateImageActionImpl {
     const { removeGenerationBatch } = store;
     const batch = generationBatchSelectors.getGenerationBatchByBatchId(generationBatchId)(store)!;
 
-    // Use batch.generations.length to preserve original imageNum (not UI config)
-    const imageNum = batch.generations.length;
+    const imageNum = getFixedImageGenerationCount();
 
     try {
       // 1. Delete generation batch

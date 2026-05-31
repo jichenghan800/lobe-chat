@@ -1031,7 +1031,7 @@ export default {
 
   'skills.details.sidebar.agent.title': 'Send this prompt to your Agent to install this Skill',
 
-  'skills.details.sidebar.agent.useOnLobeAI': 'Use on LobeAI',
+  'skills.details.sidebar.agent.useOn灵枢AI': 'Use on 灵枢AI',
 
   'skills.details.sidebar.description': 'Description',
 

@@ -1,3 +1,4 @@
+import { gptImage2Schema } from '../const/imageParameters';
 import type { AIChatModelCard, AIImageModelCard } from '../types/aiModel';
 
 const azureChatModels: AIChatModelCard[] = [
@@ -667,6 +668,15 @@ const azureChatModels: AIChatModelCard[] = [
 ];
 
 const azureImageModels: AIImageModelCard[] = [
+  {
+    description: 'Azure OpenAI deployment for GPT Image 2, supporting up to 4K image generation.',
+    displayName: 'GPT Image 2',
+    enabled: true,
+    id: 'gpt-image-2',
+    parameters: gptImage2Schema,
+    releasedAt: '2026-04-21',
+    type: 'image',
+  },
   {
     description: 'ChatGPT Image 1',
     displayName: 'GPT Image 1',

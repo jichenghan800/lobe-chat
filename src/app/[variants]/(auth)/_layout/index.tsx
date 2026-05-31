@@ -7,6 +7,7 @@ import { cx } from 'antd-style';
 import Link from 'next/link';
 import { type FC, type PropsWithChildren } from 'react';
 
+import { getBrandCopyrightFull, getBrandName } from '@/_custom/registry/branding';
 import { ProductLogo } from '@/components/Branding';
 import { useIsDark } from '@/hooks/useIsDark';
 
@@ -16,6 +17,8 @@ import { styles } from './style';
 
 const AuthContainer: FC<PropsWithChildren> = ({ children }) => {
   const isDarkMode = useIsDark();
+  const brandName = getBrandName() || 'LobeHub';
+
   return (
     <Flexbox className={styles.outerContainer} height={'100%'} padding={8} width={'100%'}>
       <Flexbox
@@ -31,7 +34,7 @@ const AuthContainer: FC<PropsWithChildren> = ({ children }) => {
           padding={16}
           width={'100%'}
         >
-          <Link aria-label={'LobeHub'} href={'/'} style={{ display: 'inline-flex' }}>
+          <Link aria-label={brandName} href={'/'} style={{ display: 'inline-flex' }}>
             <ProductLogo size={40} />
           </Link>
           <Flexbox horizontal align={'center'}>
@@ -45,7 +48,7 @@ const AuthContainer: FC<PropsWithChildren> = ({ children }) => {
         </Center>
         <Center padding={24}>
           <Text align={'center'} type={'secondary'}>
-            {COPYRIGHT_FULL}
+            {getBrandCopyrightFull(COPYRIGHT_FULL)}
           </Text>
         </Center>
       </Flexbox>

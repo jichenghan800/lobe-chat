@@ -58,15 +58,23 @@ const getItemKeys = () => {
 const initialUserStoreState = useUserStore.getState();
 
 afterEach(() => {
+  delete process.env.NEXT_PUBLIC_COTTI_HIDE_MODEL_PROVIDER_SETTINGS;
+  delete process.env.NEXT_PUBLIC_COTTI_HIDE_SERVICE_MODEL_SETTINGS;
+  delete process.env.NEXT_PUBLIC_COTTI_HIDE_MESSENGER_SETTINGS;
+  delete process.env.NEXT_PUBLIC_COTTI_HIDE_API_KEY_SETTINGS;
   useUserStore.setState(initialUserStoreState, true);
 });
 
 describe('settings useCategory', () => {
   it('keeps Provider visible when provider settings are enabled', () => {
+    process.env.NEXT_PUBLIC_COTTI_HIDE_MODEL_PROVIDER_SETTINGS = 'false';
+
     expect(getItemKeys()).toContain(SettingsTabs.Provider);
   });
 
   it('hides Provider when provider settings are disabled', () => {
+    process.env.NEXT_PUBLIC_COTTI_HIDE_MODEL_PROVIDER_SETTINGS = 'false';
+
     const { result } = renderHook(() => useCategory(), {
       wrapper: createWrapper(false),
     });
@@ -74,5 +82,16 @@ describe('settings useCategory', () => {
     const keys = result.current.flatMap((group) => group.items.map((item) => item.key));
 
     expect(keys).not.toContain(SettingsTabs.Provider);
+  });
+
+  it('hides platform-management settings by default for Cotti customization', () => {
+    expect(getItemKeys()).not.toEqual(
+      expect.arrayContaining([
+        SettingsTabs.Provider,
+        SettingsTabs.ServiceModel,
+        SettingsTabs.Messenger,
+        SettingsTabs.APIKey,
+      ]),
+    );
   });
 });

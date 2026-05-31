@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server';
 import { and, desc, eq, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { getDefaultAssistantDisplayName } from '@/_custom/registry/branding';
 import {
   getEnabledMessengerPlatforms,
   getMessengerDiscordConfig,
@@ -377,7 +378,8 @@ export const messengerRouter = router({
         backgroundColor: row.backgroundColor,
         id: row.id,
         slug: row.slug,
-        title: row.title || (row.slug === INBOX_SESSION_ID ? 'LobeAI' : null),
+        title:
+          row.title || (row.slug === INBOX_SESSION_ID ? getDefaultAssistantDisplayName() : null),
       }));
 
     // Pin the inbox/LobeAI agent to the top regardless of updatedAt — it's the

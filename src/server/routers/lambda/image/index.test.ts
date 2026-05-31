@@ -358,7 +358,7 @@ describe('imageRouter', () => {
       expect(mockChargeBeforeGenerate).toHaveBeenCalledWith(
         expect.objectContaining({
           generationTopicId: 'topic-1',
-          imageNum: 2,
+          imageNum: 1,
           model: 'stable-diffusion',
           provider: 'test-provider',
           userId: mockUserId,

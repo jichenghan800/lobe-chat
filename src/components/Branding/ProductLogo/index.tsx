@@ -4,6 +4,7 @@ import { type LobeHubProps } from '@lobehub/ui/brand';
 import { LobeHub } from '@lobehub/ui/brand';
 import { memo } from 'react';
 
+import { getBrandName } from '@/_custom/registry/branding';
 import { isCustomBranding } from '@/const/version';
 
 import CustomLogo from './Custom';
@@ -14,7 +15,7 @@ interface ProductLogoProps extends LobeHubProps {
 }
 
 export const ProductLogo = memo<ProductLogoProps>((props) => {
-  if (isCustomBranding) {
+  if (isCustomBranding || getBrandName()) {
     return <CustomLogo {...props} />;
   }
 

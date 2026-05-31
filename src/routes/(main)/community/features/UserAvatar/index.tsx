@@ -1,8 +1,9 @@
 'use client';
 
-import { Avatar, Button, Skeleton } from '@lobehub/ui';
-import { UserCircleIcon } from 'lucide-react';
-import { memo, useCallback, useState } from 'react';
+import type { DropdownItem } from '@lobehub/ui';
+import { Avatar, Button, DropdownMenu, Icon, Skeleton } from '@lobehub/ui';
+import { LogOutIcon, UserCircleIcon, UserIcon } from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,7 +39,7 @@ const UserAvatar = memo(() => {
   const { t } = useTranslation('discover');
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { isAuthenticated, isLoading, getCurrentUserInfo, signIn } = useMarketAuth();
+  const { isAuthenticated, isLoading, getCurrentUserInfo, signIn, signOut } = useMarketAuth();
 
   const enableMarketTrustedClient = useServerConfigStore(
     serverConfigSelectors.enableMarketTrustedClient,
@@ -73,6 +74,37 @@ const UserAvatar = memo(() => {
     }
   }, [navigate, userProfile?.userName, userProfile?.namespace]);
 
+  const menuItems = useMemo<DropdownItem[]>(() => {
+    const items: DropdownItem[] = [
+      {
+        disabled: !userProfile?.userName && !userProfile?.namespace,
+        icon: <Icon icon={UserIcon} />,
+        key: 'profile',
+        label: t('user.myProfile'),
+        onClick: handleAvatarClick,
+      },
+    ];
+
+    if (!enableMarketTrustedClient) {
+      items.push({
+        danger: true,
+        icon: <Icon icon={LogOutIcon} />,
+        key: 'logout',
+        label: t('user.logout'),
+        onClick: signOut,
+      });
+    }
+
+    return items;
+  }, [
+    enableMarketTrustedClient,
+    handleAvatarClick,
+    signOut,
+    t,
+    userProfile?.namespace,
+    userProfile?.userName,
+  ]);
+
   if (isLoading) {
     return <Skeleton.Avatar active shape={'square'} size={28} style={{ borderRadius: 6 }} />;
   }
@@ -99,12 +131,13 @@ const UserAvatar = memo(() => {
   const avatarUrl = userProfile?.avatarUrl;
 
   return (
-    <Avatar
-      avatar={avatarUrl || userProfile?.userName || username}
-      shape={'square'}
-      size={28}
-      onClick={handleAvatarClick}
-    />
+    <DropdownMenu items={menuItems} trigger="both">
+      <Avatar
+        avatar={avatarUrl || userProfile?.userName || username}
+        shape={'square'}
+        size={28}
+      />
+    </DropdownMenu>
   );
 });
 

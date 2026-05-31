@@ -5,6 +5,7 @@ import isEqual from 'fast-deep-equal';
 import React, { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getDefaultAssistantDisplayName } from '@/_custom/registry/branding';
 import { DEFAULT_AVATAR, DEFAULT_INBOX_AVATAR } from '@/const/meta';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useAgentStore } from '@/store/agent';
@@ -34,7 +35,7 @@ const InboxWelcome = memo(() => {
     return agentSystemRoleMsg;
   }, [openingMessage, agentSystemRoleMsg, meta.description]);
 
-  const inboxTitle = meta.title || 'Lobe AI';
+  const inboxTitle = meta.title || getDefaultAssistantDisplayName();
   const displayTitle = isInbox ? inboxTitle : meta.title || t('defaultSession', { ns: 'common' });
 
   return (

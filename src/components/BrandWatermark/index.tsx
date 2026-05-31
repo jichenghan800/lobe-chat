@@ -7,7 +7,10 @@ import { LobeHub } from '@lobehub/ui/brand';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { memo } from 'react';
 
+import { getBrandName } from '@/_custom/registry/branding';
 import { isCustomORG } from '@/const/version';
+
+const CUSTOM_BRAND_NAME = getBrandName();
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   logoLink: css`
@@ -32,7 +35,9 @@ const BrandWatermark = memo<Omit<FlexboxProps, 'children'>>(({ style, ...rest })
       {...rest}
     >
       <span>Powered by</span>
-      {isCustomORG ? (
+      {CUSTOM_BRAND_NAME ? (
+        <span>{CUSTOM_BRAND_NAME}</span>
+      ) : isCustomORG ? (
         <span>{ORG_NAME}</span>
       ) : (
         <a

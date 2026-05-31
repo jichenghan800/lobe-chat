@@ -1,7 +1,9 @@
 import { DEFAULT_AVATAR, DEFAULT_INBOX_AVATAR } from '@lobechat/const';
 import type { ScreenCaptureAgentOption } from '@lobechat/electron-client-ipc';
 
-const LOBE_AI_TITLE = 'Lobe AI';
+import { getDefaultAssistantDisplayName } from '@/_custom/registry/branding';
+
+const DEFAULT_ASSISTANT_TITLE = getDefaultAssistantDisplayName();
 const UNTITLED_AGENT_TITLE = 'Untitled Agent';
 
 interface OverlayAgentSource {
@@ -51,7 +53,7 @@ const createInboxOverlayAgentOption = (
   avatar: inboxMeta?.avatar || DEFAULT_INBOX_AVATAR,
   backgroundColor: inboxMeta?.backgroundColor ?? undefined,
   id: inboxAgentId,
-  title: inboxMeta?.title || LOBE_AI_TITLE,
+  title: inboxMeta?.title || DEFAULT_ASSISTANT_TITLE,
 });
 
 export const resolveOverlayAgentOptions = ({

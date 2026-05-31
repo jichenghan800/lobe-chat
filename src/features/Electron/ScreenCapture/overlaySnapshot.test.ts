@@ -16,7 +16,7 @@ describe('overlaySnapshot', () => {
         avatar: DEFAULT_INBOX_AVATAR,
         backgroundColor: undefined,
         id: 'inbox-agent',
-        title: 'Lobe AI',
+        title: '灵枢AI',
       },
       {
         avatar: 'A',

@@ -14,6 +14,7 @@ import { getProviderContentPolicyErrorMessage } from '@/business/server/getProvi
 import { chargeAfterGenerate } from '@/business/server/image-generation/chargeAfterGenerate';
 import { notifyImageCompleted } from '@/business/server/image-generation/notifyImageCompleted';
 import { createImageBusinessMiddleware } from '@/business/server/trpc-middlewares/async';
+import { resolveAzureImageRuntime } from '@/_custom/registry/azureImage';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { FileModel } from '@/database/models/file';
 import { GenerationModel } from '@/database/models/generation';
@@ -126,16 +127,22 @@ export const imageRouter = router({
             provider,
             model,
           );
+          const azureImageRuntime = resolveAzureImageRuntime({ model: resolvedModelId, provider });
 
           // Read user's provider config from database
-          const modelRuntime = await initModelRuntimeFromDB(ctx.serverDB, ctx.userId, provider);
+          const modelRuntime = await initModelRuntimeFromDB(
+            ctx.serverDB,
+            ctx.userId,
+            provider,
+            azureImageRuntime.runtimeParams,
+          );
 
           // Check if operation has been cancelled
           checkAbortSignal(signal);
           log('Agent runtime initialized, calling createImage');
           const response = await modelRuntime.createImage!(
             {
-              model: resolvedModelId,
+              model: azureImageRuntime.modelId,
               params: params as unknown as RuntimeImageGenParams,
             },
             {

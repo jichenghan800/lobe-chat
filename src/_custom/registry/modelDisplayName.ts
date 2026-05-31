@@ -9,7 +9,7 @@ interface ProviderModelListLike<T extends ModelLike> {
 }
 
 const DEFAULT_MODEL_DISPLAY_NAMES =
-  'vertexai/gemini-3.5-flash=灵感探索,openai/gpt-5.5=全能效率,anthropic/claude-opus-4-7=深度思考';
+  'vertexai/gemini-3.5-flash=灵感探索,azure/gpt-5.5=全能效率,anthropic/claude-opus-4-7=深度思考';
 
 const parseModelDisplayNames = () => {
   const raw = process.env.NEXT_PUBLIC_MODEL_DISPLAY_NAMES || DEFAULT_MODEL_DISPLAY_NAMES;

@@ -13,6 +13,7 @@ import { AiModelSourceEnum, isAiModelVisible } from 'model-bank';
 import { DEFAULT_MODEL_PROVIDER_LIST } from 'model-bank/modelProviders';
 import pMap from 'p-map';
 
+import { normalizeModelBuiltinSearch } from '@/_custom/registry/modelBuiltinSearch';
 import { merge, mergeArrayById } from '@/utils/merge';
 
 import { AiModelModel } from '../../models/aiModel';
@@ -121,6 +122,9 @@ const injectSearchSettings = (providerId: string, item: any) => {
   return item;
 };
 
+const normalizeCustomSearchSettings = (providerId: string, item: any) =>
+  normalizeModelBuiltinSearch(providerId, injectSearchSettings(providerId, item));
+
 export class AiInfraRepos {
   private userId: string;
   private db: LobeChatDatabase;
@@ -208,7 +212,7 @@ export class AiInfraRepos {
 
             // User hasn't modified local model
             if (!user)
-              return injectSearchSettings(provider.id, {
+              return normalizeCustomSearchSettings(provider.id, {
                 ...item,
                 abilities: item.abilities || {},
                 providerId: provider.id,
@@ -232,7 +236,7 @@ export class AiInfraRepos {
               sort: user.sort ?? undefined,
               type: user.type || item.type,
             };
-            return injectSearchSettings(provider.id, mergedModel); // User modified local model, check search settings
+            return normalizeCustomSearchSettings(provider.id, mergedModel); // User modified local model, check search settings
           })
           .filter((item) => (filterEnabled ? item.enabled : true));
       },
@@ -251,7 +255,7 @@ export class AiInfraRepos {
         if (builtinModelKeys.has(`${item.providerId}:${item.id}`)) return false;
         return filterEnabled ? enabledProviderIds.has(item.providerId) && item.enabled : true;
       })
-      .map((item) => injectSearchSettings(item.providerId, item));
+      .map((item) => normalizeCustomSearchSettings(item.providerId, item));
 
     return [...builtinModels, ...appendedUserModels].sort(
       (a, b) => (a?.sort ?? Infinity) - (b?.sort ?? Infinity),
@@ -428,7 +432,7 @@ export class AiInfraRepos {
     mergedModel = mergedModel.filter(isAiModelVisible);
 
     let list = mergedModel.map((m) =>
-      injectSearchSettings(providerId, m),
+      normalizeCustomSearchSettings(providerId, m),
     ) as AiProviderModelListItem[];
 
     if (typeof options?.enabled === 'boolean') {

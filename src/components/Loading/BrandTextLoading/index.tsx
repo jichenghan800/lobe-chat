@@ -1,5 +1,6 @@
 import { BrandLoading, LobeHubText } from '@lobehub/ui/brand';
 
+import { getBrandName } from '@/_custom/registry/branding';
 import { isCustomBranding } from '@/const/version';
 
 import CircleLoading from '../CircleLoading';
@@ -10,7 +11,7 @@ interface BrandTextLoadingProps {
 }
 
 const BrandTextLoading = ({ debugId }: BrandTextLoadingProps) => {
-  if (isCustomBranding)
+  if (isCustomBranding || getBrandName())
     return (
       <div className={styles.container}>
         <CircleLoading />

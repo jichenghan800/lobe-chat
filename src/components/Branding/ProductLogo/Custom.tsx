@@ -7,8 +7,23 @@ import { createStaticStyles, cssVar } from 'antd-style';
 import { type ReactNode } from 'react';
 import { memo } from 'react';
 
+import { getBrandLogoUrl, getBrandName } from '@/_custom/registry/branding';
 import { type ImageProps } from '@/libs/next/Image';
 import Image from '@/libs/next/Image';
+
+const CUSTOM_BRAND_NAME = getBrandName() || BRANDING_NAME;
+const CUSTOM_BRAND_LOGO_URL = getBrandLogoUrl() || BRANDING_LOGO_URL;
+const hasCustomLogo = !!CUSTOM_BRAND_LOGO_URL;
+
+const getCustomBrandWordmark = () => {
+  const compactName = CUSTOM_BRAND_NAME.replaceAll(/\s+/g, '');
+
+  if (!hasCustomLogo) return CUSTOM_BRAND_NAME;
+
+  return compactName.replace(/^灵/, '') || CUSTOM_BRAND_NAME;
+};
+
+const CUSTOM_BRAND_WORDMARK = getCustomBrandWordmark();
 
 const styles = createStaticStyles(({ css }) => {
   return {
@@ -26,23 +41,67 @@ const CustomTextLogo = memo<FlexboxProps & { size: number }>(({ size, style, ...
       style={{
         fontSize: size / 1.5,
         fontWeight: 'bolder',
+        lineHeight: 1,
         userSelect: 'none',
+        whiteSpace: 'nowrap',
         ...style,
       }}
       {...rest}
     >
-      {BRANDING_NAME}
+      {CUSTOM_BRAND_NAME}
+    </Flexbox>
+  );
+});
+
+const CustomWordmarkLogo = memo<FlexboxProps & { size: number }>(({ size, style, ...rest }) => {
+  const fontSize = Math.max(14, Math.round(size * 0.5));
+  const aiMatch = /^(.*?)(AI)$/i.exec(CUSTOM_BRAND_WORDMARK);
+  const namePart = aiMatch?.[1] || CUSTOM_BRAND_WORDMARK;
+  const aiPart = aiMatch?.[2];
+
+  return (
+    <Flexbox
+      horizontal
+      align={'center'}
+      flex={'none'}
+      height={size}
+      style={{
+        fontSize,
+        fontWeight: 750,
+        lineHeight: 1,
+        userSelect: 'none',
+        whiteSpace: 'nowrap',
+        ...style,
+      }}
+      {...rest}
+    >
+      <span style={{ color: cssVar.colorText }}>{namePart}</span>
+      {aiPart && (
+        <span
+          style={{
+            color: cssVar.colorTextSecondary,
+            fontSize: Math.max(13, Math.round(size * 0.43)),
+            fontWeight: 700,
+            marginLeft: 2,
+          }}
+        >
+          {aiPart}
+        </span>
+      )}
     </Flexbox>
   );
 });
 
 const CustomImageLogo = memo<Omit<ImageProps, 'alt' | 'src'> & { size: number }>(
-  ({ size, ...rest }) => {
+  ({ size, style, ...rest }) => {
+    if (!hasCustomLogo) return <CustomTextLogo size={size} style={style} />;
+
     return (
       <Image
-        alt={BRANDING_NAME}
+        alt={CUSTOM_BRAND_NAME}
         height={size}
-        src={BRANDING_LOGO_URL}
+        src={CUSTOM_BRAND_LOGO_URL}
+        style={style}
         unoptimized={true}
         width={size}
         {...rest}
@@ -89,11 +148,13 @@ const CustomLogo = memo<LobeChatProps>(({ extra, size = 32, className, style, ty
       break;
     }
     case 'combine': {
-      logoComponent = (
+      logoComponent = hasCustomLogo ? (
         <>
           <CustomImageLogo size={size} />
-          <CustomTextLogo size={size} style={{ marginLeft: Math.round(size / 4) }} />
+          <CustomWordmarkLogo size={size} style={{ marginLeft: Math.round(size / 5) }} />
         </>
+      ) : (
+        <CustomTextLogo size={size} />
       );
 
       if (!extra)

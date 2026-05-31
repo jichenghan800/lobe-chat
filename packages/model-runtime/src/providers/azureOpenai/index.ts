@@ -63,6 +63,22 @@ const normalizeAzureBaseURL = (value?: string) => {
   return url.toString().replace(/\/$/, '');
 };
 
+const normalizeAzureResourceEndpoint = (value: string) => {
+  const url = new URL(value);
+  const pathSegments = url.pathname.split('/').filter(Boolean);
+  const openAIIndex = pathSegments.indexOf('openai');
+
+  if (openAIIndex >= 0) {
+    const resourcePath = pathSegments.slice(0, openAIIndex).join('/');
+    url.pathname = resourcePath ? `/${resourcePath}` : '';
+  }
+
+  url.search = '';
+  url.hash = '';
+
+  return url.toString().replace(/\/$/, '');
+};
+
 const maskSensitiveUrl = (url: string) => {
   const regex = /^(https:\/\/)([^.]+)(\.(?:openai\.azure\.com|cognitiveservices\.azure\.com).*)$/;
 
@@ -234,44 +250,141 @@ export class LobeAzureOpenAI extends BaseAzureOpenAI {
 
       if (!isImageEdit) delete azureImageOptions.image;
 
-      const imageResponse = isImageEdit
-        ? await this.client.images.edit(azureImageOptions as any)
-        : await this.client.images.generate(azureImageOptions as any);
+      const imageResponse = this.shouldUseDeploymentImageApi()
+        ? await this.createImageWithDeploymentApi(model, azureImageOptions, isImageEdit)
+        : isImageEdit
+          ? await this.client.images.edit(azureImageOptions as any)
+          : await this.client.images.generate(azureImageOptions as any);
 
-      let result: any = imageResponse;
-      if (typeof result === 'string') {
-        result = JSON.parse(result);
-      } else if (result && typeof result === 'object') {
-        if (typeof result.bodyAsText === 'string') {
-          result = JSON.parse(result.bodyAsText);
-        } else if (typeof result.body === 'string') {
-          result = JSON.parse(result.body);
-        }
-      }
-
-      if (!result || !Array.isArray(result.data) || result.data.length === 0) {
-        throw new Error(
-          `Invalid image response: missing or empty data array. Response: ${JSON.stringify(result)}`,
-        );
-      }
-
-      const imageData = result.data[0];
-      if (!imageData) {
-        throw new Error('Invalid image response: first data item is null or undefined');
-      }
-
-      if (imageData.b64_json) {
-        return { imageUrl: `data:image/png;base64,${imageData.b64_json}` };
-      }
-
-      if (imageData.url) {
-        return { imageUrl: imageData.url };
-      }
-
-      throw new Error('Invalid image response: missing both b64_json and url fields');
+      return this.parseImageResponse(imageResponse);
     } catch (error) {
       throw this.handleError(error);
     }
+  }
+
+  private async createImageWithDeploymentApi(
+    model: string,
+    options: Record<string, any>,
+    isImageEdit: boolean,
+  ) {
+    const apiVersion = this.getAzureImageApiVersion();
+    const apiKey = this._options.apiKey?.trim();
+
+    if (!apiVersion || !apiKey) {
+      throw new Error('Azure image deployment API requires apiKey and apiVersion');
+    }
+
+    const resourceEndpoint = normalizeAzureResourceEndpoint(this.baseURL);
+    const operation = isImageEdit ? 'edits' : 'generations';
+    const url = new URL(
+      `${resourceEndpoint}/openai/deployments/${encodeURIComponent(model)}/images/${operation}`,
+    );
+    url.searchParams.set('api-version', apiVersion);
+
+    const { image, ...restOptions } = options;
+    delete restOptions.model;
+    const authHeaders = this.getAzureImageAuthHeaders(apiKey);
+    const headers: HeadersInit = isImageEdit
+      ? {
+          Accept: 'application/json',
+          ...authHeaders,
+        }
+      : {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        };
+    const response = await fetch(url.toString(), {
+      body: isImageEdit
+        ? this.buildAzureImageEditForm(image, restOptions)
+        : JSON.stringify(restOptions),
+      headers,
+      method: 'POST',
+    });
+    const rawText = await response.text();
+    const result = rawText ? JSON.parse(rawText) : {};
+
+    if (!response.ok) {
+      const errorMessage =
+        typeof result?.error?.message === 'string'
+          ? result.error.message
+          : `Azure image request failed with status ${response.status}`;
+      const error = new Error(errorMessage) as Error & { code?: string; status?: number };
+      error.code =
+        typeof result?.error?.code === 'string' ? result.error.code : String(response.status);
+      error.status = response.status;
+
+      throw error;
+    }
+
+    return result;
+  }
+
+  private buildAzureImageEditForm(image: any, options: Record<string, any>) {
+    const form = new FormData();
+    const imageItems = Array.isArray(image) ? image : [image];
+
+    for (const [key, value] of Object.entries(options)) {
+      if (value === undefined || value === null) continue;
+      if (typeof value === 'object') continue;
+
+      form.append(key, String(value));
+    }
+
+    for (const item of imageItems) {
+      const filename = typeof item?.name === 'string' && item.name ? item.name : 'image.png';
+      form.append('image[]', item, filename);
+    }
+
+    return form;
+  }
+
+  private getAzureImageApiVersion() {
+    return typeof this._options.apiVersion === 'string' ? this._options.apiVersion.trim() : '';
+  }
+
+  private getAzureImageAuthHeaders(apiKey: string): Record<string, string> {
+    if (apiKey.toLowerCase().startsWith('bearer ')) return { Authorization: apiKey };
+
+    return { 'api-key': apiKey };
+  }
+
+  private parseImageResponse(imageResponse: any) {
+    let result: any = imageResponse;
+    if (typeof result === 'string') {
+      result = JSON.parse(result);
+    } else if (result && typeof result === 'object') {
+      if (typeof result.bodyAsText === 'string') {
+        result = JSON.parse(result.bodyAsText);
+      } else if (typeof result.body === 'string') {
+        result = JSON.parse(result.body);
+      }
+    }
+
+    if (!result || !Array.isArray(result.data) || result.data.length === 0) {
+      throw new Error(
+        `Invalid image response: missing or empty data array. Response: ${JSON.stringify(result)}`,
+      );
+    }
+
+    const imageData = result.data[0];
+    if (!imageData) {
+      throw new Error('Invalid image response: first data item is null or undefined');
+    }
+
+    if (imageData.b64_json) {
+      return { imageUrl: `data:image/png;base64,${imageData.b64_json}` };
+    }
+
+    if (imageData.url) {
+      return { imageUrl: imageData.url };
+    }
+
+    throw new Error('Invalid image response: missing both b64_json and url fields');
+  }
+
+  private shouldUseDeploymentImageApi() {
+    return Boolean(this.getAzureImageApiVersion());
   }
 
   protected handleError(error: any) {

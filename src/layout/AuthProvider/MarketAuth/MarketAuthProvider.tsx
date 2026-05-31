@@ -94,7 +94,7 @@ const clearMarketTokensFromDB = async () => {
 
   try {
     await useUserStore.getState().setSettings({
-      market: undefined,
+      market: null,
     });
   } catch (error) {
     console.error('[MarketAuth] Failed to clear tokens from DB:', error);

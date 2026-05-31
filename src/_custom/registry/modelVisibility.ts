@@ -8,7 +8,7 @@ interface ProviderModelListLike<T extends ModelLike> {
 }
 
 const DEFAULT_VISIBLE_MODEL_ALLOW =
-  'vertexai/gemini-3.5-flash,openai/gpt-5.5,anthropic/claude-opus-4-7';
+  'vertexai/gemini-3.5-flash,azure/gpt-5.5,anthropic/claude-opus-4-7';
 
 const parseVisibleModelAllowList = () => {
   const raw = process.env.NEXT_PUBLIC_MODEL_VISIBLE_ALLOW || DEFAULT_VISIBLE_MODEL_ALLOW;

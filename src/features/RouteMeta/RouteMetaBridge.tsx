@@ -5,6 +5,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useMatches } from 'react-router-dom';
 
+import { getBrandName } from '@/_custom/registry/branding';
 import { isDesktop } from '@/const/version';
 import {
   type DynamicRouteMeta,
@@ -45,6 +46,7 @@ type Translate = (key: string) => string;
 
 const RouteMetaBridge = memo(() => {
   const { t } = useTranslation('electron');
+  const brandName = getBrandName() || BRANDING_NAME;
   const location = useLocation();
   const setCurrentRouteMeta = useElectronStore((s) => s.setCurrentRouteMeta);
   const matched = useMatchedRouteMeta();
@@ -82,8 +84,8 @@ const RouteMetaBridge = memo(() => {
   }, [matchedRouteId, publishRouteMeta, setCurrentRouteMeta]);
 
   useEffect(() => {
-    document.title = title ? `${title} · ${BRANDING_NAME}` : BRANDING_NAME;
-  }, [title]);
+    document.title = title ? `${title} · ${brandName}` : brandName;
+  }, [brandName, title]);
 
   if (!matched) return null;
 

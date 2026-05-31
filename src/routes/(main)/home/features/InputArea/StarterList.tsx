@@ -6,6 +6,7 @@ import { createStaticStyles, cx } from 'antd-style';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isHomeStarterModelHidden } from '@/_custom/registry/homeVisibility';
 import { useStableNavigate } from '@/hooks/useStableNavigate';
 import { agentService } from '@/services/agent';
 import { useAgentStore } from '@/store/agent';
@@ -54,8 +55,8 @@ const StarterList = memo(() => {
   const updateAgentConfigById = useAgentStore((s) => s.updateAgentConfigById);
   const [switchingKey, setSwitchingKey] = useState<StarterKey | null>(null);
 
-  const items: StarterItem[] = useMemo(
-    () => [
+  const items: StarterItem[] = useMemo(() => {
+    const starterItems: StarterItem[] = [
       {
         icon: DeepSeek.Avatar,
         key: 'deepseek-v4-pro',
@@ -71,9 +72,10 @@ const StarterList = memo(() => {
         key: 'video',
         titleKey: 'starter.videoGeneration',
       },
-    ],
-    [],
-  );
+    ];
+
+    return starterItems.filter((item) => !isHomeStarterModelHidden(item.key));
+  }, []);
 
   const handleClick = useCallback(
     async (key: StarterKey) => {
@@ -83,7 +85,7 @@ const StarterList = memo(() => {
       }
 
       if (key === 'image') {
-        navigate('/image?model=gpt-image-2');
+        navigate('/image?model=gpt-image-2&provider=azure');
         return;
       }
 

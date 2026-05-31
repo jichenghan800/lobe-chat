@@ -1,6 +1,6 @@
 import type { AiProviderListItem } from '@lobechat/types';
 import type { EnabledAiModel, ExtendParamsType } from 'model-bank';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getTestDB } from '../../../core/getTestDB';
 import type { LobeChatDatabase } from '../../../type';
@@ -22,6 +22,10 @@ beforeAll(async () => {
 beforeEach(() => {
   vi.clearAllMocks();
   repo = new AiInfraRepos(serverDB, userId, mockProviderConfigs);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe('AiInfraRepos', () => {
@@ -859,6 +863,32 @@ describe('AiInfraRepos', () => {
       expect(model?.abilities).toMatchObject({ search: true });
       // Should inject searchImpl even though user never modified this model
       expect(model?.settings).toEqual({ searchImpl: 'params' });
+    });
+
+    it('should strip builtin search for non-allow-listed custom models', async () => {
+      vi.stubEnv('NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW', 'vertexai/gemini-*');
+
+      const mockProviders = [
+        { enabled: true, id: 'azure', name: 'Azure', source: 'builtin' as const },
+      ];
+
+      vi.spyOn(repo, 'getAiProviderList').mockResolvedValue(mockProviders);
+      vi.spyOn(repo.aiModelModel, 'getAllModels').mockResolvedValue([]);
+      vi.spyOn(repo as any, 'fetchBuiltinModels').mockResolvedValue([
+        {
+          abilities: { functionCall: true, search: true },
+          enabled: true,
+          id: 'gpt-5.5',
+          settings: { extendParams: ['reasoning_effort'], searchImpl: 'params' },
+          type: 'chat' as const,
+        },
+      ]);
+
+      const result = await repo.getEnabledModels();
+      const model = result.find((m) => m.id === 'gpt-5.5');
+
+      expect(model?.abilities).toEqual({ functionCall: true, search: false });
+      expect(model?.settings).toEqual({ extendParams: ['reasoning_effort'] });
     });
 
     it('should not inject searchImpl for unmodified builtin model without search ability', async () => {

@@ -25,6 +25,7 @@ import {
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isSettingsTabHidden } from '@/_custom/registry/platformManagement';
 import { useElectronStore } from '@/store/electron';
 import { electronSyncSelectors } from '@/store/electron/selectors';
 import { SettingsTabs } from '@/store/global/initialState';
@@ -136,12 +137,13 @@ export const useCategory = () => {
     const agentItems: CategoryItem[] = [
       // Provider settings should not depend on Advanced tools: new users may need
       // non-LobeHub providers, and desktop users often bring their own API keys.
-      showProvider && {
-        icon: Brain,
-        key: SettingsTabs.Provider,
-        label: t('tab.provider'),
-      },
-      {
+      showProvider &&
+        !isSettingsTabHidden(SettingsTabs.Provider) && {
+          icon: Brain,
+          key: SettingsTabs.Provider,
+          label: t('tab.provider'),
+        },
+      !isSettingsTabHidden(SettingsTabs.ServiceModel) && {
         icon: Sparkles,
         key: SettingsTabs.ServiceModel,
         label: t('tab.serviceModel'),
@@ -161,12 +163,13 @@ export const useCategory = () => {
         key: SettingsTabs.Creds,
         label: t('tab.creds'),
       },
-      showApiKeyManage && {
-        icon: KeyIcon,
-        key: SettingsTabs.APIKey,
-        label: tAuth('tab.apikey'),
-      },
-      {
+      showApiKeyManage &&
+        !isSettingsTabHidden(SettingsTabs.APIKey) && {
+          icon: KeyIcon,
+          key: SettingsTabs.APIKey,
+          label: tAuth('tab.apikey'),
+        },
+      !isSettingsTabHidden(SettingsTabs.Messenger) && {
         icon: MessageCircleIcon,
         key: SettingsTabs.Messenger,
         label: t('tab.messenger'),
@@ -196,11 +199,12 @@ export const useCategory = () => {
         key: SettingsTabs.Storage,
         label: t('tab.storage'),
       },
-      isDevMode && {
-        icon: KeyIcon,
-        key: SettingsTabs.APIKey,
-        label: tAuth('tab.apikey'),
-      },
+      isDevMode &&
+        !isSettingsTabHidden(SettingsTabs.APIKey) && {
+          icon: KeyIcon,
+          key: SettingsTabs.APIKey,
+          label: tAuth('tab.apikey'),
+        },
       {
         icon: EllipsisIcon,
         key: SettingsTabs.Advanced,

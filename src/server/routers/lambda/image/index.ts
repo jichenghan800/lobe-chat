@@ -8,6 +8,7 @@ import { and, eq } from 'drizzle-orm';
 import { isProviderModelAvailable } from 'model-bank';
 import { z } from 'zod';
 
+import { getFixedImageGenerationCount } from '@/_custom/registry/imageGeneration';
 import { chargeBeforeGenerate } from '@/business/server/image-generation/chargeBeforeGenerate';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { type NewGeneration, type NewGenerationBatch } from '@/database/schemas';
@@ -61,7 +62,8 @@ export type CreateImageServicePayload = z.infer<typeof createImageInputSchema>;
 export const imageRouter = router({
   createImage: imageProcedure.input(createImageInputSchema).mutation(async ({ input, ctx }) => {
     const { userId, serverDB, asyncTaskModel, fileService } = ctx;
-    const { generationTopicId, provider, model, imageNum, params } = input;
+    const { generationTopicId, provider, model, params } = input;
+    const imageNum = getFixedImageGenerationCount();
 
     log('Starting image creation process, input: %O', input);
 

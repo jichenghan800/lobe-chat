@@ -3,8 +3,9 @@
 import { Flexbox } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 
+import { isAgentChannelUiHidden } from '@/_custom/registry/platformManagement';
 import Loading from '@/components/Loading/BrandTextLoading';
 import NavHeader from '@/features/NavHeader';
 import { useAgentStore } from '@/store/agent';
@@ -90,6 +91,8 @@ const ChannelPage = memo(() => {
     () => providers?.find((p) => p.platform === effectiveActiveId),
     [providers, effectiveActiveId],
   );
+
+  if (isAgentChannelUiHidden()) return <Navigate replace to={aid ? `/agent/${aid}` : '/'} />;
 
   if (!aid) return null;
 

@@ -7,6 +7,7 @@ import { ChevronRight, Mail } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
+import { getBrandName } from '@/_custom/registry/branding';
 import AuthIcons from '@/components/AuthIcons';
 import { PRIVACY_URL, TERMS_URL } from '@/const/url';
 
@@ -52,6 +53,7 @@ export const SignInEmailStep = ({
 }: SignInEmailStepProps) => {
   const { t } = useTranslation('auth');
   const emailInputRef = useRef<InputRef>(null);
+  const brandName = getBrandName() || BRANDING_NAME;
 
   useEffect(() => {
     emailInputRef.current?.focus();
@@ -104,7 +106,7 @@ export const SignInEmailStep = ({
   return (
     <AuthCard
       footer={footer}
-      subtitle={t('signin.subtitle', { appName: BRANDING_NAME })}
+      subtitle={t('signin.subtitle', { appName: brandName })}
       title={'Agent teammates that grow with you'}
     >
       {!serverConfigInit && (
