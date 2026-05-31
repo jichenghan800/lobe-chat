@@ -93,6 +93,7 @@ set_env "$ENV_FILE" PORT "3210"
 set_env "$ENV_FILE" LOBE_PORT "3210"
 
 set_env "$ENV_FILE" POSTGRES_IMAGE "paradedb/paradedb:0.22.3-pg17"
+set_env "$ENV_FILE" PG_CLIENT_IMAGE "${PG_CLIENT_IMAGE:-postgres:18-alpine}"
 set_env "$ENV_FILE" POSTGRES_USER "$POSTGRES_USER"
 set_env "$ENV_FILE" POSTGRES_PASSWORD "$POSTGRES_PASSWORD"
 set_env "$ENV_FILE" POSTGRES_DB "$POSTGRES_DB"
@@ -191,6 +192,8 @@ read_env() {
 POSTGRES_USER="$(read_env POSTGRES_USER)"
 POSTGRES_DB="$(read_env POSTGRES_DB)"
 POSTGRES_PASSWORD="$(read_env POSTGRES_PASSWORD)"
+PG_CLIENT_IMAGE="$(read_env PG_CLIENT_IMAGE)"
+PG_CLIENT_IMAGE="${PG_CLIENT_IMAGE:-postgres:18-alpine}"
 
 docker compose -f docker-compose.prod.yml --env-file .env up -d postgresql searxng
 docker compose -f docker-compose.prod.yml --env-file .env ps
@@ -208,7 +211,7 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql pg_
 echo "Checking ParadeDB pg_search extension availability..."
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
-  postgres:17-alpine \
+  "$PG_CLIENT_IMAGE" \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
@@ -239,6 +242,8 @@ read_env() {
 POSTGRES_USER="$(read_env POSTGRES_USER)"
 POSTGRES_DB="$(read_env POSTGRES_DB)"
 POSTGRES_PASSWORD="$(read_env POSTGRES_PASSWORD)"
+PG_CLIENT_IMAGE="$(read_env PG_CLIENT_IMAGE)"
+PG_CLIENT_IMAGE="${PG_CLIENT_IMAGE:-postgres:18-alpine}"
 
 if ! docker inspect lobehub >/dev/null 2>&1; then
   echo "Old container 'lobehub' does not exist. Cannot discover old RDS DATABASE_URL." >&2
@@ -259,7 +264,7 @@ echo "Creating RDS dump at $DUMP_FILE"
 docker run --rm --network host \
   -e OLD_DATABASE_URL="$OLD_DATABASE_URL" \
   -v "$PWD/backups:/backup" \
-  postgres:17-alpine \
+  "$PG_CLIENT_IMAGE" \
   sh -c 'pg_dump "$OLD_DATABASE_URL" -Fc --no-owner --no-acl -f "/backup/'"$(basename "$DUMP_FILE")"'"'
 
 echo "Resetting target database..."
@@ -270,13 +275,13 @@ echo "Restoring dump into Compose PostgreSQL..."
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
   -v "$PWD/backups:/backup" \
-  postgres:17-alpine \
+  "$PG_CLIENT_IMAGE" \
   pg_restore -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl "/backup/$(basename "$DUMP_FILE")"
 
 echo "Ensuring pg_search extension exists after restore..."
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
-  postgres:17-alpine \
+  "$PG_CLIENT_IMAGE" \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \

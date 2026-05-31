@@ -19,6 +19,8 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Added `src/_custom/deploy/generate-production-package.sh` to build a local ignored production
   package from dev `.env`, preserving real secrets while forcing production domain, database,
   Redis prefix, image tag, and dev-bypass safety overrides.
+- Added `PG_CLIENT_IMAGE=postgres:18-alpine` for migration tooling because the old Aliyun RDS
+  server reported PostgreSQL 18.3, while `pg_dump` 17 refuses to dump newer servers.
 
 ### Deep Thinking Temporary Disable
 

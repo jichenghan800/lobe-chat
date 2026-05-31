@@ -91,6 +91,7 @@ At minimum, confirm these values before running Compose:
 
 ```bash
 LOBECHAT_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
+PG_CLIENT_IMAGE=postgres:18-alpine
 POSTGRES_USER=paradedb
 POSTGRES_PASSWORD=<new-strong-password>
 POSTGRES_DB=lobehub
@@ -188,12 +189,14 @@ Extract the old RDS connection string from the old container without printing it
 ```bash
 ssh root@47.236.135.3 '
 OLD_DATABASE_URL="$(docker inspect lobehub --format "{{range .Config.Env}}{{println .}}{{end}}" | awk -F= '"'"'$1=="DATABASE_URL"{print substr($0,index($0,"=")+1)}'"'"')" &&
+PG_CLIENT_IMAGE="$(awk -F= '"'"'$1=="PG_CLIENT_IMAGE"{print substr($0,index($0,"=")+1)}'"'"' .env)" &&
+PG_CLIENT_IMAGE="${PG_CLIENT_IMAGE:-postgres:18-alpine}" &&
 test -n "$OLD_DATABASE_URL" &&
 mkdir -p /opt/lobechat-main/backups &&
 docker run --rm --network host \
   -e OLD_DATABASE_URL="$OLD_DATABASE_URL" \
   -v /opt/lobechat-main/backups:/backup \
-  postgres:17-alpine \
+  "$PG_CLIENT_IMAGE" \
   sh -c '"'"'pg_dump "$OLD_DATABASE_URL" -Fc --no-owner --no-acl -f /backup/lobechat-rds-$(date +%Y%m%d-%H%M%S).dump'"'"'
 '
 ```
@@ -206,8 +209,10 @@ cd /opt/lobechat-main &&
 POSTGRES_USER="$(awk -F= '"'"'$1=="POSTGRES_USER"{print substr($0,index($0,"=")+1)}'"'"' .env)" &&
 POSTGRES_PASSWORD="$(awk -F= '"'"'$1=="POSTGRES_PASSWORD"{print substr($0,index($0,"=")+1)}'"'"' .env)" &&
 POSTGRES_DB="$(awk -F= '"'"'$1=="POSTGRES_DB"{print substr($0,index($0,"=")+1)}'"'"' .env)" &&
+PG_CLIENT_IMAGE="$(awk -F= '"'"'$1=="PG_CLIENT_IMAGE"{print substr($0,index($0,"=")+1)}'"'"' .env)" &&
 POSTGRES_USER="${POSTGRES_USER:-paradedb}" &&
 POSTGRES_DB="${POSTGRES_DB:-lobehub}" &&
+PG_CLIENT_IMAGE="${PG_CLIENT_IMAGE:-postgres:18-alpine}" &&
 test -n "$POSTGRES_PASSWORD" &&
 DUMP_FILE="$(ls -t /opt/lobechat-main/backups/lobechat-rds-*.dump | head -1)" &&
 docker compose -f docker-compose.prod.yml exec -T postgresql dropdb -U "$POSTGRES_USER" --if-exists "$POSTGRES_DB" &&
@@ -215,7 +220,7 @@ docker compose -f docker-compose.prod.yml exec -T postgresql createdb -U "$POSTG
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
   -v /opt/lobechat-main/backups:/backup \
-  postgres:17-alpine \
+  "$PG_CLIENT_IMAGE" \
   pg_restore -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl "/backup/$(basename "$DUMP_FILE")"
 '
 ```
