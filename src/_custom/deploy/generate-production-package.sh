@@ -274,6 +274,15 @@ echo "Resetting target database..."
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql dropdb -U "$POSTGRES_USER" --if-exists "$POSTGRES_DB"
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql createdb -U "$POSTGRES_USER" "$POSTGRES_DB"
 
+echo "Setting database search_path to match dev..."
+docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -v ON_ERROR_STOP=1 \
+  -c "ALTER DATABASE \"$POSTGRES_DB\" SET search_path TO public, paradedb;" \
+  -c "ALTER ROLE \"$POSTGRES_USER\" IN DATABASE \"$POSTGRES_DB\" SET search_path TO public, paradedb;" \
+  -c "SET search_path TO public, paradedb;" \
+  -c "SHOW search_path;"
+
 echo "Ensuring required extensions exist before restore..."
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \

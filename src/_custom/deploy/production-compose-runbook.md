@@ -217,6 +217,11 @@ test -n "$POSTGRES_PASSWORD" &&
 DUMP_FILE="$(ls -t /opt/lobechat-main/backups/lobechat-rds-*.dump | head -1)" &&
 docker compose -f docker-compose.prod.yml exec -T postgresql dropdb -U "$POSTGRES_USER" --if-exists "$POSTGRES_DB" &&
 docker compose -f docker-compose.prod.yml exec -T postgresql createdb -U "$POSTGRES_USER" "$POSTGRES_DB" &&
+docker compose -f docker-compose.prod.yml exec -T postgresql \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -v ON_ERROR_STOP=1 \
+  -c "ALTER DATABASE \"$POSTGRES_DB\" SET search_path TO public, paradedb;" \
+  -c "ALTER ROLE \"$POSTGRES_USER\" IN DATABASE \"$POSTGRES_DB\" SET search_path TO public, paradedb;" &&
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
   "$PG_CLIENT_IMAGE" \

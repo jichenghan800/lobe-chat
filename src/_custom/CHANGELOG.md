@@ -28,6 +28,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   `public.vector(...)` and `public.vector_cosine_ops` can create vector tables and indexes.
 - Also run `ALTER EXTENSION vector SET SCHEMA public` before restore to handle images/databases
   where the `vector` extension is already preinstalled outside the `public` schema.
+- Set the production database and role `search_path` to `public, paradedb` after `createdb`, matching
+  the working dev database and ensuring unqualified official migration tables are created in
+  `public`.
 
 ### Deep Thinking Temporary Disable
 
