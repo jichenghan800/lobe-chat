@@ -26,7 +26,7 @@ Use `.env.production.example` as the sanitized template. Copy it to the producti
 At minimum, confirm these values before running Compose:
 
 ```bash
-LOBECHAT_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-210335-d6afd17c40-848c71b
+LOBECHAT_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
 POSTGRES_USER=paradedb
 POSTGRES_PASSWORD=<new-strong-password>
 POSTGRES_DB=lobehub
@@ -52,9 +52,9 @@ Build and push an immutable image tag before production deployment:
 
 ```bash
 docker tag lobehub-cotti:v2.2.1-cotti-market-auth-recovery \
-  sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-210335-d6afd17c40-848c71b
+  sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
 
-docker push sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-210335-d6afd17c40-848c71b
+docker push sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
 ```
 
 Then set the same image in production `.env` as `LOBECHAT_IMAGE`.
@@ -62,13 +62,13 @@ Then set the same image in production `.env` as `LOBECHAT_IMAGE`.
 Current pushed image:
 
 ```bash
-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-210335-d6afd17c40-848c71b
+sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
 ```
 
 Registry digest:
 
 ```bash
-sha256:d9272785870708afc6c499fbcc98bbb82615edbdfa372434080feef7585598a9
+sha256:d69b5f1d1f9e2ba156e68cb70addc003945ff9f0e2521a5f382a2be04c36ef9d
 ```
 
 ## Stage Files

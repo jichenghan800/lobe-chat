@@ -28,9 +28,11 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Built dev-verified image `lobehub-cotti:v2.2.1-cotti-market-auth-recovery` after temporarily
   disabling `深度思考`.
 - Tagged and pushed production image
-  `sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-210335-d6afd17c40-848c71b`.
+  `sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94`.
 - Registry digest:
-  `sha256:d9272785870708afc6c499fbcc98bbb82615edbdfa372434080feef7585598a9`.
+  `sha256:d69b5f1d1f9e2ba156e68cb70addc003945ff9f0e2521a5f382a2be04c36ef9d`.
+- Added `.dockerignore` entries for local release artifacts so screenshots/backups do not enter
+  future Docker build contexts.
 
 ### Production Env Template
 
