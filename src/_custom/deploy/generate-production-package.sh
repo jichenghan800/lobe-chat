@@ -215,7 +215,9 @@ docker run --rm --network lobechat_prod \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
   -c "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;" \
+  -c "ALTER EXTENSION vector SET SCHEMA public;" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
+  -c "SELECT to_regtype('public.vector') AS public_vector;" \
   -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
 
 echo "Middleware is ready. Old app was not stopped."
@@ -279,7 +281,9 @@ docker run --rm --network lobechat_prod \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
   -c "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;" \
+  -c "ALTER EXTENSION vector SET SCHEMA public;" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
+  -c "SELECT to_regtype('public.vector') AS public_vector;" \
   -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
 
 echo "Restoring dump into Compose PostgreSQL..."
@@ -296,7 +300,9 @@ docker run --rm --network lobechat_prod \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
   -c "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;" \
+  -c "ALTER EXTENSION vector SET SCHEMA public;" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
+  -c "SELECT to_regtype('public.vector') AS public_vector;" \
   -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
 
 trap - ERR
