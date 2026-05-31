@@ -219,6 +219,13 @@ docker compose -f docker-compose.prod.yml exec -T postgresql dropdb -U "$POSTGRE
 docker compose -f docker-compose.prod.yml exec -T postgresql createdb -U "$POSTGRES_USER" "$POSTGRES_DB" &&
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
+  "$PG_CLIENT_IMAGE" \
+  psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -v ON_ERROR_STOP=1 \
+  -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+  -c "CREATE EXTENSION IF NOT EXISTS pg_search;" &&
+docker run --rm --network lobechat_prod \
+  -e PGPASSWORD="$POSTGRES_PASSWORD" \
   -v /opt/lobechat-main/backups:/backup \
   "$PG_CLIENT_IMAGE" \
   pg_restore -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl "/backup/$(basename "$DUMP_FILE")"

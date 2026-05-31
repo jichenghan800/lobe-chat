@@ -21,6 +21,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   Redis prefix, image tag, and dev-bypass safety overrides.
 - Added `PG_CLIENT_IMAGE=postgres:18-alpine` for migration tooling because the old Aliyun RDS
   server reported PostgreSQL 18.3, while `pg_dump` 17 refuses to dump newer servers.
+- Ensured migration scripts create both `vector` and `pg_search` extensions immediately after
+  recreating the target database and before `pg_restore`, because restored tables use
+  `public.vector(...)` columns.
 
 ### Deep Thinking Temporary Disable
 

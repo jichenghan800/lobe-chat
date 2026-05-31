@@ -208,14 +208,15 @@ done
 
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 
-echo "Checking ParadeDB pg_search extension availability..."
+echo "Checking ParadeDB extension availability..."
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
   "$PG_CLIENT_IMAGE" \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
+  -c "CREATE EXTENSION IF NOT EXISTS vector;" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
-  -c "SELECT extname FROM pg_extension WHERE extname = 'pg_search';"
+  -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
 
 echo "Middleware is ready. Old app was not stopped."
 SCRIPT
@@ -271,6 +272,16 @@ echo "Resetting target database..."
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql dropdb -U "$POSTGRES_USER" --if-exists "$POSTGRES_DB"
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql createdb -U "$POSTGRES_USER" "$POSTGRES_DB"
 
+echo "Ensuring required extensions exist before restore..."
+docker run --rm --network lobechat_prod \
+  -e PGPASSWORD="$POSTGRES_PASSWORD" \
+  "$PG_CLIENT_IMAGE" \
+  psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -v ON_ERROR_STOP=1 \
+  -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+  -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
+  -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
+
 echo "Restoring dump into Compose PostgreSQL..."
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
@@ -278,14 +289,15 @@ docker run --rm --network lobechat_prod \
   "$PG_CLIENT_IMAGE" \
   pg_restore -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-acl "/backup/$(basename "$DUMP_FILE")"
 
-echo "Ensuring pg_search extension exists after restore..."
+echo "Ensuring required extensions exist after restore..."
 docker run --rm --network lobechat_prod \
   -e PGPASSWORD="$POSTGRES_PASSWORD" \
   "$PG_CLIENT_IMAGE" \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
+  -c "CREATE EXTENSION IF NOT EXISTS vector;" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
-  -c "SELECT extname FROM pg_extension WHERE extname = 'pg_search';"
+  -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
 
 trap - ERR
 echo "Running app once lets built-in migrations finish during app startup."
