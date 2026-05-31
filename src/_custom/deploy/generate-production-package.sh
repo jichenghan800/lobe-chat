@@ -214,7 +214,7 @@ docker run --rm --network lobechat_prod \
   "$PG_CLIENT_IMAGE" \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
-  -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+  -c "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
   -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
 
@@ -278,7 +278,7 @@ docker run --rm --network lobechat_prod \
   "$PG_CLIENT_IMAGE" \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
-  -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+  -c "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
   -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
 
@@ -295,7 +295,7 @@ docker run --rm --network lobechat_prod \
   "$PG_CLIENT_IMAGE" \
   psql -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
   -v ON_ERROR_STOP=1 \
-  -c "CREATE EXTENSION IF NOT EXISTS vector;" \
+  -c "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_search;" \
   -c "SELECT extname FROM pg_extension WHERE extname IN ('pg_search', 'vector') ORDER BY extname;"
 

@@ -24,6 +24,8 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Ensured migration scripts create both `vector` and `pg_search` extensions immediately after
   recreating the target database and before `pg_restore`, because restored tables use
   `public.vector(...)` columns.
+- Pinned `vector` extension creation to `WITH SCHEMA public` so restored dumps that reference
+  `public.vector(...)` and `public.vector_cosine_ops` can create vector tables and indexes.
 
 ### Deep Thinking Temporary Disable
 
