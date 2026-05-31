@@ -7,3 +7,10 @@ npm-debug.log
 .github
 *.md
 .env.example
+
+# Local release/migration artifacts. Keep them out of Docker build context.
+backups
+env.cleaned
+demo0.png
+error.jpg
+error copy.jpg
