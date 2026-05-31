@@ -18,10 +18,74 @@ and SearXNG from one Docker Compose stack.
 Only the app publishes a host port. PostgreSQL and SearXNG stay private on the
 Compose network.
 
+## Same-Host Isolation
+
+The production host also runs other services. This stack is isolated as follows:
+
+- Compose project name: `lobechat-prod`
+- Dedicated Docker network: `lobechat_prod`
+- Dedicated database volume: `lobechat_postgresql_data`
+- Dedicated container names: `lobechat-app`, `lobechat-postgresql`, `lobechat-searxng`
+- PostgreSQL and SearXNG do not publish host ports.
+- App, PostgreSQL, and SearXNG have configurable CPU, memory, pids, and log-size limits.
+- External Redis is still shared, but production uses `REDIS_PREFIX=lobechat_prod` to keep keyspace
+  separate from dev.
+
+Default limits:
+
+```bash
+APP_CPUS=2.0
+APP_MEM_LIMIT=6g
+POSTGRES_CPUS=2.0
+POSTGRES_MEM_LIMIT=4g
+POSTGRES_SHM_SIZE=1g
+SEARXNG_CPUS=0.75
+SEARXNG_MEM_LIMIT=768m
+LOG_MAX_SIZE=50m
+LOG_MAX_FILE=3
+```
+
+## Recommended Package Flow
+
+Generate the production package locally from the dev `.env`. This keeps provider/auth/S3/SMTP/Redis
+secrets consistent with dev, then applies the production-only overrides:
+
+```bash
+src/_custom/deploy/generate-production-package.sh
+```
+
+The generated package is written under `src/_custom/deploy/dist/` and is intentionally ignored by
+Git because it contains the real production `.env`.
+
+Upload the generated package:
+
+```bash
+cd src/_custom/deploy/dist/<generated-package>
+bash stage-to-production.sh
+```
+
+Then run on the production host:
+
+```bash
+cd /opt/lobechat-main
+bash 00-precheck.sh
+bash 01-start-middleware.sh
+bash 02-migrate-rds-to-local.sh
+bash 03-switch-new-app.sh
+```
+
+Rollback remains one command:
+
+```bash
+cd /opt/lobechat-main
+bash 04-rollback-old-app.sh
+```
+
 ## Required `.env` Changes
 
-Use `.env.production.example` as the sanitized template. Copy it to the production host as
-`/opt/lobechat-main/.env`, then fill real secrets on the server.
+Use `.env.production.example` as the sanitized reference. The recommended path is to generate the
+real production `.env` from dev with `generate-production-package.sh`; do not commit the generated
+`.env`.
 
 At minimum, confirm these values before running Compose:
 

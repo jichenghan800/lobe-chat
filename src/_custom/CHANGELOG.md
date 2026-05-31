@@ -11,9 +11,14 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - The production stack manages the app, ParadeDB/PostgreSQL, and SearXNG together.
 - Kept the old production container name `lobehub` free for rollback; the new app
   container is `lobechat-app`.
+- Added same-host resource isolation defaults for app, PostgreSQL, and SearXNG: CPU, memory, pids,
+  PostgreSQL shared memory, and JSON log rotation limits.
 - Added `src/_custom/deploy/production-compose-runbook.md` with migration,
   rollback, and cleanup commands for moving data from Aliyun RDS to the
   Compose-managed database.
+- Added `src/_custom/deploy/generate-production-package.sh` to build a local ignored production
+  package from dev `.env`, preserving real secrets while forcing production domain, database,
+  Redis prefix, image tag, and dev-bypass safety overrides.
 
 ### Deep Thinking Temporary Disable
 
