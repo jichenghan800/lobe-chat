@@ -1,0 +1,15 @@
+const DEFAULT_HIDDEN_STARTER_MODELS = ['deepseek-v4-pro'] as const;
+
+const parseHiddenStarterModels = () => {
+  const raw = process.env.NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS;
+
+  const entries = (raw ? raw.split(/[,;]/) : DEFAULT_HIDDEN_STARTER_MODELS)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  return new Set(entries);
+};
+
+const HIDDEN_STARTER_MODELS = parseHiddenStarterModels();
+
+export const isHomeStarterModelHidden = (model: string) => HIDDEN_STARTER_MODELS.has(model);
