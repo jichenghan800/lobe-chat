@@ -58,8 +58,9 @@ export enum SettingsTabs {
   Memory = 'memory',
   Messenger = 'messenger',
   Notification = 'notification',
-  // business
   Plans = 'plans',
+  // business
+  PlatformAnalytics = 'platform-analytics',
   Profile = 'profile',
   Provider = 'provider',
   Proxy = 'proxy',

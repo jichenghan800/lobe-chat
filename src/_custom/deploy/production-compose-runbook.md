@@ -81,6 +81,34 @@ cd /opt/lobechat-main
 bash 04-rollback-old-app.sh
 ```
 
+## Routine App Update
+
+After the initial RDS-to-local migration has completed, routine updates should follow the same
+lightweight Compose flow as `gemini_Refactoring`: upload the Compose file, let the production host
+reuse its server-local `.env`, then pull and restart the stack.
+
+Do not run `02-migrate-rds-to-local.sh` for routine updates. Production data now lives in the
+Compose-managed `lobechat_postgresql_data` volume.
+
+```bash
+cd /opt/lobechat-main
+
+scp docker-compose.prod.yml root@47.236.135.3:/opt/lobechat-main/ &&
+ssh root@47.236.135.3 'cd /opt/lobechat-main && docker compose -f docker-compose.prod.yml --env-file .env pull && docker compose -f docker-compose.prod.yml --env-file .env up -d && docker compose -f docker-compose.prod.yml --env-file .env ps'
+```
+
+Use this variant when only the app image changed and PostgreSQL/SearXNG do not need to be pulled:
+
+```bash
+cd /opt/lobechat-main
+
+scp docker-compose.prod.yml root@47.236.135.3:/opt/lobechat-main/ &&
+ssh root@47.236.135.3 'cd /opt/lobechat-main && docker compose -f docker-compose.prod.yml --env-file .env pull app && docker compose -f docker-compose.prod.yml --env-file .env up -d app && docker compose -f docker-compose.prod.yml --env-file .env ps'
+```
+
+If the target image tag changes, update `LOBECHAT_IMAGE` in the production host `.env` before
+running the command above. Keep real secrets on the server.
+
 ## Required `.env` Changes
 
 Use `.env.production.example` as the sanitized reference. The recommended path is to generate the

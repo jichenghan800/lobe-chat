@@ -8,6 +8,12 @@ const readHideFlag = (raw: string | undefined, defaultValue = true) => {
   return !falseValues.has(raw.trim().toLowerCase());
 };
 
+const readShowFlag = (raw: string | undefined, defaultValue = false) => {
+  if (!raw) return defaultValue;
+
+  return !falseValues.has(raw.trim().toLowerCase());
+};
+
 export const isAgentChannelUiHidden = () =>
   readHideFlag(process.env.NEXT_PUBLIC_COTTI_HIDE_AGENT_CHANNELS);
 
@@ -23,6 +29,9 @@ export const isMessengerSettingsHidden = () =>
 export const isApiKeySettingsHidden = () =>
   readHideFlag(process.env.NEXT_PUBLIC_COTTI_HIDE_API_KEY_SETTINGS);
 
+export const isPlatformAnalyticsHidden = () =>
+  !readShowFlag(process.env.NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS);
+
 export const isSettingsTabHidden = (tab: SettingsTabs) => {
   switch (tab) {
     case SettingsTabs.Provider: {
@@ -36,6 +45,9 @@ export const isSettingsTabHidden = (tab: SettingsTabs) => {
     }
     case SettingsTabs.APIKey: {
       return isApiKeySettingsHidden();
+    }
+    case SettingsTabs.PlatformAnalytics: {
+      return isPlatformAnalyticsHidden();
     }
     default: {
       return false;

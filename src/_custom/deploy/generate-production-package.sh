@@ -120,8 +120,15 @@ set_env "$ENV_FILE" LOG_MAX_FILE "${LOG_MAX_FILE:-3}"
 
 set_env "$ENV_FILE" DEV_AUTH_BYPASS_ENABLED "0"
 set_env "$ENV_FILE" DEV_AUTH_BYPASS_ALLOW_PROD "0"
+set_env "$ENV_FILE" NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS "${NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS:-$(read_template NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS)}"
 
-cat > "$OUT_DIR/00-precheck.sh" <<'SCRIPT'
+PLATFORM_ANALYTICS_ADMIN_EMAILS="${COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS:-$(read_env COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS)}"
+if [[ -z "$PLATFORM_ANALYTICS_ADMIN_EMAILS" ]]; then
+  PLATFORM_ANALYTICS_ADMIN_EMAILS="$(read_template COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS)"
+fi
+set_env "$ENV_FILE" COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS "$PLATFORM_ANALYTICS_ADMIN_EMAILS"
+
+cat > "$OUT_DIR/00-precheck.sh" << 'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -178,7 +185,7 @@ echo
 echo "Precheck finished. No traffic was switched."
 SCRIPT
 
-cat > "$OUT_DIR/01-start-middleware.sh" <<'SCRIPT'
+cat > "$OUT_DIR/01-start-middleware.sh" << 'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -223,7 +230,7 @@ docker run --rm --network lobechat_prod \
 echo "Middleware is ready. Old app was not stopped."
 SCRIPT
 
-cat > "$OUT_DIR/02-migrate-rds-to-local.sh" <<'SCRIPT'
+cat > "$OUT_DIR/02-migrate-rds-to-local.sh" << 'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -319,7 +326,7 @@ echo "Running app once lets built-in migrations finish during app startup."
 echo "Migration restore finished. Old app remains stopped."
 SCRIPT
 
-cat > "$OUT_DIR/03-switch-new-app.sh" <<'SCRIPT'
+cat > "$OUT_DIR/03-switch-new-app.sh" << 'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -355,7 +362,7 @@ echo "New app did not become healthy in time." >&2
 exit 1
 SCRIPT
 
-cat > "$OUT_DIR/04-rollback-old-app.sh" <<'SCRIPT'
+cat > "$OUT_DIR/04-rollback-old-app.sh" << 'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -367,7 +374,7 @@ docker ps --filter name='lobe' --format 'table {{.Names}}\t{{.Image}}\t{{.Status
 curl -I http://127.0.0.1:3210/ || true
 SCRIPT
 
-cat > "$OUT_DIR/05-cleanup-old-app.sh" <<'SCRIPT'
+cat > "$OUT_DIR/05-cleanup-old-app.sh" << 'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -378,7 +385,7 @@ docker image ls | grep lobehub-custom || true
 echo "Run manually if confirmed no rollback is needed: docker rmi lobehub-custom"
 SCRIPT
 
-cat > "$OUT_DIR/stage-to-production.sh" <<SCRIPT
+cat > "$OUT_DIR/stage-to-production.sh" << SCRIPT
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -390,7 +397,7 @@ scp docker-compose.prod.yml .env 0*.sh 05-cleanup-old-app.sh "root@\${PROD_HOST}
 ssh "root@\${PROD_HOST}" "cd '\${PROD_DIR}' && chmod 600 .env && chmod +x ./*.sh && ls -lah"
 SCRIPT
 
-cat > "$OUT_DIR/README.md" <<README
+cat > "$OUT_DIR/README.md" << README
 # LobeChat Production Package
 
 Generated from local dev env: \`$SRC_ENV\`

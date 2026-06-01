@@ -3,6 +3,19 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-01
+
+### Platform Analytics
+
+- Scope: add a Cotti-only platform usage analytics settings page for aggregate traffic, user,
+  feature, model, token, cost, and error visibility.
+- Scope: add a read-only TRPC analytics endpoint backed by existing `messages`, `users`,
+  `generation_*`, and related tables; no new tracking table or model-call interception is added.
+- Runtime env: show the page with `NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS=1` and restrict server
+  access with `COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS` or Better Auth `users.role='admin'`.
+- Boundary: first version is operational reporting only. It does not expose prompt content, enforce
+  quotas, or add billing controls.
+
 ## 2026-05-31
 
 ### Production Compose Preparation
@@ -59,6 +72,14 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   temporary `深度思考` disablement, branding, image/video policy, platform-management visibility,
   and required secret placeholders.
 - Boundary: real secrets remain server-local and are not committed.
+
+### Default Chat Mode
+
+- Runtime env now appends `chatConfig.enableAgentMode=false` to `DEFAULT_AGENT_CONFIG`, so new
+  default inbox conversations start in Chat mode instead of Agent mode.
+- Dev database backfill set existing `slug='inbox'` agents to `chat_config.enableAgentMode=false`.
+- Boundary: existing user-created agents are not changed, and users can still explicitly switch a
+  conversation back to Agent mode from the UI.
 
 ## 2026-05-30
 

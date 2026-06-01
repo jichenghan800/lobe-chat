@@ -50,6 +50,7 @@ import { messengerRouter } from './messenger';
 import { notebookRouter } from './notebook';
 import { notificationRouter } from './notification';
 import { oauthDeviceFlowRouter } from './oauthDeviceFlow';
+import { platformAnalyticsRouter } from './platformAnalytics';
 import { pluginRouter } from './plugin';
 import { ragEvalRouter } from './ragEval';
 import { recentRouter } from './recent';
@@ -113,6 +114,7 @@ export const lambdaRouter = router({
   notification: notificationRouter,
   oauthDeviceFlow: oauthDeviceFlowRouter,
   plugin: pluginRouter,
+  platformAnalytics: platformAnalyticsRouter,
   ragEval: ragEvalRouter,
   recent: recentRouter,
   search: searchRouter,

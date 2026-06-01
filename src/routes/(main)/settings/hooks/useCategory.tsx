@@ -6,6 +6,7 @@ import {
   Brain,
   BrainCircuit,
   ChartColumnBigIcon,
+  ChartNoAxesCombined,
   Coins,
   CreditCard,
   Database,
@@ -198,6 +199,11 @@ export const useCategory = () => {
         icon: Database,
         key: SettingsTabs.Storage,
         label: t('tab.storage'),
+      },
+      !isSettingsTabHidden(SettingsTabs.PlatformAnalytics) && {
+        icon: ChartNoAxesCombined,
+        key: SettingsTabs.PlatformAnalytics,
+        label: '平台用量分析',
       },
       isDevMode &&
         !isSettingsTabHidden(SettingsTabs.APIKey) && {
