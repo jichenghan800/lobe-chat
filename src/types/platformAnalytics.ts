@@ -28,8 +28,13 @@ export interface PlatformAnalyticsTrendItem {
 export interface PlatformAnalyticsUserItem {
   activeDays: number;
   assistantMessages: number;
+  averageLatencyMs: number;
+  errorMessages: number;
   estimatedCost: number;
   lastActiveAt?: string;
+  model?: string;
+  provider?: string;
+  requestCount: number;
   totalMessages: number;
   totalTokens: number;
   userEmail?: string;
@@ -41,10 +46,15 @@ export interface PlatformAnalyticsUserItem {
 export interface PlatformAnalyticsModelItem {
   activeUsers: number;
   assistantMessages: number;
+  averageLatencyMs: number;
   errorMessages: number;
+  errorRate: number;
   estimatedCost: number;
+  llmCalls: number;
   model: string;
+  p95LatencyMs: number;
   provider: string;
+  requestCount: number;
   totalInputTokens: number;
   totalOutputTokens: number;
   totalTokens: number;

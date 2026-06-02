@@ -43,6 +43,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
+  vi.useRealTimers();
 });
 
 describe('POST handler', () => {
@@ -141,6 +142,56 @@ describe('POST handler', () => {
         },
         errorType: 500,
       });
+    });
+
+    it('should retry retryable chat errors before returning success', async () => {
+      vi.useFakeTimers();
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+
+      const mockParams = Promise.resolve({ provider: 'test-provider' });
+      const mockChatPayload = { message: 'Hello, world!', model: 'test-model' };
+      request = new Request(new URL('https://test.com'), {
+        method: 'POST',
+        body: JSON.stringify(mockChatPayload),
+      });
+
+      const rateLimitError = Object.assign(new Error('rate limit exceeded'), { status: 429 });
+      const mockChatResponse: any = { success: true, message: 'Reply from agent' };
+      const mockRuntime: LobeRuntimeAI = {
+        baseURL: 'abc',
+        chat: vi.fn().mockRejectedValueOnce(rateLimitError).mockResolvedValueOnce(mockChatResponse),
+      };
+
+      vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
+
+      const responsePromise = POST(request, { params: mockParams });
+      await vi.advanceTimersByTimeAsync(1000);
+      const response = await responsePromise;
+
+      expect(response).toEqual(mockChatResponse);
+      expect(mockRuntime.chat).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not retry non-retryable chat errors', async () => {
+      const mockParams = Promise.resolve({ provider: 'test-provider' });
+      const mockChatPayload = { message: 'Hello, world!', model: 'test-model' };
+      request = new Request(new URL('https://test.com'), {
+        method: 'POST',
+        body: JSON.stringify(mockChatPayload),
+      });
+
+      const badRequestError = Object.assign(new Error('invalid request'), { status: 400 });
+      const mockRuntime: LobeRuntimeAI = {
+        baseURL: 'abc',
+        chat: vi.fn().mockRejectedValue(badRequestError),
+      };
+
+      vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
+
+      const response = await POST(request, { params: mockParams });
+
+      expect(response.status).toBe(500);
+      expect(mockRuntime.chat).toHaveBeenCalledTimes(1);
     });
   });
 });

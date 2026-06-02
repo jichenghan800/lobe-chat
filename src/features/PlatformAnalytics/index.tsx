@@ -85,6 +85,14 @@ const metricFormatter = {
   token: (value: number) => formatTokenNumber(value),
 };
 
+const formatLatency = (value?: number) => {
+  if (!value) return '-';
+
+  if (value < 1000) return `${formatNumber(Math.round(value))}ms`;
+
+  return `${formatNumber(value / 1000, 1)}s`;
+};
+
 interface MetricCardProps {
   description: string;
   icon: typeof Users;
@@ -188,8 +196,22 @@ const PlatformAnalytics = memo(() => {
         width: '34%',
       },
       { dataIndex: 'activeDays', title: '活跃天', width: 76 },
-      { dataIndex: 'userMessages', title: '提问', width: 76 },
-      { dataIndex: 'assistantMessages', title: '响应', width: 76 },
+      {
+        render: (_, record) =>
+          record.model ? (
+            <Flexbox gap={2}>
+              <Text ellipsis>{record.model}</Text>
+              <Text className={styles.muted} fontSize={12}>
+                {record.provider}
+              </Text>
+            </Flexbox>
+          ) : (
+            '-'
+          ),
+        title: '模型',
+        width: '24%',
+      },
+      { dataIndex: 'requestCount', title: '请求', width: 76 },
       {
         dataIndex: 'totalTokens',
         render: (value: number) => formatTokenNumber(value),
@@ -197,10 +219,16 @@ const PlatformAnalytics = memo(() => {
         width: 112,
       },
       {
-        dataIndex: 'estimatedCost',
-        render: (value: number) => `$${formatNumber(value, 4)}`,
-        title: '成本',
-        width: 100,
+        dataIndex: 'errorMessages',
+        render: (value: number) => (value ? <Tag color="error">{value}</Tag> : <Tag>0</Tag>),
+        title: '错误',
+        width: 72,
+      },
+      {
+        dataIndex: 'averageLatencyMs',
+        render: (value: number) => formatLatency(value),
+        title: '平均耗时',
+        width: 92,
       },
     ],
     [],
@@ -220,9 +248,10 @@ const PlatformAnalytics = memo(() => {
           </Flexbox>
         ),
         title: '模型',
-        width: '36%',
+        width: '30%',
       },
-      { dataIndex: 'assistantMessages', title: '调用', width: 76 },
+      { dataIndex: 'requestCount', title: '请求', width: 72 },
+      { dataIndex: 'llmCalls', title: 'LLM', width: 72 },
       { dataIndex: 'activeUsers', title: '用户', width: 76 },
       {
         dataIndex: 'totalTokens',
@@ -231,16 +260,23 @@ const PlatformAnalytics = memo(() => {
         width: 112,
       },
       {
-        dataIndex: 'estimatedCost',
-        render: (value: number) => `$${formatNumber(value, 4)}`,
-        title: '成本',
-        width: 100,
+        dataIndex: 'errorRate',
+        render: (value: number) =>
+          value > 0 ? <Tag color="error">{metricFormatter.percent(value)}</Tag> : <Tag>0%</Tag>,
+        title: '错误率',
+        width: 84,
       },
       {
-        dataIndex: 'errorMessages',
-        render: (value: number) => (value ? <Tag color="error">{value}</Tag> : <Tag>0</Tag>),
-        title: '错误',
-        width: 80,
+        dataIndex: 'averageLatencyMs',
+        render: (value: number) => formatLatency(value),
+        title: '平均',
+        width: 76,
+      },
+      {
+        dataIndex: 'p95LatencyMs',
+        render: (value: number) => formatLatency(value),
+        title: 'P95',
+        width: 76,
       },
     ],
     [],
@@ -324,7 +360,7 @@ const PlatformAnalytics = memo(() => {
           <TrendStrip data={data?.trends || []} isLoading={isLoading} />
         </FormGroup>
 
-        <FormGroup collapsible={false} gap={12} title="模型消耗" variant={'filled'}>
+        <FormGroup collapsible={false} gap={12} title="模型吞吐监控" variant={'filled'}>
           <Table
             className={styles.table}
             columns={modelColumns}
@@ -384,7 +420,7 @@ const PlatformAnalytics = memo(() => {
           )}
         </FormGroup>
 
-        <FormGroup collapsible={false} gap={12} title="用户排行" variant={'filled'}>
+        <FormGroup collapsible={false} gap={12} title="用户模型请求排行" variant={'filled'}>
           <Table
             className={styles.table}
             columns={userColumns}
