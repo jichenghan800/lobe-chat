@@ -48,6 +48,10 @@ import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import type { UserMemoryEmbeddingRuntime } from '@/server/services/memory/userMemory/embedding';
 import { embedUserMemoryTexts } from '@/server/services/memory/userMemory/embedding';
 import { normalizeSearchMemoryParams } from '@/server/services/memory/userMemory/searchParams';
+import {
+  ContextMemoryToolInputSchema,
+  PreferenceMemoryToolInputSchema,
+} from '@/server/services/memory/userMemory/toolInputSchemas';
 
 const EMPTY_SEARCH_RESULT: SearchMemoryResult = {
   activities: [],
@@ -1027,7 +1031,7 @@ export const userMemoriesRouter = router({
     }),
 
   toolAddContextMemory: memoryProcedure
-    .input(ContextMemoryItemSchema)
+    .input(ContextMemoryToolInputSchema)
     .mutation(async ({ input, ctx }) => {
       try {
         const { agentRuntime, embeddingModel } = await getEmbeddingRuntime(
@@ -1206,7 +1210,7 @@ export const userMemoriesRouter = router({
     }),
 
   toolAddPreferenceMemory: memoryProcedure
-    .input(PreferenceMemoryItemSchema)
+    .input(PreferenceMemoryToolInputSchema)
     .mutation(async ({ input, ctx }) => {
       try {
         const { agentRuntime, embeddingModel } = await getEmbeddingRuntime(
