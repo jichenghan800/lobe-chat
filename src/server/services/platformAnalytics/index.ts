@@ -7,9 +7,13 @@ import type {
   PlatformAnalyticsFeatureItem,
   PlatformAnalyticsModelItem,
   PlatformAnalyticsOverview,
+  PlatformAnalyticsQuery,
   PlatformAnalyticsRange,
   PlatformAnalyticsTrendItem,
   PlatformAnalyticsUserItem,
+  PlatformFeedbackAnalytics,
+  PlatformFeedbackReportItem,
+  PlatformFeedbackStatus,
 } from '@/types/platformAnalytics';
 
 interface OverviewRow {
@@ -27,6 +31,14 @@ interface OverviewRow {
   userMessages: unknown;
 }
 
+interface FeedbackOverviewRow {
+  ignored: unknown;
+  open: unknown;
+  resolved: unknown;
+  reviewing: unknown;
+  total: unknown;
+}
+
 const toNumber = (value: unknown) => {
   if (value === null || value === undefined) return 0;
 
@@ -42,10 +54,68 @@ const toIsoString = (value: unknown) => {
   return new Date(value as string | Date).toISOString();
 };
 
-const normalizeRange = (range: PlatformAnalyticsRange) => {
-  if ([7, 30, 90].includes(range)) return range;
+const toFeedbackStatus = (value: unknown): PlatformFeedbackStatus => {
+  if (value === 'ignored' || value === 'reviewing' || value === 'resolved') return value;
 
-  return 30;
+  return 'open';
+};
+
+const normalizeRange = (range: PlatformAnalyticsRange) => {
+  if ([1, 7, 30, 90].includes(range)) return range;
+
+  return 1;
+};
+
+const SHANGHAI_TIMEZONE_OFFSET = 8 * 60 * 60 * 1000;
+
+const getShanghaiRangeStart = (range: PlatformAnalyticsRange, now = new Date()) => {
+  const shanghaiNow = new Date(now.getTime() + SHANGHAI_TIMEZONE_OFFSET);
+
+  return new Date(
+    Date.UTC(
+      shanghaiNow.getUTCFullYear(),
+      shanghaiNow.getUTCMonth(),
+      shanghaiNow.getUTCDate() - range + 1,
+      -8,
+      0,
+      0,
+      0,
+    ),
+  );
+};
+
+const getAnalyticsBounds = (params: PlatformAnalyticsQuery) => {
+  const normalizedRange = normalizeRange(params.range || 1);
+  const endAt = new Date();
+
+  if (params.customRange) {
+    const startAt = new Date(params.customRange.start);
+    const customEndAt = new Date(params.customRange.end);
+
+    if (Number.isNaN(startAt.getTime()) || Number.isNaN(customEndAt.getTime())) {
+      return {
+        endAt,
+        range: normalizedRange,
+        startAt: getShanghaiRangeStart(normalizedRange, endAt),
+      };
+    }
+
+    return {
+      customRange: {
+        end: customEndAt.toISOString(),
+        start: startAt.toISOString(),
+      },
+      endAt: customEndAt,
+      range: normalizedRange,
+      startAt,
+    };
+  }
+
+  return {
+    endAt,
+    range: normalizedRange,
+    startAt: getShanghaiRangeStart(normalizedRange, endAt),
+  };
 };
 
 export class PlatformAnalyticsService {
@@ -55,20 +125,16 @@ export class PlatformAnalyticsService {
     this.db = db;
   }
 
-  getDashboard = async (range: PlatformAnalyticsRange): Promise<PlatformAnalyticsDashboard> => {
-    const normalizedRange = normalizeRange(range);
-    const endAt = new Date();
-    const startAt = new Date(endAt);
-    startAt.setDate(endAt.getDate() - normalizedRange + 1);
-    startAt.setHours(0, 0, 0, 0);
+  getDashboard = async (params: PlatformAnalyticsQuery): Promise<PlatformAnalyticsDashboard> => {
+    const { customRange, endAt, range: normalizedRange, startAt } = getAnalyticsBounds(params);
 
     const [overview, trends, topUsers, models, features, errors] = await Promise.all([
-      this.getOverview(startAt),
+      this.getOverview(startAt, endAt),
       this.getTrends(startAt, endAt),
-      this.getTopUsers(startAt),
-      this.getModelUsage(startAt),
-      this.getFeatureUsage(startAt),
-      this.getErrors(startAt),
+      this.getTopUsers(startAt, endAt),
+      this.getModelUsage(startAt, endAt),
+      this.getFeatureUsage(startAt, endAt),
+      this.getErrors(startAt, endAt),
     ]);
 
     return {
@@ -77,22 +143,104 @@ export class PlatformAnalyticsService {
       generatedAt: endAt.toISOString(),
       models,
       overview,
+      ...(customRange ? { customRange } : {}),
       range: normalizedRange,
       topUsers,
       trends,
     };
   };
 
-  private getOverview = async (startAt: Date): Promise<PlatformAnalyticsOverview> => {
+  getFeedbackAnalytics = async (
+    range: PlatformAnalyticsRange,
+  ): Promise<PlatformFeedbackAnalytics> => {
+    const normalizedRange = normalizeRange(range);
+    const endAt = new Date();
+    const startAt = getShanghaiRangeStart(normalizedRange, endAt);
+
+    const [overview, items] = await Promise.all([
+      this.getFeedbackOverview(startAt),
+      this.getFeedbackItems(startAt),
+    ]);
+
+    return {
+      generatedAt: endAt.toISOString(),
+      items,
+      overview,
+      range: normalizedRange,
+    };
+  };
+
+  private getFeedbackOverview = async (
+    startAt: Date,
+  ): Promise<PlatformFeedbackAnalytics['overview']> => {
+    const result = await this.db.execute(sql`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE status = 'open') AS open,
+        COUNT(*) FILTER (WHERE status = 'reviewing') AS reviewing,
+        COUNT(*) FILTER (WHERE status = 'resolved') AS resolved,
+        COUNT(*) FILTER (WHERE status = 'ignored') AS ignored
+      FROM feedback_reports
+      WHERE created_at >= ${startAt}
+    `);
+
+    const row = result.rows[0] as unknown as FeedbackOverviewRow | undefined;
+
+    return {
+      ignored: toNumber(row?.ignored),
+      open: toNumber(row?.open),
+      resolved: toNumber(row?.resolved),
+      reviewing: toNumber(row?.reviewing),
+      total: toNumber(row?.total),
+    };
+  };
+
+  private getFeedbackItems = async (startAt: Date): Promise<PlatformFeedbackReportItem[]> => {
+    const result = await this.db.execute(sql`
+      SELECT
+        id,
+        user_id AS "userId",
+        user_email AS email,
+        title,
+        message,
+        status,
+        screenshot_url AS "screenshotUrl",
+        issue_url AS "issueUrl",
+        client_info->>'url' AS "pageUrl",
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+      FROM feedback_reports
+      WHERE created_at >= ${startAt}
+      ORDER BY created_at DESC
+      LIMIT 100
+    `);
+
+    return result.rows.map((row) => ({
+      createdAt: toIsoString(row.createdAt) || '',
+      email: row.email ? toStringValue(row.email) : undefined,
+      id: toStringValue(row.id),
+      issueUrl: row.issueUrl ? toStringValue(row.issueUrl) : undefined,
+      message: toStringValue(row.message),
+      pageUrl: row.pageUrl ? toStringValue(row.pageUrl) : undefined,
+      screenshotUrl: row.screenshotUrl ? toStringValue(row.screenshotUrl) : undefined,
+      status: toFeedbackStatus(row.status),
+      title: toStringValue(row.title),
+      updatedAt: toIsoString(row.updatedAt) || '',
+      userId: row.userId ? toStringValue(row.userId) : undefined,
+    }));
+  };
+
+  private getOverview = async (startAt: Date, endAt: Date): Promise<PlatformAnalyticsOverview> => {
     const result = await this.db.execute(sql`
       WITH range_messages AS (
         SELECT *
         FROM messages
         WHERE created_at >= ${startAt}
+          AND created_at <= ${endAt}
       )
       SELECT
         (SELECT COUNT(*) FROM users) AS "totalUsers",
-        (SELECT COUNT(*) FROM users WHERE created_at >= ${startAt}) AS "newUsers",
+        (SELECT COUNT(*) FROM users WHERE created_at >= ${startAt} AND created_at <= ${endAt}) AS "newUsers",
         COUNT(DISTINCT user_id) AS "activeUsers",
         COUNT(*) FILTER (WHERE role = 'user') AS "userMessages",
         COUNT(*) FILTER (WHERE role = 'assistant') AS "assistantMessages",
@@ -151,14 +299,14 @@ export class PlatformAnalyticsService {
     const result = await this.db.execute(sql`
       WITH days AS (
         SELECT generate_series(
-          date_trunc('day', ${startAt}::timestamptz),
-          date_trunc('day', ${endAt}::timestamptz),
+          (${startAt}::timestamptz AT TIME ZONE 'Asia/Shanghai')::date,
+          (${endAt}::timestamptz AT TIME ZONE 'Asia/Shanghai')::date,
           interval '1 day'
-        ) AS day
+        )::date AS day
       ),
       rollup AS (
         SELECT
-          date_trunc('day', created_at) AS day,
+          (created_at AT TIME ZONE 'Asia/Shanghai')::date AS day,
           COUNT(DISTINCT user_id) AS active_users,
           COUNT(*) AS total_messages,
           COUNT(*) FILTER (WHERE role = 'user') AS user_messages,
@@ -185,6 +333,7 @@ export class PlatformAnalyticsService {
           ), 0) AS estimated_cost
         FROM messages
         WHERE created_at >= ${startAt}
+          AND created_at <= ${endAt}
         GROUP BY 1
       )
       SELECT
@@ -211,7 +360,10 @@ export class PlatformAnalyticsService {
     }));
   };
 
-  private getTopUsers = async (startAt: Date): Promise<PlatformAnalyticsUserItem[]> => {
+  private getTopUsers = async (
+    startAt: Date,
+    endAt: Date,
+  ): Promise<PlatformAnalyticsUserItem[]> => {
     const result = await this.db.execute(sql`
       WITH message_rollup AS (
         SELECT
@@ -219,7 +371,7 @@ export class PlatformAnalyticsService {
           COALESCE(provider, 'unknown') AS provider,
           COALESCE(model, 'unknown') AS model,
           MAX(created_at) AS last_active_at,
-          COUNT(DISTINCT date_trunc('day', created_at)) AS active_days,
+          COUNT(DISTINCT (created_at AT TIME ZONE 'Asia/Shanghai')::date) AS active_days,
           COUNT(*) AS total_messages,
           COUNT(*) FILTER (WHERE role = 'user') AS user_messages,
           COUNT(*) FILTER (WHERE role = 'assistant') AS assistant_messages,
@@ -246,6 +398,7 @@ export class PlatformAnalyticsService {
           ), 0) AS estimated_cost
         FROM messages
         WHERE created_at >= ${startAt}
+          AND created_at <= ${endAt}
         GROUP BY user_id, provider, model
       ),
       operation_rollup AS (
@@ -254,7 +407,7 @@ export class PlatformAnalyticsService {
           COALESCE(provider, 'unknown') AS provider,
           COALESCE(model, 'unknown') AS model,
           MAX(created_at) AS last_active_at,
-          COUNT(DISTINCT date_trunc('day', created_at)) AS active_days,
+          COUNT(DISTINCT (created_at AT TIME ZONE 'Asia/Shanghai')::date) AS active_days,
           COUNT(*) AS request_count,
           COUNT(*) FILTER (
             WHERE status = 'error'
@@ -266,6 +419,7 @@ export class PlatformAnalyticsService {
           COALESCE(AVG(processing_time_ms), 0) AS average_latency_ms
         FROM agent_operations
         WHERE created_at >= ${startAt}
+          AND created_at <= ${endAt}
         GROUP BY user_id, provider, model
       ),
       combined AS (
@@ -348,7 +502,10 @@ export class PlatformAnalyticsService {
     }));
   };
 
-  private getModelUsage = async (startAt: Date): Promise<PlatformAnalyticsModelItem[]> => {
+  private getModelUsage = async (
+    startAt: Date,
+    endAt: Date,
+  ): Promise<PlatformAnalyticsModelItem[]> => {
     const result = await this.db.execute(sql`
       WITH message_rollup AS (
         SELECT
@@ -380,6 +537,7 @@ export class PlatformAnalyticsService {
           ), 0) AS "estimatedCost"
         FROM messages
         WHERE created_at >= ${startAt}
+          AND created_at <= ${endAt}
           AND role = 'assistant'
         GROUP BY provider, model
       ),
@@ -406,6 +564,7 @@ export class PlatformAnalyticsService {
           ) AS "p95LatencyMs"
         FROM agent_operations
         WHERE created_at >= ${startAt}
+          AND created_at <= ${endAt}
         GROUP BY provider, model
       ),
       combined AS (
@@ -476,39 +635,46 @@ export class PlatformAnalyticsService {
     });
   };
 
-  private getFeatureUsage = async (startAt: Date): Promise<PlatformAnalyticsFeatureItem[]> => {
+  private getFeatureUsage = async (
+    startAt: Date,
+    endAt: Date,
+  ): Promise<PlatformAnalyticsFeatureItem[]> => {
     const result = await this.db.execute(sql`
       SELECT 'chat' AS key, 'Chat 问答' AS label, COUNT(*) AS count, COUNT(DISTINCT user_id) AS users
       FROM messages
-      WHERE created_at >= ${startAt} AND role = 'assistant'
+      WHERE created_at >= ${startAt} AND created_at <= ${endAt} AND role = 'assistant'
       UNION ALL
       SELECT 'search' AS key, '联网搜索' AS label, COUNT(*) AS count, COUNT(DISTINCT user_id) AS users
       FROM messages
-      WHERE created_at >= ${startAt} AND search IS NOT NULL
+      WHERE created_at >= ${startAt} AND created_at <= ${endAt} AND search IS NOT NULL
       UNION ALL
       SELECT 'tools' AS key, '工具调用' AS label, COUNT(*) AS count, COUNT(DISTINCT user_id) AS users
       FROM messages
-      WHERE created_at >= ${startAt} AND tools IS NOT NULL
+      WHERE created_at >= ${startAt} AND created_at <= ${endAt} AND tools IS NOT NULL
       UNION ALL
       SELECT 'files' AS key, '文件协作' AS label, COUNT(DISTINCT messages_files.file_id) AS count, COUNT(DISTINCT messages_files.user_id) AS users
       FROM messages_files
       JOIN messages ON messages.id = messages_files.message_id
-      WHERE messages.created_at >= ${startAt}
+      WHERE messages.created_at >= ${startAt} AND messages.created_at <= ${endAt}
       UNION ALL
       SELECT 'image' AS key, '图片生成' AS label, COUNT(*) AS count, COUNT(DISTINCT generation_batches.user_id) AS users
       FROM generation_batches
       JOIN generation_topics ON generation_topics.id = generation_batches.generation_topic_id
-      WHERE generation_batches.created_at >= ${startAt} AND generation_topics.type = 'image'
+      WHERE generation_batches.created_at >= ${startAt}
+        AND generation_batches.created_at <= ${endAt}
+        AND generation_topics.type = 'image'
       UNION ALL
       SELECT 'video' AS key, '视频生成' AS label, COUNT(*) AS count, COUNT(DISTINCT generation_batches.user_id) AS users
       FROM generation_batches
       JOIN generation_topics ON generation_topics.id = generation_batches.generation_topic_id
-      WHERE generation_batches.created_at >= ${startAt} AND generation_topics.type = 'video'
+      WHERE generation_batches.created_at >= ${startAt}
+        AND generation_batches.created_at <= ${endAt}
+        AND generation_topics.type = 'video'
       UNION ALL
       SELECT 'tts' AS key, '语音合成' AS label, COUNT(*) AS count, COUNT(DISTINCT message_tts.user_id) AS users
       FROM message_tts
       JOIN messages ON messages.id = message_tts.id
-      WHERE messages.created_at >= ${startAt}
+      WHERE messages.created_at >= ${startAt} AND messages.created_at <= ${endAt}
       ORDER BY count DESC
     `);
 
@@ -520,7 +686,7 @@ export class PlatformAnalyticsService {
     }));
   };
 
-  private getErrors = async (startAt: Date): Promise<PlatformAnalyticsErrorItem[]> => {
+  private getErrors = async (startAt: Date, endAt: Date): Promise<PlatformAnalyticsErrorItem[]> => {
     const result = await this.db.execute(sql`
       SELECT
         COALESCE(provider, 'unknown') AS provider,
@@ -528,6 +694,7 @@ export class PlatformAnalyticsService {
         COUNT(*) AS count
       FROM messages
       WHERE created_at >= ${startAt}
+        AND created_at <= ${endAt}
         AND role = 'assistant'
         AND error IS NOT NULL
       GROUP BY provider, model

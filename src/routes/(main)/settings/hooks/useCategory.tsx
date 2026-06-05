@@ -17,6 +17,7 @@ import {
   KeyboardIcon,
   KeyIcon,
   KeyRound,
+  LifeBuoy,
   Map,
   MessageCircleIcon,
   PaletteIcon,
@@ -204,6 +205,11 @@ export const useCategory = () => {
         icon: ChartNoAxesCombined,
         key: SettingsTabs.PlatformAnalytics,
         label: '平台用量分析',
+      },
+      !isSettingsTabHidden(SettingsTabs.FeedbackAnalytics) && {
+        icon: LifeBuoy,
+        key: SettingsTabs.FeedbackAnalytics,
+        label: '问题反馈分析',
       },
       isDevMode &&
         !isSettingsTabHidden(SettingsTabs.APIKey) && {

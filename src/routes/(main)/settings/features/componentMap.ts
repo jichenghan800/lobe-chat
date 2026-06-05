@@ -62,6 +62,9 @@ export const componentMap = {
   [SettingsTabs.Creds]: dynamic(() => import('../creds'), {
     loading: loading('Settings > Creds'),
   }),
+  [SettingsTabs.FeedbackAnalytics]: dynamic(() => import('../feedback-analytics'), {
+    loading: loading('Settings > FeedbackAnalytics'),
+  }),
   [SettingsTabs.Security]: dynamic(() => import('../security'), {
     loading: loading('Settings > Security'),
   }),

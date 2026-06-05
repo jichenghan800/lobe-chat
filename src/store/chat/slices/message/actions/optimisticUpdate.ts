@@ -16,6 +16,8 @@ import { nanoid } from '@lobechat/utils';
 
 import { messageService } from '@/services/message';
 import { type ChatStore } from '@/store/chat/store';
+import { messageMapKey } from '@/store/chat/utils/messageMapKey';
+import { resolvePersistableParentId } from '@/store/chat/utils/resolvePersistableParentId';
 import { type StoreSetter } from '@/store/types';
 
 import { dbMessageSelectors } from '../selectors';
@@ -56,17 +58,22 @@ export class MessageOptimisticUpdateActionImpl {
     },
   ): Promise<{ id: string; messages: UIChatMessage[] } | undefined> => {
     const { optimisticCreateTmpMessage, internal_dispatchMessage, replaceMessages } = this.#get();
+    const ctx = this.#get().internal_getConversationContext(context);
+    const contextMessages = this.#get().dbMessagesMap[messageMapKey(ctx)] ?? [];
+    const persistableMessage = {
+      ...message,
+      parentId: resolvePersistableParentId(message.parentId, contextMessages),
+    };
 
     let tempId = context?.tempMessageId;
     if (!tempId) {
-      tempId = optimisticCreateTmpMessage(message as any, context);
+      tempId = optimisticCreateTmpMessage(persistableMessage, context);
     }
 
     try {
-      const result = await messageService.createMessage(message);
+      const result = await messageService.createMessage(persistableMessage);
 
       // Use the messages returned from createMessage (already grouped)
-      const ctx = this.#get().internal_getConversationContext(context);
       replaceMessages(result.messages, { context: ctx });
 
       return result;

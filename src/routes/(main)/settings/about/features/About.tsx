@@ -1,14 +1,17 @@
 'use client';
 
 import { SiDiscord, SiGithub, SiRss, SiX, SiYoutube } from '@icons-pack/react-simple-icons';
-import { BRANDING_EMAIL, BRANDING_NAME, SOCIAL_URL } from '@lobechat/business-const';
-import { Flexbox, Form } from '@lobehub/ui';
+import { BRANDING_NAME, SOCIAL_URL } from '@lobechat/business-const';
+import { Block, Flexbox, Form, Icon } from '@lobehub/ui';
 import { Divider } from 'antd';
 import { createStaticStyles } from 'antd-style';
+import { MessageSquareHeart } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { BLOG, mailTo,OFFICIAL_SITE, PRIVACY_URL, TERMS_URL } from '@/const/url';
+import { getCottiFeedbackEmail } from '@/_custom/registry/feedback';
+import { BLOG, mailTo, OFFICIAL_SITE, PRIVACY_URL, TERMS_URL } from '@/const/url';
+import { useFeedbackModal } from '@/hooks/useFeedbackModal';
 
 import AboutList from './AboutList';
 import ItemCard from './ItemCard';
@@ -16,6 +19,16 @@ import ItemLink from './ItemLink';
 import Version from './Version';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
+  desc: css`
+    font-size: 12px;
+    line-height: 1.5;
+    color: ${cssVar.colorTextDescription};
+  `,
+  feedbackTitle: css`
+    font-size: 14px;
+    font-weight: 500;
+    color: ${cssVar.colorText};
+  `,
   title: css`
     font-size: 14px;
     font-weight: bold;
@@ -25,6 +38,8 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 const About = memo<{ mobile?: boolean }>(({ mobile }) => {
   const { t } = useTranslation('common');
+  const { open: openFeedbackModal } = useFeedbackModal();
+  const feedbackEmail = getCottiFeedbackEmail();
 
   return (
     <Form.Group
@@ -38,24 +53,29 @@ const About = memo<{ mobile?: boolean }>(({ mobile }) => {
         <div className={styles.title}>{t('version')}</div>
         <Version mobile={mobile} />
         <Divider style={{ marginBlock: 0 }} />
-        <div className={styles.title}>{t('contact')}</div>
+        <div className={styles.title}>{t('feedback.entry.title')}</div>
+        <Block
+          clickable
+          horizontal
+          align={'center'}
+          gap={12}
+          paddingBlock={12}
+          paddingInline={18}
+          onClick={() => openFeedbackModal()}
+        >
+          <Icon icon={MessageSquareHeart} size={18} />
+          <Flexbox gap={2}>
+            <div className={styles.feedbackTitle}>{t('feedback.entry.action')}</div>
+            <div className={styles.desc}>{t('feedback.entry.desc')}</div>
+          </Flexbox>
+        </Block>
         <AboutList
           ItemRender={ItemLink}
           items={[
             {
-              href: OFFICIAL_SITE,
-              label: t('officialSite'),
-              value: 'officialSite',
-            },
-            {
-              href: mailTo(BRANDING_EMAIL.support),
-              label: t('mail.support'),
+              href: mailTo(feedbackEmail),
+              label: t('feedback.entry.emailFallback'),
               value: 'support',
-            },
-            {
-              href: mailTo(BRANDING_EMAIL.business),
-              label: t('mail.business'),
-              value: 'business',
             },
           ]}
         />
@@ -65,6 +85,11 @@ const About = memo<{ mobile?: boolean }>(({ mobile }) => {
           grid
           ItemRender={ItemCard}
           items={[
+            {
+              href: OFFICIAL_SITE,
+              label: t('officialSite'),
+              value: 'officialSite',
+            },
             {
               href: BLOG,
               icon: SiRss,

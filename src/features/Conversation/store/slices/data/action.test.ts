@@ -4,9 +4,16 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { useClientDataSWRWithSync } from '@/libs/swr';
 import { messageService } from '@/services/message';
+import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 
 import { createStore } from '../../index';
 import { dataSelectors } from './selectors';
+
+const chatStoreStateMock = vi.hoisted(() => ({ current: {} as any }));
+
+vi.mock('@/store/chat', () => ({
+  getChatStoreState: vi.fn(() => chatStoreStateMock.current),
+}));
 
 // Mock conversation-flow parse function
 vi.mock('@lobechat/conversation-flow', () => ({
@@ -538,6 +545,13 @@ describe('DataSlice', () => {
   describe('useFetchMessages', () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      chatStoreStateMock.current = {
+        messageOperationMap: {},
+        operations: {},
+        operationsByContext: {},
+        operationsByMessage: {},
+        operationsByType: {} as any,
+      };
     });
 
     it('should pass threadId to messageService.getMessages', async () => {
@@ -850,6 +864,123 @@ describe('DataSlice', () => {
         expect(store.getState().dbMessages[0].error).toEqual(localError);
         expect(store.getState().dbMessages[0].updatedAt).toBe(2000);
       });
+    });
+
+    it('should preserve local tail messages when fetched data is an older prefix snapshot', async () => {
+      vi.mocked(messageService.getMessages).mockResolvedValue([
+        {
+          id: 'msg-1',
+          content: 'User message',
+          role: 'user',
+          createdAt: 1000,
+          updatedAt: 1000,
+        },
+        {
+          id: 'msg-2',
+          content: 'Tool message',
+          role: 'tool',
+          createdAt: 2000,
+          updatedAt: 2000,
+        },
+      ]);
+
+      const store = createStore({
+        context: { agentId: 'test-session', topicId: 'test-topic', threadId: null },
+      });
+
+      store.setState({
+        dbMessages: [
+          {
+            id: 'msg-1',
+            content: 'User message',
+            role: 'user',
+            createdAt: 1000,
+            updatedAt: 1000,
+          },
+          {
+            id: 'msg-2',
+            content: 'Tool message',
+            role: 'tool',
+            createdAt: 2000,
+            updatedAt: 2000,
+          },
+          {
+            id: 'msg-3',
+            content: 'Assistant tail still waiting for DB fan-out',
+            role: 'assistant',
+            createdAt: 3000,
+            updatedAt: 3000,
+          },
+        ],
+      } as any);
+
+      store.getState().useFetchMessages({
+        agentId: 'test-session',
+        topicId: 'test-topic',
+        threadId: null,
+      });
+
+      await waitFor(() => {
+        expect(store.getState().dbMessages.map((message) => message.id)).toEqual([
+          'msg-1',
+          'msg-2',
+          'msg-3',
+        ]);
+      });
+    });
+
+    it('should skip fetched data while agent runtime is running in the same context', async () => {
+      vi.mocked(messageService.getMessages).mockResolvedValue([
+        {
+          id: 'msg-1',
+          content: 'Old server snapshot',
+          role: 'assistant',
+          createdAt: 1000,
+          updatedAt: 1000,
+        },
+      ]);
+
+      const context = { agentId: 'test-session', topicId: 'test-topic', threadId: null };
+      const store = createStore({ context });
+
+      store.setState({
+        dbMessages: [
+          {
+            id: 'msg-local',
+            content: 'Local streaming state',
+            role: 'assistant',
+            createdAt: 2000,
+            updatedAt: 2000,
+          },
+        ],
+      } as any);
+
+      const operationId = 'op-running';
+      chatStoreStateMock.current = {
+        messageOperationMap: {},
+        operations: {
+          [operationId]: {
+            context,
+            id: operationId,
+            metadata: {},
+            status: 'running',
+            type: 'execAgentRuntime',
+          },
+        },
+        operationsByContext: {
+          [messageMapKey(context)]: [operationId],
+        },
+        operationsByMessage: {},
+        operationsByType: { execAgentRuntime: [operationId] },
+      };
+
+      store.getState().useFetchMessages(context);
+
+      await waitFor(() => {
+        expect(messageService.getMessages).toHaveBeenCalledWith(context);
+      });
+
+      expect(store.getState().dbMessages.map((message) => message.id)).toEqual(['msg-local']);
     });
 
     it('should accept fetched message state when server data is newer', async () => {

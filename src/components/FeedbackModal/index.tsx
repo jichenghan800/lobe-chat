@@ -1,12 +1,12 @@
 'use client';
 
-import { BRANDING_EMAIL } from '@lobechat/business-const';
 import { Button, Flexbox, Icon, Modal } from '@lobehub/ui';
 import { App, Form, Input, Upload } from 'antd';
 import { ImagePlus, Send } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getCottiFeedbackEmail } from '@/_custom/registry/feedback';
 import TextArea from '@/components/TextArea';
 import { lambdaClient } from '@/libs/trpc/client';
 import { useFileStore } from '@/store/file';
@@ -38,6 +38,7 @@ const FeedbackModal = memo<FeedbackModalProps>(({ initialValues, onClose, open }
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
 
+  const feedbackEmail = getCottiFeedbackEmail();
   const uploadWithProgress = useFileStore((s) => s.uploadWithProgress);
   const userEmail = useUserStore(userProfileSelectors.email);
 
@@ -128,7 +129,7 @@ const FeedbackModal = memo<FeedbackModalProps>(({ initialValues, onClose, open }
       onCancel={handleCancel}
     >
       <p style={{ color: 'var(--colorTextSecondary)', fontSize: 14, marginBottom: 16 }}>
-        {t('feedback.emailContact', { email: BRANDING_EMAIL.business })}
+        {t('feedback.emailContact', { email: feedbackEmail })}
       </p>
 
       <Form form={form} initialValues={initialValues} layout="vertical">

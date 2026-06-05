@@ -1,4 +1,16 @@
-export type PlatformAnalyticsRange = 7 | 30 | 90;
+export type PlatformAnalyticsRange = 1 | 7 | 30 | 90;
+
+export interface PlatformAnalyticsDateRange {
+  end: string;
+  start: string;
+}
+
+export interface PlatformAnalyticsQuery {
+  customRange?: PlatformAnalyticsDateRange;
+  range?: PlatformAnalyticsRange;
+}
+
+export type PlatformFeedbackStatus = 'ignored' | 'open' | 'resolved' | 'reviewing';
 
 export interface PlatformAnalyticsOverview {
   activeUsers: number;
@@ -74,6 +86,7 @@ export interface PlatformAnalyticsErrorItem {
 }
 
 export interface PlatformAnalyticsDashboard {
+  customRange?: PlatformAnalyticsDateRange;
   errors: PlatformAnalyticsErrorItem[];
   features: PlatformAnalyticsFeatureItem[];
   generatedAt: string;
@@ -82,4 +95,33 @@ export interface PlatformAnalyticsDashboard {
   range: PlatformAnalyticsRange;
   topUsers: PlatformAnalyticsUserItem[];
   trends: PlatformAnalyticsTrendItem[];
+}
+
+export interface PlatformFeedbackOverview {
+  ignored: number;
+  open: number;
+  resolved: number;
+  reviewing: number;
+  total: number;
+}
+
+export interface PlatformFeedbackReportItem {
+  createdAt: string;
+  email?: string;
+  id: string;
+  issueUrl?: string;
+  message: string;
+  pageUrl?: string;
+  screenshotUrl?: string;
+  status: PlatformFeedbackStatus;
+  title: string;
+  updatedAt: string;
+  userId?: string;
+}
+
+export interface PlatformFeedbackAnalytics {
+  generatedAt: string;
+  items: PlatformFeedbackReportItem[];
+  overview: PlatformFeedbackOverview;
+  range: PlatformAnalyticsRange;
 }

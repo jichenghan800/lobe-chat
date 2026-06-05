@@ -128,6 +128,15 @@ if [[ -z "$PLATFORM_ANALYTICS_ADMIN_EMAILS" ]]; then
 fi
 set_env "$ENV_FILE" COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS "$PLATFORM_ANALYTICS_ADMIN_EMAILS"
 
+FEEDBACK_EMAIL="${NEXT_PUBLIC_COTTI_FEEDBACK_EMAIL:-$(read_env NEXT_PUBLIC_COTTI_FEEDBACK_EMAIL)}"
+if [[ -z "$FEEDBACK_EMAIL" ]]; then
+  FEEDBACK_EMAIL="$(printf '%s' "$PLATFORM_ANALYTICS_ADMIN_EMAILS" | cut -d, -f1 | xargs)"
+fi
+if [[ -z "$FEEDBACK_EMAIL" ]]; then
+  FEEDBACK_EMAIL="jicheng.han@cotticoffee.com"
+fi
+set_env "$ENV_FILE" NEXT_PUBLIC_COTTI_FEEDBACK_EMAIL "$FEEDBACK_EMAIL"
+
 cat > "$OUT_DIR/00-precheck.sh" << 'SCRIPT'
 #!/usr/bin/env bash
 set -euo pipefail

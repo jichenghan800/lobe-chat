@@ -51,6 +51,7 @@ export enum SettingsTabs {
   Common = 'common',
   Credits = 'credits',
   Creds = 'creds',
+  FeedbackAnalytics = 'feedback-analytics',
   Hotkey = 'hotkey',
   /** @deprecated Use ServiceModel instead */
   Image = 'image',

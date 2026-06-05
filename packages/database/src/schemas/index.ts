@@ -14,6 +14,7 @@ export * from './connector';
 export * from './device';
 export * from './documentHistory';
 export * from './documentShare';
+export * from './feedback';
 export * from './file';
 export * from './generation';
 export * from './llmGenerationTracing';

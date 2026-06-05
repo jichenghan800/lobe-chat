@@ -4,6 +4,7 @@ import { serialize } from 'cookie';
 import debug from 'debug';
 import { z } from 'zod';
 
+import { feedbackReports } from '@/database/schemas';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { marketUserInfo, serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { DiscoverService } from '@/server/services/discover';
@@ -917,12 +918,39 @@ export const marketRouter = router({
     .mutation(async ({ input, ctx }) => {
       log('submitFeedback input: %O', input);
 
+      let issueUrl: string | undefined;
+      let marketError: string | undefined;
+
       try {
         const result = await ctx.marketService.submitFeedback(input);
-        return { issueUrl: result?.issueUrl, success: true };
+        issueUrl = result?.issueUrl;
       } catch (error) {
-        console.error('Error submitting feedback: %O', error);
+        marketError = error instanceof Error ? error.message : String(error);
+        console.error('Error submitting feedback to market: %O', error);
+      }
+
+      try {
+        const marketEmail = (ctx.marketUserInfo as { email?: string } | undefined)?.email;
+
+        await ctx.serverDB.insert(feedbackReports).values({
+          clientInfo: input.clientInfo,
+          issueUrl,
+          message: input.message,
+          metadata: {
+            marketSubmitted: Boolean(issueUrl),
+            ...(marketError ? { marketError } : {}),
+          },
+          screenshotUrl: input.screenshotUrl,
+          title: input.title,
+          userEmail: input.email || marketEmail,
+          userId: ctx.userId,
+        });
+
+        return { issueUrl, success: true };
+      } catch (error) {
+        console.error('Error saving feedback report: %O', error);
         throw new TRPCError({
+          cause: error,
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to submit feedback',
         });

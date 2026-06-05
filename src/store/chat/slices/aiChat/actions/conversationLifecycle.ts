@@ -54,6 +54,7 @@ import {
   getCompressionCandidateMessageIds,
   hasRunningCompressionOperation,
 } from '@/store/chat/utils/compression';
+import { resolvePersistableParentId } from '@/store/chat/utils/resolvePersistableParentId';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 import { type StoreSetter } from '@/store/types';
@@ -405,6 +406,7 @@ export class ConversationLifecycleActionImpl {
     if (!parentId && lastMessage) {
       parentId = displayMessageSelectors.findLastMessageId(lastMessage.id)(this.#get());
     }
+    parentId = resolvePersistableParentId(parentId, messages);
 
     // Create operation for send message first, so we can use operationId for optimistic updates
     const tempId = 'tmp_' + nanoid();

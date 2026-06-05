@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { type ActionsBarConfig, type MessageActionSlot } from '@/features/Conversation/types';
 import { useAgentStore } from '@/store/agent';
-import { agentSelectors } from '@/store/agent/selectors';
+import { agentByIdSelectors } from '@/store/agent/selectors';
 
 /**
  * Hetero-agent sessions only support copy + delete — edit / regenerate /
@@ -21,8 +21,8 @@ const HETERO_ASSISTANT: { bar: MessageActionSlot[]; menu: MessageActionSlot[] } 
   menu: ['copy', 'divider', 'del'],
 };
 
-export const useActionsBarConfig = (): ActionsBarConfig => {
-  const isHeteroAgent = useAgentStore(agentSelectors.isCurrentAgentHeterogeneous);
+export const useActionsBarConfig = (agentId: string): ActionsBarConfig => {
+  const isHeteroAgent = useAgentStore(agentByIdSelectors.isAgentHeterogeneousById(agentId));
 
   return useMemo<ActionsBarConfig>(() => {
     if (isHeteroAgent) {

@@ -1,11 +1,11 @@
 import { type UIChatMessage } from '@lobechat/types';
 import { TraceEventType } from '@lobechat/types';
 import * as lobeUIModules from '@lobehub/ui';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { type Mock } from 'vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mutate } from '@/libs/swr';
+import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
 import { messageService } from '@/services/message';
 import { topicService } from '@/services/topic';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
@@ -18,6 +18,15 @@ vi.mock('@/libs/swr', async () => {
   return {
     ...actual,
     mutate: vi.fn(),
+    useClientDataSWRWithSync: vi.fn((key, fetcher, options) => {
+      if (key) {
+        fetcher?.().then((data: UIChatMessage[]) => {
+          options?.onData?.(data);
+        });
+      }
+
+      return { data: undefined, isLoading: true };
+    }),
   };
 });
 
@@ -778,6 +787,70 @@ describe('chatMessage actions', () => {
 
       // 确保恢复 mutate 的模拟，以免影响其他测试
       (mutate as Mock).mockReset();
+    });
+  });
+
+  describe('useFetchMessages action', () => {
+    it('should skip fetched data while agent runtime is running in the same context', async () => {
+      const context = { agentId: 'session-id', topicId: 'topic-id' };
+      const localMessages = [
+        {
+          id: 'msg-local',
+          content: 'Local streaming state',
+          role: 'assistant',
+          createdAt: 2000,
+          updatedAt: 2000,
+        },
+      ] as any;
+
+      vi.mocked(messageService.getMessages).mockResolvedValue([
+        {
+          id: 'msg-1',
+          content: 'Old server snapshot',
+          role: 'assistant',
+          createdAt: 1000,
+          updatedAt: 1000,
+        },
+      ] as any);
+
+      const { result } = renderHook(() => useChatStore());
+
+      act(() => {
+        useChatStore.setState({
+          activeAgentId: context.agentId,
+          activeThreadId: undefined,
+          activeTopicId: context.topicId,
+          dbMessagesMap: {
+            [messageMapKey(context)]: localMessages,
+          },
+          messageOperationMap: {},
+          messagesMap: {
+            [messageMapKey(context)]: localMessages,
+          },
+          operations: {},
+          operationsByContext: {},
+          operationsByMessage: {},
+          operationsByType: {} as any,
+        });
+
+        result.current.startOperation({
+          context,
+          type: 'execAgentRuntime',
+        });
+      });
+
+      result.current.useFetchMessages(context);
+
+      await waitFor(() => {
+        expect(messageService.getMessages).toHaveBeenCalledWith(context);
+      });
+
+      expect(result.current.dbMessagesMap[messageMapKey(context)]).toEqual(localMessages);
+      expect(vi.mocked(useClientDataSWRWithSync)).toHaveBeenCalledWith(
+        ['CHAT_STORE_FETCH_MESSAGES', context],
+        expect.any(Function),
+        expect.any(Object),
+      );
     });
   });
 

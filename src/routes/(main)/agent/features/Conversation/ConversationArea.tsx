@@ -15,7 +15,7 @@ import ZenModeToast from '@/features/ZenModeToast';
 import { useGatewayReconnect } from '@/hooks/useGatewayReconnect';
 import { useOperationState } from '@/hooks/useOperationState';
 import { useAgentStore } from '@/store/agent';
-import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
+import { agentByIdSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
 import { threadSelectors, topicSelectors } from '@/store/chat/selectors';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
@@ -41,10 +41,7 @@ const Conversation = memo(() => {
 
   // Get raw dbMessages from ChatStore for this context
   // ConversationStore will parse them internally to generate displayMessages
-  const chatKey = useMemo(
-    () => messageMapKey(context),
-    [context.agentId, context.topicId, context.threadId],
-  );
+  const chatKey = useMemo(() => messageMapKey(context), [context]);
   const replaceMessages = useChatStore((s) => s.replaceMessages);
   const messages = useChatStore((s) => s.dbMessagesMap[chatKey]);
 
@@ -54,12 +51,14 @@ const Conversation = memo(() => {
   const operationState = useOperationState(context);
 
   // Get actionsBar config with branching support from ChatStore
-  const actionsBarConfig = useActionsBarConfig();
+  const actionsBarConfig = useActionsBarConfig(context.agentId);
 
   // Heterogeneous agents (Claude Code, etc.) use a simplified input — their
   // toolchain/memory/model are managed by the external runtime, so LobeHub's
   // model/tools/memory/KB/MCP/runtime-mode pickers don't apply.
-  const isHeterogeneousAgent = useAgentStore(agentSelectors.isCurrentAgentHeterogeneous);
+  const isHeterogeneousAgent = useAgentStore(
+    agentByIdSelectors.isAgentHeterogeneousById(context.agentId),
+  );
 
   // Subagent threads (spawned by an external agent's subagent tool call) are
   // read-only — the parent agent drives their execution, so hide the input.
@@ -73,7 +72,7 @@ const Conversation = memo(() => {
   );
   useGatewayReconnect(context.topicId, runningOperation);
 
-  const agentChatConfig = useAgentStore(agentChatConfigSelectors.currentChatConfig);
+  const agentChatConfig = useAgentStore(chatConfigByIdSelectors.getChatConfigById(context.agentId));
   const chatFollowUpHooks = useChatFollowUp({
     agentChatConfig,
     conversationKey: chatKey,

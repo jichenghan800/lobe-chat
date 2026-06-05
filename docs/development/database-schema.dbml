@@ -819,6 +819,27 @@ table knowledge_bases {
   }
 }
 
+table feedback_reports {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  user_id text
+  user_email text
+  title text [not null]
+  message text [not null]
+  status text [not null, default: 'open']
+  screenshot_url text
+  issue_url text
+  client_info jsonb
+  metadata jsonb [default: `{}`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'feedback_reports_user_id_idx']
+    status [name: 'feedback_reports_status_idx']
+    created_at [name: 'feedback_reports_created_at_idx']
+  }
+}
+
 table generation_batches {
   id text [pk, not null]
   user_id text [not null]

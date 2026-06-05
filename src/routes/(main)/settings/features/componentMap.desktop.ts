@@ -11,6 +11,7 @@ import Advanced from '../advanced';
 import APIKey from '../apikey';
 import Appearance from '../appearance';
 import Creds from '../creds';
+import FeedbackAnalytics from '../feedback-analytics';
 import Hotkey from '../hotkey';
 import Memory from '../memory';
 import Messenger from '../messenger';
@@ -44,6 +45,7 @@ export const componentMap = {
   [SettingsTabs.Usage]: Usage,
   [SettingsTabs.APIKey]: APIKey,
   [SettingsTabs.Creds]: Creds,
+  [SettingsTabs.FeedbackAnalytics]: FeedbackAnalytics,
   [SettingsTabs.Security]: Security,
   [SettingsTabs.Skill]: Skill,
 

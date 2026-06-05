@@ -1,10 +1,12 @@
 import { parse } from '@lobechat/conversation-flow';
 import { type ConversationContext, type UIChatMessage } from '@lobechat/types';
+import debug from 'debug';
 import isEqual from 'fast-deep-equal';
 import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
 import { messageService } from '@/services/message';
+import { operationSelectors } from '@/store/chat/slices/operation/selectors';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
 
@@ -12,6 +14,7 @@ import { type MessageMapKeyInput } from '../../../utils/messageMapKey';
 import { messageMapKey } from '../../../utils/messageMapKey';
 
 const SWR_USE_FETCH_MESSAGES = 'SWR_USE_FETCH_MESSAGES';
+const log = debug('lobe-store:message-query');
 
 /**
  * Data query and synchronization actions
@@ -87,10 +90,27 @@ export class MessageQueryActionImpl {
     // Get raw messages from dbMessagesMap and apply reducer
     const nextDbMap = { ...this.#get().dbMessagesMap, [messagesKey]: messages };
 
-    if (isEqual(nextDbMap, this.#get().dbMessagesMap)) return;
+    if (isEqual(nextDbMap, this.#get().dbMessagesMap)) {
+      log(
+        '[replaceMessages] noop | key=%s | action=%s | count=%d',
+        messagesKey,
+        params?.action ?? 'replaceMessages',
+        messages.length,
+      );
+      return;
+    }
 
     // Parse messages using conversation-flow
     const { flatList } = parse(messages);
+
+    log(
+      '[replaceMessages] apply | key=%s | action=%s | count=%d | displayCount=%d | ids=%o',
+      messagesKey,
+      params?.action ?? 'replaceMessages',
+      messages.length,
+      flatList.length,
+      messages.slice(-5).map((message) => message.id),
+    );
 
     this.#set(
       {
@@ -133,6 +153,15 @@ export class MessageQueryActionImpl {
       {
         onData: (data) => {
           if (!data || !context.topicId) return;
+
+          if (operationSelectors.isAgentRuntimeRunningByContext(context)(this.#get())) {
+            log(
+              '[useFetchMessages] skip stale fetch while runtime is running | key=%s | fetchedCount=%d',
+              messageMapKey(context),
+              data.length,
+            );
+            return;
+          }
 
           // Use replaceMessages to store the fetched messages
           this.#get().replaceMessages(data, { action: 'useFetchMessages', context });

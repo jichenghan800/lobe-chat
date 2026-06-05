@@ -25,6 +25,7 @@ const mergeFetchedMessagesWithLocalState = (
   if (localMessages.length === 0 || fetchedMessages.length === 0) return fetchedMessages;
 
   const localById = new Map(localMessages.map((message) => [message.id, message]));
+  const fetchedIds = new Set(fetchedMessages.map((message) => message.id));
   let changed = false;
 
   const mergedMessages = fetchedMessages.map((message) => {
@@ -36,6 +37,18 @@ const mergeFetchedMessagesWithLocalState = (
     changed = true;
     return localMessage;
   });
+
+  const isFetchedPrefixOfLocal =
+    localMessages.length > fetchedMessages.length &&
+    fetchedMessages.every((message, index) => localMessages[index]?.id === message.id);
+
+  if (isFetchedPrefixOfLocal) {
+    const localTailMessages = localMessages
+      .slice(fetchedMessages.length)
+      .filter((message) => !fetchedIds.has(message.id));
+
+    if (localTailMessages.length > 0) return [...mergedMessages, ...localTailMessages];
+  }
 
   return changed ? mergedMessages : fetchedMessages;
 };
@@ -230,8 +243,14 @@ export const dataSlice: StateCreator<
           // updatedAt tie-breaker handles most cases on its own, but the
           // updatedAt comparison degenerates when server's pushed snapshot
           // carries a DB updatedAt equal to a later stale fetch's row.
-          if (operationSelectors.isAgentRuntimeRunningByContext(context)(getChatStoreState()))
+          if (operationSelectors.isAgentRuntimeRunningByContext(context)(getChatStoreState())) {
+            log(
+              '[useFetchMessages] skip stale fetch while runtime is running | contextKey=%s | fetchedCount=%d',
+              contextKey,
+              data.length,
+            );
             return;
+          }
 
           const prevDbMessages = get().dbMessages;
           const mergedMessages = mergeFetchedMessagesWithLocalState(data, prevDbMessages);

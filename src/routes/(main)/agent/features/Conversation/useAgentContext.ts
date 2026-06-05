@@ -1,6 +1,7 @@
 'use client';
 
 import { type ConversationContext } from '@lobechat/types';
+import { useMemo } from 'react';
 
 import { useChatStore } from '@/store/chat';
 import { useDocumentStore } from '@/store/document';
@@ -34,11 +35,14 @@ export function useAgentContext(): ConversationContext {
     }
   });
 
-  return {
-    agentId,
-    documentId: activeTopicDocumentId,
-    scope: threadId ? 'thread' : 'main',
-    threadId,
-    topicId,
-  };
+  return useMemo(
+    () => ({
+      agentId,
+      documentId: activeTopicDocumentId,
+      scope: threadId ? 'thread' : 'main',
+      threadId,
+      topicId,
+    }),
+    [activeTopicDocumentId, agentId, threadId, topicId],
+  );
 }
