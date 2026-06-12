@@ -85,7 +85,7 @@ const transformOpenAIStream = (
             return {
               data: [
                 {
-                  function: { arguments: chunk.item.arguments, name: chunk.item.name },
+                  function: { arguments: chunk.item.arguments ?? '', name: chunk.item.name },
                   id: chunk.item.call_id,
                   index: streamContext.toolIndex!,
                   type: 'function',

@@ -4,9 +4,15 @@ import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
 import { type LobeChatDatabase } from '@lobechat/database';
 import { type AgentItem, type LobeAgentConfig } from '@lobechat/types';
 import { cleanObject, merge } from '@lobechat/utils';
+import { TRPCError } from '@trpc/server';
 import debug from 'debug';
 import { type PartialDeep } from 'type-fest';
 
+import {
+  containsCottiAgentModeEnable,
+  forceCottiChatOnlyAgentConfig,
+} from '@/_custom/registry/agentAccess';
+import { resolveCottiAgentAccessForUser } from '@/_custom/registry/agentAccess.server';
 import { AgentModel } from '@/database/models/agent';
 import { SessionModel } from '@/database/models/session';
 import { UserModel } from '@/database/models/user';
@@ -33,6 +39,10 @@ export type AgentConfigWithId = LobeAgentConfig & { id: string; slug?: string | 
 interface AgentWelcomeData {
   openQuestions: string[];
   welcomeMessage: string;
+}
+
+interface AgentConfigGateInput {
+  chatConfig?: PartialDeep<LobeAgentConfig['chatConfig']> | null;
 }
 
 /**
@@ -82,13 +92,15 @@ export class AgentService {
     const mergedConfig = this.mergeDefaultConfig(agent, defaultAgentConfig);
     if (!mergedConfig) return null;
 
+    const gatedConfig = await this.applyCottiAgentAccessGate(mergedConfig);
+
     // Use builtin avatar as fallback only when DB has no custom avatar
     const builtinAgent = BUILTIN_AGENTS[slug as BuiltinAgentSlug];
-    if (builtinAgent?.avatar && !mergedConfig.avatar) {
-      return { ...mergedConfig, avatar: builtinAgent.avatar };
+    if (builtinAgent?.avatar && !gatedConfig.avatar) {
+      return { ...gatedConfig, avatar: builtinAgent.avatar };
     }
 
-    return mergedConfig;
+    return gatedConfig;
   }
 
   /**
@@ -107,7 +119,9 @@ export class AgentService {
       this.userModel.getUserSettingsDefaultAgentConfig(),
     ]);
 
-    return this.mergeDefaultConfig(agent, defaultAgentConfig) as AgentConfigWithId | null;
+    const config = this.mergeDefaultConfig(agent, defaultAgentConfig) as AgentConfigWithId | null;
+
+    return config ? this.applyCottiAgentAccessGate(config) : null;
   }
 
   /**
@@ -131,15 +145,21 @@ export class AgentService {
     if (!config) return null;
 
     // Merge AI-generated welcome data if available
-    if (welcomeData) {
-      return {
+    const mergedConfig = welcomeData
+      ? {
         ...config,
         openingMessage: welcomeData.welcomeMessage,
         openingQuestions: welcomeData.openQuestions,
-      };
-    }
+      }
+      : config;
 
-    return config;
+    return this.applyCottiAgentAccessGate(mergedConfig);
+  }
+
+  async applyCottiAgentAccessGate<T extends AgentConfigGateInput>(config: T) {
+    const hasAgentAccess = await resolveCottiAgentAccessForUser(this.db, this.userId);
+
+    return hasAgentAccess ? config : forceCottiChatOnlyAgentConfig(config);
   }
 
   /**
@@ -201,8 +221,19 @@ export class AgentService {
     agentId: string,
     value: PartialDeep<AgentItem>,
   ): Promise<UpdateAgentResult> {
+    const hasAgentAccess = await resolveCottiAgentAccessForUser(this.db, this.userId);
+
+    if (!hasAgentAccess && containsCottiAgentModeEnable(value)) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Agent mode is not enabled for this user',
+      });
+    }
+
+    const nextValue = hasAgentAccess ? value : forceCottiChatOnlyAgentConfig(value);
+
     // 1. Execute update
-    await this.agentModel.updateConfig(agentId, value);
+    await this.agentModel.updateConfig(agentId, nextValue);
 
     // 2. Query and return updated data (with default config merged)
     const agent = await this.getAgentConfigById(agentId);

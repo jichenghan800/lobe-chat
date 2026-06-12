@@ -19,6 +19,7 @@ import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/selectors';
+import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 import ContextWindow from '../ActionBar/Token';
 import { useAgentId } from '../hooks/useAgentId';
@@ -107,6 +108,7 @@ const RuntimeConfig = memo(() => {
   const { updateAgentChatConfig } = useUpdateAgentConfig();
   const [dirPopoverOpen, setDirPopoverOpen] = useState(false);
   const [modePopoverOpen, setModePopoverOpen] = useState(false);
+  const enableCottiAgentAccess = useServerConfigStore(serverConfigSelectors.enableCottiAgentAccess);
   const showContextWindow = useChatInputStore((s) =>
     s.rightActions.flat().includes('contextWindow'),
   );
@@ -125,6 +127,7 @@ const RuntimeConfig = memo(() => {
   const effectiveWorkingDirectory = topicWorkingDirectory || agentWorkingDirectory;
 
   const repoType = useRepoType(effectiveWorkingDirectory);
+  const effectiveEnableAgentMode = enableCottiAgentAccess && enableAgentMode;
 
   const dirIconNode = useMemo((): ReactNode => {
     if (!effectiveWorkingDirectory) return <Icon icon={SquircleDashed} size={14} />;
@@ -285,7 +288,7 @@ const RuntimeConfig = memo(() => {
       {/* Left: Chat mode switcher + (agent-only) runtime env + working directory */}
       <Flexbox horizontal align={'center'} gap={4}>
         <ModeSelector />
-        {enableAgentMode && (
+        {effectiveEnableAgentMode && (
           <>
             <Popover
               content={modeContent}
@@ -309,7 +312,7 @@ const RuntimeConfig = memo(() => {
       </Flexbox>
 
       <Flexbox horizontal align={'center'} gap={4}>
-        {enableAgentMode && <ApprovalMode />}
+        {effectiveEnableAgentMode && <ApprovalMode />}
         {showContextWindow && <ContextWindow />}
       </Flexbox>
     </Flexbox>

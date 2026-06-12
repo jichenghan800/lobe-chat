@@ -460,6 +460,33 @@ describe('OpenAIResponsesStream', () => {
     expect(chunks.some((c) => c.includes('search_web'))).toBe(true);
   });
 
+  it('should tolerate response.output_item.added function_call without arguments', async () => {
+    const mockOpenAIStream = createReadableStream([
+      {
+        type: 'response.created',
+        response: {
+          id: 'resp_missing_args_test',
+          status: 'in_progress',
+        },
+      },
+      {
+        type: 'response.output_item.added',
+        output_index: 0,
+        item: {
+          type: 'function_call',
+          call_id: 'call_missing_args',
+          name: 'web_search',
+        },
+      },
+    ]);
+
+    const protocolStream = OpenAIResponsesStream(mockOpenAIStream as any);
+    const chunks = await readStreamChunk(protocolStream);
+
+    expect(chunks).toMatchSnapshot();
+    expect(chunks.some((c) => c.includes('web_search'))).toBe(true);
+  });
+
   it('should handle response.output_text.delta', async () => {
     const mockOpenAIStream = createReadableStream([
       {

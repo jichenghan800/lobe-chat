@@ -97,5 +97,20 @@ describe('LobeQwenAI - custom features', () => {
       expect(calledPayload.enable_thinking).toBe(true);
       expect(calledPayload.thinking_budget).toBe(4096);
     });
+
+    it('should forward enable_thinking for qwen3.7-plus', async () => {
+      await instance.chat({
+        messages: [{ content: 'Hello', role: 'user' }],
+        model: 'qwen3.7-plus',
+        thinking: {
+          type: 'enabled',
+        },
+      });
+
+      const calledPayload = (instance['client'].chat.completions.create as any).mock.calls[0][0];
+
+      expect(calledPayload.enable_thinking).toBe(true);
+      expect(calledPayload.model).toBe('qwen3.7-plus');
+    });
   });
 });

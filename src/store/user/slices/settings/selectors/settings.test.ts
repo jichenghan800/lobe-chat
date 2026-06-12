@@ -82,6 +82,30 @@ describe('settingsSelectors', () => {
     });
   });
 
+  describe('memory', () => {
+    it('should default memory to disabled', () => {
+      const s = {
+        settings: {},
+      } as unknown as UserStore;
+
+      expect(settingsSelectors.currentMemorySettings(s)).toEqual({
+        effort: 'medium',
+        enabled: false,
+      });
+      expect(settingsSelectors.memoryEnabled(s)).toBe(false);
+    });
+
+    it('should enable memory only when user explicitly enables it', () => {
+      const s = {
+        settings: {
+          memory: { enabled: true },
+        },
+      } as unknown as UserStore;
+
+      expect(settingsSelectors.memoryEnabled(s)).toBe(true);
+    });
+  });
+
   describe('defaultAgentMeta', () => {
     it('should merge DEFAULT_AGENT_META and defaultAgent(s).meta correctly', () => {
       const s = {

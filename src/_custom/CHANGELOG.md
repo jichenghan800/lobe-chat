@@ -3,6 +3,56 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-12
+
+### Cotti Assistant Identity
+
+- Scope: append a Cotti-only assistant identity guard to server-side agent `systemRole` before
+  model execution and to normal chat context engineering before message assembly.
+- Runtime behavior: when users ask the assistant name, identity, source, training party, developer,
+  or affiliated organization, the assistant is instructed to answer as `Cotti` instead of Lobe,
+  Google, or the underlying model/provider.
+- Boundary: existing user/system prompts are preserved and the identity guard is appended centrally
+  in `AiAgentService.execAgent` and `services/chat/mecha/contextEngineering`.
+
+### Agent Access Allowlist
+
+- Scope: add Cotti-only Agent access control with `COTTI_AGENT_ACCESS_MODE`,
+  `COTTI_AGENT_ALLOWED_EMAILS`, and `COTTI_AGENT_ALLOWED_USER_IDS`.
+- Runtime behavior: users outside the allowlist see Chat-only UI, cannot select Agent Mode, and
+  receive server-side Chat-only agent configs.
+- Safety boundary: non-allowlisted users cannot persist `chatConfig.enableAgentMode=true`; existing
+  Agent configs are downgraded at read/execution time, and heterogeneous Agent sandbox dispatch is
+  rejected before sandbox spawn.
+- Extension point: access checks are centralized under `src/_custom/registry/agentAccess*`, so a
+  future Feishu department resolver can plug into the same boundary.
+
+### Cotti Model Aliases
+
+- Runtime/source defaults expose `COTTI-快速` on `vertexai/gemini-3.1-flash-lite`,
+  `COTTI-专业` on `vertexai/gemini-3.5-flash`, and `豆包1.6-Flash` on
+  `volcengine/doubao-seed-1.6-flash`.
+- Runtime env defaults `DEFAULT_AGENT_CONFIG` to `vertexai/gemini-3.1-flash-lite` and removes
+  the public `全能效率` chat entry from the model switch allow list.
+- Runtime/source defaults add `豆包1.6-Flash` on `volcengine/doubao-seed-1.6-flash`, backed by the
+  existing OpenAI-compatible Volcengine runtime and the built-in deployment mapping to
+  `doubao-seed-1-6-flash-250828`.
+- Runtime env copies the Ark API key into local `VOLCENGINE_API_KEY`; production template keeps a
+  `CHANGE_ME` placeholder.
+- Production env template includes both Vertex AI models in `VERTEXAI_MODEL_LIST` and public model
+  visibility/display-name envs, and enables
+  `VOLCENGINE_MODEL_LIST=-all,+doubao-seed-1.6-flash=豆包1.6-Flash`.
+- Added Aliyun Bailian Qwen via the existing `qwen` OpenAI-compatible runtime:
+  `qwen/qwen3.7-plus` is visible as `千问3.7-Plus`, with `QWEN_MODEL_LIST` restricted to that
+  model and provider calls handled by the existing Qwen Chat Completions payload mapping.
+- Qwen env model declaration explicitly exposes reasoning, vision, function calling, and search
+  capabilities; detailed thinking/search behavior remains on the upstream provider path.
+- Home starter label now shows a lightweight safety reminder:
+  `安全提醒：平台安全可控，对话将用于合规审计，请规范使用。`
+- Default reasoning controls now start at low intensity (`thinkingLevel=low`,
+  `reasoningEffort=low`) and user memory defaults to disabled at both agent and global settings
+  levels.
+
 ## 2026-06-01
 
 ### Platform Analytics
@@ -137,9 +187,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 ### Home Starter Visibility
 
-- Scope: add `src/_custom/registry/homeVisibility.ts` and hide only the home starter model
-  `deepseek-v4-pro` by default.
-- Boundary: `GPT Image 2` and `Seedance 2.0` remain visible.
+- Scope: add `src/_custom/registry/homeVisibility.ts` and hide the home starter models
+  `deepseek-v4-pro` and `image` by default.
+- Boundary: `Seedance 2.0` visibility is controlled by the later temporary video toggle.
 
 ### Azure GPT Image 2
 
@@ -163,8 +213,10 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   application web-browsing path backed by `SEARCH_PROVIDERS=searxng` and
   `SEARXNG_URL=http://lobe-searxng:8080`.
 - Scope: add `src/_custom/registry/modelBuiltinSearch.ts` and apply
-  `NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW` while reading enabled model metadata, so Gemini can
-  keep provider search and Azure GPT-5.5 falls back to application search.
+  `NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW` while reading enabled model metadata, so Gemini and
+  Qwen can keep provider search and Azure GPT-5.5 falls back to application search.
+- Boundary: Volcengine Doubao builtin `web_search` is supported through the Responses API and is in
+  the default allow list once the 火山方舟联网内容插件 is activated for the account.
 - Boundary: existing agents stored as `openai/gpt-5.5` are not migrated by this config step; migrate
   them only after the Azure channel passes live testing.
 
@@ -178,15 +230,24 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 ### Image Generation Controls
 
-- Runtime env: set `AZURE_MODEL_LIST=-all,gpt-image-2=GPT Image 2` so unconfigured Azure image
-  models are not exposed by provider fallback lists.
+- Runtime env: set `AZURE_MODEL_LIST=-all` so Azure image models are not exposed by provider
+  fallback lists.
 - Runtime env: set `ENABLED_FAL=0` and `ENABLED_COMFYUI=0` because upstream defaults these
   providers to enabled unless explicitly disabled.
-- Runtime env: set `NEXT_PUBLIC_NAV_HIDE_IMAGE=0` and `NEXT_PUBLIC_HOME_STARTER_HIDE_IMAGE=0` to
-  expose the image generation entry while the configured providers are available.
+- Runtime env: set `NEXT_PUBLIC_NAV_HIDE_IMAGE=1` and `NEXT_PUBLIC_HOME_STARTER_HIDE_IMAGE=1` to
+  hide the image generation entry.
 - Runtime env: set `AI_IMAGE_DEFAULT_IMAGE_NUM=1`.
 - Scope: hide the image count control and force image generation requests to use one output.
 - Boundary: model provider availability is still controlled by provider env/model-list config.
+
+### Temporary GPT Image 2 Disable
+
+- Runtime env: keep `AZURE_MODEL_LIST=-all` to remove the configured Azure `gpt-image-2` image
+  model from the server model list.
+- Runtime env: set `NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS=deepseek-v4-pro,image,video` to
+  hide the home GPT Image 2 starter entry.
+- Boundary: this is a low-intrusion access-entry disable. Azure GPT Image 2 runtime code and model
+  metadata remain in place for a later config-only restore.
 
 ### Volcengine Seedance 2.0 Video
 
@@ -203,8 +264,8 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 - Runtime env: set `VOLCENGINE_MODEL_LIST=-all` to remove the configured Seedance 2.0 video model
   from the server model list.
-- Runtime env: set `NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS=deepseek-v4-pro,video` to hide the
-  home video starter entry while keeping the image starter visible.
+- Runtime env: set `NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS=deepseek-v4-pro,image,video` to
+  hide the home image and video starter entries.
 - Boundary: this is env-only. The `/video` route is not removed by source code; direct access shows
   the video page without an enabled video model.
 

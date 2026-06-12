@@ -154,11 +154,11 @@ exports[`OpenAIResponsesStream > should handle chunks with undefined values grac
   "data: "in_progress"
 
 ",
-  "id: undefined
+  "id:
 ",
   "event: reasoning
 ",
-  "data: undefined
+  "data: null
 
 ",
 ]
@@ -541,6 +541,25 @@ exports[`OpenAIResponsesStream > should handle unknown chunk type as data 1`] = 
   "event: data
 ",
   "data: {"type":"response.unknown_event","data":"some data"}
+
+",
+]
+`;
+
+exports[`OpenAIResponsesStream > should tolerate response.output_item.added function_call without arguments 1`] = `
+[
+  "id: resp_missing_args_test
+",
+  "event: data
+",
+  "data: "in_progress"
+
+",
+  "id: resp_missing_args_test
+",
+  "event: tool_calls
+",
+  "data: [{"function":{"arguments":"","name":"web_search"},"id":"call_missing_args","index":0,"type":"function"}]
 
 ",
 ]

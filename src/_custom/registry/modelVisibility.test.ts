@@ -6,22 +6,37 @@ describe('modelVisibility', () => {
   it('filters and orders visible models by the allow list', () => {
     const providers = filterVisibleProviderModelLists([
       {
-        children: [{ id: 'gpt-5.5' }, { id: 'hidden-openai' }],
-        id: 'openai',
+        children: [{ id: 'gpt-5.5' }, { id: 'hidden-azure' }],
+        id: 'azure',
       },
       {
         children: [{ id: 'claude-opus-4-7' }, { id: 'hidden-claude' }],
         id: 'anthropic',
       },
       {
-        children: [{ id: 'gemini-3.5-flash' }, { id: 'hidden-gemini' }],
+        children: [
+          { id: 'gemini-3.5-flash' },
+          { id: 'gemini-3.1-flash-lite' },
+          { id: 'hidden-gemini' },
+        ],
         id: 'vertexai',
+      },
+      {
+        children: [{ id: 'doubao-seed-1.6-flash' }, { id: 'hidden-doubao' }],
+        id: 'volcengine',
+      },
+      {
+        children: [{ id: 'qwen3.7-plus' }, { id: 'hidden-qwen' }],
+        id: 'qwen',
       },
     ]);
 
-    expect(providers.map((provider) => provider.id)).toEqual(['vertexai', 'openai', 'anthropic']);
-    expect(providers[0].children.map((model) => model.id)).toEqual(['gemini-3.5-flash']);
-    expect(providers[1].children.map((model) => model.id)).toEqual(['gpt-5.5']);
-    expect(providers[2].children.map((model) => model.id)).toEqual(['claude-opus-4-7']);
+    expect(providers.map((provider) => provider.id)).toEqual(['vertexai', 'volcengine', 'qwen']);
+    expect(providers[0].children.map((model) => model.id)).toEqual([
+      'gemini-3.1-flash-lite',
+      'gemini-3.5-flash',
+    ]);
+    expect(providers[1].children.map((model) => model.id)).toEqual(['doubao-seed-1.6-flash']);
+    expect(providers[2].children.map((model) => model.id)).toEqual(['qwen3.7-plus']);
   });
 });

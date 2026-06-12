@@ -58,7 +58,8 @@ export default {
   'starter.developing': 'Coming soon',
   'starter.image': 'Image',
   'starter.imageGeneration': 'GPT Image 2',
-  'starter.newLabel': 'New',
+  'starter.newLabel':
+    '安全提醒：平台安全可控，对话将用于合规审计，请规范使用。',
   'starter.videoGeneration': 'Seedance 2.0',
   'starter.write': 'Write',
 };

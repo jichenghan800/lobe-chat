@@ -30,8 +30,15 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     }
   `,
   newTag: css`
+    max-width: min(100%, 520px);
     padding-inline: 10px !important;
     border-radius: 999px !important;
+    line-height: 1.6 !important;
+    text-align: center;
+    white-space: normal !important;
+  `,
+  root: css`
+    flex-wrap: wrap;
   `,
 }));
 
@@ -128,7 +135,7 @@ const StarterList = memo(() => {
   );
 
   return (
-    <Center horizontal gap={8}>
+    <Center className={styles.root} horizontal gap={8}>
       <Tag className={styles.newTag} size={'small'}>
         {t('starter.newLabel')}
       </Tag>

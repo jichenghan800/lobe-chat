@@ -350,9 +350,11 @@ export const createSSEProtocolTransformer = (
       const buffers = Array.isArray(result) ? result : [result];
 
       buffers.forEach(({ type, id, data }) => {
-        controller.enqueue(`id: ${id}\n`);
+        const serializableData = typeof data === 'undefined' ? null : data;
+
+        controller.enqueue(typeof id === 'undefined' || id === null ? `id:\n` : `id: ${id}\n`);
         controller.enqueue(`event: ${type}\n`);
-        controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
+        controller.enqueue(`data: ${JSON.stringify(serializableData)}\n\n`);
 
         // mark terminal when receiving any of these events
         if (type === 'stop' || type === 'usage' || type === 'error') hasTerminalEvent = true;

@@ -4,6 +4,7 @@ import debug from 'debug';
 import { sha256 } from 'js-sha256';
 import { z } from 'zod';
 
+import { resolveCottiAgentAccessForUser } from '@/_custom/registry/agentAccess.server';
 import { AgentSkillModel } from '@/database/models/agentSkill';
 import { FileModel } from '@/database/models/file';
 import { type ToolCallContent } from '@/libs/mcp';
@@ -145,6 +146,14 @@ const execInSandboxHandler = async ({
 }): Promise<CallToolResult> => {
   const { toolName, params, topicId } = input;
   const userId = input?.userId || ctx.userId;
+  const hasAgentAccess = await resolveCottiAgentAccessForUser(ctx.serverDB, ctx.userId);
+
+  if (!hasAgentAccess) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Agent mode is not enabled for this user',
+    });
+  }
 
   log('execInSandbox: tool=%s, topicId=%s', toolName, topicId);
 
@@ -642,6 +651,14 @@ export const marketRouter = router({
     .input(exportAndUploadFileSchema)
     .mutation(async ({ input, ctx }) => {
       const { path, filename, topicId } = input;
+      const hasAgentAccess = await resolveCottiAgentAccessForUser(ctx.serverDB, ctx.userId);
+
+      if (!hasAgentAccess) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Agent mode is not enabled for this user',
+        });
+      }
 
       log('Exporting and uploading file: %s from path: %s in topic: %s', filename, path, topicId);
 

@@ -22,6 +22,15 @@ describe('modelBuiltinSearch', () => {
     expect(model.settings).toEqual({ searchImpl: 'params', searchProvider: 'google' });
   });
 
+  it('keeps builtin search for allow-listed Doubao and Qwen models', () => {
+    const allowList = 'vertexai/gemini-*,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus';
+
+    expect(isModelBuiltinSearchAllowed('volcengine', 'doubao-seed-1.6-flash', allowList)).toBe(
+      true,
+    );
+    expect(isModelBuiltinSearchAllowed('qwen', 'qwen3.7-plus', allowList)).toBe(true);
+  });
+
   it('strips builtin search from non-allow-listed models and preserves other settings', () => {
     const previousAllow = process.env.NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW;
     process.env.NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW = 'vertexai/gemini-*';

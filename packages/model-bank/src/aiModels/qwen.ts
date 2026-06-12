@@ -86,6 +86,29 @@ const qwenChatModels: AIChatModelCard[] = [
       functionCall: true,
       reasoning: true,
       search: true,
+      vision: true,
+    },
+    config: {
+      deploymentName: 'qwen3.7-plus',
+    },
+    contextWindowTokens: 262_144,
+    description:
+      'Qwen3.7 Plus is a Qwen model on Aliyun Bailian for reasoning, multimodal image understanding, tool use, web search, and agent workflows. It supports thinking mode through DashScope OpenAI-compatible APIs.',
+    displayName: 'Qwen3.7 Plus',
+    id: 'qwen3.7-plus',
+    maxOutput: 65_536,
+    organization: 'Qwen',
+    settings: {
+      extendParams: ['enableReasoning', 'reasoningBudgetToken'],
+      searchImpl: 'params',
+    },
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      reasoning: true,
+      search: true,
     },
     contextWindowTokens: 204_800,
     description:

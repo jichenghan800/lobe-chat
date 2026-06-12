@@ -1,4 +1,4 @@
-const DEFAULT_HIDDEN_STARTER_MODELS = ['deepseek-v4-pro'] as const;
+const DEFAULT_HIDDEN_STARTER_MODELS = ['deepseek-v4-pro', 'image'] as const;
 
 const parseHiddenStarterModels = () => {
   const raw = process.env.NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS;

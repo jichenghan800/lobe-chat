@@ -31,12 +31,17 @@ export const DEFAULT_AGENT_CHAT_CONFIG: LobeAgentChatConfig = {
   enableHistoryCount: false,
   enableStreaming: true,
   historyCount: 20,
+  memory: {
+    enabled: false,
+  },
   reasoningBudgetToken: 1024,
+  reasoningEffort: 'low',
   searchFCModel: DEFAULT_AGENT_SEARCH_FC_MODEL,
   searchMode: 'auto',
   selfIteration: {
     enabled: false,
   },
+  thinkingLevel: 'low',
 };
 
 export const DEFAULT_AGENT_CONFIG: LobeAgentConfig = {

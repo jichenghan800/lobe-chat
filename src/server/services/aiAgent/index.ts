@@ -42,6 +42,8 @@ import { RequestTrigger, ThreadStatus, ThreadType } from '@lobechat/types';
 import { nanoid } from '@lobechat/utils';
 import debug from 'debug';
 
+import { resolveCottiAgentAccessForUser } from '@/_custom/registry/agentAccess.server';
+import { applyCottiAssistantIdentity } from '@/_custom/registry/assistantIdentity';
 import { AgentModel } from '@/database/models/agent';
 import { AgentOperationModel } from '@/database/models/agentOperation';
 import { AgentSkillModel } from '@/database/models/agentSkill';
@@ -387,6 +389,7 @@ export class AiAgentService {
     if (!agentConfig) {
       throw new Error(`Agent not found: ${identifier}`);
     }
+    const hasCottiAgentAccess = await resolveCottiAgentAccessForUser(this.db, this.userId);
 
     // Use actual agent ID from config for subsequent operations
     const resolvedAgentId = agentConfig.id;
@@ -490,6 +493,12 @@ export class AiAgentService {
         : instructions;
       log('execAgent: appended additional instructions to systemRole');
     }
+
+    agentConfig.systemRole = applyCottiAssistantIdentity(agentConfig.systemRole, {
+      model: agentConfig.model,
+      provider: agentConfig.provider,
+    });
+    log('execAgent: applied Cotti assistant identity guard to systemRole when model matches');
 
     let resumeParentMessage;
 
@@ -651,6 +660,7 @@ export class AiAgentService {
     // Extract model and provider from agent config
     const model = agentConfig.model!;
     const provider = agentConfig.provider!;
+    const isAgentModeEnabled = agentConfig.chatConfig?.enableAgentMode !== false;
 
     // 3.5. Hetero-agent early exit — Claude Code / Codex / OpenClaw / Hermes agents bypass the
     // server-side LLM pipeline.  After topic + message creation we hand off to
@@ -663,6 +673,10 @@ export class AiAgentService {
     const HETERO_AGENT_MODELS = new Set<string>(['claude-code', 'codex']);
     const heteroProviderType = agentConfig.agencyConfig?.heterogeneousProvider?.type;
     const isHeteroAgent = !!heteroProviderType || HETERO_AGENT_MODELS.has(model);
+    if (!hasCottiAgentAccess && isHeteroAgent) {
+      throw new Error('Agent mode is not enabled for this user');
+    }
+
     if (isHeteroAgent) {
       const heteroType = (heteroProviderType ?? model) as
         | 'claude-code'
@@ -1023,7 +1037,7 @@ export class AiAgentService {
       const settings = await userModel.getUserSettings();
       const memorySettings = settings?.memory as { enabled?: boolean } | undefined;
 
-      globalMemoryEnabled = agentMemoryEnabled ?? memorySettings?.enabled !== false;
+      globalMemoryEnabled = agentMemoryEnabled ?? memorySettings?.enabled === true;
 
       const generalSettings = settings?.general as { timezone?: string } | undefined;
       userTimezone = generalSettings?.timezone;
@@ -1071,7 +1085,9 @@ export class AiAgentService {
     // These are needed outside the tools block (for agent management context, skill engine, etc.)
     let lobehubSkillManifests: LobeToolManifest[] = [];
     let klavisManifests: LobeToolManifest[] = [];
-    let agentPlugins: string[] = [...(agentConfig?.plugins ?? []), ...(additionalPluginIds || [])];
+    let agentPlugins: string[] = isAgentModeEnabled
+      ? [...(agentConfig?.plugins ?? []), ...(additionalPluginIds || [])]
+      : [];
 
     // Model metadata is needed both for tool support checks and agent-management context.
     const { loadModels } = await import('@/business/client/model-bank/loadModels');
@@ -1211,8 +1227,8 @@ export class AiAgentService {
         visualUnderstandingConfigured && (needsImageUnderstanding || needsVideoUnderstanding);
       agentPlugins = [
         ...agentPlugins,
-        ...(hasTopicReference ? ['lobe-topic-reference'] : []),
-        ...(isBotConversation ? [MessageToolIdentifier] : []),
+        ...(isAgentModeEnabled && hasTopicReference ? ['lobe-topic-reference'] : []),
+        ...(isAgentModeEnabled && isBotConversation ? [MessageToolIdentifier] : []),
         ...(shouldEnableVisualUnderstanding ? [LobeAgentManifest.identifier] : []),
       ];
 
@@ -1502,7 +1518,8 @@ export class AiAgentService {
     //   enabled, since they're solely needed for createAgent / updateAgent.
     const isAgentManagementEnabled = toolsResult.enabledToolIds?.includes('lobe-agent-management');
     const isInAutoSkillMode = agentConfig.chatConfig?.skillActivateMode !== 'manual';
-    const shouldInjectAvailableAgents = isInAutoSkillMode || isAgentManagementEnabled;
+    const shouldInjectAvailableAgents =
+      isAgentModeEnabled && (isInAutoSkillMode || isAgentManagementEnabled);
     let agentManagementContext: AgentManagementContext | undefined;
 
     if (shouldInjectAvailableAgents) {

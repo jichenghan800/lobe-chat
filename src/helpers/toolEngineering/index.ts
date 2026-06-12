@@ -14,6 +14,7 @@ import { type ChatCompletionTool, type ToolManifest, type WorkingModel } from '@
 import { isToolAvailableInCurrentEnv } from '@/helpers/toolAvailability';
 import { getAgentStoreState } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
+import { getServerConfigStoreState, serverConfigSelectors } from '@/store/serverConfig';
 import { getToolStoreState } from '@/store/tool';
 import {
   klavisStoreSelectors,
@@ -124,8 +125,12 @@ export const createAgentToolsEngine = (
 ) => {
   const searchConfig = getSearchConfig(workingModel.model, workingModel.provider);
   const agentState = getAgentStoreState();
+  const serverConfigState = getServerConfigStoreState();
+  const hasCottiAgentAccess =
+    !!serverConfigState && serverConfigSelectors.enableCottiAgentAccess(serverConfigState);
   const userPlugins = agentSelectors.currentAgentPlugins(agentState);
   const isChatMode =
+    !hasCottiAgentAccess ||
     agentChatConfigSelectors.currentChatConfig(agentState).enableAgentMode === false;
 
   // Each entry below still respects its own runtime gate; in chat mode this

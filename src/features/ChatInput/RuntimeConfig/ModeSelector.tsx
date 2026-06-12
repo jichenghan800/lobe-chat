@@ -16,6 +16,7 @@ import { useAgentId } from '@/features/ChatInput/hooks/useAgentId';
 import { useToggleAgentMode } from '@/features/ChatInput/hooks/useToggleAgentMode';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
+import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 const styles = createStaticStyles(({ css }) => ({
   activeOption: css`
@@ -93,6 +94,14 @@ const styles = createStaticStyles(({ css }) => ({
     line-height: 1.4;
     color: ${cssVar.colorText};
   `,
+  readonlyButton: css`
+    cursor: default;
+
+    &:hover {
+      color: ${cssVar.colorTextSecondary};
+      background: transparent;
+    }
+  `,
 }));
 
 const AGENT_CAPS = [
@@ -109,9 +118,11 @@ const ModeSelector = memo(() => {
   const [open, setOpen] = useState(false);
 
   const enableAgentMode = useAgentStore(agentByIdSelectors.getAgentEnableModeById(agentId));
+  const enableCottiAgentAccess = useServerConfigStore(serverConfigSelectors.enableCottiAgentAccess);
 
-  const currentMode = enableAgentMode ? 'agent' : 'chat';
-  const CurrentIcon = enableAgentMode ? InfinityIcon : MessageCircleIcon;
+  const effectiveEnableAgentMode = enableCottiAgentAccess && enableAgentMode;
+  const currentMode = effectiveEnableAgentMode ? 'agent' : 'chat';
+  const CurrentIcon = effectiveEnableAgentMode ? InfinityIcon : MessageCircleIcon;
 
   const handleSelect = useCallback(
     async (mode: 'chat' | 'agent') => {
@@ -134,6 +145,17 @@ const ModeSelector = memo(() => {
   );
 
   const chatTooltip = t('chatMode.chatDesc');
+
+  if (!enableCottiAgentAccess) {
+    const chatOnlyButton = (
+      <div className={cx(styles.button, styles.readonlyButton)}>
+        <Icon icon={MessageCircleIcon} size={14} />
+        <span>{t('chatMode.chat')}</span>
+      </div>
+    );
+
+    return <Tooltip title={chatTooltip}>{chatOnlyButton}</Tooltip>;
+  }
 
   const popoverContent = (
     <Flexbox gap={4} style={{ maxWidth: 320, minWidth: 280 }}>
@@ -206,7 +228,7 @@ const ModeSelector = memo(() => {
         {open ? (
           button
         ) : (
-          <Tooltip title={enableAgentMode ? agentTooltip : chatTooltip}>{button}</Tooltip>
+          <Tooltip title={effectiveEnableAgentMode ? agentTooltip : chatTooltip}>{button}</Tooltip>
         )}
       </div>
     </Popover>
