@@ -10,6 +10,7 @@ import { topUpRouter } from '@/business/server/lambda-routers/topUp';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 
 import { agentRouter } from './agent';
+import { agentAccessRouter } from './agentAccess';
 import { agentBotProviderRouter } from './agentBotProvider';
 import { agentDocumentRouter } from './agentDocument';
 import { agentEvalRouter } from './agentEval';
@@ -71,6 +72,7 @@ import { webBrowsingRouter } from './webBrowsing';
 
 export const lambdaRouter = router({
   agent: agentRouter,
+  agentAccess: agentAccessRouter,
   agentBotProvider: agentBotProviderRouter,
   agentNotify: agentNotifyRouter,
   botMessage: botMessageRouter,

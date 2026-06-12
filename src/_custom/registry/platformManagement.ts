@@ -34,6 +34,9 @@ export const isPlatformAnalyticsHidden = () =>
 
 export const isSettingsTabHidden = (tab: SettingsTabs) => {
   switch (tab) {
+    case SettingsTabs.AgentAccess: {
+      return isPlatformAnalyticsHidden();
+    }
     case SettingsTabs.Provider: {
       return isModelProviderSettingsHidden();
     }

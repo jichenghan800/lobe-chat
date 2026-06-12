@@ -651,6 +651,31 @@ table user_connectors {
   }
 }
 
+table cotti_agent_access_rules {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  type varchar(32) [not null]
+  value text [not null]
+  enabled boolean [not null, default: true]
+  note text
+  created_by text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    (type, value) [name: 'cotti_agent_access_rules_type_value_unique', unique]
+  }
+}
+
+table cotti_agent_access_settings {
+  id varchar(32) [pk, not null, default: 'default']
+  mode varchar(32) [not null, default: 'allowlist']
+  updated_by text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+}
+
 table devices {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   user_id text [not null]
@@ -702,6 +727,27 @@ table document_shares {
   indexes {
     document_id [name: 'document_shares_document_id_unique', unique]
     user_id [name: 'document_shares_user_id_idx']
+  }
+}
+
+table feedback_reports {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  user_id text
+  user_email text
+  title text [not null]
+  message text [not null]
+  status text [not null, default: 'open']
+  screenshot_url text
+  issue_url text
+  client_info jsonb
+  metadata jsonb [default: `{}`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'feedback_reports_user_id_idx']
+    status [name: 'feedback_reports_status_idx']
+    created_at [name: 'feedback_reports_created_at_idx']
   }
 }
 
@@ -816,27 +862,6 @@ table knowledge_bases {
   indexes {
     (client_id, user_id) [name: 'knowledge_bases_client_id_user_id_unique', unique]
     user_id [name: 'knowledge_bases_user_id_idx']
-  }
-}
-
-table feedback_reports {
-  id uuid [pk, not null, default: `gen_random_uuid()`]
-  user_id text
-  user_email text
-  title text [not null]
-  message text [not null]
-  status text [not null, default: 'open']
-  screenshot_url text
-  issue_url text
-  client_info jsonb
-  metadata jsonb [default: `{}`]
-  created_at "timestamp with time zone" [not null, default: `now()`]
-  updated_at "timestamp with time zone" [not null, default: `now()`]
-
-  indexes {
-    user_id [name: 'feedback_reports_user_id_idx']
-    status [name: 'feedback_reports_status_idx']
-    created_at [name: 'feedback_reports_created_at_idx']
   }
 }
 

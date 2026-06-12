@@ -10,6 +10,9 @@ export const componentMap = {
   [SettingsTabs.Advanced]: dynamic(() => import('../advanced'), {
     loading: loading('Settings > Advanced'),
   }),
+  [SettingsTabs.AgentAccess]: dynamic(() => import('../agent-access'), {
+    loading: loading('Settings > AgentAccess'),
+  }),
   [SettingsTabs.Appearance]: dynamic(() => import('../appearance'), {
     loading: loading('Settings > Appearance'),
   }),

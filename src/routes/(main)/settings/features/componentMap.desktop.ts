@@ -8,6 +8,7 @@ import { SettingsTabs } from '@/store/global/initialState';
 
 import About from '../about';
 import Advanced from '../advanced';
+import AgentAccess from '../agent-access';
 import APIKey from '../apikey';
 import Appearance from '../appearance';
 import Creds from '../creds';
@@ -28,6 +29,7 @@ import SystemTools from '../system-tools';
 
 export const componentMap = {
   [SettingsTabs.Advanced]: Advanced,
+  [SettingsTabs.AgentAccess]: AgentAccess,
   [SettingsTabs.Appearance]: Appearance,
   [SettingsTabs.Provider]: Provider,
   [SettingsTabs.ServiceModel]: ServiceModel,

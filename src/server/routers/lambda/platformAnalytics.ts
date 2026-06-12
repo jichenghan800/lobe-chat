@@ -1,12 +1,12 @@
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { users } from '@/database/schemas';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { PlatformAnalyticsService } from '@/server/services/platformAnalytics';
 import type { PlatformAnalyticsQuery, PlatformAnalyticsRange } from '@/types/platformAnalytics';
+
+import { assertPlatformAdminAccess } from './_helpers/platformAdmin';
 
 const dashboardInput = z.object({
   customRange: z
@@ -18,27 +18,9 @@ const dashboardInput = z.object({
   range: z.union([z.literal(1), z.literal(7), z.literal(30), z.literal(90)]).default(1),
 });
 
-const parseAdminEmails = () =>
-  (process.env.COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS || '')
-    .split(',')
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-
 const platformAnalyticsProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
-  const user = await ctx.serverDB.query.users.findFirst({
-    columns: { email: true, id: true, normalizedEmail: true, role: true },
-    where: eq(users.id, ctx.userId),
-  });
-
-  const adminEmails = parseAdminEmails();
-  const email = (user?.normalizedEmail || user?.email || '').toLowerCase();
-  const isAllowedByEmail = adminEmails.includes('*') || (!!email && adminEmails.includes(email));
-  const isAdminRole = user?.role === 'admin';
-
-  if (!isAllowedByEmail && !isAdminRole) {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Platform analytics access denied.' });
-  }
+  await assertPlatformAdminAccess(ctx.serverDB, ctx.userId);
 
   return opts.next({
     ctx: {

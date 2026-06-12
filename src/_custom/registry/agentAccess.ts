@@ -33,7 +33,7 @@ const normalizeIdentity = (value: string | null | undefined) => value?.trim().to
 
 export const getCottiAgentAccessMode = () => normalizeMode(process.env.COTTI_AGENT_ACCESS_MODE);
 
-export const isCottiAgentAccessEnabledForSubject = (subject: CottiAgentAccessSubject) => {
+export const isCottiAgentAccessEnabledForSubjectFromEnv = (subject: CottiAgentAccessSubject) => {
   const mode = getCottiAgentAccessMode();
 
   if (mode === 'open') return true;
@@ -52,6 +52,8 @@ export const isCottiAgentAccessEnabledForSubject = (subject: CottiAgentAccessSub
     (!!normalizedEmail && allowedEmails.has(normalizedEmail))
   );
 };
+
+export const isCottiAgentAccessEnabledForSubject = isCottiAgentAccessEnabledForSubjectFromEnv;
 
 const isRecord = (value: unknown): value is Record<PropertyKey, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

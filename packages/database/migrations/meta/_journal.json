@@ -742,6 +742,13 @@
       "when": 1780398880106,
       "tag": "0105_add_feedback_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1781283493872,
+      "tag": "0106_add_cotti_agent_access",
+      "breakpoints": true
     }
   ],
   "version": "6"

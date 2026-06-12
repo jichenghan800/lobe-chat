@@ -21,6 +21,7 @@ import {
   Map,
   MessageCircleIcon,
   PaletteIcon,
+  ShieldCheck,
   Sparkles,
   TerminalSquare,
 } from 'lucide-react';
@@ -205,6 +206,11 @@ export const useCategory = () => {
         icon: ChartNoAxesCombined,
         key: SettingsTabs.PlatformAnalytics,
         label: '平台用量分析',
+      },
+      !isSettingsTabHidden(SettingsTabs.AgentAccess) && {
+        icon: ShieldCheck,
+        key: SettingsTabs.AgentAccess,
+        label: 'Agent 权限配置',
       },
       !isSettingsTabHidden(SettingsTabs.FeedbackAnalytics) && {
         icon: LifeBuoy,
