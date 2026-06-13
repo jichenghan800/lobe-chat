@@ -27,6 +27,13 @@ describe('agentAccess', () => {
     expect(isCottiAgentAccessEnabledForSubject({ userId: 'u3' })).toBe(false);
   });
 
+  it('allows email entries by mailbox prefix across domains', () => {
+    vi.stubEnv('COTTI_AGENT_ALLOWED_EMAILS', 'jicheng.han@cotticoffee.com');
+
+    expect(isCottiAgentAccessEnabledForSubject({ email: 'jicheng.han@abite.com' })).toBe(true);
+    expect(isCottiAgentAccessEnabledForSubject({ email: 'other.han@cotticoffee.com' })).toBe(false);
+  });
+
   it('supports open and off modes', () => {
     vi.stubEnv('COTTI_AGENT_ACCESS_MODE', 'open');
     expect(isCottiAgentAccessEnabledForSubject({})).toBe(true);

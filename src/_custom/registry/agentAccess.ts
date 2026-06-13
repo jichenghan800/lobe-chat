@@ -31,6 +31,13 @@ const normalizeMode = (raw: string | undefined): CottiAgentAccessMode => {
 
 const normalizeIdentity = (value: string | null | undefined) => value?.trim().toLowerCase() || '';
 
+const normalizeEmailPrefix = (value: string | null | undefined) => {
+  const email = normalizeIdentity(value);
+  if (!email) return '';
+
+  return email.split('@')[0];
+};
+
 export const getCottiAgentAccessMode = () => normalizeMode(process.env.COTTI_AGENT_ACCESS_MODE);
 
 export const isCottiAgentAccessEnabledForSubjectFromEnv = (subject: CottiAgentAccessSubject) => {
@@ -41,15 +48,22 @@ export const isCottiAgentAccessEnabledForSubjectFromEnv = (subject: CottiAgentAc
 
   const allowedUserIds = parseList(process.env.COTTI_AGENT_ALLOWED_USER_IDS);
   const allowedEmails = parseList(process.env.COTTI_AGENT_ALLOWED_EMAILS);
+  const allowedEmailPrefixes = new Set(
+    [...allowedEmails].map((item) => normalizeEmailPrefix(item)).filter(Boolean),
+  );
 
   const userId = normalizeIdentity(subject.userId);
   const email = normalizeIdentity(subject.email);
   const normalizedEmail = normalizeIdentity(subject.normalizedEmail);
+  const emailPrefix = normalizeEmailPrefix(subject.email);
+  const normalizedEmailPrefix = normalizeEmailPrefix(subject.normalizedEmail);
 
   return (
     (!!userId && allowedUserIds.has(userId)) ||
     (!!email && allowedEmails.has(email)) ||
-    (!!normalizedEmail && allowedEmails.has(normalizedEmail))
+    (!!normalizedEmail && allowedEmails.has(normalizedEmail)) ||
+    (!!emailPrefix && allowedEmailPrefixes.has(emailPrefix)) ||
+    (!!normalizedEmailPrefix && allowedEmailPrefixes.has(normalizedEmailPrefix))
   );
 };
 

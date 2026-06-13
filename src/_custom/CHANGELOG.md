@@ -53,7 +53,7 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Qwen env model declaration explicitly exposes reasoning, vision, function calling, and search
   capabilities; detailed thinking/search behavior remains on the upstream provider path.
 - Home starter label now shows a lightweight safety reminder:
-  `安全提醒：平台安全可控，对话将用于合规审计，请规范使用。`
+  `安全提醒：平台安全可控但非100%无风险，对话将用于合规审计；请勿处理公司机密或敏感信息。`
 - Default reasoning controls now start at low intensity (`thinkingLevel=low`,
   `reasoningEffort=low`) and user memory defaults to disabled at both agent and global settings
   levels.

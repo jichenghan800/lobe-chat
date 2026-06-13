@@ -35,6 +35,13 @@ export const normalizeCottiAgentAccessValue = (
   return type === 'email' ? normalized.toLowerCase() : normalized;
 };
 
+export const normalizeCottiAgentAccessEmailPrefix = (value: string | null | undefined) => {
+  const email = normalizeCottiAgentAccessValue('email', value);
+  if (!email) return '';
+
+  return email.split('@')[0];
+};
+
 export class CottiAgentAccessModel {
   private db: LobeChatDatabase;
 
@@ -64,28 +71,26 @@ export class CottiAgentAccessModel {
       candidates.push({ type: 'email', value: normalizedEmail });
     }
 
-    if (candidates.length === 0) return false;
-
     const emailValues = candidates
       .filter((candidate) => candidate.type === 'email')
       .map((candidate) => candidate.value);
+    const emailPrefixes = new Set(
+      emailValues.map((value) => normalizeCottiAgentAccessEmailPrefix(value)).filter(Boolean),
+    );
     const userIdValues = candidates
       .filter((candidate) => candidate.type === 'userId')
       .map((candidate) => candidate.value);
 
+    if (emailPrefixes.size === 0 && userIdValues.length === 0) return false;
+
     const checks = await Promise.all([
-      emailValues.length > 0
+      emailPrefixes.size > 0
         ? this.db
-            .select({ id: cottiAgentAccessRules.id })
+            .select({ id: cottiAgentAccessRules.id, value: cottiAgentAccessRules.value })
             .from(cottiAgentAccessRules)
             .where(
-              and(
-                eq(cottiAgentAccessRules.type, 'email'),
-                eq(cottiAgentAccessRules.enabled, true),
-                inArray(cottiAgentAccessRules.value, emailValues),
-              ),
+              and(eq(cottiAgentAccessRules.type, 'email'), eq(cottiAgentAccessRules.enabled, true)),
             )
-            .limit(1)
         : [],
       userIdValues.length > 0
         ? this.db
@@ -102,7 +107,12 @@ export class CottiAgentAccessModel {
         : [],
     ]);
 
-    return checks.some((items) => items.length > 0);
+    const [emailRules, userRules] = checks;
+    const emailAllowed = emailRules.some((rule) =>
+      emailPrefixes.has(normalizeCottiAgentAccessEmailPrefix(rule.value)),
+    );
+
+    return emailAllowed || userRules.length > 0;
   };
 
   listRules = async (): Promise<CottiAgentAccessRuleItem[]> => {
