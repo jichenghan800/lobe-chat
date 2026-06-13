@@ -21,11 +21,15 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   `COTTI_AGENT_ALLOWED_EMAILS`, and `COTTI_AGENT_ALLOWED_USER_IDS`.
 - Scope: add database-backed Agent access settings and a settings page under System, allowing
   admins to switch mode and manage allowlist rules without restarting containers.
+- Scope: add local platform-user autocomplete on the Agent allowlist page, backed by the existing
+  `users` table and restricted to platform admins.
 - Runtime behavior: users outside the allowlist see Chat-only UI, cannot select Agent Mode, and
   receive server-side Chat-only agent configs.
 - Runtime behavior: once the database setting row exists, Agent access is resolved from
   `cotti_agent_access_settings` and `cotti_agent_access_rules`; env vars remain the bootstrap
   fallback before the admin page saves a mode.
+- Runtime behavior: allowlist email matching is by mailbox prefix, so `name@cotticoffee.com` can
+  also authorize the same mailbox prefix on another login domain.
 - Safety boundary: non-allowlisted users cannot persist `chatConfig.enableAgentMode=true`; existing
   Agent configs are downgraded at read/execution time, and heterogeneous Agent sandbox dispatch is
   rejected before sandbox spawn.

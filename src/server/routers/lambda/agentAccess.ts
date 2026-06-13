@@ -66,6 +66,12 @@ export const agentAccessRouter = router({
       return rule;
     }),
 
+  searchUsers: agentAccessProcedure
+    .input(z.object({ query: z.string().min(2).max(128) }))
+    .query(async ({ ctx, input }) => {
+      return ctx.agentAccessModel.searchUsers(input.query, 8);
+    }),
+
   upsertRule: agentAccessProcedure
     .input(
       z.object({

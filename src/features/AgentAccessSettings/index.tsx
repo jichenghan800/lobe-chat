@@ -1,16 +1,32 @@
 'use client';
 
 import { Flexbox, FormGroup, Icon, Segmented, Text } from '@lobehub/ui';
-import { App, Button, Empty, Input, Popconfirm, Skeleton, Space, Table, Tag } from 'antd';
+import { useDebounce } from 'ahooks';
+import {
+  App,
+  AutoComplete,
+  Button,
+  Empty,
+  Input,
+  Popconfirm,
+  Skeleton,
+  Space,
+  Table,
+  Tag,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { createStaticStyles } from 'antd-style';
 import { LockKeyhole, ShieldCheck, UserPlus, UsersRound } from 'lucide-react';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useClientDataSWR } from '@/libs/swr';
 import SettingHeader from '@/routes/(main)/settings/features/SettingHeader';
 import { agentAccessService } from '@/services/agentAccess';
-import type { AgentAccessMode, AgentAccessRuleType } from '@/types/agentAccess';
+import type {
+  AgentAccessMode,
+  AgentAccessRuleType,
+  AgentAccessUserSuggestion,
+} from '@/types/agentAccess';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   inlineForm: css`
@@ -70,6 +86,8 @@ const typeOptions = [
   { label: '用户 ID', value: 'userId' },
 ] satisfies Array<{ label: string; value: AgentAccessRuleType }>;
 
+const USER_SEARCH_MIN_LENGTH = 2;
+
 const modeCopy: Record<AgentAccessMode, { color: string; desc: string; title: string }> = {
   allowlist: {
     color: 'processing',
@@ -107,9 +125,22 @@ const AgentAccessSettings = memo(() => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingRuleId, setPendingRuleId] = useState<string>();
   const [isModeSaving, setIsModeSaving] = useState(false);
+  const debouncedRuleValue = useDebounce(ruleValue, { wait: 300 });
 
   const { data, error, isLoading, mutate } = useClientDataSWR('agent-access-settings', () =>
     agentAccessService.getDetail(),
+  );
+  const userSearchQuery = debouncedRuleValue.trim();
+  const shouldSearchUsers = userSearchQuery.length >= USER_SEARCH_MIN_LENGTH;
+  const { data: userSuggestions = [], isLoading: isSearchingUsers } = useClientDataSWR<
+    AgentAccessUserSuggestion[]
+  >(
+    shouldSearchUsers ? ['agent-access-user-search', userSearchQuery] : null,
+    ([, query]: [string, string]) => agentAccessService.searchUsers(query),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    },
   );
 
   useEffect(() => {
@@ -120,6 +151,36 @@ const AgentAccessSettings = memo(() => {
 
   const mode = data?.mode ?? 'allowlist';
   const currentModeCopy = modeCopy[mode];
+  const userSuggestionOptions = useMemo(
+    () =>
+      userSuggestions.flatMap((user) => {
+        const email = user.email || user.normalizedEmail;
+        const value = ruleType === 'email' ? email : user.id;
+        if (!value) return [];
+
+        const displayName = user.fullName || user.username;
+
+        return [
+          {
+            label: (
+              <Flexbox gap={2}>
+                <Flexbox horizontal align="center" gap={8}>
+                  <Text ellipsis weight={500}>
+                    {email || user.id}
+                  </Text>
+                  {user.role === 'admin' && <Tag color="processing">管理员</Tag>}
+                </Flexbox>
+                <Text ellipsis className={styles.muted} fontSize={12}>
+                  {displayName ? `${displayName} · ${user.id}` : user.id}
+                </Text>
+              </Flexbox>
+            ),
+            value,
+          },
+        ];
+      }),
+    [ruleType, userSuggestions],
+  );
 
   const handleSetMode = async (nextMode: AgentAccessMode) => {
     if (nextMode === mode) return;
@@ -161,31 +222,37 @@ const AgentAccessSettings = memo(() => {
     }
   };
 
-  const handleToggleRule = async (id: string, enabled: boolean) => {
-    setPendingRuleId(id);
-    try {
-      await agentAccessService.setRuleEnabled(id, enabled);
-      await mutate();
-      void message.success(enabled ? '白名单项已启用' : '白名单项已停用');
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : '白名单项更新失败');
-    } finally {
-      setPendingRuleId(undefined);
-    }
-  };
+  const handleToggleRule = useCallback(
+    async (id: string, enabled: boolean) => {
+      setPendingRuleId(id);
+      try {
+        await agentAccessService.setRuleEnabled(id, enabled);
+        await mutate();
+        void message.success(enabled ? '白名单项已启用' : '白名单项已停用');
+      } catch (error) {
+        void message.error(error instanceof Error ? error.message : '白名单项更新失败');
+      } finally {
+        setPendingRuleId(undefined);
+      }
+    },
+    [message, mutate],
+  );
 
-  const handleRemoveRule = async (id: string) => {
-    setPendingRuleId(id);
-    try {
-      await agentAccessService.removeRule(id);
-      await mutate();
-      void message.success('白名单项已删除');
-    } catch (error) {
-      void message.error(error instanceof Error ? error.message : '白名单项删除失败');
-    } finally {
-      setPendingRuleId(undefined);
-    }
-  };
+  const handleRemoveRule = useCallback(
+    async (id: string) => {
+      setPendingRuleId(id);
+      try {
+        await agentAccessService.removeRule(id);
+        await mutate();
+        void message.success('白名单项已删除');
+      } catch (error) {
+        void message.error(error instanceof Error ? error.message : '白名单项删除失败');
+      } finally {
+        setPendingRuleId(undefined);
+      }
+    },
+    [message, mutate],
+  );
 
   const columns = useMemo<ColumnsType<NonNullable<typeof data>['rules'][number]>>(
     () => [
@@ -245,7 +312,7 @@ const AgentAccessSettings = memo(() => {
         width: 128,
       },
     ],
-    [pendingRuleId],
+    [handleRemoveRule, handleToggleRule, pendingRuleId],
   );
 
   return (
@@ -298,13 +365,21 @@ const AgentAccessSettings = memo(() => {
                 value={ruleType}
                 onChange={(value) => setRuleType(value as AgentAccessRuleType)}
               />
-              <Input
+              <AutoComplete
                 allowClear
-                placeholder={ruleType === 'email' ? 'name@company.com' : '用户 ID'}
+                options={userSuggestionOptions}
                 value={ruleValue}
-                onChange={(event) => setRuleValue(event.target.value)}
-                onPressEnter={handleSubmitRule}
-              />
+                notFoundContent={
+                  shouldSearchUsers && !isSearchingUsers ? '未匹配到平台用户' : undefined
+                }
+                placeholder={
+                  ruleType === 'email' ? '输入姓名/邮箱前缀搜索' : '输入用户 ID 或邮箱搜索'
+                }
+                onChange={(value) => setRuleValue(value)}
+                onSelect={(value) => setRuleValue(value)}
+              >
+                <Input onPressEnter={handleSubmitRule} />
+              </AutoComplete>
               <Input
                 allowClear
                 placeholder="备注，可选"
@@ -327,14 +402,14 @@ const AgentAccessSettings = memo(() => {
               columns={columns}
               dataSource={data?.rules || []}
               loading={isLoading}
+              pagination={{ pageSize: 10, showSizeChanger: false }}
+              rowKey="id"
+              size="middle"
               locale={{
                 emptyText: (
                   <Empty description="暂无白名单成员" image={Empty.PRESENTED_IMAGE_SIMPLE} />
                 ),
               }}
-              pagination={{ pageSize: 10, showSizeChanger: false }}
-              rowKey="id"
-              size="middle"
             />
           </Flexbox>
         </FormGroup>

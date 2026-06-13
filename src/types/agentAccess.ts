@@ -13,3 +13,12 @@ export interface AgentAccessDetail {
   rules: CottiAgentAccessRuleItem[];
   source: AgentAccessSource;
 }
+
+export interface AgentAccessUserSuggestion {
+  email: null | string;
+  fullName: null | string;
+  id: string;
+  normalizedEmail: null | string;
+  role: null | string;
+  username: null | string;
+}

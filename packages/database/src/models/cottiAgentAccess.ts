@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, or } from 'drizzle-orm';
 
 import type {
   CottiAgentAccessMode,
@@ -7,7 +7,7 @@ import type {
   CottiAgentAccessSettingsItem,
   NewCottiAgentAccessRule,
 } from '../schemas';
-import { cottiAgentAccessRules, cottiAgentAccessSettings } from '../schemas';
+import { cottiAgentAccessRules, cottiAgentAccessSettings, users } from '../schemas';
 import type { LobeChatDatabase } from '../type';
 
 const SETTINGS_ID = 'default';
@@ -23,6 +23,15 @@ export interface UpsertCottiAgentAccessRuleParams {
   note?: string | null;
   type: CottiAgentAccessRuleType;
   value: string;
+}
+
+export interface CottiAgentAccessUserSuggestion {
+  email: null | string;
+  fullName: null | string;
+  id: string;
+  normalizedEmail: null | string;
+  role: null | string;
+  username: null | string;
 }
 
 export const normalizeCottiAgentAccessValue = (
@@ -161,6 +170,36 @@ export class CottiAgentAccessModel {
 
   removeRule = async (id: string): Promise<void> => {
     await this.db.delete(cottiAgentAccessRules).where(eq(cottiAgentAccessRules.id, id));
+  };
+
+  searchUsers = async (rawQuery: string, limit = 8): Promise<CottiAgentAccessUserSuggestion[]> => {
+    const query = rawQuery.trim();
+    if (query.length < 2) return [];
+
+    const matchedPattern = `%${query}%`;
+    const safeLimit = Math.min(Math.max(limit, 1), 20);
+
+    return this.db
+      .select({
+        email: users.email,
+        fullName: users.fullName,
+        id: users.id,
+        normalizedEmail: users.normalizedEmail,
+        role: users.role,
+        username: users.username,
+      })
+      .from(users)
+      .where(
+        or(
+          ilike(users.email, matchedPattern),
+          ilike(users.normalizedEmail, matchedPattern),
+          ilike(users.username, matchedPattern),
+          ilike(users.fullName, matchedPattern),
+          ilike(users.id, matchedPattern),
+        ),
+      )
+      .orderBy(desc(users.lastActiveAt))
+      .limit(safeLimit);
   };
 
   upsertRule = async (

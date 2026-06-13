@@ -1,8 +1,9 @@
 // @vitest-environment node
+import { inArray } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getTestDB } from '../../core/getTestDB';
-import { cottiAgentAccessRules, cottiAgentAccessSettings } from '../../schemas';
+import { cottiAgentAccessRules, cottiAgentAccessSettings, users } from '../../schemas';
 import type { LobeChatDatabase } from '../../type';
 import {
   CottiAgentAccessModel,
@@ -12,10 +13,12 @@ import {
 
 const serverDB: LobeChatDatabase = await getTestDB();
 const model = new CottiAgentAccessModel(serverDB);
+const testUserIds = ['agent-access-search-user-1', 'agent-access-search-user-2'];
 
 const cleanup = async () => {
   await serverDB.delete(cottiAgentAccessRules);
   await serverDB.delete(cottiAgentAccessSettings);
+  await serverDB.delete(users).where(inArray(users.id, testUserIds));
 };
 
 beforeEach(cleanup);
@@ -72,6 +75,34 @@ describe('CottiAgentAccessModel', () => {
     await expect(model.isSubjectAllowed({ email: 'other.han@cotticoffee.com' })).resolves.toBe(
       false,
     );
+  });
+
+  it('searches existing users for admin allowlist suggestions', async () => {
+    await serverDB.insert(users).values([
+      {
+        email: 'jicheng.han.agentaccess.test@cotticoffee.com',
+        fullName: '韩继承',
+        id: testUserIds[0],
+        normalizedEmail: 'jicheng.han.agentaccess.test@cotticoffee.com',
+        username: 'jicheng',
+      },
+      {
+        email: 'other@cotticoffee.com',
+        id: testUserIds[1],
+        normalizedEmail: 'other@cotticoffee.com',
+      },
+    ]);
+
+    await expect(model.searchUsers('jicheng')).resolves.toMatchObject([
+      {
+        email: 'jicheng.han.agentaccess.test@cotticoffee.com',
+        fullName: '韩继承',
+        id: testUserIds[0],
+        normalizedEmail: 'jicheng.han.agentaccess.test@cotticoffee.com',
+        username: 'jicheng',
+      },
+    ]);
+    await expect(model.searchUsers('j')).resolves.toEqual([]);
   });
 
   it('updates duplicate rules and ignores disabled rules', async () => {

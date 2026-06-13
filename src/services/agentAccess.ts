@@ -10,6 +10,10 @@ class AgentAccessClientService {
     return lambdaClient.agentAccess.removeRule.mutate({ id });
   };
 
+  searchUsers = async (query: string) => {
+    return lambdaClient.agentAccess.searchUsers.query({ query });
+  };
+
   setMode = async (mode: AgentAccessMode) => {
     return lambdaClient.agentAccess.setMode.mutate({ mode });
   };
