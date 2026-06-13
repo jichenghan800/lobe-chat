@@ -36,6 +36,18 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Extension point: access checks are centralized under `src/_custom/registry/agentAccess*`, so a
   future Feishu department resolver can plug into the same boundary.
 
+### Platform Management
+
+- Scope: move platform usage analytics, feedback analytics, Agent access, and compliance audit into
+  a dedicated `平台管理` settings group visible under the same platform-admin gate.
+- Scope: add first-version compliance audit under settings, backed by existing message/session/user
+  data plus a `cotti_audit_view_logs` table for administrator message-view traceability.
+- Runtime behavior: audit listing supports time range, user email, feature type, and risk-level
+  filters; message detail viewing records who viewed which message without duplicating message
+  content into the audit table.
+- Boundary: risk tags are deterministic rules in the server service for credentials, company
+  confidential terms, personal information, sensitive operations, attachments, and tool calls.
+
 ### Cotti Model Aliases
 
 - Runtime/source defaults expose `COTTI-快速` on `vertexai/gemini-3.1-flash-lite`,

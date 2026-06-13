@@ -17,6 +17,7 @@ import Hotkey from '../hotkey';
 import Memory from '../memory';
 import Messenger from '../messenger';
 import PlatformAnalytics from '../platform-analytics';
+import PlatformAudit from '../platform-audit';
 import Profile from '../profile';
 import Provider from '../provider';
 import Proxy from '../proxy';
@@ -52,6 +53,7 @@ export const componentMap = {
   [SettingsTabs.Skill]: Skill,
 
   [SettingsTabs.Plans]: Plans,
+  [SettingsTabs.PlatformAudit]: PlatformAudit,
   [SettingsTabs.PlatformAnalytics]: PlatformAnalytics,
   [SettingsTabs.Credits]: Credits,
   [SettingsTabs.Billing]: Billing,

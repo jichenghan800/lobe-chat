@@ -10,7 +10,16 @@ const parsePlatformAdminEmails = () =>
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
 
-export const assertPlatformAdminAccess = async (db: LobeChatDatabase, userId: string) => {
+export interface PlatformAdminUser {
+  email: null | string;
+  normalizedEmail: null | string;
+  role: null | string;
+}
+
+export const resolvePlatformAdminUser = async (
+  db: LobeChatDatabase,
+  userId: string,
+): Promise<PlatformAdminUser> => {
   const [user] = await db
     .select({
       email: users.email,
@@ -29,4 +38,14 @@ export const assertPlatformAdminAccess = async (db: LobeChatDatabase, userId: st
   if (!isAllowedByEmail && !isAdminRole) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Platform admin access denied.' });
   }
+
+  return {
+    email: user?.email ?? null,
+    normalizedEmail: user?.normalizedEmail ?? null,
+    role: user?.role ?? null,
+  };
+};
+
+export const assertPlatformAdminAccess = async (db: LobeChatDatabase, userId: string) => {
+  await resolvePlatformAdminUser(db, userId);
 };

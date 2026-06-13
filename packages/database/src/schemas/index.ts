@@ -12,6 +12,7 @@ export * from './betterAuth';
 export * from './chatGroup';
 export * from './connector';
 export * from './cottiAgentAccess';
+export * from './cottiAudit';
 export * from './device';
 export * from './documentHistory';
 export * from './documentShare';

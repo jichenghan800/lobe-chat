@@ -12,6 +12,7 @@ import {
   Database,
   EllipsisIcon,
   EthernetPort,
+  FileSearch,
   Gift,
   Info,
   KeyboardIcon,
@@ -44,6 +45,7 @@ import { userGeneralSettingsSelectors } from '@/store/user/slices/settings/selec
 export enum SettingsGroupKey {
   Agent = 'agent',
   General = 'general',
+  PlatformManagement = 'platform-management',
   Subscription = 'subscription',
   System = 'system',
 }
@@ -185,6 +187,37 @@ export const useCategory = () => {
       title: t('group.aiConfig'),
     });
 
+    const platformManagementItems: CategoryItem[] = [
+      !isSettingsTabHidden(SettingsTabs.PlatformAnalytics) && {
+        icon: ChartNoAxesCombined,
+        key: SettingsTabs.PlatformAnalytics,
+        label: '平台用量分析',
+      },
+      !isSettingsTabHidden(SettingsTabs.FeedbackAnalytics) && {
+        icon: LifeBuoy,
+        key: SettingsTabs.FeedbackAnalytics,
+        label: '问题反馈分析',
+      },
+      !isSettingsTabHidden(SettingsTabs.AgentAccess) && {
+        icon: ShieldCheck,
+        key: SettingsTabs.AgentAccess,
+        label: 'Agent 权限配置',
+      },
+      !isSettingsTabHidden(SettingsTabs.PlatformAudit) && {
+        icon: FileSearch,
+        key: SettingsTabs.PlatformAudit,
+        label: '合规审计',
+      },
+    ].filter(Boolean) as CategoryItem[];
+
+    if (platformManagementItems.length > 0) {
+      groups.push({
+        items: platformManagementItems,
+        key: SettingsGroupKey.PlatformManagement,
+        title: '平台管理',
+      });
+    }
+
     // System group
     const systemItems: CategoryItem[] = [
       isDesktop && {
@@ -201,21 +234,6 @@ export const useCategory = () => {
         icon: Database,
         key: SettingsTabs.Storage,
         label: t('tab.storage'),
-      },
-      !isSettingsTabHidden(SettingsTabs.PlatformAnalytics) && {
-        icon: ChartNoAxesCombined,
-        key: SettingsTabs.PlatformAnalytics,
-        label: '平台用量分析',
-      },
-      !isSettingsTabHidden(SettingsTabs.AgentAccess) && {
-        icon: ShieldCheck,
-        key: SettingsTabs.AgentAccess,
-        label: 'Agent 权限配置',
-      },
-      !isSettingsTabHidden(SettingsTabs.FeedbackAnalytics) && {
-        icon: LifeBuoy,
-        key: SettingsTabs.FeedbackAnalytics,
-        label: '问题反馈分析',
       },
       isDevMode &&
         !isSettingsTabHidden(SettingsTabs.APIKey) && {

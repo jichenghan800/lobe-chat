@@ -676,6 +676,26 @@ table cotti_agent_access_settings {
   updated_at "timestamp with time zone" [not null, default: `now()`]
 }
 
+table cotti_audit_view_logs {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  admin_user_id text
+  admin_email text
+  target_type text [not null]
+  target_id text [not null]
+  message_id text
+  session_id text
+  target_user_id text
+  target_user_email text
+  metadata jsonb [default: `{}`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    admin_user_id [name: 'cotti_audit_view_logs_admin_user_id_idx']
+    (target_type, target_id) [name: 'cotti_audit_view_logs_target_idx']
+    created_at [name: 'cotti_audit_view_logs_created_at_idx']
+  }
+}
+
 table devices {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   user_id text [not null]

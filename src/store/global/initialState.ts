@@ -40,9 +40,9 @@ export type WorkingSidebarTab = 'files' | 'params' | 'resources' | 'review';
 export enum SettingsTabs {
   About = 'about',
   Advanced = 'advanced',
-  AgentAccess = 'agent-access',
   /** @deprecated Use ServiceModel instead */
   Agent = 'agent',
+  AgentAccess = 'agent-access',
   APIKey = 'apikey',
   Appearance = 'appearance',
   Billing = 'billing',
@@ -61,8 +61,9 @@ export enum SettingsTabs {
   Messenger = 'messenger',
   Notification = 'notification',
   Plans = 'plans',
-  // business
   PlatformAnalytics = 'platform-analytics',
+  // business
+  PlatformAudit = 'platform-audit',
   Profile = 'profile',
   Provider = 'provider',
   Proxy = 'proxy',
