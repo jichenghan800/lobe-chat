@@ -756,6 +756,13 @@
       "when": 1781328012580,
       "tag": "0107_add_cotti_audit_view_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1781331195882,
+      "tag": "0108_add_cotti_audit_risk_analyses",
+      "breakpoints": true
     }
   ],
   "version": "6"

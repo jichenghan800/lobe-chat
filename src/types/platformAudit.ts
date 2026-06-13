@@ -15,8 +15,30 @@ export interface PlatformAuditRiskFlag {
   level: Exclude<PlatformAuditRiskLevel, 'none'>;
 }
 
+export type PlatformAuditRiskAnalysisStatus = 'completed' | 'failed' | 'pending' | 'running';
+
+export interface PlatformAuditRiskEvidence {
+  label: string;
+  quote: string;
+}
+
+export interface PlatformAuditRiskAnalysis {
+  confidence?: 'high' | 'low' | 'medium' | null;
+  error?: null | string;
+  evidence: PlatformAuditRiskEvidence[];
+  model?: null | string;
+  provider?: null | string;
+  reason?: null | string;
+  riskLabels: string[];
+  riskLevel?: null | string;
+  status: PlatformAuditRiskAnalysisStatus;
+  summary?: null | string;
+  updatedAt?: null | string;
+}
+
 export interface PlatformAuditItem {
   agentId?: null | string;
+  analysis?: null | PlatformAuditRiskAnalysis;
   contentPreview?: null | string;
   createdAt: string;
   error: boolean;

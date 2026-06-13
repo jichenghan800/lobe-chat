@@ -28,6 +28,28 @@ const platformAuditProcedure = authedProcedure.use(serverDatabase).use(async (op
 });
 
 export const platformAuditRouter = router({
+  analyzeMessageRisk: platformAuditProcedure
+    .input(z.object({ force: z.boolean().optional(), messageId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await ctx.platformAuditService.analyzeMessageRisk({
+          adminEmail: ctx.adminUser.normalizedEmail || ctx.adminUser.email,
+          adminUserId: ctx.userId,
+          force: input.force,
+          messageId: input.messageId,
+        });
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        console.error('[platformAudit:analyzeMessageRisk]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to analyze audit risk.',
+        });
+      }
+    }),
+
   dashboard: platformAuditProcedure.input(auditInput).query(async ({ ctx, input }) => {
     try {
       return await ctx.platformAuditService.getDashboard(input as PlatformAuditQuery);

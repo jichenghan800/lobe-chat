@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Search,
   ShieldAlert,
+  Sparkles,
   Wrench,
 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -161,6 +162,7 @@ const PlatformAudit = memo(() => {
   const [email, setEmail] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [activeDetail, setActiveDetail] = useState<PlatformAuditDetail>();
+  const [analysisLoadingId, setAnalysisLoadingId] = useState<string>();
   const [detailLoadingId, setDetailLoadingId] = useState<string>();
 
   const query = useMemo<PlatformAuditQuery>(
@@ -173,7 +175,7 @@ const PlatformAudit = memo(() => {
     [email, feature, range, riskLevel],
   );
 
-  const { data, error, isLoading } = useClientDataSWR(
+  const { data, error, isLoading, mutate: refreshDashboard } = useClientDataSWR(
     ['platform-audit-dashboard', query],
     () => platformAuditService.getDashboard(query),
     {
@@ -201,6 +203,23 @@ const PlatformAudit = memo(() => {
       }
     },
     [message],
+  );
+
+  const handleAnalyzeRisk = useCallback(
+    async (record: PlatformAuditItem, force?: boolean) => {
+      setAnalysisLoadingId(record.id);
+      try {
+        const analysis = await platformAuditService.analyzeMessageRisk(record.id, force);
+        setActiveDetail((detail) => (detail?.id === record.id ? { ...detail, analysis } : detail));
+        await refreshDashboard();
+        void message.success('疑点提取已完成');
+      } catch (error) {
+        void message.error(error instanceof Error ? error.message : '疑点提取失败');
+      } finally {
+        setAnalysisLoadingId(undefined);
+      }
+    },
+    [message, refreshDashboard],
   );
 
   const columns = useMemo<ColumnsType<PlatformAuditItem>>(
@@ -264,6 +283,51 @@ const PlatformAudit = memo(() => {
         title: '消息预览',
       },
       {
+        render: (_, record) => {
+          const analysis = record.analysis;
+          if (!analysis) {
+            return record.riskLevel === 'none' ? (
+              <Text className={styles.muted}>-</Text>
+            ) : (
+              <Button
+                icon={<Icon icon={Sparkles} size={14} />}
+                loading={analysisLoadingId === record.id}
+                size="small"
+                onClick={() => handleAnalyzeRisk(record)}
+              >
+                生成
+              </Button>
+            );
+          }
+
+          if (analysis.status === 'running' || analysis.status === 'pending') {
+            return <Tag color="processing">分析中</Tag>;
+          }
+
+          return (
+            <Flexbox gap={6}>
+              <Text ellipsis>{analysis.summary || '已生成疑点片段'}</Text>
+              {analysis.evidence[0] && (
+                <Text ellipsis className={styles.muted} fontSize={12}>
+                  {analysis.evidence[0].quote}
+                </Text>
+              )}
+              <Button
+                icon={<Icon icon={Sparkles} size={14} />}
+                loading={analysisLoadingId === record.id}
+                size="small"
+                type="text"
+                onClick={() => handleAnalyzeRisk(record, true)}
+              >
+                重析
+              </Button>
+            </Flexbox>
+          );
+        },
+        title: '疑点提取',
+        width: 240,
+      },
+      {
         render: (_, record) => (
           <Button
             icon={<Icon icon={Eye} size={14} />}
@@ -278,7 +342,7 @@ const PlatformAudit = memo(() => {
         width: 92,
       },
     ],
-    [detailLoadingId, handleViewDetail],
+    [analysisLoadingId, detailLoadingId, handleAnalyzeRisk, handleViewDetail],
   );
 
   return (
@@ -387,6 +451,48 @@ const PlatformAudit = memo(() => {
               <div className={styles.content}>
                 {activeDetail.content || <Text className={styles.muted}>无内容</Text>}
               </div>
+            </Flexbox>
+            <Flexbox gap={8}>
+              <Flexbox horizontal align="center" justify="space-between">
+                <Text className={styles.muted}>疑点提取</Text>
+                <Button
+                  icon={<Icon icon={Sparkles} size={14} />}
+                  loading={analysisLoadingId === activeDetail.id}
+                  size="small"
+                  onClick={() => handleAnalyzeRisk(activeDetail, !!activeDetail.analysis)}
+                >
+                  {activeDetail.analysis ? '重新分析' : '生成'}
+                </Button>
+              </Flexbox>
+              {activeDetail.analysis ? (
+                <Flexbox gap={8}>
+                  <Text>{activeDetail.analysis.summary || '已生成疑点片段'}</Text>
+                  <Text className={styles.muted} fontSize={13}>
+                    {activeDetail.analysis.reason || '-'}
+                  </Text>
+                  <Space wrap size={4}>
+                    {activeDetail.analysis.riskLabels.map((label) => (
+                      <Tag key={label}>{label}</Tag>
+                    ))}
+                  </Space>
+                  <Flexbox gap={6}>
+                    {activeDetail.analysis.evidence.map((item) => (
+                      <div className={styles.content} key={`${item.label}-${item.quote}`}>
+                        <Text weight={600}>{item.label}</Text>
+                        <br />
+                        <Text>{item.quote}</Text>
+                      </div>
+                    ))}
+                  </Flexbox>
+                  {activeDetail.analysis.error && (
+                    <Text className={styles.muted} fontSize={12}>
+                      模型提取失败，已使用规则提取：{activeDetail.analysis.error}
+                    </Text>
+                  )}
+                </Flexbox>
+              ) : (
+                <Text className={styles.muted}>尚未生成疑点片段</Text>
+              )}
             </Flexbox>
           </Flexbox>
         )}

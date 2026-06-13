@@ -1,17 +1,33 @@
+import { consumeStreamUntilDone } from '@lobechat/model-runtime';
+import { safeParseJSON } from '@lobechat/utils';
 import { sql } from 'drizzle-orm';
 
-import { cottiAuditViewLogs } from '@/database/schemas';
+import { cottiAuditRiskAnalyses, cottiAuditViewLogs } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
+import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import type {
   PlatformAuditDashboard,
   PlatformAuditDetail,
   PlatformAuditQuery,
+  PlatformAuditRiskAnalysis,
+  PlatformAuditRiskEvidence,
   PlatformAuditRiskFlag,
   PlatformAuditRiskLevel,
 } from '@/types/platformAudit';
 
 interface PlatformAuditMessageRow {
   agentId: null | string;
+  analysisConfidence?: null | PlatformAuditRiskAnalysis['confidence'];
+  analysisError?: null | string;
+  analysisEvidence?: null | PlatformAuditRiskEvidence[] | string;
+  analysisModel?: null | string;
+  analysisProvider?: null | string;
+  analysisReason?: null | string;
+  analysisRiskLabels?: null | string[] | string;
+  analysisRiskLevel?: null | string;
+  analysisStatus?: null | PlatformAuditRiskAnalysis['status'];
+  analysisSummary?: null | string;
+  analysisUpdatedAt?: Date | null | string;
   attachmentRisk?: boolean;
   confidentialRisk?: boolean;
   content: null | string;
@@ -42,10 +58,18 @@ interface RecordViewParams {
   target: PlatformAuditDetail;
 }
 
+interface AnalyzeMessageParams {
+  adminEmail?: null | string;
+  adminUserId: string;
+  force?: boolean;
+  messageId: string;
+}
+
 const DEFAULT_RANGE = 1;
 const DEFAULT_FEATURE = 'all';
 const DEFAULT_RISK_LEVEL = 'all';
 const MAX_AUDIT_ITEMS = 200;
+const MAX_ANALYSIS_CONTENT_LENGTH = 12_000;
 
 const credentialRiskPattern =
   '(api[_-]?key|secret|token|password|passwd|access[_-]?key|private[_-]?key|AKIA|sk-[A-Z0-9])';
@@ -54,6 +78,8 @@ const confidentialRiskPattern =
 const personalRiskPattern = '(身份证|手机号|银行卡|住址|家庭住址|护照|社保|个人信息)';
 const sensitiveOperationRiskPattern =
   '(删除数据|导出数据|批量下载|生产库|数据库密码|root权限|sudo|rm -rf|转账|付款)';
+const auditRiskModelProvider = process.env.COTTI_AUDIT_RISK_MODEL_PROVIDER?.trim();
+const auditRiskModel = process.env.COTTI_AUDIT_RISK_MODEL?.trim();
 
 const RISK_FLAG_DEFINITIONS: Array<{
   key: string;
@@ -153,6 +179,106 @@ const buildRiskFlagsFromRow = (row: PlatformAuditMessageRow) => {
   return flags;
 };
 
+const ensureArray = <T>(value: null | string | T[] | undefined): T[] => {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+
+  const parsed = safeParseJSON<T[]>(value);
+  return Array.isArray(parsed) ? parsed : [];
+};
+
+const normalizeAnalysis = (row: PlatformAuditMessageRow): null | PlatformAuditRiskAnalysis => {
+  if (!row.analysisStatus) return null;
+
+  return {
+    confidence: row.analysisConfidence ?? null,
+    error: row.analysisError ?? null,
+    evidence: ensureArray<PlatformAuditRiskEvidence>(row.analysisEvidence),
+    model: row.analysisModel ?? null,
+    provider: row.analysisProvider ?? null,
+    reason: row.analysisReason ?? null,
+    riskLabels: ensureArray<string>(row.analysisRiskLabels),
+    riskLevel: row.analysisRiskLevel ?? null,
+    status: row.analysisStatus,
+    summary: row.analysisSummary ?? null,
+    updatedAt: row.analysisUpdatedAt ? toDate(row.analysisUpdatedAt).toISOString() : null,
+  };
+};
+
+const extractQuote = (text: string, pattern: RegExp): null | string => {
+  const match = pattern.exec(text);
+  if (!match?.index && match?.index !== 0) return null;
+
+  const start = Math.max(match.index - 36, 0);
+  const end = Math.min(match.index + match[0].length + 36, text.length);
+
+  return text.slice(start, end).replaceAll(/\s+/g, ' ').trim();
+};
+
+const buildRuleBasedAnalysis = (detail: PlatformAuditDetail): PlatformAuditRiskAnalysis => {
+  const content = detail.content || detail.contentPreview || '';
+  const evidence: PlatformAuditRiskEvidence[] = [];
+
+  for (const definition of RISK_FLAG_DEFINITIONS) {
+    const quote = extractQuote(content, new RegExp(definition.pattern));
+    if (!quote) continue;
+
+    evidence.push({ label: definition.label, quote });
+  }
+
+  if (detail.fileCount > 0) {
+    evidence.push({ label: '包含附件', quote: `该消息包含 ${detail.fileCount} 个附件` });
+  }
+
+  if (detail.tool) {
+    evidence.push({ label: '调用工具', quote: '该消息或回复存在工具调用记录' });
+  }
+
+  const labels = detail.riskFlags.map((flag) => flag.label);
+  const summary =
+    evidence.length > 0
+      ? `命中 ${labels.join('、') || '疑似风险'}，建议人工核对上下文。`
+      : '未提取到明确风险片段，建议结合原文人工判断。';
+
+  return {
+    confidence: detail.riskLevel === 'high' ? 'medium' : 'low',
+    error: null,
+    evidence,
+    model: 'rule-based',
+    provider: 'local',
+    reason: '基于关键词、附件和工具调用记录提取疑似风险片段，作为人工复核线索。',
+    riskLabels: labels,
+    riskLevel: detail.riskLevel,
+    status: 'completed',
+    summary,
+  };
+};
+
+const parseModelAnalysis = (content: string): PlatformAuditRiskAnalysis => {
+  const jsonText = content
+    .trim()
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/, '')
+    .replace(/\s*```$/, '');
+  const parsed = safeParseJSON<Partial<PlatformAuditRiskAnalysis>>(jsonText);
+
+  if (!parsed) throw new Error('模型返回内容不是合法 JSON');
+
+  return {
+    confidence:
+      parsed.confidence === 'high' || parsed.confidence === 'medium' ? parsed.confidence : 'low',
+    error: null,
+    evidence: Array.isArray(parsed.evidence) ? parsed.evidence.slice(0, 8) : [],
+    model: auditRiskModel,
+    provider: auditRiskModelProvider,
+    reason: typeof parsed.reason === 'string' ? parsed.reason.slice(0, 1000) : null,
+    riskLabels: Array.isArray(parsed.riskLabels) ? parsed.riskLabels.slice(0, 8) : [],
+    riskLevel: typeof parsed.riskLevel === 'string' ? parsed.riskLevel : null,
+    status: 'completed',
+    summary: typeof parsed.summary === 'string' ? parsed.summary.slice(0, 500) : null,
+  };
+};
+
 export class PlatformAuditService {
   private db: LobeChatDatabase;
 
@@ -244,12 +370,25 @@ export class PlatformAuditService {
         enriched."personalRisk",
         enriched."sensitiveOperationRisk",
         enriched."riskLevel",
+        risk_analysis.status AS "analysisStatus",
+        risk_analysis.summary AS "analysisSummary",
+        risk_analysis.reason AS "analysisReason",
+        risk_analysis.confidence AS "analysisConfidence",
+        risk_analysis.evidence AS "analysisEvidence",
+        risk_analysis.risk_level AS "analysisRiskLevel",
+        risk_analysis.risk_labels AS "analysisRiskLabels",
+        risk_analysis.provider AS "analysisProvider",
+        risk_analysis.model AS "analysisModel",
+        risk_analysis.error AS "analysisError",
+        risk_analysis.updated_at AS "analysisUpdatedAt",
         (
           SELECT COUNT(*)
           FROM messages_files
           WHERE messages_files.message_id = enriched.id
         ) AS "fileCount"
       FROM enriched
+      LEFT JOIN cotti_audit_risk_analyses risk_analysis
+        ON risk_analysis.message_id = enriched.id
       WHERE (${feature} = 'all' OR enriched."featureType" = ${feature})
         AND (
           ${riskLevel} = 'all'
@@ -319,6 +458,87 @@ export class PlatformAuditService {
     return this.mapMessageRow(row, true);
   };
 
+  analyzeMessageRisk = async ({
+    adminEmail,
+    adminUserId,
+    force,
+    messageId,
+  }: AnalyzeMessageParams): Promise<PlatformAuditRiskAnalysis> => {
+    if (!force) {
+      const existing = await this.getRiskAnalysis(messageId);
+      if (existing?.status === 'completed') return existing;
+    }
+
+    const detail = await this.getMessageDetail(messageId);
+    if (!detail) throw new Error('Audit message not found.');
+
+    await this.upsertRiskAnalysis({
+      adminEmail,
+      adminUserId,
+      analysis: {
+        confidence: null,
+        error: null,
+        evidence: [],
+        model: auditRiskModel ?? null,
+        provider: auditRiskModelProvider ?? null,
+        reason: null,
+        riskLabels: detail.riskFlags.map((flag) => flag.label),
+        riskLevel: detail.riskLevel,
+        status: 'running',
+        summary: null,
+      },
+      target: detail,
+    });
+
+    const fallbackAnalysis = buildRuleBasedAnalysis(detail);
+    let analysis = fallbackAnalysis;
+
+    if (auditRiskModelProvider && auditRiskModel) {
+      try {
+        analysis = await this.analyzeWithModel(detail, adminUserId);
+      } catch (error) {
+        analysis = {
+          ...fallbackAnalysis,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
+
+    await this.upsertRiskAnalysis({
+      adminEmail,
+      adminUserId,
+      analysis,
+      target: detail,
+    });
+
+    return analysis;
+  };
+
+  getRiskAnalysis = async (messageId: string): Promise<PlatformAuditRiskAnalysis | undefined> => {
+    const result = await this.db.execute(sql`
+      SELECT
+        status AS "analysisStatus",
+        summary AS "analysisSummary",
+        reason AS "analysisReason",
+        confidence AS "analysisConfidence",
+        evidence AS "analysisEvidence",
+        risk_level AS "analysisRiskLevel",
+        risk_labels AS "analysisRiskLabels",
+        provider AS "analysisProvider",
+        model AS "analysisModel",
+        error AS "analysisError",
+        updated_at AS "analysisUpdatedAt"
+      FROM cotti_audit_risk_analyses
+      WHERE message_id = ${messageId}
+      LIMIT 1
+    `);
+
+    const row = result.rows[0] as unknown as PlatformAuditMessageRow | undefined;
+    if (!row) return;
+
+    return normalizeAnalysis(row) ?? undefined;
+  };
+
   recordMessageView = async ({ adminEmail, adminUserId, metadata, target }: RecordViewParams) => {
     await this.db.insert(cottiAuditViewLogs).values({
       adminEmail: adminEmail ?? null,
@@ -333,6 +553,124 @@ export class PlatformAuditService {
     });
   };
 
+  private analyzeWithModel = async (
+    detail: PlatformAuditDetail,
+    adminUserId: string,
+  ): Promise<PlatformAuditRiskAnalysis> => {
+    if (!auditRiskModelProvider || !auditRiskModel) {
+      return buildRuleBasedAnalysis(detail);
+    }
+
+    const runtime = await initModelRuntimeFromDB(this.db, adminUserId, auditRiskModelProvider);
+    let content = '';
+    let streamError: unknown;
+    const sourceText = (detail.content || '').slice(0, MAX_ANALYSIS_CONTENT_LENGTH);
+
+    const response = await runtime.chat(
+      {
+        messages: [
+          {
+            content:
+              '你是企业合规审计助手。请只从用户消息中提取疑似风险片段，帮助人工复核，不要做最终违规定性。必须只输出 JSON，不要 Markdown。',
+            role: 'system',
+          },
+          {
+            content: [
+              '请分析以下消息，输出 JSON：',
+              '{',
+              '  "summary": "一句话风险摘要",',
+              '  "reason": "为什么这些片段需要人工复核",',
+              '  "confidence": "low|medium|high",',
+              '  "riskLevel": "none|low|medium|high",',
+              '  "riskLabels": ["标签"],',
+              '  "evidence": [{"label":"标签","quote":"原文中的短片段"}]',
+              '}',
+              '要求：evidence 最多 5 条；quote 必须来自原文；不要输出完整原文；无法确认时 confidence 用 low。',
+              '',
+              `规则初筛风险：${detail.riskFlags.map((flag) => flag.label).join('、') || '无'}`,
+              `消息原文：${sourceText}`,
+            ].join('\n'),
+            role: 'user',
+          },
+        ],
+        model: auditRiskModel,
+        stream: true,
+      },
+      {
+        callback: {
+          onError: async (error) => {
+            streamError = error;
+          },
+          onText: async (text) => {
+            content += text;
+          },
+        },
+        user: adminUserId,
+      },
+    );
+
+    await consumeStreamUntilDone(response);
+
+    if (streamError) {
+      throw new Error(
+        streamError instanceof Error ? streamError.message : JSON.stringify(streamError),
+      );
+    }
+
+    return parseModelAnalysis(content);
+  };
+
+  private upsertRiskAnalysis = async ({
+    adminEmail,
+    adminUserId,
+    analysis,
+    target,
+  }: {
+    adminEmail?: null | string;
+    adminUserId: string;
+    analysis: PlatformAuditRiskAnalysis;
+    target: PlatformAuditDetail;
+  }) => {
+    await this.db
+      .insert(cottiAuditRiskAnalyses)
+      .values({
+        confidence: analysis.confidence ?? null,
+        error: analysis.error ?? null,
+        evidence: analysis.evidence,
+        messageId: target.id,
+        model: analysis.model ?? null,
+        provider: analysis.provider ?? null,
+        reason: analysis.reason ?? null,
+        requestedByEmail: adminEmail ?? null,
+        requestedByUserId: adminUserId,
+        riskLabels: analysis.riskLabels,
+        riskLevel: analysis.riskLevel ?? null,
+        sessionId: target.sessionId ?? null,
+        status: analysis.status,
+        summary: analysis.summary ?? null,
+        targetUserEmail: target.userEmail ?? null,
+        targetUserId: target.userId,
+      })
+      .onConflictDoUpdate({
+        set: {
+          confidence: analysis.confidence ?? null,
+          error: analysis.error ?? null,
+          evidence: analysis.evidence,
+          model: analysis.model ?? null,
+          provider: analysis.provider ?? null,
+          reason: analysis.reason ?? null,
+          requestedByEmail: adminEmail ?? null,
+          requestedByUserId: adminUserId,
+          riskLabels: analysis.riskLabels,
+          riskLevel: analysis.riskLevel ?? null,
+          status: analysis.status,
+          summary: analysis.summary ?? null,
+          updatedAt: new Date(),
+        },
+        target: cottiAuditRiskAnalyses.messageId,
+      });
+  };
+
   private mapMessageRow = (
     row: PlatformAuditMessageRow,
     includeContent: boolean,
@@ -342,6 +680,7 @@ export class PlatformAuditService {
     const normalizedRiskFlags = dashboardRiskFlags ?? riskFlags;
     const item: PlatformAuditDetail = {
       agentId: row.agentId,
+      analysis: normalizeAnalysis(row),
       contentPreview: row.contentPreview,
       createdAt: toDate(row.createdAt).toISOString(),
       error: row.error,
