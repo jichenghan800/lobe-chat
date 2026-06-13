@@ -159,6 +159,7 @@ const PlatformAudit = memo(() => {
   const [feature, setFeature] = useState<PlatformAuditFeatureType | 'all'>('all');
   const [riskLevel, setRiskLevel] = useState<PlatformAuditRiskLevel | 'all'>('all');
   const [email, setEmail] = useState('');
+  const [emailInput, setEmailInput] = useState('');
   const [activeDetail, setActiveDetail] = useState<PlatformAuditDetail>();
   const [detailLoadingId, setDetailLoadingId] = useState<string>();
 
@@ -172,8 +173,13 @@ const PlatformAudit = memo(() => {
     [email, feature, range, riskLevel],
   );
 
-  const { data, error, isLoading } = useClientDataSWR(['platform-audit-dashboard', query], () =>
-    platformAuditService.getDashboard(query),
+  const { data, error, isLoading } = useClientDataSWR(
+    ['platform-audit-dashboard', query],
+    () => platformAuditService.getDashboard(query),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    },
   );
 
   useEffect(() => {
@@ -317,8 +323,13 @@ const PlatformAudit = memo(() => {
               allowClear
               placeholder="用户邮箱"
               style={{ width: 220 }}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={emailInput}
+              onSearch={(value) => setEmail(value.trim())}
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                setEmailInput(nextValue);
+                if (!nextValue) setEmail('');
+              }}
             />
             <Button
               icon={<Icon icon={Download} size={14} />}

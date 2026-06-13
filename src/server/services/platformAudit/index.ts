@@ -5,8 +5,6 @@ import type { LobeChatDatabase } from '@/database/type';
 import type {
   PlatformAuditDashboard,
   PlatformAuditDetail,
-  PlatformAuditFeatureType,
-  PlatformAuditItem,
   PlatformAuditQuery,
   PlatformAuditRiskFlag,
   PlatformAuditRiskLevel,
@@ -14,16 +12,22 @@ import type {
 
 interface PlatformAuditMessageRow {
   agentId: null | string;
+  attachmentRisk?: boolean;
+  confidentialRisk?: boolean;
   content: null | string;
   contentPreview: null | string;
   createdAt: Date | string;
+  credentialRisk?: boolean;
   error: boolean;
   fileCount: number | string;
   id: string;
   model: null | string;
+  personalRisk?: boolean;
   provider: null | string;
+  riskLevel?: PlatformAuditRiskLevel;
   role: string;
   search: boolean;
+  sensitiveOperationRisk?: boolean;
   sessionId: null | string;
   sessionTitle: null | string;
   tool: boolean;
@@ -42,7 +46,14 @@ const DEFAULT_RANGE = 1;
 const DEFAULT_FEATURE = 'all';
 const DEFAULT_RISK_LEVEL = 'all';
 const MAX_AUDIT_ITEMS = 200;
-const QUERY_ITEM_LIMIT = 500;
+
+const credentialRiskPattern =
+  '(api[_-]?key|secret|token|password|passwd|access[_-]?key|private[_-]?key|AKIA|sk-[A-Z0-9])';
+const confidentialRiskPattern =
+  '(机密|绝密|保密|内部资料|未公开|竞品策略|价格底线|源代码|财务报表|薪酬|裁员)';
+const personalRiskPattern = '(身份证|手机号|银行卡|住址|家庭住址|护照|社保|个人信息)';
+const sensitiveOperationRiskPattern =
+  '(删除数据|导出数据|批量下载|生产库|数据库密码|root权限|sudo|rm -rf|转账|付款)';
 
 const RISK_FLAG_DEFINITIONS: Array<{
   key: string;
@@ -112,12 +123,34 @@ const detectRiskFlags = (content: null | string, row: PlatformAuditMessageRow) =
   return flags;
 };
 
-const getFeatureType = (item: PlatformAuditItem): PlatformAuditFeatureType => {
-  if (item.error) return 'error';
-  if (item.tool) return 'tool';
-  if (item.search) return 'search';
-  if (item.agentId) return 'agent';
-  return 'chat';
+const buildRiskFlagsFromRow = (row: PlatformAuditMessageRow) => {
+  const flags: PlatformAuditRiskFlag[] = [];
+
+  if (row.credentialRisk) {
+    flags.push({ key: 'credential', label: '疑似密钥/凭证', level: 'high' });
+  }
+
+  if (row.confidentialRisk) {
+    flags.push({ key: 'confidential', label: '疑似公司机密', level: 'high' });
+  }
+
+  if (row.personalRisk) {
+    flags.push({ key: 'personal', label: '疑似个人信息', level: 'medium' });
+  }
+
+  if (row.sensitiveOperationRisk) {
+    flags.push({ key: 'sensitive_operation', label: '敏感操作', level: 'medium' });
+  }
+
+  if (row.attachmentRisk || toNumber(row.fileCount) > 0) {
+    flags.push({ key: 'attachment', label: '包含附件', level: 'low' });
+  }
+
+  if (row.tool) {
+    flags.push({ key: 'tool_call', label: '调用工具', level: 'low' });
+  }
+
+  return flags;
 };
 
 export class PlatformAuditService {
@@ -136,47 +169,98 @@ export class PlatformAuditService {
     const emailQuery = query.email?.trim().toLowerCase();
 
     const result = await this.db.execute(sql`
-      WITH file_counts AS (
-        SELECT message_id, COUNT(*) AS file_count
-        FROM messages_files
-        GROUP BY message_id
+      WITH base AS MATERIALIZED (
+        SELECT
+          messages.id,
+          messages.role,
+          LEFT(COALESCE(messages.content, ''), 160) AS "contentPreview",
+          messages.provider,
+          messages.model,
+          messages.error IS NOT NULL AS error,
+          messages.tools IS NOT NULL AS tool,
+          messages.search IS NOT NULL AS search,
+          messages.agent_id AS "agentId",
+          messages.session_id AS "sessionId",
+          messages.user_id AS "userId",
+          messages.created_at AS "createdAt",
+          users.email AS "userEmail",
+          sessions.title AS "sessionTitle",
+          EXISTS (
+            SELECT 1
+            FROM messages_files
+            WHERE messages_files.message_id = messages.id
+            LIMIT 1
+          ) AS "attachmentRisk",
+          COALESCE(messages.content, '') ~* ${credentialRiskPattern} AS "credentialRisk",
+          COALESCE(messages.content, '') ~ ${confidentialRiskPattern} AS "confidentialRisk",
+          COALESCE(messages.content, '') ~ ${personalRiskPattern} AS "personalRisk",
+          COALESCE(messages.content, '') ~* ${sensitiveOperationRiskPattern} AS "sensitiveOperationRisk"
+        FROM messages
+        LEFT JOIN users ON users.id = messages.user_id
+        LEFT JOIN sessions ON sessions.id = messages.session_id
+        WHERE messages.created_at >= ${startAt}
+          AND messages.created_at <= ${endAt}
+          AND (
+            ${emailQuery || null}::text IS NULL
+            OR LOWER(COALESCE(users.email, users.normalized_email, messages.user_id)) LIKE ${emailQuery ? `%${emailQuery}%` : null}
+          )
+      ),
+      enriched AS (
+        SELECT
+          base.*,
+          CASE
+            WHEN base.error THEN 'error'
+            WHEN base.tool THEN 'tool'
+            WHEN base.search THEN 'search'
+            WHEN base."agentId" IS NOT NULL THEN 'agent'
+            ELSE 'chat'
+          END AS "featureType",
+          CASE
+            WHEN base."credentialRisk" OR base."confidentialRisk" THEN 'high'
+            WHEN base."personalRisk" OR base."sensitiveOperationRisk" THEN 'medium'
+            WHEN base."attachmentRisk" OR base.tool THEN 'low'
+            ELSE 'none'
+          END AS "riskLevel"
+        FROM base
       )
       SELECT
-        messages.id,
-        messages.role,
-        messages.content,
-        LEFT(COALESCE(messages.content, ''), 160) AS "contentPreview",
-        messages.provider,
-        messages.model,
-        messages.error IS NOT NULL AS error,
-        messages.tools IS NOT NULL AS tool,
-        messages.search IS NOT NULL AS search,
-        messages.agent_id AS "agentId",
-        messages.session_id AS "sessionId",
-        messages.user_id AS "userId",
-        messages.created_at AS "createdAt",
-        users.email AS "userEmail",
-        sessions.title AS "sessionTitle",
-        COALESCE(file_counts.file_count, 0) AS "fileCount"
-      FROM messages
-      LEFT JOIN users ON users.id = messages.user_id
-      LEFT JOIN sessions ON sessions.id = messages.session_id
-      LEFT JOIN file_counts ON file_counts.message_id = messages.id
-      WHERE messages.created_at >= ${startAt}
-        AND messages.created_at <= ${endAt}
+        enriched.id,
+        enriched.role,
+        enriched."contentPreview",
+        enriched.provider,
+        enriched.model,
+        enriched.error,
+        enriched.tool,
+        enriched.search,
+        enriched."agentId",
+        enriched."sessionId",
+        enriched."userId",
+        enriched."createdAt",
+        enriched."userEmail",
+        enriched."sessionTitle",
+        enriched."attachmentRisk",
+        enriched."credentialRisk",
+        enriched."confidentialRisk",
+        enriched."personalRisk",
+        enriched."sensitiveOperationRisk",
+        enriched."riskLevel",
+        (
+          SELECT COUNT(*)
+          FROM messages_files
+          WHERE messages_files.message_id = enriched.id
+        ) AS "fileCount"
+      FROM enriched
+      WHERE (${feature} = 'all' OR enriched."featureType" = ${feature})
         AND (
-          ${emailQuery || null}::text IS NULL
-          OR LOWER(COALESCE(users.email, users.normalized_email, messages.user_id)) LIKE ${emailQuery ? `%${emailQuery}%` : null}
+          ${riskLevel} = 'all'
+          OR enriched."riskLevel" = ${riskLevel}
         )
-      ORDER BY messages.created_at DESC
-      LIMIT ${QUERY_ITEM_LIMIT}
+      ORDER BY enriched."createdAt" DESC
+      LIMIT ${MAX_AUDIT_ITEMS}
     `);
 
     const items = result.rows
-      .map((row) => this.mapMessageRow(row as unknown as PlatformAuditMessageRow, false))
-      .filter((item) => feature === 'all' || getFeatureType(item) === feature)
-      .filter((item) => riskLevel === 'all' || item.riskLevel === riskLevel)
-      .slice(0, MAX_AUDIT_ITEMS);
+      .map((row) => this.mapMessageRow(row as unknown as PlatformAuditMessageRow, false));
 
     return {
       items,
@@ -254,6 +338,8 @@ export class PlatformAuditService {
     includeContent: boolean,
   ): PlatformAuditDetail => {
     const riskFlags = detectRiskFlags(row.content, row);
+    const dashboardRiskFlags = includeContent ? undefined : buildRiskFlagsFromRow(row);
+    const normalizedRiskFlags = dashboardRiskFlags ?? riskFlags;
     const item: PlatformAuditDetail = {
       agentId: row.agentId,
       contentPreview: row.contentPreview,
@@ -263,8 +349,8 @@ export class PlatformAuditService {
       id: row.id,
       model: row.model,
       provider: row.provider,
-      riskFlags,
-      riskLevel: normalizeRiskLevel(riskFlags),
+      riskFlags: normalizedRiskFlags,
+      riskLevel: row.riskLevel ?? normalizeRiskLevel(normalizedRiskFlags),
       role: row.role,
       search: row.search,
       sessionId: row.sessionId,
