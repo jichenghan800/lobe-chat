@@ -4,9 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT_DIR"
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-20260614}"
-TARGET_DIGEST="${TARGET_DIGEST:-sha256:2cf56274ed87e98c2594f966ce82b25082e3fc9f55b3cbac0d2a30c26927c8d7}"
-PACKAGE_NAME="${PACKAGE_NAME:-lobechat-prod-app-update-20260614-ui-env}"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-20260614}"
+TARGET_DIGEST="${TARGET_DIGEST:-sha256:1b3dea098b716856b1c9af94f0b8656251dbc533845651d87f0c2a8731571f66}"
+PACKAGE_NAME="${PACKAGE_NAME:-lobechat-prod-app-update-20260614-ui-env-models}"
 OUT_ROOT="${OUT_ROOT:-src/_custom/deploy/dist}"
 OUT_DIR="$OUT_ROOT/$PACKAGE_NAME"
 TARBALL="$OUT_ROOT/$PACKAGE_NAME.tar.gz"
@@ -69,7 +69,7 @@ Run on the production server:
 
 Notes:
 - The existing /opt/lobechat-main/.env stays on the production server.
-- 02-confirm-and-update-app.sh backs up .env before changing LOBECHAT_IMAGE.
+- 02-confirm-and-update-app.sh backs up .env before changing LOBECHAT_IMAGE and model exposure env values.
 - Only the compose app service image is pulled and restarted.
 - PostgreSQL and SearXNG images are not changed.
 - App startup runs Drizzle migrations automatically when DATABASE_DRIVER is set.

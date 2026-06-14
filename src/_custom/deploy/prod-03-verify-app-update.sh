@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-20260614}"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-20260614}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
 
@@ -50,8 +50,14 @@ const keys = [
   'NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS',
   'NEXT_PUBLIC_MODEL_VISIBLE_ALLOW',
   'NEXT_PUBLIC_MODEL_DISPLAY_NAMES',
+  'ENABLED_VERTEXAI',
+  'VERTEXAI_MODEL_LIST',
+  'ENABLED_AZURE_OPENAI',
   'AZURE_MODEL_LIST',
+  'ENABLED_VOLCENGINE',
   'VOLCENGINE_MODEL_LIST',
+  'ENABLED_QWEN',
+  'QWEN_MODEL_LIST',
   'COTTI_AUDIT_RISK_MODEL_PROVIDER',
   'COTTI_AUDIT_RISK_MODEL',
 ];
@@ -59,13 +65,29 @@ for (const key of keys) console.log(key + '=' + (process.env[key] ?? ''));
 "
 
 echo
-echo "== 4. App health =="
+echo "== 4. Provider credential presence =="
+docker exec "$APP_CONTAINER" /bin/node -e "
+const required = ['AZURE_API_KEY', 'VERTEXAI_CREDENTIALS', 'VOLCENGINE_API_KEY', 'QWEN_API_KEY'];
+const missing = [];
+for (const key of required) {
+  const present = Boolean(process.env[key]);
+  console.log(key + '=' + (present ? 'set' : 'missing'));
+  if (!present) missing.push(key);
+}
+if (missing.length > 0) {
+  console.error('Missing provider credentials: ' + missing.join(', '));
+  process.exit(2);
+}
+"
+
+echo
+echo "== 5. App health =="
 PORT="$(read_env LOBECHAT_PORT)"
 PORT="${PORT:-3210}"
 curl -fsSI --max-time 20 "http://127.0.0.1:${PORT}/" | sed -n '1,12p'
 
 echo
-echo "== 5. Migration and startup logs =="
+echo "== 6. Migration and startup logs =="
 docker logs --tail 200 "$APP_CONTAINER" | grep -E 'Start to migration|database migration pass|Ready|Gateway|migrate failed|ERROR|Error' || true
 docker logs --tail 200 "$APP_CONTAINER" | grep -q 'database migration pass' \
   || fail "database migration success log not found in recent app logs"
@@ -73,7 +95,7 @@ docker logs --tail 200 "$APP_CONTAINER" | grep -q 'Ready' \
   || fail "Next.js Ready log not found in recent app logs"
 
 echo
-echo "== 6. Database tables used by this release =="
+echo "== 7. Database tables used by this release =="
 POSTGRES_USER="$(read_env_default POSTGRES_USER paradedb)"
 POSTGRES_DB="$(read_env_default POSTGRES_DB lobehub)"
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \

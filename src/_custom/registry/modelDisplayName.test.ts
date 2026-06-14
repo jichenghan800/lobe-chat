@@ -14,6 +14,7 @@ describe('modelDisplayName', () => {
       getModelDisplayName('volcengine', 'doubao-seed-1.6-flash', 'Doubao Seed 1.6 Flash'),
     ).toBe('豆包1.6-Flash');
     expect(getModelDisplayName('qwen', 'qwen3.7-plus', 'Qwen3.7 Plus')).toBe('千问3.7-Plus');
+    expect(getModelDisplayName('azure', 'gpt-5.5', 'GPT-5.5')).toBe('全能效率');
   });
 
   it('normalizes provider model lists without dropping provider fields', () => {
@@ -36,6 +37,11 @@ describe('modelDisplayName', () => {
         id: 'qwen',
         name: 'Aliyun Bailian',
       },
+      {
+        children: [{ displayName: 'GPT-5.5', id: 'gpt-5.5' }],
+        id: 'azure',
+        name: 'Azure OpenAI',
+      },
     ]);
 
     expect(providers).toEqual([
@@ -56,6 +62,11 @@ describe('modelDisplayName', () => {
         children: [{ displayName: '千问3.7-Plus', id: 'qwen3.7-plus' }],
         id: 'qwen',
         name: 'Aliyun Bailian',
+      },
+      {
+        children: [{ displayName: '全能效率', id: 'gpt-5.5' }],
+        id: 'azure',
+        name: 'Azure OpenAI',
       },
     ]);
   });

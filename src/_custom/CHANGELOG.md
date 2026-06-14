@@ -53,8 +53,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Runtime/source defaults expose `COTTI-快速` on `vertexai/gemini-3.1-flash-lite`,
   `COTTI-专业` on `vertexai/gemini-3.5-flash`, and `豆包1.6-Flash` on
   `volcengine/doubao-seed-1.6-flash`.
-- Runtime env defaults `DEFAULT_AGENT_CONFIG` to `vertexai/gemini-3.1-flash-lite` and removes
-  the public `全能效率` chat entry from the model switch allow list.
+- Runtime env defaults `DEFAULT_AGENT_CONFIG` to `vertexai/gemini-3.1-flash-lite` and exposes five
+  public chat models in order: `COTTI-快速`, `COTTI-专业`, `豆包1.6-Flash`, `千问3.7-Plus`, and
+  `全能效率`.
 - Runtime/source defaults add `豆包1.6-Flash` on `volcengine/doubao-seed-1.6-flash`, backed by the
   existing OpenAI-compatible Volcengine runtime and the built-in deployment mapping to
   `doubao-seed-1-6-flash-250828`.
@@ -68,6 +69,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   model and provider calls handled by the existing Qwen Chat Completions payload mapping.
 - Qwen env model declaration explicitly exposes reasoning, vision, function calling, and search
   capabilities; detailed thinking/search behavior remains on the upstream provider path.
+- Production update scripts synchronize `VERTEXAI_MODEL_LIST`, `QWEN_MODEL_LIST`,
+  `AZURE_MODEL_LIST`, and `VOLCENGINE_MODEL_LIST` with the public allow list so all five chat models
+  are available after deployment when provider credentials are present.
 - Home starter label now shows a lightweight safety reminder:
   `安全提醒：平台安全可控但非100%无风险，对话将用于合规审计；请勿处理公司机密或敏感信息。`
 - Default reasoning controls now start at low intensity (`thinkingLevel=low`,

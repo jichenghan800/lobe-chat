@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-20260614}"
-TARGET_DIGEST="${TARGET_DIGEST:-sha256:2cf56274ed87e98c2594f966ce82b25082e3fc9f55b3cbac0d2a30c26927c8d7}"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-20260614}"
+TARGET_DIGEST="${TARGET_DIGEST:-sha256:1b3dea098b716856b1c9af94f0b8656251dbc533845651d87f0c2a8731571f66}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
 
@@ -106,12 +106,18 @@ set_env .env NEXT_PUBLIC_HOME_STARTER_HIDE_VIDEO "1"
 set_env .env NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS "deepseek-v4-pro,image,image2,video"
 set_env .env NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS "messengerBanner,botIntegrationBanner"
 
-set_env .env NEXT_PUBLIC_MODEL_VISIBLE_ALLOW "vertexai/gemini-3.1-flash-lite,vertexai/gemini-3.5-flash,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus"
-set_env .env NEXT_PUBLIC_MODEL_DISPLAY_NAMES "vertexai/gemini-3.1-flash-lite=COTTI-快速,vertexai/gemini-3.5-flash=COTTI-专业,volcengine/doubao-seed-1.6-flash=豆包1.6-Flash,qwen/qwen3.7-plus=千问3.7-Plus"
+set_env .env NEXT_PUBLIC_MODEL_VISIBLE_ALLOW "vertexai/gemini-3.1-flash-lite,vertexai/gemini-3.5-flash,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus,azure/gpt-5.5"
+set_env .env NEXT_PUBLIC_MODEL_DISPLAY_NAMES "vertexai/gemini-3.1-flash-lite=COTTI-快速,vertexai/gemini-3.5-flash=COTTI-专业,volcengine/doubao-seed-1.6-flash=豆包1.6-Flash,qwen/qwen3.7-plus=千问3.7-Plus,azure/gpt-5.5=全能效率"
 set_env .env NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW "vertexai/gemini-*,google/gemini-*,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus"
 
-set_env .env AZURE_MODEL_LIST "-all,+gpt-image-2=GPT Image 2"
+set_env .env ENABLED_VERTEXAI "1"
+set_env .env VERTEXAI_MODEL_LIST "-all,gemini-3.1-flash-lite=COTTI-快速<1114112:reasoning:vision:fc:video:search>,gemini-3.5-flash=COTTI-专业<1114112:reasoning:vision:fc:video:search>,gemini-3.1-flash-image-preview:image=Nano Banana 2"
+set_env .env ENABLED_AZURE_OPENAI "1"
+set_env .env AZURE_MODEL_LIST "-all,+gpt-image-2=GPT Image 2,+gpt-5.5=全能效率<1050000:reasoning:vision:fc>"
+set_env .env ENABLED_VOLCENGINE "1"
 set_env .env VOLCENGINE_MODEL_LIST "-all,+doubao-seed-1.6-flash=豆包1.6-Flash,+doubao-seedream-5-0-260128=Seedream 5.0 Lite"
+set_env .env ENABLED_QWEN "1"
+set_env .env QWEN_MODEL_LIST "-all,+qwen3.7-plus=千问3.7-Plus<262144:reasoning:vision:fc:search>"
 set_env .env COTTI_AUDIT_RISK_MODEL_PROVIDER "vertexai"
 set_env .env COTTI_AUDIT_RISK_MODEL "gemini-3.1-flash-lite"
 set_env .env LOBECHAT_IMAGE "$TARGET_IMAGE"
