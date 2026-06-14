@@ -74,6 +74,30 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   `reasoningEffort=low`) and user memory defaults to disabled at both agent and global settings
   levels.
 
+### Image Generation Exposure
+
+- Runtime env: expose only `doubao-seedream-5-0-260128=Seedream 5.0 Lite` as the Volcengine image
+  model, alongside the existing `豆包1.6-Flash` chat model.
+- Runtime env: expose Azure `gpt-image-2=GPT Image 2` again through `AZURE_MODEL_LIST`, using the
+  existing dedicated `AZURE_IMAGE_*` runtime override.
+- Runtime env: set `NEXT_PUBLIC_NAV_HIDE_IMAGE=0` and `NEXT_PUBLIC_HOME_STARTER_HIDE_IMAGE=0` so the
+  image generation entry is visible.
+- Runtime env: set `FEATURE_FLAGS=+ai_image` and remove `starterList` from
+  `NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS` so the home `New` shortcut row is visible.
+- Runtime env: keep `image` and `image2` hidden from `NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS`
+  so the home `New` shortcut row does not show duplicate image shortcuts.
+- Runtime behavior: when the hidden starter is enabled, home image starter opens
+  `/image?model=doubao-seedream-5-0-260128&provider=volcengine`.
+- Runtime behavior: when the hidden starter is enabled, home `New` shortcuts include a GPT Image 2
+  button that opens
+  `/image?model=gpt-image-2&provider=azure`.
+- Runtime behavior: keep the home recommendation block visible.
+- Runtime behavior: render the home security reminder as two explicit lines.
+- Boundary: image generation count remains fixed at one output through the existing
+  `COTTI_FIXED_IMAGE_GENERATION_COUNT` customization.
+- Runtime behavior: hide video generation from the image/video mode switch when
+  `NEXT_PUBLIC_NAV_HIDE_VIDEO=1`, and redirect direct `/video` access back to `/image`.
+
 ## 2026-06-01
 
 ### Platform Analytics

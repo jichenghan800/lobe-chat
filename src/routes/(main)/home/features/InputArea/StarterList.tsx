@@ -1,4 +1,4 @@
-import { DeepSeek, Jimeng, OpenAI } from '@lobehub/icons';
+import { DeepSeek, Doubao, Jimeng, OpenAI } from '@lobehub/icons';
 import { type ButtonProps } from '@lobehub/ui';
 import { Button, Center, Tag, Tooltip } from '@lobehub/ui';
 import { App } from 'antd';
@@ -15,7 +15,7 @@ import { agentByIdSelectors } from '@/store/agent/selectors';
 import { useResolvedHomeAgentId } from '../AgentSelect/useResolvedHomeAgentId';
 import { DEEPSEEK_V4_PRO_MODEL, DEEPSEEK_V4_PRO_PROVIDER } from './starterModels';
 
-type StarterKey = 'image' | 'video' | 'deepseek-v4-pro';
+type StarterKey = 'image' | 'image2' | 'video' | 'deepseek-v4-pro';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   button: css`
@@ -35,7 +35,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     border-radius: 999px !important;
     line-height: 1.6 !important;
     text-align: center;
-    white-space: normal !important;
+    white-space: pre-line !important;
   `,
   root: css`
     flex-wrap: wrap;
@@ -44,6 +44,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 type StarterTitleKey =
   | 'starter.imageGeneration'
+  | 'starter.image2Generation'
   | 'starter.videoGeneration'
   | 'starter.deepseekV4Pro';
 
@@ -70,9 +71,14 @@ const StarterList = memo(() => {
         titleKey: 'starter.deepseekV4Pro',
       },
       {
-        icon: OpenAI.Avatar,
+        icon: Doubao.Avatar,
         key: 'image',
         titleKey: 'starter.imageGeneration',
+      },
+      {
+        icon: OpenAI.Avatar,
+        key: 'image2',
+        titleKey: 'starter.image2Generation',
       },
       {
         icon: Jimeng.Avatar,
@@ -92,6 +98,11 @@ const StarterList = memo(() => {
       }
 
       if (key === 'image') {
+        navigate('/image?model=doubao-seedream-5-0-260128&provider=volcengine');
+        return;
+      }
+
+      if (key === 'image2') {
         navigate('/image?model=gpt-image-2&provider=azure');
         return;
       }

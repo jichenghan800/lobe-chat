@@ -8,6 +8,7 @@ import {
   type DailyBriefRecommendationsUIState,
   useDailyBriefRecommendationsUI,
 } from '@/business/client/useDailyBriefRecommendationsUI';
+import { isHomeBlockHidden } from '@/_custom/registry/homeVisibility';
 
 import { useEligibleActions } from './hooks/useEligibleActions';
 import { RecommendationCard } from './RecommendationCard';
@@ -19,6 +20,8 @@ const isTaskTemplatesVisible = (state: DailyBriefRecommendationsUIState): boolea
 export const useRecommendationsVisible = (): boolean => {
   const taskTemplatesState = useDailyBriefRecommendationsUI();
   const { actions } = useEligibleActions();
+  if (isHomeBlockHidden('recommendations')) return false;
+
   return actions.length > 0 || isTaskTemplatesVisible(taskTemplatesState);
 };
 
@@ -29,6 +32,7 @@ const Recommendations = memo(() => {
   const { actions } = useEligibleActions();
 
   const showTaskTemplates = isTaskTemplatesVisible(taskTemplatesState);
+  if (isHomeBlockHidden('recommendations')) return null;
   if (actions.length === 0 && !showTaskTemplates) return null;
 
   return (

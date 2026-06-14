@@ -53,8 +53,9 @@
   "starter.deepseekV4ProSwitched": "Switched to DeepSeek V4 Pro",
   "starter.developing": "Coming soon",
   "starter.image": "Image",
-  "starter.imageGeneration": "GPT Image 2",
-  "starter.newLabel": "Security reminder: the platform is secure and controlled. Conversations may be used for compliance audit.",
+  "starter.image2Generation": "GPT Image 2",
+  "starter.imageGeneration": "Seedream 5.0 Lite",
+  "starter.newLabel": "Security reminder: the platform is secure and controlled, but not 100% risk-free. Conversations may be used for compliance audit.\nDo not process company confidential or sensitive information.",
   "starter.videoGeneration": "Seedance 2.0",
   "starter.write": "Write"
 }
