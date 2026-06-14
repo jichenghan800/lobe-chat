@@ -14,6 +14,7 @@ import { DEFAULT_MODEL_PROVIDER_LIST } from 'model-bank/modelProviders';
 import pMap from 'p-map';
 
 import { normalizeModelBuiltinSearch } from '@/_custom/registry/modelBuiltinSearch';
+import { isModelVisible } from '@/_custom/registry/modelVisibility';
 import { merge, mergeArrayById } from '@/utils/merge';
 
 import { AiModelModel } from '../../models/aiModel';
@@ -23,6 +24,16 @@ import type { LobeChatDatabase } from '../../type';
 type DecryptUserKeyVaults = (encryptKeyVaultsStr: string | null) => Promise<any>;
 
 const normalizeProvider = (provider: string) => provider.toLowerCase();
+
+const resolveCottiPublicModelEnabled = (
+  providerId: string,
+  modelId: string,
+  enabled: boolean | null | undefined,
+) => {
+  if (isModelVisible(providerId, modelId)) return true;
+
+  return enabled;
+};
 
 /**
  * Provider-level search defaults (only used when built-in models don't provide settings.searchImpl and settings.searchProvider)
@@ -215,6 +226,7 @@ export class AiInfraRepos {
               return normalizeCustomSearchSettings(provider.id, {
                 ...item,
                 abilities: item.abilities || {},
+                enabled: resolveCottiPublicModelEnabled(provider.id, item.id, item.enabled),
                 providerId: provider.id,
               });
 
@@ -227,7 +239,11 @@ export class AiInfraRepos {
                   ? user.contextWindowTokens
                   : item.contextWindowTokens,
               displayName: user?.displayName || item.displayName,
-              enabled: typeof user.enabled === 'boolean' ? user.enabled : item.enabled,
+              enabled: resolveCottiPublicModelEnabled(
+                provider.id,
+                item.id,
+                typeof user.enabled === 'boolean' ? user.enabled : item.enabled,
+              ),
               id: item.id,
               providerId: provider.id,
               settings: isEmpty(user.settings)
@@ -253,9 +269,17 @@ export class AiInfraRepos {
       .filter((item) => {
         if (item.providerId === BRANDING_PROVIDER) return false;
         if (builtinModelKeys.has(`${item.providerId}:${item.id}`)) return false;
-        return filterEnabled ? enabledProviderIds.has(item.providerId) && item.enabled : true;
+        return filterEnabled
+          ? enabledProviderIds.has(item.providerId) &&
+              resolveCottiPublicModelEnabled(item.providerId, item.id, item.enabled)
+          : true;
       })
-      .map((item) => normalizeCustomSearchSettings(item.providerId, item));
+      .map((item) =>
+        normalizeCustomSearchSettings(item.providerId, {
+          ...item,
+          enabled: resolveCottiPublicModelEnabled(item.providerId, item.id, item.enabled),
+        }),
+      );
 
     return [...builtinModels, ...appendedUserModels].sort(
       (a, b) => (a?.sort ?? Infinity) - (b?.sort ?? Infinity),

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-20260614}"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
 

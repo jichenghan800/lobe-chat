@@ -98,6 +98,60 @@ describe('AiInfraRepos', () => {
       );
     });
 
+    it('keeps Cotti public allow-list models enabled even when user model config disables them', async () => {
+      const mockProviders = [
+        { enabled: true, id: 'azure', name: 'Azure OpenAI', sort: 1, source: 'builtin' as const },
+      ];
+
+      const mockAllModels = [
+        {
+          enabled: false,
+          id: 'gpt-5.5',
+          providerId: 'azure',
+          type: 'chat' as const,
+        },
+        {
+          enabled: false,
+          id: 'hidden-azure',
+          providerId: 'azure',
+          type: 'chat' as const,
+        },
+      ];
+
+      vi.spyOn(repo, 'getAiProviderList').mockResolvedValue(mockProviders);
+      vi.spyOn(repo.aiModelModel, 'getAllModels').mockResolvedValue(mockAllModels);
+      vi.spyOn(repo as any, 'fetchBuiltinModels').mockResolvedValue([
+        {
+          displayName: 'GPT-5.5',
+          enabled: true,
+          id: 'gpt-5.5',
+          type: 'chat' as const,
+        },
+        {
+          displayName: 'Hidden Azure',
+          enabled: true,
+          id: 'hidden-azure',
+          type: 'chat' as const,
+        },
+      ]);
+
+      const result = await repo.getEnabledModels();
+
+      expect(result).toContainEqual(
+        expect.objectContaining({
+          enabled: true,
+          id: 'gpt-5.5',
+          providerId: 'azure',
+        }),
+      );
+      expect(result).not.toContainEqual(
+        expect.objectContaining({
+          id: 'hidden-azure',
+          providerId: 'azure',
+        }),
+      );
+    });
+
     it('should handle case when user model not found', async () => {
       const mockProviders = [
         { enabled: true, id: 'openai', name: 'OpenAI', sort: 1, source: 'builtin' as const },

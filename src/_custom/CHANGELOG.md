@@ -72,6 +72,10 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Production update scripts synchronize `VERTEXAI_MODEL_LIST`, `QWEN_MODEL_LIST`,
   `AZURE_MODEL_LIST`, and `VOLCENGINE_MODEL_LIST` with the public allow list so all five chat models
   are available after deployment when provider credentials are present.
+- Runtime behavior: Cotti public model allow-list entries stay enabled even if a database model
+  override has `enabled=false`, keeping development and production model switchers aligned at five
+  chat models when provider credentials are present.
+- Settings UI: the `平台管理` group is expanded by default in the settings sidebar.
 - Home starter label now shows a lightweight safety reminder:
   `安全提醒：平台安全可控但非100%无风险，对话将用于合规审计；请勿处理公司机密或敏感信息。`
 - Default reasoning controls now start at low intensity (`thinkingLevel=low`,

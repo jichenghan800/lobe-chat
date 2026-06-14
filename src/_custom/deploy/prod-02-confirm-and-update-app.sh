@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-20260614}"
-TARGET_DIGEST="${TARGET_DIGEST:-sha256:1b3dea098b716856b1c9af94f0b8656251dbc533845651d87f0c2a8731571f66}"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}"
+TARGET_DIGEST="${TARGET_DIGEST:-sha256:01a1ade52b127fa116a3acd67710c3444efacb46e1e39e158daf49f26bf38f0d}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
 
