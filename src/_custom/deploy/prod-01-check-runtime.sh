@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-20260614-613876cc}"
+TARGET_DIGEST="${TARGET_DIGEST:-sha256:0144d6ca270f5397f09103506d4f48e43d32ca52d808f4c8e8088dc585b2af47}"
+DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
+
+cd "$DEPLOY_DIR"
+
+read_env() {
+  local key="$1"
+  awk -F= -v key="$key" '$1 == key { print substr($0, index($0, "=") + 1); exit }' .env
+}
+
+read_env_default() {
+  local key="$1"
+  local default_value="$2"
+  local value
+  value="$(read_env "$key")"
+  printf '%s' "${value:-$default_value}"
+}
+
+mask_value() {
+  local value="$1"
+  if [[ -z "$value" ]]; then
+    printf '(empty)'
+  else
+    printf 'set(length=%s)' "${#value}"
+  fi
+}
+
+require_file() {
+  local file="$1"
+  if [[ ! -f "$file" ]]; then
+    echo "Missing required file: $DEPLOY_DIR/$file" >&2
+    exit 1
+  fi
+}
+
+require_command() {
+  local command_name="$1"
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    echo "Missing command: $command_name" >&2
+    exit 1
+  fi
+}
+
+echo "== 1. Host and Docker runtime =="
+hostname
+date '+%Y-%m-%d %H:%M:%S %z'
+df -h / /var/lib/docker 2>/dev/null || df -h
+free -h || true
+
+require_command docker
+docker version --format 'Docker client={{.Client.Version}} server={{.Server.Version}}'
+docker compose version
+
+echo
+echo "== 2. Required deployment files =="
+require_file .env
+require_file docker-compose.prod.yml
+ls -l .env docker-compose.prod.yml
+
+echo
+echo "== 3. Sanitized env check =="
+for key in \
+  LOBECHAT_IMAGE LOBECHAT_BIND LOBECHAT_PORT \
+  POSTGRES_USER POSTGRES_DB POSTGRES_PASSWORD DATABASE_DRIVER \
+  APP_URL AUTH_TRUSTED_ORIGINS KEY_VAULTS_SECRET \
+  NEXT_PUBLIC_NAV_HIDE_IMAGE NEXT_PUBLIC_NAV_HIDE_VIDEO \
+  COTTI_AUDIT_RISK_MODEL_PROVIDER COTTI_AUDIT_RISK_MODEL; do
+  value="$(read_env "$key")"
+  case "$key" in
+    POSTGRES_PASSWORD|KEY_VAULTS_SECRET|AUTH_TRUSTED_ORIGINS)
+      printf '%s=%s\n' "$key" "$(mask_value "$value")"
+      ;;
+    *)
+      printf '%s=%s\n' "$key" "${value:-'(empty)'}"
+      ;;
+  esac
+done
+
+echo
+echo "== 4. Compose render check =="
+docker compose -f docker-compose.prod.yml --env-file .env config >/tmp/lobechat-compose-prod.rendered.yml
+echo "Rendered compose written to /tmp/lobechat-compose-prod.rendered.yml"
+docker compose -f docker-compose.prod.yml --env-file .env ps || true
+
+echo
+echo "== 5. Current containers =="
+docker ps -a \
+  --filter name='lobechat' \
+  --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' || true
+
+echo
+echo "== 6. Registry access check =="
+echo "Target image: $TARGET_IMAGE"
+echo "Expected pushed digest: $TARGET_DIGEST"
+docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
+echo "Registry manifest is readable: /tmp/lobechat-target-manifest.json"
+
+echo
+echo "== 7. Database readiness check =="
+if docker compose -f docker-compose.prod.yml --env-file .env ps postgresql >/dev/null 2>&1; then
+  docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
+    pg_isready -U "$(read_env_default POSTGRES_USER paradedb)" -d "$(read_env_default POSTGRES_DB lobehub)"
+else
+  echo "postgresql service is not available through this compose file"
+fi
+
+echo
+echo "Precheck passed. No changes were made."
