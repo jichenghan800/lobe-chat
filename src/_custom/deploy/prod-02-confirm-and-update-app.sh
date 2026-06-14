@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-20260614-613876cc}"
-TARGET_DIGEST="${TARGET_DIGEST:-sha256:0144d6ca270f5397f09103506d4f48e43d32ca52d808f4c8e8088dc585b2af47}"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-20260614}"
+TARGET_DIGEST="${TARGET_DIGEST:-sha256:2cf56274ed87e98c2594f966ce82b25082e3fc9f55b3cbac0d2a30c26927c8d7}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
 
@@ -78,10 +78,11 @@ echo "No manual DML script is required for this release."
 echo
 echo "== Planned actions =="
 echo "1. Backup .env into backups/"
-echo "2. Set LOBECHAT_IMAGE to the target image"
-echo "3. docker compose pull app"
-echo "4. docker compose up -d app"
-echo "5. Show app status and recent logs"
+echo "2. Sync image/chat model exposure env values"
+echo "3. Set LOBECHAT_IMAGE to the target image"
+echo "4. docker compose pull app"
+echo "5. docker compose up -d app"
+echo "6. Show app status and recent logs"
 
 if [[ "${AUTO_APPROVE:-0}" != "1" ]]; then
   echo
@@ -97,6 +98,22 @@ BACKUP_FILE="backups/.env.$(date +%Y%m%d%H%M%S)"
 cp .env "$BACKUP_FILE"
 echo "Backed up .env to $BACKUP_FILE"
 
+set_env .env AI_IMAGE_DEFAULT_IMAGE_NUM "1"
+set_env .env NEXT_PUBLIC_NAV_HIDE_IMAGE "0"
+set_env .env NEXT_PUBLIC_HOME_STARTER_HIDE_IMAGE "0"
+set_env .env NEXT_PUBLIC_NAV_HIDE_VIDEO "1"
+set_env .env NEXT_PUBLIC_HOME_STARTER_HIDE_VIDEO "1"
+set_env .env NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS "deepseek-v4-pro,image,image2,video"
+set_env .env NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS "messengerBanner,botIntegrationBanner"
+
+set_env .env NEXT_PUBLIC_MODEL_VISIBLE_ALLOW "vertexai/gemini-3.1-flash-lite,vertexai/gemini-3.5-flash,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus"
+set_env .env NEXT_PUBLIC_MODEL_DISPLAY_NAMES "vertexai/gemini-3.1-flash-lite=COTTI-快速,vertexai/gemini-3.5-flash=COTTI-专业,volcengine/doubao-seed-1.6-flash=豆包1.6-Flash,qwen/qwen3.7-plus=千问3.7-Plus"
+set_env .env NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW "vertexai/gemini-*,google/gemini-*,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus"
+
+set_env .env AZURE_MODEL_LIST "-all,+gpt-image-2=GPT Image 2"
+set_env .env VOLCENGINE_MODEL_LIST "-all,+doubao-seed-1.6-flash=豆包1.6-Flash,+doubao-seedream-5-0-260128=Seedream 5.0 Lite"
+set_env .env COTTI_AUDIT_RISK_MODEL_PROVIDER "vertexai"
+set_env .env COTTI_AUDIT_RISK_MODEL "gemini-3.1-flash-lite"
 set_env .env LOBECHAT_IMAGE "$TARGET_IMAGE"
 
 echo

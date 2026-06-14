@@ -32,11 +32,9 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     font-weight: 600;
     line-height: 1.2;
   `,
-  staticMode: css`
+  staticLabel: css`
     height: 36px;
-    padding-inline: 11px;
-    border-radius: ${cssVar.borderRadius}px;
-    background: ${cssVar.colorFillTertiary};
+    color: ${cssVar.colorText};
   `,
 }));
 
@@ -123,7 +121,7 @@ const GenerationMediaModeSegment = memo<GenerationMediaModeSegmentProps>(
       }
 
       return (
-        <Flexbox horizontal align="center" className={styles.staticMode} gap={6}>
+        <Flexbox horizontal align="center" className={styles.staticLabel} gap={6}>
           <Icon icon={ImageIcon} size={16} />
           <span style={{ whiteSpace: 'nowrap' }}>{imageLabel}</span>
         </Flexbox>

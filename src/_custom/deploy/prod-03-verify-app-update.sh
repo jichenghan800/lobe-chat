@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-20260614-613876cc}"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-20260614}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
 
@@ -48,6 +48,10 @@ const keys = [
   'NEXT_PUBLIC_HOME_STARTER_HIDE_VIDEO',
   'NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS',
   'NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS',
+  'NEXT_PUBLIC_MODEL_VISIBLE_ALLOW',
+  'NEXT_PUBLIC_MODEL_DISPLAY_NAMES',
+  'AZURE_MODEL_LIST',
+  'VOLCENGINE_MODEL_LIST',
   'COTTI_AUDIT_RISK_MODEL_PROVIDER',
   'COTTI_AUDIT_RISK_MODEL',
 ];

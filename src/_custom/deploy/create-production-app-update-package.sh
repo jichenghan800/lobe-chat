@@ -4,9 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT_DIR"
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-20260614-613876cc}"
-TARGET_DIGEST="${TARGET_DIGEST:-sha256:0144d6ca270f5397f09103506d4f48e43d32ca52d808f4c8e8088dc585b2af47}"
-PACKAGE_NAME="${PACKAGE_NAME:-lobechat-prod-app-update-20260614-613876cc}"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-20260614}"
+TARGET_DIGEST="${TARGET_DIGEST:-sha256:2cf56274ed87e98c2594f966ce82b25082e3fc9f55b3cbac0d2a30c26927c8d7}"
+PACKAGE_NAME="${PACKAGE_NAME:-lobechat-prod-app-update-20260614-ui-env}"
 OUT_ROOT="${OUT_ROOT:-src/_custom/deploy/dist}"
 OUT_DIR="$OUT_ROOT/$PACKAGE_NAME"
 TARBALL="$OUT_ROOT/$PACKAGE_NAME.tar.gz"
