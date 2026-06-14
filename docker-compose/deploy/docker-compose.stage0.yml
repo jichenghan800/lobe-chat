@@ -1,0 +1,26 @@
+name: lobehub
+
+services:
+  app:
+    image: ${LOBECHAT_STAGE0_IMAGE:-lobehub-cotti:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}
+    container_name: lobehub-v221-official-stage0
+    restart: unless-stopped
+    env_file:
+      - /opt/lobechat-main/.env
+    ports:
+      - "3210:3210"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "node -e \"fetch('http://127.0.0.1:3210/').then((res) => process.exit(res.status < 500 ? 0 : 1)).catch(() => process.exit(1))\""
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - default
+
+networks:
+  default:
+    name: lobehub_default
+    external: true
