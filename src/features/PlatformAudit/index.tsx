@@ -26,10 +26,16 @@ import type {
   PlatformAuditItem,
   PlatformAuditQuery,
   PlatformAuditRange,
+  PlatformAuditRiskAnalysis,
   PlatformAuditRiskLevel,
 } from '@/types/platformAudit';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
+  analysisCell: css`
+    min-width: 0;
+    max-height: 58px;
+    overflow: hidden;
+  `,
   content: css`
     max-height: 48vh;
     overflow: auto;
@@ -43,21 +49,89 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
     background: ${cssVar.colorFillQuaternary};
   `,
+  filterBar: css`
+    padding: 10px;
+    border: 1px solid ${cssVar.colorBorderSecondary};
+    border-radius: 8px;
+
+    background: ${cssVar.colorBgContainer};
+  `,
+  filterItem: css`
+    min-width: 0;
+  `,
   metric: css`
-    min-width: 160px;
-    padding: 14px;
+    min-width: 0;
+    padding: 12px;
     border: 1px solid ${cssVar.colorBorderSecondary};
     border-radius: 8px;
     background: ${cssVar.colorBgContainer};
   `,
+  metricGrid: css`
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+    gap: 10px;
+  `,
+  metricIcon: css`
+    display: grid;
+    place-items: center;
+
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+
+    color: ${cssVar.colorTextSecondary};
+    background: ${cssVar.colorFillTertiary};
+  `,
   muted: css`
     color: ${cssVar.colorTextDescription};
   `,
+  messagePreview: css`
+    overflow: hidden;
+    display: -webkit-box;
+
+    max-height: 60px;
+
+    line-height: 20px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  `,
+  notice: css`
+    padding: 10px 12px;
+    border: 1px solid ${cssVar.colorBorderSecondary};
+    border-radius: 8px;
+
+    background: ${cssVar.colorFillQuaternary};
+  `,
+  riskTags: css`
+    min-width: 0;
+  `,
   table: css`
+    :where(.ant-table) {
+      table-layout: fixed;
+    }
+
     :where(.ant-table-cell) {
+      vertical-align: top;
+
+      padding: 9px 8px !important;
+
       white-space: normal;
       word-break: break-word;
     }
+
+    :where(.ant-table-thead > tr > th) {
+      white-space: nowrap;
+    }
+
+    :where(.ant-tag) {
+      margin-inline-end: 0;
+    }
+  `,
+  tableMeta: css`
+    padding-block: 2px 8px;
   `,
 }));
 
@@ -93,10 +167,35 @@ const riskColor: Record<PlatformAuditRiskLevel, string> = {
 };
 
 const riskLabel: Record<PlatformAuditRiskLevel, string> = {
+  high: '高风险',
+  low: '低风险',
+  medium: '中风险',
+  none: '无风险',
+};
+
+const riskShortLabel: Record<PlatformAuditRiskLevel, string> = {
   high: '高',
   low: '低',
   medium: '中',
   none: '无',
+};
+
+const normalizeAnalysisRiskLevel = (
+  riskLevel?: null | string,
+): PlatformAuditRiskLevel =>
+  riskLevel === 'high' || riskLevel === 'medium' || riskLevel === 'low' || riskLevel === 'none'
+    ? riskLevel
+    : 'none';
+
+const buildAnalysisRiskFlags = (analysis: PlatformAuditRiskAnalysis) => {
+  const riskLevel = normalizeAnalysisRiskLevel(analysis.riskLevel);
+  if (riskLevel === 'none') return [];
+
+  return analysis.riskLabels.map((label) => ({
+    key: `ai_${label}`,
+    label,
+    level: riskLevel,
+  }));
 };
 
 const formatDateTime = (value: string) =>
@@ -141,14 +240,16 @@ const MetricCard = memo<{
   title: string;
   value?: number;
 }>(({ icon, title, value = 0 }) => (
-  <Flexbox className={styles.metric} gap={8}>
+  <Flexbox className={styles.metric} gap={10}>
     <Flexbox horizontal align="center" gap={8}>
-      <Icon icon={icon} size={16} />
-      <Text className={styles.muted} fontSize={13}>
+      <div className={styles.metricIcon}>
+        <Icon icon={icon} size={15} />
+      </div>
+      <Text className={styles.muted} fontSize={12}>
         {title}
       </Text>
     </Flexbox>
-    <Text fontSize={24} weight={600}>
+    <Text fontSize={22} weight={600}>
       {value.toLocaleString('zh-CN')}
     </Text>
   </Flexbox>
@@ -210,7 +311,16 @@ const PlatformAudit = memo(() => {
       setAnalysisLoadingId(record.id);
       try {
         const analysis = await platformAuditService.analyzeMessageRisk(record.id, force);
-        setActiveDetail((detail) => (detail?.id === record.id ? { ...detail, analysis } : detail));
+        setActiveDetail((detail) =>
+          detail?.id === record.id
+            ? {
+                ...detail,
+                analysis,
+                riskFlags: buildAnalysisRiskFlags(analysis),
+                riskLevel: normalizeAnalysisRiskLevel(analysis.riskLevel),
+              }
+            : detail,
+        );
         await refreshDashboard();
         void message.success('疑点提取已完成');
       } catch (error) {
@@ -228,19 +338,28 @@ const PlatformAudit = memo(() => {
         dataIndex: 'createdAt',
         render: formatDateTime,
         title: '时间',
-        width: 112,
+        width: 102,
       },
       {
-        render: (_, record) => (
-          <Flexbox gap={2}>
-            <Text ellipsis>{record.userEmail || record.userId}</Text>
-            <Text ellipsis className={styles.muted} fontSize={12}>
-              {record.sessionTitle || record.sessionId || '-'}
-            </Text>
-          </Flexbox>
-        ),
-        title: '用户 / 会话',
-        width: 220,
+        render: (_, record) => {
+          const user = record.userEmail || record.userId;
+          const session = record.sessionTitle || record.sessionId;
+
+          return (
+            <Flexbox gap={2}>
+              <Text ellipsis title={user}>
+                {user}
+              </Text>
+              {session && (
+                <Text ellipsis className={styles.muted} fontSize={12} title={session}>
+                  {session}
+                </Text>
+              )}
+            </Flexbox>
+          );
+        },
+        title: '用户',
+        width: 164,
       },
       {
         render: (_, record) => (
@@ -254,20 +373,20 @@ const PlatformAudit = memo(() => {
           </Space>
         ),
         title: '类型',
-        width: 190,
+        width: 118,
       },
       {
         render: (_, record) => (
           <Text ellipsis>{[record.provider, record.model].filter(Boolean).join('/') || '-'}</Text>
         ),
         title: '模型',
-        width: 180,
+        width: 64,
       },
       {
         render: (_, record) => (
           <Flexbox gap={4}>
-            <Tag color={riskColor[record.riskLevel]}>{riskLabel[record.riskLevel]}</Tag>
-            <Space wrap size={4}>
+            <Tag color={riskColor[record.riskLevel]}>{riskShortLabel[record.riskLevel]}</Tag>
+            <Space wrap className={styles.riskTags} size={4}>
               {record.riskFlags.map((flag) => (
                 <Tag key={flag.key}>{flag.label}</Tag>
               ))}
@@ -275,28 +394,29 @@ const PlatformAudit = memo(() => {
           </Flexbox>
         ),
         title: '风险',
-        width: 210,
+        width: 58,
       },
       {
         dataIndex: 'contentPreview',
-        render: (value?: string | null) => value || <Text className={styles.muted}>-</Text>,
+        render: (value?: string | null) =>
+          value ? (
+            <div className={styles.messagePreview} title={value}>
+              {value}
+            </div>
+          ) : (
+            <Text className={styles.muted}>-</Text>
+        ),
         title: '消息预览',
+        width: 274,
       },
       {
         render: (_, record) => {
           const analysis = record.analysis;
           if (!analysis) {
             return record.riskLevel === 'none' ? (
-              <Text className={styles.muted}>-</Text>
+              <Tag color="success">普通消息</Tag>
             ) : (
-              <Button
-                icon={<Icon icon={Sparkles} size={14} />}
-                loading={analysisLoadingId === record.id}
-                size="small"
-                onClick={() => handleAnalyzeRisk(record)}
-              >
-                生成
-              </Button>
+              <Text className={styles.muted}>待复核</Text>
             );
           }
 
@@ -304,8 +424,12 @@ const PlatformAudit = memo(() => {
             return <Tag color="processing">分析中</Tag>;
           }
 
+          if (normalizeAnalysisRiskLevel(analysis.riskLevel) === 'none') {
+            return <Tag color="success">普通消息</Tag>;
+          }
+
           return (
-            <Flexbox gap={6}>
+            <Flexbox className={styles.analysisCell} gap={6}>
               <Text ellipsis>{analysis.summary || '已生成疑点片段'}</Text>
               {analysis.evidence[0] && (
                 <Text ellipsis className={styles.muted} fontSize={12}>
@@ -324,8 +448,8 @@ const PlatformAudit = memo(() => {
             </Flexbox>
           );
         },
-        title: '疑点提取',
-        width: 240,
+        title: '审计结果',
+        width: 88,
       },
       {
         render: (_, record) => (
@@ -339,7 +463,7 @@ const PlatformAudit = memo(() => {
           </Button>
         ),
         title: '操作',
-        width: 92,
+        width: 64,
       },
     ],
     [analysisLoadingId, detailLoadingId, handleAnalyzeRisk, handleViewDetail],
@@ -349,58 +473,82 @@ const PlatformAudit = memo(() => {
     <>
       <SettingHeader title="合规审计" />
       <Flexbox gap={16}>
-        <Text className={styles.muted} fontSize={13}>
-          审计数据来自平台已有对话记录；管理员查看原文会被单独留痕。
+        <Text className={styles.notice} fontSize={13}>
+          风险项由 lite 模型确认；无风险用于查询普通用户提问；管理员查看原文会被留痕。
         </Text>
         <FormGroup collapsible={false} gap={12} title="审计总览" variant="filled">
-          <Flexbox horizontal gap={12} wrap="wrap">
+          <div className={styles.metricGrid}>
             <MetricCard icon={MessageSquare} title="消息数" value={data?.overview.totalMessages} />
             <MetricCard icon={ShieldAlert} title="高风险" value={data?.overview.highRiskMessages} />
             <MetricCard icon={Bot} title="Agent" value={data?.overview.agentMessages} />
             <MetricCard icon={Wrench} title="工具调用" value={data?.overview.toolMessages} />
             <MetricCard icon={Search} title="联网搜索" value={data?.overview.searchMessages} />
             <MetricCard icon={AlertTriangle} title="错误" value={data?.overview.errorMessages} />
-          </Flexbox>
+          </div>
         </FormGroup>
 
         <FormGroup collapsible={false} gap={12} title="审计列表" variant="filled">
-          <Flexbox horizontal align="center" gap={8} wrap="wrap">
-            <Segmented
-              options={rangeOptions}
-              value={range}
-              variant="outlined"
-              onChange={(value) => setRange(value as PlatformAuditRange)}
-            />
-            <Select
-              options={featureOptions}
-              style={{ width: 120 }}
-              value={feature}
-              onChange={(value) => setFeature(value)}
-            />
-            <Select
-              options={riskOptions}
-              style={{ width: 120 }}
-              value={riskLevel}
-              onChange={(value) => setRiskLevel(value)}
-            />
-            <Input.Search
-              allowClear
-              placeholder="用户邮箱"
-              style={{ width: 220 }}
-              value={emailInput}
-              onSearch={(value) => setEmail(value.trim())}
-              onChange={(event) => {
-                const nextValue = event.target.value;
-                setEmailInput(nextValue);
-                if (!nextValue) setEmail('');
-              }}
-            />
-            <Button
-              icon={<Icon icon={Download} size={14} />}
-              onClick={() => exportAuditCsv(data?.items || [])}
-            >
-              导出
-            </Button>
+          <Flexbox className={styles.filterBar} gap={10}>
+            <Flexbox horizontal align="center" gap={10} wrap="wrap">
+              <Flexbox className={styles.filterItem} gap={4}>
+                <Text className={styles.muted} fontSize={12}>
+                  时间范围
+                </Text>
+                <Segmented
+                  options={rangeOptions}
+                  value={range}
+                  onChange={(value) => setRange(value as PlatformAuditRange)}
+                />
+              </Flexbox>
+              <Flexbox className={styles.filterItem} gap={4}>
+                <Text className={styles.muted} fontSize={12}>
+                  场景
+                </Text>
+                <Select
+                  options={featureOptions}
+                  style={{ width: 128 }}
+                  value={feature}
+                  onChange={(value) => setFeature(value)}
+                />
+              </Flexbox>
+              <Flexbox className={styles.filterItem} gap={4}>
+                <Text className={styles.muted} fontSize={12}>
+                  风险
+                </Text>
+                <Select
+                  options={riskOptions}
+                  style={{ width: 128 }}
+                  value={riskLevel}
+                  onChange={(value) => setRiskLevel(value)}
+                />
+              </Flexbox>
+              <Flexbox className={styles.filterItem} gap={4}>
+                <Text className={styles.muted} fontSize={12}>
+                  用户
+                </Text>
+                <Input.Search
+                  allowClear
+                  placeholder="邮箱或前缀"
+                  style={{ width: 240 }}
+                  value={emailInput}
+                  onSearch={(value) => setEmail(value.trim())}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    setEmailInput(nextValue);
+                    if (!nextValue) setEmail('');
+                  }}
+                />
+              </Flexbox>
+              <Button
+                icon={<Icon icon={Download} size={14} />}
+                onClick={() => exportAuditCsv(data?.items || [])}
+              >
+                导出
+              </Button>
+            </Flexbox>
+            <Text className={styles.tableMeta} fontSize={12}>
+              当前显示 {data?.items.length ?? 0} 条记录
+            </Text>
           </Flexbox>
           <Table
             className={styles.table}
@@ -409,7 +557,9 @@ const PlatformAudit = memo(() => {
             loading={isLoading}
             pagination={{ pageSize: 10, showSizeChanger: false }}
             rowKey="id"
+            scroll={{ x: 932 }}
             size="small"
+            tableLayout="fixed"
             locale={{
               emptyText: <Empty description="暂无审计记录" image={Empty.PRESENTED_IMAGE_SIMPLE} />,
             }}
@@ -456,12 +606,13 @@ const PlatformAudit = memo(() => {
               <Flexbox horizontal align="center" justify="space-between">
                 <Text className={styles.muted}>疑点提取</Text>
                 <Button
+                  disabled={!activeDetail.analysis}
                   icon={<Icon icon={Sparkles} size={14} />}
                   loading={analysisLoadingId === activeDetail.id}
                   size="small"
                   onClick={() => handleAnalyzeRisk(activeDetail, !!activeDetail.analysis)}
                 >
-                  {activeDetail.analysis ? '重新分析' : '生成'}
+                  重新分析
                 </Button>
               </Flexbox>
               {activeDetail.analysis ? (

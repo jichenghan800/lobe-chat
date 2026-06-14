@@ -52,7 +52,11 @@ export const platformAuditRouter = router({
 
   dashboard: platformAuditProcedure.input(auditInput).query(async ({ ctx, input }) => {
     try {
-      return await ctx.platformAuditService.getDashboard(input as PlatformAuditQuery);
+      return await ctx.platformAuditService.getDashboard({
+        ...(input as PlatformAuditQuery),
+        adminEmail: ctx.adminUser.normalizedEmail || ctx.adminUser.email,
+        adminUserId: ctx.userId,
+      });
     } catch (error) {
       if (error instanceof TRPCError) throw error;
 

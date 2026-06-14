@@ -65,9 +65,15 @@ interface AnalyzeMessageParams {
   messageId: string;
 }
 
+interface DashboardParams extends PlatformAuditQuery {
+  adminEmail?: null | string;
+  adminUserId: string;
+}
+
 const DEFAULT_RANGE = 1;
 const DEFAULT_FEATURE = 'all';
 const DEFAULT_RISK_LEVEL = 'all';
+const MAX_AUTO_ANALYSIS_PER_DASHBOARD = 5;
 const MAX_AUDIT_ITEMS = 200;
 const MAX_ANALYSIS_CONTENT_LENGTH = 12_000;
 
@@ -122,6 +128,26 @@ const normalizeRiskLevel = (flags: PlatformAuditRiskFlag[]): PlatformAuditRiskLe
   if (flags.some((flag) => flag.level === 'medium')) return 'medium';
   if (flags.some((flag) => flag.level === 'low')) return 'low';
   return 'none';
+};
+
+const normalizeModelRiskLevel = (value: unknown): PlatformAuditRiskLevel =>
+  value === 'high' || value === 'medium' || value === 'low' || value === 'none'
+    ? value
+    : 'none';
+
+const isVisibleAnalysisRiskLevel = (value: null | string | undefined) =>
+  value === 'high' || value === 'medium' || value === 'low';
+
+const buildAnalysisRiskFlags = (
+  analysis: null | PlatformAuditRiskAnalysis,
+): PlatformAuditRiskFlag[] => {
+  if (!analysis || !isVisibleAnalysisRiskLevel(analysis.riskLevel)) return [];
+
+  return analysis.riskLabels.map((label) => ({
+    key: `ai_${label}`,
+    label,
+    level: analysis.riskLevel as Exclude<PlatformAuditRiskLevel, 'none'>,
+  }));
 };
 
 const detectRiskFlags = (content: null | string, row: PlatformAuditMessageRow) => {
@@ -231,7 +257,7 @@ const buildRuleBasedAnalysis = (detail: PlatformAuditDetail): PlatformAuditRiskA
   }
 
   if (detail.tool) {
-    evidence.push({ label: '调用工具', quote: '该消息或回复存在工具调用记录' });
+    evidence.push({ label: '调用工具', quote: '该用户提问存在工具调用记录' });
   }
 
   const labels = detail.riskFlags.map((flag) => flag.label);
@@ -273,7 +299,7 @@ const parseModelAnalysis = (content: string): PlatformAuditRiskAnalysis => {
     provider: auditRiskModelProvider,
     reason: typeof parsed.reason === 'string' ? parsed.reason.slice(0, 1000) : null,
     riskLabels: Array.isArray(parsed.riskLabels) ? parsed.riskLabels.slice(0, 8) : [],
-    riskLevel: typeof parsed.riskLevel === 'string' ? parsed.riskLevel : null,
+    riskLevel: normalizeModelRiskLevel(parsed.riskLevel),
     status: 'completed',
     summary: typeof parsed.summary === 'string' ? parsed.summary.slice(0, 500) : null,
   };
@@ -286,13 +312,21 @@ export class PlatformAuditService {
     this.db = db;
   }
 
-  getDashboard = async (query: PlatformAuditQuery = {}): Promise<PlatformAuditDashboard> => {
+  getDashboard = async (query: DashboardParams): Promise<PlatformAuditDashboard> => {
     const range = query.range ?? DEFAULT_RANGE;
     const feature = query.feature ?? DEFAULT_FEATURE;
     const riskLevel = query.riskLevel ?? DEFAULT_RISK_LEVEL;
     const endAt = new Date();
     const startAt = new Date(endAt.getTime() - range * 24 * 60 * 60 * 1000);
     const emailQuery = query.email?.trim().toLowerCase();
+
+    await this.analyzePendingRiskCandidates({
+      adminEmail: query.adminEmail,
+      adminUserId: query.adminUserId,
+      emailQuery,
+      endAt,
+      startAt,
+    });
 
     const result = await this.db.execute(sql`
       WITH base AS MATERIALIZED (
@@ -326,6 +360,7 @@ export class PlatformAuditService {
         LEFT JOIN sessions ON sessions.id = messages.session_id
         WHERE messages.created_at >= ${startAt}
           AND messages.created_at <= ${endAt}
+          AND messages.role = 'user'
           AND (
             ${emailQuery || null}::text IS NULL
             OR LOWER(COALESCE(users.email, users.normalized_email, messages.user_id)) LIKE ${emailQuery ? `%${emailQuery}%` : null}
@@ -389,10 +424,15 @@ export class PlatformAuditService {
       FROM enriched
       LEFT JOIN cotti_audit_risk_analyses risk_analysis
         ON risk_analysis.message_id = enriched.id
+        AND risk_analysis.status = 'completed'
+        AND risk_analysis.error IS NULL
+        AND risk_analysis.provider IS NOT NULL
+        AND risk_analysis.provider <> 'local'
       WHERE (${feature} = 'all' OR enriched."featureType" = ${feature})
         AND (
-          ${riskLevel} = 'all'
-          OR enriched."riskLevel" = ${riskLevel}
+          (${riskLevel} = 'all' AND risk_analysis.risk_level IN ('high', 'medium', 'low'))
+          OR (${riskLevel} = 'none' AND COALESCE(risk_analysis.risk_level, enriched."riskLevel") = 'none')
+          OR (${riskLevel} IN ('high', 'medium', 'low') AND risk_analysis.risk_level = ${riskLevel})
         )
       ORDER BY enriched."createdAt" DESC
       LIMIT ${MAX_AUDIT_ITEMS}
@@ -443,12 +483,26 @@ export class PlatformAuditService {
         messages.created_at AS "createdAt",
         users.email AS "userEmail",
         sessions.title AS "sessionTitle",
-        COALESCE(file_counts.file_count, 0) AS "fileCount"
+        COALESCE(file_counts.file_count, 0) AS "fileCount",
+        risk_analysis.status AS "analysisStatus",
+        risk_analysis.summary AS "analysisSummary",
+        risk_analysis.reason AS "analysisReason",
+        risk_analysis.confidence AS "analysisConfidence",
+        risk_analysis.evidence AS "analysisEvidence",
+        risk_analysis.risk_level AS "analysisRiskLevel",
+        risk_analysis.risk_labels AS "analysisRiskLabels",
+        risk_analysis.provider AS "analysisProvider",
+        risk_analysis.model AS "analysisModel",
+        risk_analysis.error AS "analysisError",
+        risk_analysis.updated_at AS "analysisUpdatedAt"
       FROM messages
       LEFT JOIN users ON users.id = messages.user_id
       LEFT JOIN sessions ON sessions.id = messages.session_id
       LEFT JOIN file_counts ON file_counts.message_id = messages.id
+      LEFT JOIN cotti_audit_risk_analyses risk_analysis
+        ON risk_analysis.message_id = messages.id
       WHERE messages.id = ${messageId}
+        AND messages.role = 'user'
       LIMIT 1
     `);
 
@@ -490,16 +544,34 @@ export class PlatformAuditService {
       target: detail,
     });
 
-    const fallbackAnalysis = buildRuleBasedAnalysis(detail);
-    let analysis = fallbackAnalysis;
+    let analysis: PlatformAuditRiskAnalysis = {
+      confidence: null,
+      error: auditRiskModelProvider && auditRiskModel ? null : 'Audit risk model is not configured.',
+      evidence: [],
+      model: auditRiskModel ?? null,
+      provider: auditRiskModelProvider ?? null,
+      reason: null,
+      riskLabels: [],
+      riskLevel: 'none',
+      status: auditRiskModelProvider && auditRiskModel ? 'running' : 'failed',
+      summary: null,
+    };
 
     if (auditRiskModelProvider && auditRiskModel) {
       try {
         analysis = await this.analyzeWithModel(detail, adminUserId);
       } catch (error) {
         analysis = {
-          ...fallbackAnalysis,
+          confidence: null,
+          evidence: [],
           error: error instanceof Error ? error.message : String(error),
+          model: auditRiskModel,
+          provider: auditRiskModelProvider,
+          reason: null,
+          riskLabels: [],
+          riskLevel: 'none',
+          status: 'failed',
+          summary: null,
         };
       }
     }
@@ -571,12 +643,12 @@ export class PlatformAuditService {
         messages: [
           {
             content:
-              '你是企业合规审计助手。请只从用户消息中提取疑似风险片段，帮助人工复核，不要做最终违规定性。必须只输出 JSON，不要 Markdown。',
+              '你是企业合规审计助手。审计对象只包含用户提问，不包含大模型回复。请判断这条用户提问是否需要展示给管理员复核；只有确实涉及疑似泄密、个人信息、敏感操作、违规合规风险时才标记风险。不要做最终违规定性。必须只输出 JSON，不要 Markdown。',
             role: 'system',
           },
           {
             content: [
-              '请分析以下消息，输出 JSON：',
+              '请分析以下用户提问，输出 JSON：',
               '{',
               '  "summary": "一句话风险摘要",',
               '  "reason": "为什么这些片段需要人工复核",',
@@ -585,9 +657,9 @@ export class PlatformAuditService {
               '  "riskLabels": ["标签"],',
               '  "evidence": [{"label":"标签","quote":"原文中的短片段"}]',
               '}',
-              '要求：evidence 最多 5 条；quote 必须来自原文；不要输出完整原文；无法确认时 confidence 用 low。',
+              '要求：如果只是普通技术咨询、概念解释、公开信息查询、合规培训或上下文不足，请返回 riskLevel 为 none、riskLabels 为空数组、evidence 为空数组；evidence 最多 5 条；quote 必须来自原文；不要输出完整原文；无法确认时 confidence 用 low。',
               '',
-              `规则初筛风险：${detail.riskFlags.map((flag) => flag.label).join('、') || '无'}`,
+              `后台规则召回标签，仅供参考，不要直接照抄为结论：${detail.riskFlags.map((flag) => flag.label).join('、') || '无'}`,
               `消息原文：${sourceText}`,
             ].join('\n'),
             role: 'user',
@@ -618,6 +690,69 @@ export class PlatformAuditService {
     }
 
     return parseModelAnalysis(content);
+  };
+
+  private analyzePendingRiskCandidates = async ({
+    adminEmail,
+    adminUserId,
+    emailQuery,
+    endAt,
+    startAt,
+  }: {
+    adminEmail?: null | string;
+    adminUserId: string;
+    emailQuery?: string;
+    endAt: Date;
+    startAt: Date;
+  }) => {
+    if (!auditRiskModelProvider || !auditRiskModel) return;
+
+    const result = await this.db.execute(sql`
+      SELECT messages.id
+      FROM messages
+      LEFT JOIN users ON users.id = messages.user_id
+      LEFT JOIN cotti_audit_risk_analyses risk_analysis
+        ON risk_analysis.message_id = messages.id
+      WHERE messages.created_at >= ${startAt}
+        AND messages.created_at <= ${endAt}
+        AND messages.role = 'user'
+        AND (
+          COALESCE(messages.content, '') ~* ${credentialRiskPattern}
+          OR COALESCE(messages.content, '') ~ ${confidentialRiskPattern}
+          OR COALESCE(messages.content, '') ~ ${personalRiskPattern}
+          OR COALESCE(messages.content, '') ~* ${sensitiveOperationRiskPattern}
+          OR EXISTS (
+            SELECT 1
+            FROM messages_files
+            WHERE messages_files.message_id = messages.id
+            LIMIT 1
+          )
+          OR messages.tools IS NOT NULL
+        )
+        AND (
+          ${emailQuery || null}::text IS NULL
+          OR LOWER(COALESCE(users.email, users.normalized_email, messages.user_id)) LIKE ${emailQuery ? `%${emailQuery}%` : null}
+        )
+        AND (
+          risk_analysis.message_id IS NULL
+          OR risk_analysis.provider = 'local'
+        )
+      ORDER BY messages.created_at DESC
+      LIMIT ${MAX_AUTO_ANALYSIS_PER_DASHBOARD}
+    `);
+
+    for (const row of result.rows as Array<{ id: string }>) {
+      try {
+        await this.analyzeMessageRisk({
+          adminEmail,
+          adminUserId,
+          force: true,
+          messageId: row.id,
+        });
+      } catch (error) {
+        console.error('[platformAudit:analyzePendingRiskCandidates]', error);
+      }
+    }
   };
 
   private upsertRiskAnalysis = async ({
@@ -675,12 +810,17 @@ export class PlatformAuditService {
     row: PlatformAuditMessageRow,
     includeContent: boolean,
   ): PlatformAuditDetail => {
+    const analysis = normalizeAnalysis(row);
     const riskFlags = detectRiskFlags(row.content, row);
     const dashboardRiskFlags = includeContent ? undefined : buildRiskFlagsFromRow(row);
-    const normalizedRiskFlags = dashboardRiskFlags ?? riskFlags;
+    const analysisRiskFlags = buildAnalysisRiskFlags(analysis);
+    const normalizedRiskFlags = analysis ? analysisRiskFlags : (dashboardRiskFlags ?? riskFlags);
+    const normalizedRiskLevel = analysis
+      ? normalizeModelRiskLevel(analysis.riskLevel)
+      : normalizeModelRiskLevel(row.riskLevel);
     const item: PlatformAuditDetail = {
       agentId: row.agentId,
-      analysis: normalizeAnalysis(row),
+      analysis,
       contentPreview: row.contentPreview,
       createdAt: toDate(row.createdAt).toISOString(),
       error: row.error,
@@ -689,7 +829,8 @@ export class PlatformAuditService {
       model: row.model,
       provider: row.provider,
       riskFlags: normalizedRiskFlags,
-      riskLevel: row.riskLevel ?? normalizeRiskLevel(normalizedRiskFlags),
+      riskLevel:
+        normalizedRiskLevel === 'none' ? normalizeRiskLevel(normalizedRiskFlags) : normalizedRiskLevel,
       role: row.role,
       search: row.search,
       sessionId: row.sessionId,
