@@ -45,6 +45,17 @@ require_command() {
   fi
 }
 
+require_env_value() {
+  local key="$1"
+  local label="$2"
+  local value
+  value="$(read_env "$key")"
+  if [[ -z "$value" ]]; then
+    echo "Missing required env for $label: $key" >&2
+    exit 1
+  fi
+}
+
 echo "== 1. Host and Docker runtime =="
 hostname
 date '+%Y-%m-%d %H:%M:%S %z'
@@ -86,26 +97,37 @@ for key in \
 done
 
 echo
-echo "== 4. Compose render check =="
+echo "== 4. Provider credential gate =="
+require_env_value AZURE_API_KEY "全能效率"
+echo "AZURE_API_KEY=set"
+require_env_value VERTEXAI_CREDENTIALS "COTTI-快速/COTTI-专业"
+echo "VERTEXAI_CREDENTIALS=set"
+require_env_value VOLCENGINE_API_KEY "豆包1.6-Flash/Seedream 5.0 Lite"
+echo "VOLCENGINE_API_KEY=set"
+require_env_value QWEN_API_KEY "千问3.7-Plus"
+echo "QWEN_API_KEY=set"
+
+echo
+echo "== 5. Compose render check =="
 docker compose -f docker-compose.prod.yml --env-file .env config >/tmp/lobechat-compose-prod.rendered.yml
 echo "Rendered compose written to /tmp/lobechat-compose-prod.rendered.yml"
 docker compose -f docker-compose.prod.yml --env-file .env ps || true
 
 echo
-echo "== 5. Current containers =="
+echo "== 6. Current containers =="
 docker ps -a \
   --filter name='lobechat' \
   --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' || true
 
 echo
-echo "== 6. Registry access check =="
+echo "== 7. Registry access check =="
 echo "Target image: $TARGET_IMAGE"
 echo "Expected pushed digest: $TARGET_DIGEST"
 docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Registry manifest is readable: /tmp/lobechat-target-manifest.json"
 
 echo
-echo "== 7. Database readiness check =="
+echo "== 8. Database readiness check =="
 if docker compose -f docker-compose.prod.yml --env-file .env ps postgresql >/dev/null 2>&1; then
   docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
     pg_isready -U "$(read_env_default POSTGRES_USER paradedb)" -d "$(read_env_default POSTGRES_DB lobehub)"

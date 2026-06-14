@@ -43,6 +43,17 @@ require_file() {
   fi
 }
 
+require_env_value() {
+  local key="$1"
+  local label="$2"
+  local value
+  value="$(read_env "$key")"
+  if [[ -z "$value" ]]; then
+    echo "Missing required env for $label: $key" >&2
+    exit 1
+  fi
+}
+
 require_file .env
 require_file docker-compose.prod.yml
 
@@ -67,6 +78,17 @@ docker compose -f docker-compose.prod.yml --env-file .env config >/tmp/lobechat-
 docker compose -f docker-compose.prod.yml --env-file .env ps
 docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Compose render OK and target image manifest is readable."
+
+echo
+echo "== Provider credential gate =="
+require_env_value AZURE_API_KEY "全能效率"
+echo "AZURE_API_KEY=set"
+require_env_value VERTEXAI_CREDENTIALS "COTTI-快速/COTTI-专业"
+echo "VERTEXAI_CREDENTIALS=set"
+require_env_value VOLCENGINE_API_KEY "豆包1.6-Flash/Seedream 5.0 Lite"
+echo "VOLCENGINE_API_KEY=set"
+require_env_value QWEN_API_KEY "千问3.7-Plus"
+echo "QWEN_API_KEY=set"
 
 echo
 echo "== Database impact =="
