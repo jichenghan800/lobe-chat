@@ -638,6 +638,46 @@ describe('LobeAzureOpenAI', () => {
       expect(res).toEqual({ imageUrl: url });
     });
 
+    it('should normalize file-like image objects for Azure deployment image edit API', async () => {
+      const url = 'https://example.com/azure-edited-file-like.png';
+      instance = new LobeAzureOpenAI({
+        apiKey: 'test_key',
+        apiVersion: '2025-04-01-preview',
+        baseURL: 'https://test.openai.azure.com/',
+      });
+
+      const helpers = await import('../../core/contextBuilders/openai');
+      vi.spyOn(helpers, 'convertImageUrlToFile').mockResolvedValue({
+        arrayBuffer: async () => new TextEncoder().encode('fake-image').buffer,
+        name: 'source.png',
+        size: 10,
+        type: 'image/png',
+      } as any);
+
+      const fetchSpy = vi.fn(async (_requestUrl: string, init: RequestInit) => {
+        const body = init.body as FormData;
+        const images = body.getAll('image[]');
+
+        expect(images).toHaveLength(1);
+        expect(images[0]).toBeInstanceOf(Blob);
+        expect((images[0] as Blob).type).toBe('image/png');
+
+        return new Response(JSON.stringify({ data: [{ url }] }), { status: 200 });
+      });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      const res = await instance.createImage({
+        model: 'gpt-image-2',
+        params: {
+          imageUrl: 'https://example.com/in.png',
+          prompt: 'edit',
+        },
+      });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(res).toEqual({ imageUrl: url });
+    });
+
     it('should convert multiple imageUrls and pass images array to edit', async () => {
       const url = 'https://example.com/edited2.png';
       const editSpy = vi

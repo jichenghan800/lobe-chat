@@ -296,7 +296,7 @@ export class LobeAzureOpenAI extends BaseAzureOpenAI {
         };
     const response = await fetch(url.toString(), {
       body: isImageEdit
-        ? this.buildAzureImageEditForm(image, restOptions)
+        ? await this.buildAzureImageEditForm(image, restOptions)
         : JSON.stringify(restOptions),
       headers,
       method: 'POST',
@@ -320,7 +320,7 @@ export class LobeAzureOpenAI extends BaseAzureOpenAI {
     return result;
   }
 
-  private buildAzureImageEditForm(image: any, options: Record<string, any>) {
+  private async buildAzureImageEditForm(image: any, options: Record<string, any>) {
     const form = new FormData();
     const imageItems = Array.isArray(image) ? image : [image];
 
@@ -333,10 +333,22 @@ export class LobeAzureOpenAI extends BaseAzureOpenAI {
 
     for (const item of imageItems) {
       const filename = typeof item?.name === 'string' && item.name ? item.name : 'image.png';
-      form.append('image[]', item, filename);
+      form.append('image[]', await this.toNativeBlob(item), filename);
     }
 
     return form;
+  }
+
+  private async toNativeBlob(item: any) {
+    if (item instanceof Blob) return item;
+
+    if (typeof item?.arrayBuffer === 'function') {
+      return new Blob([await item.arrayBuffer()], {
+        type: typeof item.type === 'string' && item.type ? item.type : 'application/octet-stream',
+      });
+    }
+
+    throw new TypeError('Azure image edit input must be Blob-compatible');
   }
 
   private getAzureImageApiVersion() {
