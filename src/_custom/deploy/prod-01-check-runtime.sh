@@ -64,6 +64,27 @@ require_env_value() {
   fi
 }
 
+validate_redis_url() {
+  local value
+  value="$(read_env REDIS_URL)"
+
+  if [[ -z "$value" || "$value" == "CHANGE_ME" ]]; then
+    echo "REDIS_URL=(not configured)"
+    return
+  fi
+
+  if [[ ! "$value" =~ ^rediss?:// ]]; then
+    echo "Invalid REDIS_URL: value is set but missing URL scheme. Use redis://... or rediss://..." >&2
+    exit 1
+  fi
+
+  if [[ "$value" =~ ^rediss:// ]]; then
+    echo "REDIS_URL=set(scheme=rediss)"
+  else
+    echo "REDIS_URL=set(scheme=redis)"
+  fi
+}
+
 echo "== 1. Host and Docker runtime =="
 hostname
 date '+%Y-%m-%d %H:%M:%S %z'
@@ -86,6 +107,7 @@ for key in \
   LOBECHAT_IMAGE LOBECHAT_BIND LOBECHAT_PORT \
   POSTGRES_USER POSTGRES_DB POSTGRES_PASSWORD DATABASE_DRIVER \
   APP_URL AUTH_TRUSTED_ORIGINS KEY_VAULTS_SECRET \
+  REDIS_URL REDIS_PREFIX REDIS_DATABASE REDIS_TLS \
   OPENAI_API_KEY OPENAI_PROXY_URL AZURE_API_KEY VERTEXAI_CREDENTIALS VOLCENGINE_API_KEY QWEN_API_KEY \
   NEXT_PUBLIC_NAV_HIDE_IMAGE NEXT_PUBLIC_NAV_HIDE_VIDEO \
   NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS \
@@ -95,7 +117,7 @@ for key in \
   COTTI_AUDIT_RISK_MODEL_PROVIDER COTTI_AUDIT_RISK_MODEL; do
   value="$(read_env "$key")"
   case "$key" in
-    POSTGRES_PASSWORD|KEY_VAULTS_SECRET|AUTH_TRUSTED_ORIGINS|OPENAI_API_KEY|AZURE_API_KEY|VERTEXAI_CREDENTIALS|VOLCENGINE_API_KEY|QWEN_API_KEY)
+    POSTGRES_PASSWORD|KEY_VAULTS_SECRET|AUTH_TRUSTED_ORIGINS|REDIS_URL|OPENAI_API_KEY|AZURE_API_KEY|VERTEXAI_CREDENTIALS|VOLCENGINE_API_KEY|QWEN_API_KEY)
       printf '%s=%s\n' "$key" "$(mask_value "$value")"
       ;;
     *)
@@ -120,26 +142,30 @@ require_env_value QWEN_API_KEY "千问3.7-Plus"
 echo "QWEN_API_KEY=set"
 
 echo
-echo "== 5. Compose render check =="
+echo "== 5. Redis configuration gate =="
+validate_redis_url
+
+echo
+echo "== 6. Compose render check =="
 docker compose -f docker-compose.prod.yml --env-file .env config >/tmp/lobechat-compose-prod.rendered.yml
 echo "Rendered compose written to /tmp/lobechat-compose-prod.rendered.yml"
 docker compose -f docker-compose.prod.yml --env-file .env ps || true
 
 echo
-echo "== 6. Current containers =="
+echo "== 7. Current containers =="
 docker ps -a \
   --filter name='lobechat' \
   --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' || true
 
 echo
-echo "== 7. Registry access check =="
+echo "== 8. Registry access check =="
 echo "Target image: $TARGET_IMAGE"
 echo "Expected pushed digest: ${TARGET_DIGEST:-'(not provided)'}"
 docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Registry manifest is readable: /tmp/lobechat-target-manifest.json"
 
 echo
-echo "== 8. Database readiness check =="
+echo "== 9. Database readiness check =="
 if docker compose -f docker-compose.prod.yml --env-file .env ps postgresql >/dev/null 2>&1; then
   docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
     pg_isready -U "$(read_env_default POSTGRES_USER paradedb)" -d "$(read_env_default POSTGRES_DB lobehub)"
