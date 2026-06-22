@@ -148,11 +148,13 @@ vi.mock('@/database/models/file', () => ({
 
 const mockFileServiceGetFullFileUrl = vi.fn();
 const mockFileServiceGetFileMetadata = vi.fn();
+const mockFileServiceDeleteFile = vi.fn();
+const mockFileServiceDeleteFiles = vi.fn();
 
 vi.mock('@/server/services/file', () => ({
   FileService: vi.fn(() => ({
-    deleteFile: vi.fn(),
-    deleteFiles: vi.fn(),
+    deleteFile: mockFileServiceDeleteFile,
+    deleteFiles: mockFileServiceDeleteFiles,
     getFullFileUrl: mockFileServiceGetFullFileUrl,
     getFileMetadata: mockFileServiceGetFileMetadata,
   })),
@@ -693,6 +695,20 @@ describe('fileRouter', () => {
       await caller.removeFiles({ ids: ['invalid-1', 'invalid-2'] });
 
       expect(ctx.fileService.deleteFiles).not.toHaveBeenCalled();
+    });
+
+    it('should not fail after database deletion when storage cleanup fails', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockFileModelDeleteMany.mockResolvedValue([{ ...mockFile, url: 'files/test.txt' }]);
+      mockFileServiceDeleteFiles.mockRejectedValue(new Error('Missing Content-MD5'));
+
+      try {
+        await expect(caller.removeFiles({ ids: ['test-id'] })).resolves.toBeUndefined();
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
+
+      expect(mockFileServiceDeleteFiles).toHaveBeenCalledWith(['files/test.txt']);
     });
   });
 

@@ -385,6 +385,50 @@ describe('RuntimeExecutors', () => {
       );
     });
 
+    it('should persist text content emitted as content_part chunks', async () => {
+      const mockChat = vi.fn().mockImplementation(async (_payload, options) => {
+        await options?.callback?.onContentPart?.({
+          content: 'Here are the search results.',
+          partType: 'text',
+        });
+        await options?.callback?.onCompletion?.({
+          usage: { totalInputTokens: 1, totalOutputTokens: 5, totalTokens: 6 },
+        });
+        return new Response('done');
+      });
+      vi.mocked(initModelRuntimeFromDB).mockResolvedValueOnce({ chat: mockChat } as any);
+
+      const executors = createRuntimeExecutors(ctx);
+      const state = createMockState();
+
+      const result = await executors.call_llm!(
+        {
+          payload: {
+            messages: [{ content: 'Search arXiv', role: 'user' }],
+            model: 'gemini-3.1-flash-lite',
+            provider: 'vertexai',
+            tools: [],
+          },
+          type: 'call_llm' as const,
+        },
+        state,
+      );
+
+      expect(mockMessageModel.update).toHaveBeenCalledWith(
+        'msg-123',
+        expect.objectContaining({
+          content: 'Here are the search results.',
+        }),
+      );
+      expect(result.newState.messages.at(-1)).toEqual(
+        expect.objectContaining({
+          content: 'Here are the search results.',
+          id: 'msg-123',
+          role: 'assistant',
+        }),
+      );
+    });
+
     it('should push assistant message with persisted DB id so request_human_approve can find parent', async () => {
       const toolCallPayload = [
         {

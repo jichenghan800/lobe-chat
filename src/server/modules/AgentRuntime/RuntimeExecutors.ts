@@ -1037,6 +1037,29 @@ export const createRuntimeExecutors = (
                       }, BUFFER_INTERVAL);
                     }
                   },
+                  onContentPart: async (part) => {
+                    if (firstChunkAt === undefined) {
+                      firstChunkAt = Date.now() - llmStartTime;
+                    }
+
+                    contentParts.push(
+                      part.partType === 'image'
+                        ? { image: part.content, type: 'image' }
+                        : { text: part.content, type: 'text' },
+                    );
+
+                    if (part.partType !== 'text') return;
+
+                    content += part.content;
+                    textBuffer += part.content;
+
+                    if (!textBufferTimer) {
+                      textBufferTimer = setTimeout(async () => {
+                        await flushTextBuffer();
+                        textBufferTimer = null;
+                      }, BUFFER_INTERVAL);
+                    }
+                  },
                   onThinking: async (reasoning) => {
                     if (firstChunkAt === undefined) {
                       firstChunkAt = Date.now() - llmStartTime;
@@ -1053,6 +1076,29 @@ export const createRuntimeExecutors = (
                     reasoningBuffer += reasoning;
 
                     // If no timer exists, create one
+                    if (!reasoningBufferTimer) {
+                      reasoningBufferTimer = setTimeout(async () => {
+                        await flushReasoningBuffer();
+                        reasoningBufferTimer = null;
+                      }, BUFFER_INTERVAL);
+                    }
+                  },
+                  onReasoningPart: async (part) => {
+                    if (firstChunkAt === undefined) {
+                      firstChunkAt = Date.now() - llmStartTime;
+                    }
+
+                    reasoningParts.push(
+                      part.partType === 'image'
+                        ? { image: part.content, type: 'image' }
+                        : { text: part.content, type: 'text' },
+                    );
+
+                    if (part.partType !== 'text') return;
+
+                    thinkingContent += part.content;
+                    reasoningBuffer += part.content;
+
                     if (!reasoningBufferTimer) {
                       reasoningBufferTimer = setTimeout(async () => {
                         await flushReasoningBuffer();

@@ -115,6 +115,24 @@ const isStoredObjectAvailable = async (fileService: FileService, url: string): P
   }
 };
 
+const deleteStoredFilesAfterDatabaseDeletion = async (
+  fileService: FileService,
+  urls: Array<string | null | undefined>,
+  context: string,
+): Promise<void> => {
+  const storedUrls = urls.filter((url): url is string => Boolean(url));
+  if (storedUrls.length === 0) return;
+
+  try {
+    await fileService.deleteFiles(storedUrls);
+  } catch (error) {
+    console.error(`[file:${context}] Failed to delete storage objects after database deletion`, {
+      count: storedUrls.length,
+      error,
+    });
+  }
+};
+
 const fileProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
 
@@ -468,7 +486,11 @@ export const fileRouter = router({
         );
 
         if (needToRemoveFileList && needToRemoveFileList.length > 0) {
-          await ctx.fileService.deleteFiles(needToRemoveFileList.map((file) => file.url!));
+          await deleteStoredFilesAfterDatabaseDeletion(
+            ctx.fileService,
+            needToRemoveFileList.map((file) => file.url),
+            'deleteKnowledgeItemsByQuery',
+          );
         }
       }
 
@@ -559,7 +581,11 @@ export const fileRouter = router({
 
     // Delete S3 files only if no other users reference them
     if (needToRemoveFileList && needToRemoveFileList.length > 0) {
-      await ctx.fileService.deleteFiles(needToRemoveFileList.map((file) => file.url!));
+      await deleteStoredFilesAfterDatabaseDeletion(
+        ctx.fileService,
+        needToRemoveFileList.map((file) => file.url),
+        'removeAllFiles',
+      );
     }
   }),
 
@@ -569,7 +595,7 @@ export const fileRouter = router({
     if (!file) return;
 
     // delete the file from S3 if it is not used by other files
-    await ctx.fileService.deleteFile(file.url!);
+    await deleteStoredFilesAfterDatabaseDeletion(ctx.fileService, [file.url], 'removeFile');
   }),
 
   removeFileAsyncTask: fileProcedure
@@ -602,7 +628,11 @@ export const fileRouter = router({
       if (!needToRemoveFileList || needToRemoveFileList.length === 0) return;
 
       // remove from S3
-      await ctx.fileService.deleteFiles(needToRemoveFileList.map((file) => file.url!));
+      await deleteStoredFilesAfterDatabaseDeletion(
+        ctx.fileService,
+        needToRemoveFileList.map((file) => file.url),
+        'removeFiles',
+      );
     }),
 
   updateFile: fileProcedure

@@ -1,6 +1,5 @@
 import {
   DeleteObjectCommand,
-  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -74,12 +73,10 @@ export class S3 {
   }
 
   public async deleteFiles(keys: string[]) {
-    const command = new DeleteObjectsCommand({
-      Bucket: this.bucket,
-      Delete: { Objects: keys.map((key) => ({ Key: key })) },
-    });
+    const uniqueKeys = [...new Set(keys)].filter(Boolean);
+    if (uniqueKeys.length === 0) return [];
 
-    return this.client.send(command);
+    return Promise.all(uniqueKeys.map((key) => this.deleteFile(key)));
   }
 
   public async getFileContent(key: string): Promise<string> {

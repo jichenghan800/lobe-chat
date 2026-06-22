@@ -1,7 +1,6 @@
 // @vitest-environment node
 import {
   DeleteObjectCommand,
-  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -212,20 +211,26 @@ describe('FileS3', () => {
   });
 
   describe('deleteFiles', () => {
-    it('should delete multiple files with correct parameters', async () => {
+    it('should delete multiple files one by one with correct parameters', async () => {
       const s3 = new FileS3();
       mockS3ClientSend.mockResolvedValue({});
 
       const keys = ['file1.txt', 'file2.txt', 'file3.txt'];
       await s3.deleteFiles(keys);
 
-      expect(DeleteObjectsCommand).toHaveBeenCalledWith({
+      expect(DeleteObjectCommand).toHaveBeenNthCalledWith(1, {
         Bucket: 'test-bucket',
-        Delete: {
-          Objects: [{ Key: 'file1.txt' }, { Key: 'file2.txt' }, { Key: 'file3.txt' }],
-        },
+        Key: 'file1.txt',
       });
-      expect(mockS3ClientSend).toHaveBeenCalled();
+      expect(DeleteObjectCommand).toHaveBeenNthCalledWith(2, {
+        Bucket: 'test-bucket',
+        Key: 'file2.txt',
+      });
+      expect(DeleteObjectCommand).toHaveBeenNthCalledWith(3, {
+        Bucket: 'test-bucket',
+        Key: 'file3.txt',
+      });
+      expect(mockS3ClientSend).toHaveBeenCalledTimes(3);
     });
 
     it('should handle empty array', async () => {
@@ -234,12 +239,8 @@ describe('FileS3', () => {
 
       await s3.deleteFiles([]);
 
-      expect(DeleteObjectsCommand).toHaveBeenCalledWith({
-        Bucket: 'test-bucket',
-        Delete: {
-          Objects: [],
-        },
-      });
+      expect(DeleteObjectCommand).not.toHaveBeenCalled();
+      expect(mockS3ClientSend).not.toHaveBeenCalled();
     });
   });
 
