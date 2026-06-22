@@ -6,8 +6,8 @@ describe('modelVisibility', () => {
   it('filters and orders visible models by the allow list', () => {
     const providers = filterVisibleProviderModelLists([
       {
-        children: [{ id: 'gpt-5.5' }, { id: 'hidden-azure' }],
-        id: 'azure',
+        children: [{ id: 'gpt-5.5' }, { id: 'hidden-openai' }],
+        id: 'openai',
       },
       {
         children: [{ id: 'claude-opus-4-7' }, { id: 'hidden-claude' }],
@@ -35,7 +35,7 @@ describe('modelVisibility', () => {
       'vertexai',
       'volcengine',
       'qwen',
-      'azure',
+      'openai',
     ]);
     expect(providers[0].children.map((model) => model.id)).toEqual([
       'gemini-3.1-flash-lite',
