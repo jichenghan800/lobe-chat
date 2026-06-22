@@ -90,7 +90,7 @@ RUN set -e && \
     mkdir -p /deps && \
     cd /deps && \
     echo '{"name":"deps","private":true}' > package.json && \
-    pnpm add pg drizzle-orm
+    pnpm add pg drizzle-orm yauzl
 
 COPY . .
 
@@ -121,6 +121,7 @@ COPY --from=builder /app/scripts/migrateServerDB/errorHint.js /app/errorHint.js
 COPY --from=builder /deps/node_modules/.pnpm /app/node_modules/.pnpm
 COPY --from=builder /deps/node_modules/pg /app/node_modules/pg
 COPY --from=builder /deps/node_modules/drizzle-orm /app/node_modules/drizzle-orm
+COPY --from=builder /deps/node_modules/yauzl /app/node_modules/yauzl
 
 # Copy server launcher and shared scripts
 COPY --from=builder /app/scripts/serverLauncher/startServer.js /app/startServer.js
