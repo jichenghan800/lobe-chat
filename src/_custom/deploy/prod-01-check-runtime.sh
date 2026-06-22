@@ -99,7 +99,8 @@ echo
 echo "== 2. Required deployment files =="
 require_file .env
 require_file docker-compose.prod.yml
-ls -l .env docker-compose.prod.yml
+require_file searxng-settings.yml
+ls -l .env docker-compose.prod.yml searxng-settings.yml
 
 echo
 echo "== 3. Sanitized env check =="
@@ -146,26 +147,39 @@ echo "== 5. Redis configuration gate =="
 validate_redis_url
 
 echo
-echo "== 6. Compose render check =="
+echo "== 6. SearXNG settings gate =="
+if ! awk '
+  $1 == "formats:" { in_formats = 1; next }
+  in_formats && /^[^[:space:]-]/ { in_formats = 0 }
+  in_formats && $0 ~ /^[[:space:]]*-[[:space:]]*json[[:space:]]*$/ { found = 1 }
+  END { exit found ? 0 : 1 }
+' searxng-settings.yml; then
+  echo "SearXNG settings must enable search.formats json for LobeChat search" >&2
+  exit 1
+fi
+echo "SearXNG JSON search format is enabled"
+
+echo
+echo "== 7. Compose render check =="
 docker compose -f docker-compose.prod.yml --env-file .env config >/tmp/lobechat-compose-prod.rendered.yml
 echo "Rendered compose written to /tmp/lobechat-compose-prod.rendered.yml"
 docker compose -f docker-compose.prod.yml --env-file .env ps || true
 
 echo
-echo "== 7. Current containers =="
+echo "== 8. Current containers =="
 docker ps -a \
   --filter name='lobechat' \
   --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' || true
 
 echo
-echo "== 8. Registry access check =="
+echo "== 9. Registry access check =="
 echo "Target image: $TARGET_IMAGE"
 echo "Expected pushed digest: ${TARGET_DIGEST:-'(not provided)'}"
 docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Registry manifest is readable: /tmp/lobechat-target-manifest.json"
 
 echo
-echo "== 9. Database readiness check =="
+echo "== 10. Database readiness check =="
 if docker compose -f docker-compose.prod.yml --env-file .env ps postgresql >/dev/null 2>&1; then
   docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
     pg_isready -U "$(read_env_default POSTGRES_USER paradedb)" -d "$(read_env_default POSTGRES_DB lobehub)"

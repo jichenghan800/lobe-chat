@@ -4,6 +4,7 @@ import {
   DocumentLoadRule,
 } from '@lobechat/agent-templates';
 import { TRPCError } from '@trpc/server';
+import debug from 'debug';
 import { z } from 'zod';
 
 import { AgentDocumentModel } from '@/database/models/agentDocuments';
@@ -16,6 +17,8 @@ import { emitAgentDocumentToolOutcomeSafely } from '@/server/services/agentDocum
 import { AgentDocumentVfsService } from '@/server/services/agentDocumentVfs';
 import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
 import { getUnifiedSkillNamespaceRootPath } from '@/server/services/agentDocumentVfs/mounts/skills/path';
+
+const log = debug('lobe-server:agent-document-router');
 
 const MAX_METADATA_BYTES = 16 * 1024;
 const MAX_RULE_REGEXP_LENGTH = 512;
@@ -218,7 +221,15 @@ export const agentDocumentRouter = router({
   getDocuments: agentDocumentProcedure
     .input(z.object({ agentId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return ctx.agentDocumentService.getAgentDocuments(input.agentId);
+      const startTime = Date.now();
+      const documents = await ctx.agentDocumentService.getAgentDocuments(input.agentId);
+      log(
+        'getDocuments:done agentId=%s count=%d durationMs=%d',
+        input.agentId,
+        documents.length,
+        Date.now() - startTime,
+      );
+      return documents;
     }),
 
   /**
@@ -309,7 +320,15 @@ export const agentDocumentRouter = router({
   getContext: agentDocumentProcedure
     .input(z.object({ agentId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return ctx.agentDocumentService.getAgentContext(input.agentId);
+      const startTime = Date.now();
+      const context = await ctx.agentDocumentService.getAgentContext(input.agentId);
+      log(
+        'getContext:done agentId=%s contentLength=%d durationMs=%d',
+        input.agentId,
+        context.length,
+        Date.now() - startTime,
+      );
+      return context;
     }),
 
   /**
@@ -318,7 +337,14 @@ export const agentDocumentRouter = router({
   getDocumentsMap: agentDocumentProcedure
     .input(z.object({ agentId: z.string() }))
     .query(async ({ ctx, input }) => {
+      const startTime = Date.now();
       const map = await ctx.agentDocumentService.getDocumentsMap(input.agentId);
+      log(
+        'getDocumentsMap:done agentId=%s count=%d durationMs=%d',
+        input.agentId,
+        map.size,
+        Date.now() - startTime,
+      );
       // Convert Map to object for JSON serialization
       return Object.fromEntries(map);
     }),
@@ -359,17 +385,40 @@ export const agentDocumentRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const startTime = Date.now();
       if (input.scope === 'currentTopic') {
         if (!input.topicId) throw new Error('topicId is required to list current topic documents');
 
-        return ctx.agentDocumentService.listDocumentsForTopic(
+        const documents = await ctx.agentDocumentService.listDocumentsForTopic(
           input.agentId,
           input.topicId,
           input.sourceType,
         );
+        log(
+          'listDocuments:done agentId=%s topicId=%s scope=%s sourceType=%s count=%d durationMs=%d',
+          input.agentId,
+          input.topicId,
+          input.scope,
+          input.sourceType,
+          documents.length,
+          Date.now() - startTime,
+        );
+        return documents;
       }
 
-      return ctx.agentDocumentService.listDocuments(input.agentId, input.sourceType);
+      const documents = await ctx.agentDocumentService.listDocuments(
+        input.agentId,
+        input.sourceType,
+      );
+      log(
+        'listDocuments:done agentId=%s scope=%s sourceType=%s count=%d durationMs=%d',
+        input.agentId,
+        input.scope,
+        input.sourceType,
+        documents.length,
+        Date.now() - startTime,
+      );
+      return documents;
     }),
 
   /**
@@ -386,8 +435,9 @@ export const agentDocumentRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const startTime = Date.now();
       try {
-        return await ctx.agentDocumentVfsService.list(
+        const result = await ctx.agentDocumentVfsService.list(
           input.path,
           {
             agentId: input.agentId,
@@ -398,7 +448,24 @@ export const agentDocumentRouter = router({
             limit: input.limit,
           },
         );
+        log(
+          'listDocumentsByPath:done agentId=%s topicId=%s path=%s itemCount=%d durationMs=%d',
+          input.agentId,
+          input.topicId,
+          input.path,
+          result.length,
+          Date.now() - startTime,
+        );
+        return result;
       } catch (error) {
+        log(
+          'listDocumentsByPath:failed agentId=%s topicId=%s path=%s durationMs=%d error=%O',
+          input.agentId,
+          input.topicId,
+          input.path,
+          Date.now() - startTime,
+          error,
+        );
         handleAgentDocumentVfsError(error);
       }
     }),
@@ -438,8 +505,9 @@ export const agentDocumentRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const startTime = Date.now();
       try {
-        return await ctx.agentDocumentVfsService.read(
+        const result = await ctx.agentDocumentVfsService.read(
           input.path,
           {
             agentId: input.agentId,
@@ -449,7 +517,25 @@ export const agentDocumentRouter = router({
             loc: input.loc,
           },
         );
+        log(
+          'readDocumentByPath:done agentId=%s topicId=%s path=%s hasLoc=%s durationMs=%d',
+          input.agentId,
+          input.topicId,
+          input.path,
+          !!input.loc,
+          Date.now() - startTime,
+        );
+        return result;
       } catch (error) {
+        log(
+          'readDocumentByPath:failed agentId=%s topicId=%s path=%s hasLoc=%s durationMs=%d error=%O',
+          input.agentId,
+          input.topicId,
+          input.path,
+          !!input.loc,
+          Date.now() - startTime,
+          error,
+        );
         handleAgentDocumentVfsError(error);
       }
     }),

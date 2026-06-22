@@ -63,9 +63,15 @@ require_value() {
 
 mkdir -p "$OUT_DIR"
 cp docker-compose.prod.yml "$OUT_DIR/docker-compose.prod.yml"
+cp docker-compose/deploy/searxng-settings.yml "$OUT_DIR/searxng-settings.yml"
 cp "$SRC_ENV" "$OUT_DIR/.env"
 
-LOBECHAT_IMAGE="${LOBECHAT_IMAGE:-$(read_template LOBECHAT_IMAGE)}"
+LOBECHAT_IMAGE="${LOBECHAT_IMAGE:-$(read_env LOBECHAT_IMAGE)}"
+if [[ -z "$LOBECHAT_IMAGE" || "$LOBECHAT_IMAGE" == CHANGE_ME* ]]; then
+  echo "LOBECHAT_IMAGE must be set explicitly for production package generation" >&2
+  echo "Example: LOBECHAT_IMAGE=registry.example.com/lobechat/lobehub:tag $0 <out-dir>" >&2
+  exit 1
+fi
 POSTGRES_USER="${POSTGRES_USER:-paradedb}"
 POSTGRES_DB="${POSTGRES_DB:-lobehub}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-$(openssl rand -hex 24)}"
@@ -174,6 +180,19 @@ printf 'redis_prefix=%s\n' "$(read_env REDIS_PREFIX)"
 
 echo
 echo "== Compose config =="
+if [[ ! -f searxng-settings.yml ]]; then
+  echo "Missing required SearXNG settings file: searxng-settings.yml" >&2
+  exit 1
+fi
+if ! awk '
+  $1 == "formats:" { in_formats = 1; next }
+  in_formats && /^[^[:space:]-]/ { in_formats = 0 }
+  in_formats && $0 ~ /^[[:space:]]*-[[:space:]]*json[[:space:]]*$/ { found = 1 }
+  END { exit found ? 0 : 1 }
+' searxng-settings.yml; then
+  echo "SearXNG settings must enable search.formats json for LobeChat search" >&2
+  exit 1
+fi
 docker compose -f docker-compose.prod.yml --env-file .env config >/tmp/lobechat-compose-prod.rendered.yml
 echo "Rendered compose: /tmp/lobechat-compose-prod.rendered.yml"
 

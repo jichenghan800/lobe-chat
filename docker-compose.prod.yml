@@ -81,6 +81,8 @@ services:
     environment:
       BASE_URL: https://chat.cotticoffee.com
       SEARXNG_SETTINGS_FILE: /etc/searxng/settings.yml
+    volumes:
+      - ./searxng-settings.yml:/etc/searxng/settings.yml:ro
     networks:
       - runtime
     logging:

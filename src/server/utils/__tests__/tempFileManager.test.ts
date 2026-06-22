@@ -87,6 +87,7 @@ describe('TempFileManager', () => {
   });
 
   it('should register cleanup hooks on process events', () => {
+    TempFileManager.resetForTest();
     const processOnSpy = vi.spyOn(process, 'on');
     new TempFileManager(mockDirname);
 
@@ -94,6 +95,16 @@ describe('TempFileManager', () => {
     expect(processOnSpy).toHaveBeenCalledWith('uncaughtException', expect.any(Function));
     expect(processOnSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
     expect(processOnSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+  });
+
+  it('should register process cleanup hooks only once', () => {
+    TempFileManager.resetForTest();
+    const processOnSpy = vi.spyOn(process, 'on');
+
+    new TempFileManager(mockDirname);
+    new TempFileManager(mockDirname);
+
+    expect(processOnSpy).toHaveBeenCalledTimes(4);
   });
 });
 

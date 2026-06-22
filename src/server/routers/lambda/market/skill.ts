@@ -7,7 +7,22 @@ import { marketUserInfo, serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { MarketService } from '@/server/services/market';
 import { SkillSorts } from '@/types/discover';
 
-const log = debug('lambda-router:market:skill');
+const log = debug('lobe-server:market:skill-router');
+
+const getMarketAuthState = (ctx: { marketAccessToken?: string; marketUserInfo?: unknown }) => ({
+  hasAccessToken: !!ctx.marketAccessToken,
+  hasUserInfo: !!ctx.marketUserInfo,
+});
+
+const getResultSize = (result: unknown): number | undefined => {
+  if (!result || typeof result !== 'object') return undefined;
+
+  if ('items' in result && Array.isArray(result.items)) return result.items.length;
+  if ('data' in result && Array.isArray(result.data)) return result.data.length;
+  if ('categories' in result && Array.isArray(result.categories)) return result.categories.length;
+
+  return undefined;
+};
 
 // Public procedure with optional user info for trusted client token
 const marketProcedure = publicProcedure
@@ -35,12 +50,19 @@ export const skillRouter = router({
         .optional(),
     )
     .query(async ({ input, ctx }) => {
-      log('getSkillCategories input: %O', input);
+      const startTime = Date.now();
+      log('getSkillCategories:start input=%O auth=%O', input, getMarketAuthState(ctx));
 
       try {
-        return await ctx.marketService.getSkillCategories();
+        const result = await ctx.marketService.getSkillCategories();
+        log(
+          'getSkillCategories:success durationMs=%d resultSize=%s',
+          Date.now() - startTime,
+          getResultSize(result) ?? 'unknown',
+        );
+        return result;
       } catch (error) {
-        log('Error fetching skill categories: %O', error);
+        log('getSkillCategories:failed durationMs=%d error=%O', Date.now() - startTime, error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch skill categories',
@@ -57,15 +79,33 @@ export const skillRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
-      log('getSkillDetail input: %O', input);
+      const startTime = Date.now();
+      log(
+        'getSkillDetail:start identifier=%s locale=%s version=%s auth=%O',
+        input.identifier,
+        input.locale,
+        input.version,
+        getMarketAuthState(ctx),
+      );
 
       try {
-        return await ctx.marketService.getSkillDetail(input.identifier, {
+        const result = await ctx.marketService.getSkillDetail(input.identifier, {
           locale: input.locale,
           version: input.version,
         });
+        log(
+          'getSkillDetail:success identifier=%s durationMs=%d',
+          input.identifier,
+          Date.now() - startTime,
+        );
+        return result;
       } catch (error) {
-        log('Error fetching skill detail: %O', error);
+        log(
+          'getSkillDetail:failed identifier=%s durationMs=%d error=%O',
+          input.identifier,
+          Date.now() - startTime,
+          error,
+        );
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch skill detail',
@@ -88,12 +128,19 @@ export const skillRouter = router({
         .optional(),
     )
     .query(async ({ input, ctx }) => {
-      log('getSkillList input: %O', input);
+      const startTime = Date.now();
+      log('getSkillList:start input=%O auth=%O', input, getMarketAuthState(ctx));
 
       try {
-        return await ctx.marketService.searchSkill(input ?? {});
+        const result = await ctx.marketService.searchSkill(input ?? {});
+        log(
+          'getSkillList:success durationMs=%d resultSize=%s',
+          Date.now() - startTime,
+          getResultSize(result) ?? 'unknown',
+        );
+        return result;
       } catch (error) {
-        log('Error fetching skill list: %O', error);
+        log('getSkillList:failed durationMs=%d error=%O', Date.now() - startTime, error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to fetch skill list',
