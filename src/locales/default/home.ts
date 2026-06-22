@@ -59,8 +59,7 @@ export default {
   'starter.image': 'Image',
   'starter.image2Generation': 'GPT Image 2',
   'starter.imageGeneration': 'Seedream 5.0 Lite',
-  'starter.newLabel':
-    '安全提醒：平台安全可控但非 100% 无风险，对话将用于合规审计。\n请勿处理公司机密或敏感信息。',
+  'starter.newLabel': '安全提醒：对话将用于合规审计，请勿处理公司机密或敏感信息。',
   'starter.videoGeneration': 'Seedance 2.0',
   'starter.write': 'Write',
 };

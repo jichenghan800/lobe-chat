@@ -399,6 +399,11 @@ export class PlatformAnalyticsService {
         FROM messages
         WHERE created_at >= ${startAt}
           AND created_at <= ${endAt}
+          AND role = 'assistant'
+          AND provider IS NOT NULL
+          AND provider <> ''
+          AND model IS NOT NULL
+          AND model <> ''
         GROUP BY user_id, provider, model
       ),
       operation_rollup AS (
@@ -420,6 +425,10 @@ export class PlatformAnalyticsService {
         FROM agent_operations
         WHERE created_at >= ${startAt}
           AND created_at <= ${endAt}
+          AND provider IS NOT NULL
+          AND provider <> ''
+          AND model IS NOT NULL
+          AND model <> ''
         GROUP BY user_id, provider, model
       ),
       combined AS (

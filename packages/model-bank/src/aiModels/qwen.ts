@@ -98,6 +98,29 @@ const qwenChatModels: AIChatModelCard[] = [
     id: 'qwen3.7-plus',
     maxOutput: 65_536,
     organization: 'Qwen',
+    pricing: {
+      currency: 'CNY',
+      units: [
+        {
+          name: 'textInput',
+          strategy: 'tiered',
+          tiers: [
+            { rate: 2, upTo: 256_000 },
+            { rate: 6, upTo: 'infinity' },
+          ],
+          unit: 'millionTokens',
+        },
+        {
+          name: 'textOutput',
+          strategy: 'tiered',
+          tiers: [
+            { rate: 8, upTo: 256_000 },
+            { rate: 24, upTo: 'infinity' },
+          ],
+          unit: 'millionTokens',
+        },
+      ],
+    },
     settings: {
       extendParams: ['enableReasoning', 'reasoningBudgetToken'],
       searchImpl: 'params',

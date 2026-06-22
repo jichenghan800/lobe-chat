@@ -1,12 +1,147 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
+import path from 'node:path';
 
 import debug from 'debug';
 import * as xlsx from 'xlsx';
+import { open } from 'yauzl';
+
+import type { Entry } from 'yauzl';
 
 import type { DocumentPage, FileLoaderInterface } from '../../types';
 import { promptTemplate } from './prompt';
 
 const log = debug('file-loaders:excel');
+
+const MB = 1024 * 1024;
+
+const parseLimitBytes = (envName: string, defaultMB: number) => {
+  const value = Number(process.env[envName]);
+
+  return Number.isFinite(value) && value > 0 ? value * MB : defaultMB * MB;
+};
+
+const MAX_EXCEL_FILE_SIZE_BYTES = parseLimitBytes('FILE_LOADER_EXCEL_MAX_FILE_SIZE_MB', 20);
+const MAX_EXCEL_ZIP_ENTRY_BYTES = parseLimitBytes('FILE_LOADER_EXCEL_MAX_ZIP_ENTRY_MB', 80);
+const MAX_EXCEL_ZIP_TOTAL_BYTES = parseLimitBytes('FILE_LOADER_EXCEL_MAX_ZIP_TOTAL_MB', 200);
+
+interface ExcelZipStats {
+  entries: number;
+  maxEntryName: string;
+  maxEntryUncompressedBytes: number;
+  totalUncompressedBytes: number;
+}
+
+const formatMB = (bytes: number) => `${(bytes / MB).toFixed(1)}MB`;
+
+const buildExcelTooLargeError = (reason: string) =>
+  new Error(
+    [
+      'Excel file is too large to parse safely.',
+      reason,
+      `Limits: file <= ${formatMB(MAX_EXCEL_FILE_SIZE_BYTES)}, uncompressed zip total <= ${formatMB(
+        MAX_EXCEL_ZIP_TOTAL_BYTES,
+      )}, single zip entry <= ${formatMB(MAX_EXCEL_ZIP_ENTRY_BYTES)}.`,
+      'Please split the workbook or export the required sheet as CSV before uploading.',
+    ].join(' '),
+  );
+
+const isXlsxFile = (filePath: string) => path.extname(filePath).toLowerCase() === '.xlsx';
+
+const inspectXlsxZip = async (filePath: string): Promise<ExcelZipStats> =>
+  new Promise((resolve, reject) => {
+    open(
+      filePath,
+      { autoClose: true, lazyEntries: true, validateEntrySizes: false },
+      (openError, zipfile) => {
+        if (openError) {
+          reject(openError);
+          return;
+        }
+
+        if (!zipfile) {
+          reject(new Error('Failed to open Excel zip file.'));
+          return;
+        }
+
+        const stats: ExcelZipStats = {
+          entries: 0,
+          maxEntryName: '',
+          maxEntryUncompressedBytes: 0,
+          totalUncompressedBytes: 0,
+        };
+        let settled = false;
+
+        const rejectOnce = (error: Error) => {
+          if (settled) return;
+          settled = true;
+          zipfile.close();
+          reject(error);
+        };
+
+        zipfile.on('entry', (entry: Entry) => {
+          if (settled) return;
+
+          stats.entries += 1;
+          stats.totalUncompressedBytes += entry.uncompressedSize;
+
+          if (entry.uncompressedSize > stats.maxEntryUncompressedBytes) {
+            stats.maxEntryName = entry.fileName;
+            stats.maxEntryUncompressedBytes = entry.uncompressedSize;
+          }
+
+          if (entry.uncompressedSize > MAX_EXCEL_ZIP_ENTRY_BYTES) {
+            rejectOnce(
+              buildExcelTooLargeError(
+                `Zip entry '${entry.fileName}' expands to ${formatMB(entry.uncompressedSize)}.`,
+              ),
+            );
+            return;
+          }
+
+          if (stats.totalUncompressedBytes > MAX_EXCEL_ZIP_TOTAL_BYTES) {
+            rejectOnce(
+              buildExcelTooLargeError(
+                `Zip entries expand to ${formatMB(stats.totalUncompressedBytes)} in total.`,
+              ),
+            );
+            return;
+          }
+
+          zipfile.readEntry();
+        });
+
+        zipfile.once('end', () => {
+          if (settled) return;
+          settled = true;
+          resolve(stats);
+        });
+
+        zipfile.once('error', (error) => {
+          rejectOnce(error);
+        });
+
+        zipfile.readEntry();
+      },
+    );
+  });
+
+const assertExcelFileParseable = async (filePath: string) => {
+  const fileStats = await stat(filePath);
+
+  if (fileStats.size > MAX_EXCEL_FILE_SIZE_BYTES) {
+    throw buildExcelTooLargeError(`File size is ${formatMB(fileStats.size)}.`);
+  }
+
+  if (!isXlsxFile(filePath)) return;
+
+  const zipStats = await inspectXlsxZip(filePath);
+  log('Excel zip preflight passed: %O', {
+    entries: zipStats.entries,
+    maxEntryName: zipStats.maxEntryName,
+    maxEntryUncompressedBytes: zipStats.maxEntryUncompressedBytes,
+    totalUncompressedBytes: zipStats.totalUncompressedBytes,
+  });
+};
 
 /**
  * Converts sheet data (array of objects) to a Markdown table string.
@@ -58,6 +193,8 @@ export class ExcelLoader implements FileLoaderInterface {
     log('Loading Excel file:', filePath);
     const pages: DocumentPage[] = [];
     try {
+      await assertExcelFileParseable(filePath);
+
       // Use readFile for async operation compatible with other loaders
       log('Reading Excel file as buffer');
       const dataBuffer = await readFile(filePath);
