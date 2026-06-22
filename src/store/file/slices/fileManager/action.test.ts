@@ -774,6 +774,46 @@ describe('FileManagerActions', () => {
       expect(removeSpy).toHaveBeenCalledWith('file-1');
       expect(refreshSpy).toHaveBeenCalled();
     });
+
+    it('should remove deleted file from local resource state and detail cache', async () => {
+      const { result } = renderHook(() => useStore());
+      const file = {
+        chunkCount: null,
+        chunkingError: null,
+        createdAt: new Date(),
+        embeddingError: null,
+        fileType: 'text/plain',
+        finishEmbedding: false,
+        id: 'file-1',
+        name: 'test.txt',
+        size: 100,
+        sourceType: 'file',
+        updatedAt: new Date(),
+        url: 'http://example.com/test.txt',
+      } satisfies FileListItem;
+
+      act(() => {
+        useStore.setState({
+          fileList: [file],
+          resourceList: [file],
+          resourceMap: new Map([[file.id, file]]),
+        });
+      });
+
+      vi.spyOn(fileService, 'removeFile').mockResolvedValue(undefined);
+      vi.spyOn(result.current, 'refreshFileList').mockResolvedValue();
+
+      await act(async () => {
+        await result.current.removeFileItem('file-1');
+      });
+
+      expect(result.current.fileList).toEqual([]);
+      expect(result.current.resourceList).toEqual([]);
+      expect(result.current.resourceMap.has('file-1')).toBe(false);
+      expect(mutate).toHaveBeenCalledWith(['useFetchKnowledgeItem', 'file-1'], undefined, {
+        revalidate: false,
+      });
+    });
   });
 
   describe('removeFiles', () => {
@@ -789,6 +829,57 @@ describe('FileManagerActions', () => {
 
       expect(removeSpy).toHaveBeenCalledWith(['file-1', 'file-2']);
       expect(refreshSpy).toHaveBeenCalled();
+    });
+
+    it('should remove multiple deleted files from local resource state and detail caches', async () => {
+      const { result } = renderHook(() => useStore());
+      const createFile = (id: string) =>
+        ({
+          chunkCount: null,
+          chunkingError: null,
+          createdAt: new Date(),
+          embeddingError: null,
+          fileType: 'text/plain',
+          finishEmbedding: false,
+          id,
+          name: `${id}.txt`,
+          size: 100,
+          sourceType: 'file',
+          updatedAt: new Date(),
+          url: `http://example.com/${id}.txt`,
+        }) satisfies FileListItem;
+      const file1 = createFile('file-1');
+      const file2 = createFile('file-2');
+      const file3 = createFile('file-3');
+
+      act(() => {
+        useStore.setState({
+          fileList: [file1, file2, file3],
+          resourceList: [file1, file2, file3],
+          resourceMap: new Map([
+            [file1.id, file1],
+            [file2.id, file2],
+            [file3.id, file3],
+          ]),
+        });
+      });
+
+      vi.spyOn(fileService, 'removeFiles').mockResolvedValue(undefined);
+      vi.spyOn(result.current, 'refreshFileList').mockResolvedValue();
+
+      await act(async () => {
+        await result.current.removeFiles(['file-1', 'file-2']);
+      });
+
+      expect(result.current.fileList).toEqual([file3]);
+      expect(result.current.resourceList).toEqual([file3]);
+      expect([...result.current.resourceMap.keys()]).toEqual(['file-3']);
+      expect(mutate).toHaveBeenCalledWith(['useFetchKnowledgeItem', 'file-1'], undefined, {
+        revalidate: false,
+      });
+      expect(mutate).toHaveBeenCalledWith(['useFetchKnowledgeItem', 'file-2'], undefined, {
+        revalidate: false,
+      });
     });
   });
 
@@ -957,6 +1048,27 @@ describe('FileManagerActions', () => {
       await waitFor(() => {
         expect(swrResult.current.data).toEqual(mockFile);
       });
+    });
+
+    it('should return undefined when file detail has already been deleted', async () => {
+      const { result } = renderHook(() => useStore());
+      const error = Object.assign(new Error('File not found'), {
+        data: { code: 'NOT_FOUND', httpStatus: 404 },
+      });
+
+      vi.mocked(lambdaClient.file.getFileItemById.query).mockRejectedValue(error);
+
+      const { result: swrResult } = renderHook(
+        () => result.current.useFetchKnowledgeItem('file-1'),
+        { wrapper: withSWR },
+      );
+
+      await waitFor(() => {
+        expect(swrResult.current.isLoading).toBe(false);
+      });
+
+      expect(swrResult.current.data).toBeUndefined();
+      expect(swrResult.current.error).toBeUndefined();
     });
   });
 

@@ -1,13 +1,15 @@
 'use client';
 
 import { ActionIcon, Block } from '@lobehub/ui';
-import { Spin } from 'antd';
+import { App, Spin } from 'antd';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
 import { Plus, X } from 'lucide-react';
 import type { ChangeEvent, CSSProperties } from 'react';
 import { memo, useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Image from '@/libs/next/Image';
+import { formatFileSize } from '@/routes/(main)/(create)/image/features/ConfigPanel/utils/imageValidation';
 import { useFileStore } from '@/store/file';
 
 export const UPLOAD_CARD_SIZE = 64;
@@ -146,6 +148,8 @@ const UploadCard = memo<UploadCardProps>(
     variant = 'card',
   }) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const { message } = App.useApp();
+    const { t } = useTranslation('components');
     const uploadWithProgress = useFileStore((s) => s.uploadWithProgress);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadPreview, setUploadPreview] = useState<string | null>(null);
@@ -159,7 +163,16 @@ const UploadCard = memo<UploadCardProps>(
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (maxFileSize && file.size > maxFileSize) return;
+        if (maxFileSize && file.size > maxFileSize) {
+          message.error(
+            t('MultiImagesUpload.validation.fileSizeExceededDetail', {
+              actualSize: formatFileSize(file.size),
+              fileName: file.name,
+              maxSize: formatFileSize(maxFileSize),
+            }),
+          );
+          return;
+        }
 
         const previewUrl = URL.createObjectURL(file);
         setUploadPreview(previewUrl);
@@ -184,7 +197,7 @@ const UploadCard = memo<UploadCardProps>(
           setIsUploading(false);
         }
       },
-      [maxFileSize, uploadWithProgress, onUpload],
+      [maxFileSize, message, t, uploadWithProgress, onUpload],
     );
 
     const showPreview = uploadPreview || imageUrl;

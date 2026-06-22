@@ -27,6 +27,25 @@ import { fileManagerSelectors } from './selectors';
 
 const serverFileService = new FileService();
 const FETCH_ALL_KNOWLEDGE_KEY = 'useFetchKnowledgeItems';
+const FETCH_KNOWLEDGE_ITEM_KEY = 'useFetchKnowledgeItem';
+
+const isMissingKnowledgeItemError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+
+  const maybeTRPCError = error as Error & {
+    data?: {
+      code?: string;
+      httpStatus?: number;
+    };
+  };
+
+  return (
+    error.message === 'File not found' &&
+    (!maybeTRPCError.data ||
+      maybeTRPCError.data.code === 'NOT_FOUND' ||
+      maybeTRPCError.data.httpStatus === 404)
+  );
+};
 
 export interface FolderCrumb {
   id: string;
@@ -380,6 +399,41 @@ export class FileManageActionImpl {
     );
   };
 
+  #removeDeletedKnowledgeItems = async (ids: string[]): Promise<void> => {
+    if (ids.length === 0) return;
+
+    const deletedIds = new Set(ids);
+    const { fileList, resourceList, resourceMap } = this.#get();
+    const nextResourceMap = new Map(resourceMap);
+
+    for (const id of deletedIds) {
+      nextResourceMap.delete(id);
+    }
+
+    this.#set(
+      {
+        fileList: fileList.filter((item) => !deletedIds.has(item.id)),
+        resourceList: resourceList.filter((item) => !deletedIds.has(item.id)),
+        resourceMap: nextResourceMap,
+      },
+      false,
+      'removeDeletedKnowledgeItems',
+    );
+
+    await Promise.all([
+      mutate(
+        (key) => Array.isArray(key) && key[0] === FETCH_ALL_KNOWLEDGE_KEY,
+        async (currentData: FileListItem[] | undefined) => {
+          if (!currentData) return currentData;
+
+          return currentData.filter((item) => !deletedIds.has(item.id));
+        },
+        { revalidate: false },
+      ),
+      ...ids.map((id) => mutate([FETCH_KNOWLEDGE_ITEM_KEY, id], undefined, { revalidate: false })),
+    ]);
+  };
+
   refreshFileList = async (options?: RefreshFileListOptions): Promise<void> => {
     await this.#refreshKnowledgeListCaches();
 
@@ -395,11 +449,13 @@ export class FileManageActionImpl {
 
   removeFileItem = async (id: string): Promise<void> => {
     await fileService.removeFile(id);
+    await this.#removeDeletedKnowledgeItems([id]);
     await this.#get().refreshFileList();
   };
 
   removeFiles = async (ids: string[]): Promise<void> => {
     await fileService.removeFiles(ids);
+    await this.#removeDeletedKnowledgeItems(ids);
     await this.#get().refreshFileList();
   };
 
@@ -672,10 +728,16 @@ export class FileManageActionImpl {
 
   useFetchKnowledgeItem = (id?: string): SWRResponse<FileListItem | undefined> => {
     return useClientDataSWR<FileListItem | undefined>(
-      !id ? null : ['useFetchKnowledgeItem', id],
+      !id ? null : [FETCH_KNOWLEDGE_ITEM_KEY, id],
       async () => {
-        const response = await serverFileService.getKnowledgeItem(id!);
-        return response ?? undefined;
+        try {
+          const response = await serverFileService.getKnowledgeItem(id!);
+          return response ?? undefined;
+        } catch (error) {
+          if (isMissingKnowledgeItemError(error)) return undefined;
+
+          throw error;
+        }
       },
     );
   };
