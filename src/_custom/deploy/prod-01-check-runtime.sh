@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}"
-TARGET_DIGEST="${TARGET_DIGEST:-sha256:01a1ade52b127fa116a3acd67710c3444efacb46e1e39e158daf49f26bf38f0d}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 
 cd "$DEPLOY_DIR"
+
+if [[ -f release.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source release.env
+  set +a
+fi
+
+TARGET_IMAGE="${TARGET_IMAGE:-${LOBECHAT_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}}"
+TARGET_DIGEST="${TARGET_DIGEST:-${LOBECHAT_IMAGE_DIGEST:-}}"
 
 read_env() {
   local key="$1"
@@ -78,16 +86,16 @@ for key in \
   LOBECHAT_IMAGE LOBECHAT_BIND LOBECHAT_PORT \
   POSTGRES_USER POSTGRES_DB POSTGRES_PASSWORD DATABASE_DRIVER \
   APP_URL AUTH_TRUSTED_ORIGINS KEY_VAULTS_SECRET \
-  AZURE_API_KEY VERTEXAI_CREDENTIALS VOLCENGINE_API_KEY QWEN_API_KEY \
+  OPENAI_API_KEY OPENAI_PROXY_URL AZURE_API_KEY VERTEXAI_CREDENTIALS VOLCENGINE_API_KEY QWEN_API_KEY \
   NEXT_PUBLIC_NAV_HIDE_IMAGE NEXT_PUBLIC_NAV_HIDE_VIDEO \
   NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS \
   NEXT_PUBLIC_MODEL_VISIBLE_ALLOW NEXT_PUBLIC_MODEL_DISPLAY_NAMES \
-  ENABLED_VERTEXAI VERTEXAI_MODEL_LIST ENABLED_AZURE_OPENAI AZURE_MODEL_LIST \
+  ENABLED_OPENAI OPENAI_MODEL_LIST ENABLED_VERTEXAI VERTEXAI_MODEL_LIST ENABLED_AZURE_OPENAI AZURE_MODEL_LIST \
   ENABLED_VOLCENGINE VOLCENGINE_MODEL_LIST ENABLED_QWEN QWEN_MODEL_LIST \
   COTTI_AUDIT_RISK_MODEL_PROVIDER COTTI_AUDIT_RISK_MODEL; do
   value="$(read_env "$key")"
   case "$key" in
-    POSTGRES_PASSWORD|KEY_VAULTS_SECRET|AUTH_TRUSTED_ORIGINS|AZURE_API_KEY|VERTEXAI_CREDENTIALS|VOLCENGINE_API_KEY|QWEN_API_KEY)
+    POSTGRES_PASSWORD|KEY_VAULTS_SECRET|AUTH_TRUSTED_ORIGINS|OPENAI_API_KEY|AZURE_API_KEY|VERTEXAI_CREDENTIALS|VOLCENGINE_API_KEY|QWEN_API_KEY)
       printf '%s=%s\n' "$key" "$(mask_value "$value")"
       ;;
     *)
@@ -98,7 +106,11 @@ done
 
 echo
 echo "== 4. Provider credential gate =="
-require_env_value AZURE_API_KEY "全能效率"
+require_env_value OPENAI_API_KEY "全能效率"
+echo "OPENAI_API_KEY=set"
+require_env_value OPENAI_PROXY_URL "全能效率"
+echo "OPENAI_PROXY_URL=$(read_env OPENAI_PROXY_URL)"
+require_env_value AZURE_API_KEY "GPT Image 2"
 echo "AZURE_API_KEY=set"
 require_env_value VERTEXAI_CREDENTIALS "COTTI-快速/COTTI-专业"
 echo "VERTEXAI_CREDENTIALS=set"
@@ -122,7 +134,7 @@ docker ps -a \
 echo
 echo "== 7. Registry access check =="
 echo "Target image: $TARGET_IMAGE"
-echo "Expected pushed digest: $TARGET_DIGEST"
+echo "Expected pushed digest: ${TARGET_DIGEST:-'(not provided)'}"
 docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Registry manifest is readable: /tmp/lobechat-target-manifest.json"
 

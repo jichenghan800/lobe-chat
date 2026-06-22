@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}"
-TARGET_DIGEST="${TARGET_DIGEST:-sha256:01a1ade52b127fa116a3acd67710c3444efacb46e1e39e158daf49f26bf38f0d}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
 
 cd "$DEPLOY_DIR"
+
+if [[ -f release.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source release.env
+  set +a
+fi
+
+TARGET_IMAGE="${TARGET_IMAGE:-${LOBECHAT_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}}"
+TARGET_DIGEST="${TARGET_DIGEST:-${LOBECHAT_IMAGE_DIGEST:-}}"
 
 read_env() {
   local key="$1"
@@ -70,7 +78,7 @@ echo "Container: $APP_CONTAINER"
 echo "Current .env LOBECHAT_IMAGE: ${CURRENT_ENV_IMAGE:-'(empty)'}"
 echo "Current running container image: ${CURRENT_CONTAINER_IMAGE:-'(container not found)'}"
 echo "Target image: $TARGET_IMAGE"
-echo "Expected pushed digest: $TARGET_DIGEST"
+echo "Expected pushed digest: ${TARGET_DIGEST:-'(not provided)'}"
 
 echo
 echo "== Actual runtime checks =="
@@ -81,7 +89,11 @@ echo "Compose render OK and target image manifest is readable."
 
 echo
 echo "== Provider credential gate =="
-require_env_value AZURE_API_KEY "全能效率"
+require_env_value OPENAI_API_KEY "全能效率"
+echo "OPENAI_API_KEY=set"
+require_env_value OPENAI_PROXY_URL "全能效率"
+echo "OPENAI_PROXY_URL=$(read_env OPENAI_PROXY_URL)"
+require_env_value AZURE_API_KEY "GPT Image 2"
 echo "AZURE_API_KEY=set"
 require_env_value VERTEXAI_CREDENTIALS "COTTI-快速/COTTI-专业"
 echo "VERTEXAI_CREDENTIALS=set"

@@ -4,9 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT_DIR"
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}"
-TARGET_DIGEST="${TARGET_DIGEST:-sha256:01a1ade52b127fa116a3acd67710c3444efacb46e1e39e158daf49f26bf38f0d}"
-PACKAGE_NAME="${PACKAGE_NAME:-lobechat-prod-app-update-20260614-ui-env-models-v2}"
+DEFAULT_TAG="v2.2.1-cotti-$(date +%Y%m%d-%H%M%S)-$(git rev-parse --short=12 HEAD)"
+TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:$DEFAULT_TAG}"
+TARGET_DIGEST="${TARGET_DIGEST:-}"
+PACKAGE_NAME="${PACKAGE_NAME:-lobechat-prod-app-update-$(date +%Y%m%d-%H%M%S)}"
 OUT_ROOT="${OUT_ROOT:-src/_custom/deploy/dist}"
 OUT_DIR="$OUT_ROOT/$PACKAGE_NAME"
 TARBALL="$OUT_ROOT/$PACKAGE_NAME.tar.gz"
@@ -34,6 +35,8 @@ cp src/_custom/deploy/prod-03-verify-app-update.sh "$OUT_DIR/03-verify-app-updat
 chmod +x "$OUT_DIR/"*.sh
 
 cat > "$OUT_DIR/release.env" <<EOF
+TARGET_IMAGE=$TARGET_IMAGE
+TARGET_DIGEST=$TARGET_DIGEST
 LOBECHAT_IMAGE=$TARGET_IMAGE
 LOBECHAT_IMAGE_DIGEST=$TARGET_DIGEST
 EOF
@@ -47,7 +50,7 @@ Target image:
 $TARGET_IMAGE
 
 Expected pushed digest:
-$TARGET_DIGEST
+${TARGET_DIGEST:-not provided}
 
 Expected production directory:
 /opt/lobechat-main
@@ -68,6 +71,7 @@ Run on the production server:
   bash 03-verify-app-update.sh
 
 Notes:
+- The scripts automatically read release.env when it exists in the deployment directory.
 - The existing /opt/lobechat-main/.env stays on the production server.
 - 02-confirm-and-update-app.sh backs up .env before changing LOBECHAT_IMAGE and model exposure env values.
 - Only the compose app service image is pulled and restarted.

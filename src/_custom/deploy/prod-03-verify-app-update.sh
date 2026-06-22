@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_IMAGE="${TARGET_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}"
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/lobechat-main}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
 
 cd "$DEPLOY_DIR"
+
+if [[ -f release.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source release.env
+  set +a
+fi
+
+TARGET_IMAGE="${TARGET_IMAGE:-${LOBECHAT_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}}"
 
 read_env() {
   local key="$1"
@@ -50,6 +58,10 @@ const keys = [
   'NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS',
   'NEXT_PUBLIC_MODEL_VISIBLE_ALLOW',
   'NEXT_PUBLIC_MODEL_DISPLAY_NAMES',
+  'NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW',
+  'ENABLED_OPENAI',
+  'OPENAI_PROXY_URL',
+  'OPENAI_MODEL_LIST',
   'ENABLED_VERTEXAI',
   'VERTEXAI_MODEL_LIST',
   'ENABLED_AZURE_OPENAI',
@@ -67,7 +79,7 @@ for (const key of keys) console.log(key + '=' + (process.env[key] ?? ''));
 echo
 echo "== 4. Provider credential presence =="
 docker exec "$APP_CONTAINER" /bin/node -e "
-const required = ['AZURE_API_KEY', 'VERTEXAI_CREDENTIALS', 'VOLCENGINE_API_KEY', 'QWEN_API_KEY'];
+const required = ['OPENAI_API_KEY', 'OPENAI_PROXY_URL', 'AZURE_API_KEY', 'VERTEXAI_CREDENTIALS', 'VOLCENGINE_API_KEY', 'QWEN_API_KEY'];
 const missing = [];
 for (const key of required) {
   const present = Boolean(process.env[key]);
