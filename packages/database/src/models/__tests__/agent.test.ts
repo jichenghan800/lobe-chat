@@ -90,7 +90,7 @@ describe('AgentModel', () => {
       expect(result!.files).toHaveLength(1);
     });
 
-    it('should fetch and include document content for enabled files', async () => {
+    it('should omit document content by default for enabled files', async () => {
       const agentId = 'test-agent-with-docs';
       await serverDB.insert(agents).values({ id: agentId, userId });
       await serverDB.insert(agentsFiles).values({ agentId, fileId: '1', userId, enabled: true });
@@ -110,7 +110,33 @@ describe('AgentModel', () => {
 
       expect(result).not.toBeNull();
       expect(result!.files).toHaveLength(1);
-      expect(result!.files[0].content).toBe('This is document content');
+      expect((result!.files[0] as { content?: string | null }).content).toBeUndefined();
+      expect(result!.files[0].enabled).toBe(true);
+    });
+
+    it('should fetch and include document content for enabled files when requested', async () => {
+      const agentId = 'test-agent-with-docs-included';
+      await serverDB.insert(agents).values({ id: agentId, userId });
+      await serverDB.insert(agentsFiles).values({ agentId, fileId: '1', userId, enabled: true });
+      await serverDB.insert(documents).values({
+        id: 'doc1-included',
+        fileId: '1',
+        userId,
+        content: 'This is document content',
+        fileType: 'application/pdf',
+        totalCharCount: 100,
+        totalLineCount: 10,
+        sourceType: 'file',
+        source: 'document.pdf',
+      });
+
+      const result = await agentModel.getAgentConfigById(agentId, { includeFileContent: true });
+
+      expect(result).not.toBeNull();
+      expect(result!.files).toHaveLength(1);
+      expect((result!.files[0] as { content?: string | null }).content).toBe(
+        'This is document content',
+      );
       expect(result!.files[0].enabled).toBe(true);
     });
 
@@ -134,7 +160,7 @@ describe('AgentModel', () => {
 
       expect(result).not.toBeNull();
       expect(result!.files).toHaveLength(1);
-      expect(result!.files[0].content).toBeUndefined();
+      expect((result!.files[0] as { content?: string | null }).content).toBeUndefined();
       expect(result!.files[0].enabled).toBe(false);
     });
 
@@ -147,7 +173,7 @@ describe('AgentModel', () => {
 
       expect(result).not.toBeNull();
       expect(result!.files).toHaveLength(1);
-      expect(result!.files[0].content).toBeUndefined();
+      expect((result!.files[0] as { content?: string | null }).content).toBeUndefined();
     });
 
     it('should handle agent with no files', async () => {

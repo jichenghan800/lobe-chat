@@ -28,6 +28,10 @@ import type { LobeChatDatabase } from '../type';
 import { normalizeInboxAgentMeta } from '../utils/inboxAgent';
 import { buildWorkspacePayload, buildWorkspaceWhere } from '../utils/workspace';
 
+interface AgentKnowledgeOptions {
+  includeFileContent?: boolean;
+}
+
 export class AgentModel {
   private userId: string;
   private db: LobeChatDatabase;
@@ -93,14 +97,14 @@ export class AgentModel {
   private agentsToSessionsOwnership = () =>
     buildWorkspaceWhere({ userId: this.userId, workspaceId: this.workspaceId }, agentsToSessions);
 
-  getAgentConfigById = async (id: string) => {
+  getAgentConfigById = async (id: string, options?: AgentKnowledgeOptions) => {
     const agent = await this.db.query.agents.findFirst({
       where: and(eq(agents.id, id), this.ownership()),
     });
 
     if (!agent) return null;
 
-    return this.enrichAgentWithKnowledge(agent);
+    return this.enrichAgentWithKnowledge(agent, options);
   };
 
   existsById = async (id: string): Promise<boolean> => {
@@ -279,7 +283,7 @@ export class AgentModel {
   /**
    * Get agent config by ID or slug (single query with OR condition)
    */
-  getAgentConfig = async (idOrSlug: string) => {
+  getAgentConfig = async (idOrSlug: string, options?: AgentKnowledgeOptions) => {
     // Prefer an exact ID match over a slug match. The combined `or(id, slug)`
     // query has no inherent ordering, so resolve ID first for determinism.
     const agent =
@@ -292,17 +296,19 @@ export class AgentModel {
 
     if (!agent) return null;
 
-    return this.enrichAgentWithKnowledge(agent);
+    return this.enrichAgentWithKnowledge(agent, options);
   };
 
   /**
    * Enrich agent with knowledge base and files data
    */
-  private enrichAgentWithKnowledge = async (agent: AgentItem) => {
+  private enrichAgentWithKnowledge = async (agent: AgentItem, options?: AgentKnowledgeOptions) => {
     const knowledge = await this.getAgentAssignedKnowledge(agent.id);
     const normalizedAgent = normalizeInboxAgentMeta(agent, { slug: agent.slug });
 
-    // Fetch document content for enabled files
+    if (!options?.includeFileContent) return { ...normalizedAgent, ...knowledge };
+
+    // Fetch document content only for runtime paths that explicitly need it.
     const enabledFileIds = knowledge.files
       .filter((f) => f.enabled)
       .map((f) => f.id)

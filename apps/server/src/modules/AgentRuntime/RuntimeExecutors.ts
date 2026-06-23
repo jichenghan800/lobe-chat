@@ -72,13 +72,16 @@ import {
 } from '@lobechat/types';
 import { sanitizeToolCallArguments, serializePartsForStorage } from '@lobechat/utils';
 import debug from 'debug';
+import { and, inArray } from 'drizzle-orm';
 import { type ExtendParamsType, ModelProvider } from 'model-bank';
 
 import { composioEnv } from '@/config/composio';
 import { type MessageModel, MessageModel as MessageModelClass } from '@/database/models/message';
 import { TopicModel } from '@/database/models/topic';
 import { UserModel } from '@/database/models/user';
+import { documents } from '@/database/schemas';
 import { type LobeChatDatabase } from '@/database/type';
+import { buildWorkspaceWhere } from '@/database/utils/workspace';
 import { fileEnv } from '@/envs/file';
 import { type ExecutionPlan, isDeviceCapablePlan } from '@/helpers/executionTarget';
 import { serverMessagesEngine } from '@/server/modules/Mecha/ContextEngineering';
@@ -332,6 +335,54 @@ const buildPostProcessUrl = (
   }
   return (path: string | null, file: { id?: string | null }) =>
     fileService!.getFileAccessUrl({ id: file.id, url: path });
+};
+
+const resolveRuntimeFileContents = async (
+  files: Array<{
+    content?: string | null;
+    enabled?: boolean | null;
+    id?: string;
+    name?: string;
+  }> = [],
+  ctx: Pick<RuntimeExecutorContext, 'serverDB' | 'userId' | 'workspaceId'>,
+) => {
+  const enabledFiles = files.filter((file) => file.enabled === true && file.id);
+  if (enabledFiles.length === 0) return [];
+
+  const contentByFileId = new Map<string, string>();
+  for (const file of enabledFiles) {
+    if (file.id && file.content) contentByFileId.set(file.id, file.content);
+  }
+
+  const missingContentFileIds = enabledFiles
+    .map((file) => file.id!)
+    .filter((fileId) => !contentByFileId.has(fileId));
+
+  if (missingContentFileIds.length > 0 && ctx.userId) {
+    const rows = await ctx.serverDB
+      .select({ content: documents.content, fileId: documents.fileId })
+      .from(documents)
+      .where(
+        and(
+          buildWorkspaceWhere({ userId: ctx.userId, workspaceId: ctx.workspaceId }, documents),
+          inArray(documents.fileId, missingContentFileIds),
+        ),
+      );
+
+    for (const row of rows) {
+      if (row.fileId && row.content && !contentByFileId.has(row.fileId)) {
+        contentByFileId.set(row.fileId, row.content);
+      }
+    }
+  }
+
+  return enabledFiles
+    .map((file) => ({
+      content: contentByFileId.get(file.id!) ?? '',
+      fileId: file.id!,
+      filename: file.name ?? '',
+    }))
+    .filter((file) => file.content.length > 0);
 };
 
 /**
@@ -1228,6 +1279,8 @@ export const createRuntimeExecutors = (
           }
         }
 
+        const runtimeFileContents = await resolveRuntimeFileContents(agentConfig.files, ctx);
+
         const contextEngineInput = {
           agentDocuments,
           agentGroup: buildBotAgentGroupContext({
@@ -1287,13 +1340,7 @@ export const createRuntimeExecutors = (
           historyCount: resolveRuntimeHistoryCount(agentConfig.chatConfig?.historyCount),
           initialContext: (state as any).initialContext?.initialContext,
           knowledge: {
-            fileContents: agentConfig.files
-              ?.filter((f: { enabled?: boolean | null }) => f.enabled === true)
-              .map((f: { content?: string | null; id?: string; name?: string }) => ({
-                content: f.content ?? '',
-                fileId: f.id ?? '',
-                filename: f.name ?? '',
-              })),
+            fileContents: runtimeFileContents,
             knowledgeBases: agentConfig.knowledgeBases
               ?.filter((kb: { enabled?: boolean | null }) => kb.enabled === true)
               .map((kb: { id?: string; name?: string }) => ({

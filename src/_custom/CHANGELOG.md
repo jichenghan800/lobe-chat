@@ -3,6 +3,63 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-23
+
+### Composio Server Configuration
+
+- Change: enable Composio integrations through the server-only `COMPOSIO_API_KEY`
+  environment variable in deployment env files.
+- Boundary: the real API key must stay in ignored runtime env files such as `.env` and
+  `docker-compose/deploy/.env`; do not commit the secret value to source control or docs.
+- Runtime behavior: `enableComposio` is derived from whether `COMPOSIO_API_KEY` exists, so changing
+  the value requires recreating the server container, not just restarting it.
+
+### Resource Page List Payload Performance
+
+- Incident: `https://chatdev.cotticoffee.com/resource` loaded slowly and sometimes surfaced
+  `ERR_INCOMPLETE_CHUNKED_ENCODING 200 (OK)` on the batched TRPC request
+  `file.getKnowledgeItems,knowledgeBase.getKnowledgeBases`.
+- Root cause: the resource list query returned `documents.content` and `documents.editor_data` for
+  every list row. After Excel parsing support was enabled, uploaded Excel files created large mirror
+  document bodies. The first resource page requested only 50 rows, but the old response still carried
+  about 5.5 MB of document text plus editor JSON, including `维修.xlsx` at about 1.79 MB by itself.
+- Fix: keep resource list responses lightweight by returning `content: null` and `editorData: null`
+  from `KnowledgeRepo.query`, `KnowledgeRepo.queryRecent`, and `file.getKnowledgeItems`.
+- Boundary: detail/edit paths still fetch full document bodies through `fileService.getKnowledgeItem`
+  and `document.getDocumentById`; only list-style resource responses are trimmed.
+- Verification: the same resource-page TRPC request now returns 200 without chunked-encoding errors,
+  response body is about 34 KB for 49 items, and no returned list item contains `content` or
+  `editorData`.
+- Tests: `bunx vitest run --silent='passed-only' apps/server/src/routers/lambda/__tests__/file.test.ts`
+  passed; `bun run type-check` passed. The database repository test did not run because the local
+  PGLite migration harness currently fails on a preexisting multi-statement migration.
+- Deployment: dev container image
+  `sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260623-af45efa975`
+  is running on `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-prev-before-resource-trim-194404`.
+
+### Agent Config Payload Performance
+
+- Incident: `agent.getAgentConfigById` and `agent.updateAgentConfig` could fail in the browser with
+  `ERR_INCOMPLETE_CHUNKED_ENCODING 200 (OK)` after large Excel-backed files were attached to an
+  agent.
+- Root cause: `AgentModel.enrichAgentWithKnowledge` embedded full `documents.content` into
+  `agent.files[].content` for enabled files. The agent config API and the update mutation both
+  returned that full payload to the browser, so saving a small slider value could still transfer
+  megabytes of file text.
+- Fix: agent config reads omit file content by default. Runtime context construction explicitly
+  resolves enabled file content server-side from `documents` when building model context.
+- Boundary: file metadata and enabled states remain available to the UI; full file text is reserved
+  for server-side model-context construction.
+- Verification: `bun run type-check` passed. The focused database test is blocked by the existing
+  local PGLite multi-statement migration issue; existing agent service/route tests need Cotti access
+  mocks before they can be used as regression coverage.
+- Deployment: dev container image
+  `sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260623-33ee730e0d`
+  is running on `chatdev` and pushed to Aliyun with digest
+  `sha256:fd756b08cb260a6abc3ab824420fa168e3287902b1f0ec16c31fa2f846e763a5`; previous dev
+  container is retained as `lobehub-v228-stage0-prev-before-agent-trim-200017`.
+
 ## 2026-06-22
 
 ### GPT-5.5 and Public Model Exposure

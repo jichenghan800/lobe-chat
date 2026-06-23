@@ -143,9 +143,9 @@ export class AgentService {
    * 4. The actual agent config from database
    * 5. AI-generated welcome data from Redis (if available)
    */
-  async getAgentConfigById(agentId: string) {
+  async getAgentConfigById(agentId: string, options?: { includeFileContent?: boolean }) {
     const [agent, defaultAgentConfig, welcomeData] = await Promise.all([
-      this.agentModel.getAgentConfigById(agentId),
+      this.agentModel.getAgentConfigById(agentId, options),
       this.userModel.getUserSettingsDefaultAgentConfig(),
       this.getAgentWelcomeFromRedis(agentId),
     ]);
