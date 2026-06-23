@@ -8,7 +8,7 @@ interface ProviderModelListLike<T extends ModelLike> {
 }
 
 const DEFAULT_VISIBLE_MODEL_ALLOW =
-  'vertexai/gemini-3.1-flash-lite,vertexai/gemini-3.5-flash,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus,openai/gpt-5.5';
+  'vertexai/gemini-3.1-flash-lite,vertexai/gemini-3.5-flash,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus,openai/gpt-5.5,openai/glm-5.2';
 
 const parseVisibleModelAllowList = () => {
   const raw = process.env.NEXT_PUBLIC_MODEL_VISIBLE_ALLOW || DEFAULT_VISIBLE_MODEL_ALLOW;

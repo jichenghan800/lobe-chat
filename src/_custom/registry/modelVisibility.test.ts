@@ -6,7 +6,7 @@ describe('modelVisibility', () => {
   it('filters and orders visible models by the allow list', () => {
     const providers = filterVisibleProviderModelLists([
       {
-        children: [{ id: 'gpt-5.5' }, { id: 'hidden-openai' }],
+        children: [{ id: 'gpt-5.5' }, { id: 'glm-5.2' }, { id: 'hidden-openai' }],
         id: 'openai',
       },
       {
@@ -43,6 +43,6 @@ describe('modelVisibility', () => {
     ]);
     expect(providers[1].children.map((model) => model.id)).toEqual(['doubao-seed-1.6-flash']);
     expect(providers[2].children.map((model) => model.id)).toEqual(['qwen3.7-plus']);
-    expect(providers[3].children.map((model) => model.id)).toEqual(['gpt-5.5']);
+    expect(providers[3].children.map((model) => model.id)).toEqual(['gpt-5.5', 'glm-5.2']);
   });
 });

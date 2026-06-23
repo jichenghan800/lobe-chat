@@ -9,7 +9,7 @@ interface ProviderModelListLike<T extends ModelLike> {
 }
 
 const DEFAULT_MODEL_DISPLAY_NAMES =
-  'vertexai/gemini-3.1-flash-lite=COTTI-快速,vertexai/gemini-3.5-flash=COTTI-专业,volcengine/doubao-seed-1.6-flash=豆包1.6-Flash,qwen/qwen3.7-plus=千问3.7-Plus,openai/gpt-5.5=全能效率';
+  'vertexai/gemini-3.1-flash-lite=COTTI-快速,vertexai/gemini-3.5-flash=COTTI-专业,volcengine/doubao-seed-1.6-flash=豆包1.6-Flash,qwen/qwen3.7-plus=千问3.7-Plus,openai/gpt-5.5=全能效率,openai/glm-5.2=智谱-GLM5.2';
 
 const parseModelDisplayNames = () => {
   const raw = process.env.NEXT_PUBLIC_MODEL_DISPLAY_NAMES || DEFAULT_MODEL_DISPLAY_NAMES;
