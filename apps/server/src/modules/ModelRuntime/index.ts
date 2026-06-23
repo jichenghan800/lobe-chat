@@ -405,6 +405,7 @@ export const initModelRuntimeFromDB = async (
   userId: string,
   provider: string,
   workspaceId?: string,
+  params: Record<string, unknown> = {},
 ): Promise<ModelRuntime> => {
   // 1. Get user's provider configuration from database
   // NOTE: workspace-scoped ai_infra is deferred until the ai_infra surrogate-`_id`
@@ -436,5 +437,5 @@ export const initModelRuntimeFromDB = async (
   const hooks = mergeModelRuntimeHooks(businessHooks, tracingHooks);
 
   // 6. Initialize ModelRuntime with the payload and hooks
-  return initModelRuntimeWithUserPayload(provider, payload, { userId }, hooks);
+  return initModelRuntimeWithUserPayload(provider, payload, { ...params, userId }, hooks);
 };

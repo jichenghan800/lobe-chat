@@ -75,8 +75,9 @@ export const agentRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const config = await ctx.agentService.applyCottiAgentAccessGate(input.config ?? {});
       const agent = await ctx.agentModel.create({
-        ...input.config,
+        ...config,
         sessionGroupId: input.groupId,
       });
 
@@ -127,8 +128,10 @@ export const agentRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const config = await ctx.agentService.applyCottiAgentAccessGate(input.config ?? {});
+
       // Create the agent entity only (no session)
-      const agent = await ctx.agentModel.create(input.config ?? {});
+      const agent = await ctx.agentModel.create(config);
 
       // Add the agent to the group
       await ctx.chatGroupModel.addAgentToGroup(input.groupId, agent.id);
@@ -229,7 +232,10 @@ export const agentRouter = router({
       if (!session) throw new Error(`Session [${input.sessionId}] not found`);
       const sessionId = session.id;
 
-      return ctx.agentModel.findBySessionId(sessionId);
+      const agentConfig = await ctx.agentModel.findBySessionId(sessionId);
+      if (!agentConfig) return null;
+
+      return ctx.agentService.applyCottiAgentAccessGate(agentConfig);
     }),
 
   getAgentConfigById: agentProcedure

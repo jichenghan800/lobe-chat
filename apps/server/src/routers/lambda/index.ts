@@ -19,6 +19,7 @@ import { workspaceUsageRouter } from '@/business/server/lambda-routers/workspace
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 
 import { agentRouter } from './agent';
+import { agentAccessRouter } from './agentAccess';
 import { agentBotProviderRouter } from './agentBotProvider';
 import { agentDocumentRouter } from './agentDocument';
 import { agentEvalRouter } from './agentEval';
@@ -61,6 +62,8 @@ import { messengerRouter } from './messenger';
 import { notebookRouter } from './notebook';
 import { notificationRouter } from './notification';
 import { oauthDeviceFlowRouter } from './oauthDeviceFlow';
+import { platformAnalyticsRouter } from './platformAnalytics';
+import { platformAuditRouter } from './platformAudit';
 import { pluginRouter } from './plugin';
 import { pushTokenRouter } from './pushToken';
 import { ragEvalRouter } from './ragEval';
@@ -83,6 +86,7 @@ import { webBrowsingRouter } from './webBrowsing';
 
 export const lambdaRouter = router({
   agent: agentRouter,
+  agentAccess: agentAccessRouter,
   agentBotProvider: agentBotProviderRouter,
   agentNotify: agentNotifyRouter,
   botMessage: botMessageRouter,
@@ -128,6 +132,8 @@ export const lambdaRouter = router({
   notebook: notebookRouter,
   notification: notificationRouter,
   oauthDeviceFlow: oauthDeviceFlowRouter,
+  platformAnalytics: platformAnalyticsRouter,
+  platformAudit: platformAuditRouter,
   plugin: pluginRouter,
   pushToken: pushTokenRouter,
   ragEval: ragEvalRouter,

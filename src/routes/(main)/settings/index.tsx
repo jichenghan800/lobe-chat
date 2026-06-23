@@ -1,8 +1,9 @@
 'use client';
 
 import { memo } from 'react';
-import { useMatches, useParams } from 'react-router';
+import { Navigate, useMatches, useParams } from 'react-router';
 
+import { isSettingsTabHidden } from '@/_custom/registry/platformManagement';
 import { SettingsTabs } from '@/store/global/initialState';
 
 import { type LayoutProps } from './_layout/type';
@@ -31,6 +32,8 @@ const Layout = memo<LayoutProps>(() => {
     (params.tab as SettingsTabs | undefined) ||
     getSettingsTabFromMatches(matches) ||
     SettingsTabs.Profile;
+
+  if (isSettingsTabHidden(activeTab)) return <Navigate replace to="/settings/profile" />;
 
   return <SettingsContent activeTab={activeTab} mobile={false} />;
 });

@@ -7,6 +7,7 @@ import { Images } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { shouldHideImageGenerationCountControl } from '@/_custom/registry/imageGeneration';
 import { loginRequired } from '@/components/Error/loginRequiredNotification';
 import Action from '@/features/ChatInput/ActionBar/components/Action';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
@@ -160,6 +161,7 @@ const PromptInput = ({ showTitle = false }: PromptInputProps) => {
 
   const [promptParam, setPromptParam] = useQueryState('prompt');
   const [modelParam, setModelParam] = useQueryState('model');
+  const [providerParam, setProviderParam] = useQueryState('provider');
   const hasProcessedPrompt = useRef(false);
   const hasProcessedModel = useRef(false);
 
@@ -177,8 +179,14 @@ const PromptInput = ({ showTitle = false }: PromptInputProps) => {
   useEffect(() => {
     if (modelParam && !hasProcessedModel.current && isInit) {
       const targetModel = modelParam;
+      const targetProvider = providerParam?.toLowerCase();
+      const providerGroups = targetProvider
+        ? enabledImageModelList.filter(
+            (providerGroup) => providerGroup.id.toLowerCase() === targetProvider,
+          )
+        : enabledImageModelList;
 
-      for (const providerGroup of enabledImageModelList) {
+      for (const providerGroup of providerGroups) {
         const found = providerGroup.children.some((m) => m.id === targetModel);
         if (found) {
           setModelAndProviderOnSelect(targetModel, providerGroup.id);
@@ -188,8 +196,17 @@ const PromptInput = ({ showTitle = false }: PromptInputProps) => {
 
       hasProcessedModel.current = true;
       setModelParam(null);
+      setProviderParam(null);
     }
-  }, [modelParam, isInit, enabledImageModelList, setModelAndProviderOnSelect, setModelParam]);
+  }, [
+    modelParam,
+    providerParam,
+    isInit,
+    enabledImageModelList,
+    setModelAndProviderOnSelect,
+    setModelParam,
+    setProviderParam,
+  ]);
 
   useEffect(() => {
     if (promptParam && !hasProcessedPrompt.current && isLogin && canCreate) {
@@ -374,16 +391,18 @@ const PromptInput = ({ showTitle = false }: PromptInputProps) => {
                 </Flexbox>
               }
             />
-            <Action
-              icon={Images}
-              title={t('config.imageNum.label')}
-              trigger={'click'}
-              popover={{
-                content: <ImageNum />,
-                minWidth: 220,
-                title: t('config.imageNum.label'),
-              }}
-            />
+            {!shouldHideImageGenerationCountControl() && (
+              <Action
+                icon={Images}
+                title={t('config.imageNum.label')}
+                trigger={'click'}
+                popover={{
+                  content: <ImageNum />,
+                  minWidth: 220,
+                  title: t('config.imageNum.label'),
+                }}
+              />
+            )}
           </Flexbox>
         }
         placeholder={

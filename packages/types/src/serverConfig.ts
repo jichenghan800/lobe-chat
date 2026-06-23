@@ -63,6 +63,7 @@ export interface GlobalServerConfig {
   disableEmailPassword?: boolean;
   enableBusinessFeatures?: boolean;
   enableComposio?: boolean;
+  enableCottiAgentAccess?: boolean;
   /**
    * @deprecated
    */

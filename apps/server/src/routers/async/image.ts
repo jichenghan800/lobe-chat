@@ -10,6 +10,7 @@ import debug from 'debug';
 import { type RuntimeImageGenParams } from 'model-bank';
 import { z } from 'zod';
 
+import { resolveAzureImageRuntime } from '@/_custom/registry/azureImage';
 import { getProviderContentPolicyErrorMessage } from '@/business/server/getProviderContentPolicyErrorMessage';
 import { chargeAfterGenerate } from '@/business/server/image-generation/chargeAfterGenerate';
 import { notifyImageCompleted } from '@/business/server/image-generation/notifyImageCompleted';
@@ -132,6 +133,7 @@ export const imageRouter = router({
             provider,
             model,
           );
+          const runtimeOverride = resolveAzureImageRuntime({ model: resolvedModelId, provider });
 
           // Read user's provider config from database
           const modelRuntime = await initModelRuntimeFromDB(
@@ -139,6 +141,7 @@ export const imageRouter = router({
             ctx.userId,
             provider,
             workspaceId,
+            runtimeOverride.runtimeParams,
           );
 
           // Check if operation has been cancelled
@@ -146,7 +149,7 @@ export const imageRouter = router({
           log('Agent runtime initialized, calling createImage');
           const response = await modelRuntime.createImage!(
             {
-              model: resolvedModelId,
+              model: runtimeOverride.modelId,
               params: params as unknown as RuntimeImageGenParams,
             },
             {

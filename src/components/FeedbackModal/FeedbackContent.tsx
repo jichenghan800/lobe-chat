@@ -1,6 +1,5 @@
 'use client';
 
-import { BRANDING_EMAIL } from '@lobechat/business-const';
 import { Button, Flexbox, Icon } from '@lobehub/ui';
 import { useModalContext } from '@lobehub/ui/base-ui';
 import { App, Form, Input, Upload } from 'antd';
@@ -8,6 +7,7 @@ import { ImagePlus, Send } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
+import { getCottiFeedbackEmail } from '@/_custom/registry/feedback';
 import TextArea from '@/components/TextArea';
 import { lambdaClient } from '@/libs/trpc/client';
 import { useFileStore } from '@/store/file';
@@ -34,6 +34,7 @@ const FeedbackContent = memo<FeedbackContentProps>(({ initialValues }) => {
   const [loading, setLoading] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
+  const feedbackEmail = getCottiFeedbackEmail();
 
   const uploadWithProgress = useFileStore((s) => s.uploadWithProgress);
   const userEmail = useUserStore(userProfileSelectors.email);
@@ -109,11 +110,11 @@ const FeedbackContent = memo<FeedbackContentProps>(({ initialValues }) => {
         <Trans
           i18nKey="feedback.emailContact"
           ns="common"
-          values={{ email: BRANDING_EMAIL.business }}
+          values={{ email: feedbackEmail }}
           components={{
             email: (
               <a
-                href={`mailto:${BRANDING_EMAIL.business}`}
+                href={`mailto:${feedbackEmail}`}
                 rel="noopener noreferrer"
                 style={{ color: 'inherit', textDecoration: 'underline' }}
                 target="_blank"

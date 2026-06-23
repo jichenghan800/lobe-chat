@@ -5,6 +5,8 @@ import { createStaticStyles, cx } from 'antd-style';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isVideoGenerationHidden } from '@/_custom/registry/generationVisibility';
+import { isHomeStarterModelHidden } from '@/_custom/registry/homeVisibility';
 import {
   type BusinessModelModeConfig,
   useBusinessModelModeConfig,
@@ -44,6 +46,13 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 const getStarterItemKey = (item: HomeNewModelItem) => `${item.type}:${item.model}`;
 const getStarterItemProvider = (item: HomeNewModelItem, fallbackProvider: string) =>
   item.provider ?? fallbackProvider;
+const getStarterItemVisibilityKeys = (item: HomeNewModelItem) =>
+  [
+    item.model,
+    item.provider ? `${item.provider}/${item.model}` : undefined,
+    item.iconModel,
+    item.title,
+  ].filter(Boolean) as string[];
 const skeletonWidths = [112, 150, 126, 138];
 
 const StarterList = memo(() => {
@@ -55,7 +64,12 @@ const StarterList = memo(() => {
   const updateAgentConfigById = useAgentStore((s) => s.updateAgentConfigById);
   const [switchingKey, setSwitchingKey] = useState<string | null>(null);
   const { defaultHomeNewModels, fallbackChatProvider } = useStarterModelDefaults();
-  const { isLoading, items } = useHomeNewModels(defaultHomeNewModels);
+  const { isLoading, items: rawItems } = useHomeNewModels(defaultHomeNewModels);
+  const items = rawItems.filter((item) => {
+    if (item.type === 'video' && isVideoGenerationHidden()) return false;
+
+    return !getStarterItemVisibilityKeys(item).some(isHomeStarterModelHidden);
+  });
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
 
   const handleClick = useCallback(
@@ -65,12 +79,14 @@ const StarterList = memo(() => {
       const key = getStarterItemKey(item);
 
       if (item.type === 'video') {
-        navigate(`/video?model=${item.model}`);
+        const provider = item.provider ? `&provider=${encodeURIComponent(item.provider)}` : '';
+        navigate(`/video?model=${encodeURIComponent(item.model)}${provider}`);
         return;
       }
 
       if (item.type === 'image') {
-        navigate(`/image?model=${item.model}`);
+        const provider = item.provider ? `&provider=${encodeURIComponent(item.provider)}` : '';
+        navigate(`/image?model=${encodeURIComponent(item.model)}${provider}`);
         return;
       }
 

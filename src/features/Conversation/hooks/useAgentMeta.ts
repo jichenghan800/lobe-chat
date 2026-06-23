@@ -1,12 +1,13 @@
 import { type MetaData } from '@lobechat/types';
 import { useMemo } from 'react';
 
+import { getDefaultAssistantDisplayName } from '@/_custom/registry/branding';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 
 import { contextSelectors, useConversationStore } from '../store';
 
-const LOBE_AI_TITLE = 'Lobe AI';
+const DEFAULT_ASSISTANT_TITLE = getDefaultAssistantDisplayName();
 
 /**
  * Hook to get agent meta data for a specific agent or the current conversation.
@@ -30,8 +31,7 @@ export const useAgentMeta = (messageAgentId?: string | null): MetaData => {
     const isBuiltinAgent = builtinAgentIds.includes(agentId);
 
     if (isBuiltinAgent) {
-      // Use DB-stored title if customized (e.g. via onboarding), otherwise fallback to Lobe AI
-      return { ...agentMeta, title: agentMeta.title || LOBE_AI_TITLE };
+      return { ...agentMeta, title: agentMeta.title || DEFAULT_ASSISTANT_TITLE };
     }
 
     return agentMeta;

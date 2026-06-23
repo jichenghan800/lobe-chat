@@ -1,8 +1,10 @@
 import { EdgeConfig } from '@lobechat/edge-config';
 import debug from 'debug';
 
+import { resolveCottiAgentAccessForUser } from '@/_custom/registry/agentAccess.server';
 import { businessConfigEndpoints } from '@/business/server/lambda-routers/config';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
+import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerFeatureFlagsStateFromRuntimeConfig } from '@/server/featureFlags';
 import { getServerDefaultAgentConfig, getServerGlobalConfig } from '@/server/globalConfig';
 import {
@@ -59,19 +61,30 @@ export const configRouter = router({
     return getServerDefaultAgentConfig();
   }),
 
-  getGlobalConfig: publicProcedure.query(async ({ ctx }): Promise<GlobalRuntimeConfig> => {
-    log('[GlobalConfig] Starting global config retrieval for user:', ctx.userId || 'anonymous');
+  getGlobalConfig: publicProcedure
+    .use(serverDatabase)
+    .query(async ({ ctx }): Promise<GlobalRuntimeConfig> => {
+      log('[GlobalConfig] Starting global config retrieval for user:', ctx.userId || 'anonymous');
 
-    const [serverConfig, serverFeatureFlags, billboard] = await Promise.all([
-      getServerGlobalConfig(),
-      getServerFeatureFlagsStateFromRuntimeConfig(ctx.userId || undefined),
-      getActiveBillboard(),
-    ]);
+      const [serverConfig, serverFeatureFlags, billboard, enableCottiAgentAccess] =
+        await Promise.all([
+          getServerGlobalConfig(),
+          getServerFeatureFlagsStateFromRuntimeConfig(ctx.userId || undefined),
+          getActiveBillboard(),
+          resolveCottiAgentAccessForUser(ctx.serverDB, ctx.userId || undefined),
+        ]);
 
-    log('[GlobalConfig] Server config retrieved');
+      log('[GlobalConfig] Server config retrieved');
 
-    return { billboard, serverConfig, serverFeatureFlags };
-  }),
+      return {
+        billboard,
+        serverConfig: {
+          ...serverConfig,
+          enableCottiAgentAccess,
+        },
+        serverFeatureFlags,
+      };
+    }),
 
   ...businessConfigEndpoints,
 });

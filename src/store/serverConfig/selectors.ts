@@ -5,6 +5,7 @@ export const featureFlagsSelectors = (s: ServerConfigStore) => s.featureFlags;
 export const serverConfigSelectors = {
   disableEmailPassword: (s: ServerConfigStore) => s.serverConfig.disableEmailPassword || false,
   enableBusinessFeatures: (s: ServerConfigStore) => s.serverConfig.enableBusinessFeatures || false,
+  enableCottiAgentAccess: (s: ServerConfigStore) => s.serverConfig.enableCottiAgentAccess || false,
   enableEmailVerification: (s: ServerConfigStore) =>
     s.serverConfig.enableEmailVerification || false,
   enableComposio: (s: ServerConfigStore) => s.serverConfig.enableComposio || false,

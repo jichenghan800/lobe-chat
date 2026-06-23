@@ -38,6 +38,7 @@ const Body = memo(() => {
           SettingsGroupKey.General,
           SettingsGroupKey.Subscription,
           SettingsGroupKey.Agent,
+          SettingsGroupKey.PlatformManagement,
           SettingsGroupKey.System,
         ]}
       >

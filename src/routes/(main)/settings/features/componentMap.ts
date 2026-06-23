@@ -10,6 +10,9 @@ export const componentMap = {
   [SettingsTabs.Advanced]: dynamic(() => import('../advanced'), {
     loading: loading('Settings > Advanced'),
   }),
+  [SettingsTabs.AgentAccess]: dynamic(() => import('../agent-access'), {
+    loading: loading('Settings > AgentAccess'),
+  }),
   [SettingsTabs.Appearance]: dynamic(() => import('../appearance'), {
     loading: loading('Settings > Appearance'),
   }),
@@ -65,6 +68,9 @@ export const componentMap = {
   [SettingsTabs.Creds]: dynamic(() => import('../creds'), {
     loading: loading('Settings > Creds'),
   }),
+  [SettingsTabs.FeedbackAnalytics]: dynamic(() => import('../feedback-analytics'), {
+    loading: loading('Settings > FeedbackAnalytics'),
+  }),
   [SettingsTabs.Security]: dynamic(() => import('../security'), {
     loading: loading('Settings > Security'),
   }),
@@ -74,6 +80,12 @@ export const componentMap = {
 
   [SettingsTabs.Plans]: dynamic(() => import('@/business/client/BusinessSettingPages/Plans'), {
     loading: loading('Settings > Plans'),
+  }),
+  [SettingsTabs.PlatformAnalytics]: dynamic(() => import('../platform-analytics'), {
+    loading: loading('Settings > PlatformAnalytics'),
+  }),
+  [SettingsTabs.PlatformAudit]: dynamic(() => import('../platform-audit'), {
+    loading: loading('Settings > PlatformAudit'),
   }),
   [SettingsTabs.Credits]: dynamic(() => import('@/business/client/BusinessSettingPages/Credits'), {
     loading: loading('Settings > Credits'),

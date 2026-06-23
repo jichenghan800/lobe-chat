@@ -1,12 +1,14 @@
 'use client';
 
 import { Flexbox, Icon } from '@lobehub/ui';
-import { Select, type SelectProps } from '@lobehub/ui/base-ui';
+import type { SelectProps } from '@lobehub/ui/base-ui';
+import { Select } from '@lobehub/ui/base-ui';
 import { createStaticStyles } from 'antd-style';
 import { ImageIcon, Video } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isVideoGenerationHidden } from '@/_custom/registry/generationVisibility';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 
 export interface GenerationMediaModeSegmentProps {
@@ -29,6 +31,10 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     font-weight: 600;
     line-height: 1.2;
   `,
+  staticLabel: css`
+    height: 36px;
+    color: ${cssVar.colorText};
+  `,
 }));
 
 const GenerationMediaModeSegment = memo<GenerationMediaModeSegmentProps>(
@@ -36,9 +42,11 @@ const GenerationMediaModeSegment = memo<GenerationMediaModeSegmentProps>(
     const { t } = useTranslation('common');
     const navigate = useWorkspaceAwareNavigate();
     const isHero = layout === 'hero';
+    const hideVideo = isVideoGenerationHidden();
+    const imageLabel = t('tab.image');
 
-    const options = useMemo<SelectProps['options']>(
-      () => [
+    const options = useMemo<SelectProps['options']>(() => {
+      const items: NonNullable<SelectProps['options']> = [
         {
           label: (
             <Flexbox horizontal align="center" gap={8}>
@@ -48,7 +56,10 @@ const GenerationMediaModeSegment = memo<GenerationMediaModeSegmentProps>(
           ),
           value: 'image',
         },
-        {
+      ];
+
+      if (!hideVideo) {
+        items.push({
           label: (
             <Flexbox horizontal align="center" gap={8}>
               {!isHero && <Icon icon={Video} />}
@@ -56,13 +67,14 @@ const GenerationMediaModeSegment = memo<GenerationMediaModeSegmentProps>(
             </Flexbox>
           ),
           value: 'video',
-        },
-      ],
-      [t, isHero],
-    );
+        });
+      }
+
+      return items;
+    }, [t, isHero, hideVideo]);
 
     const labelRender: SelectProps['labelRender'] = useCallback(
-      (props: any) => {
+      (props) => {
         const v = String((props as { value?: string }).value ?? '');
         const isVideo = v === 'video';
         const text = isVideo ? t('tab.video') : t('tab.image');
@@ -92,10 +104,28 @@ const GenerationMediaModeSegment = memo<GenerationMediaModeSegmentProps>(
     const handleChange = useCallback(
       (value: string) => {
         if (value === mode) return;
+        if (value === 'video' && hideVideo) return;
         navigate(value === 'video' ? '/video' : '/image');
       },
-      [mode, navigate],
+      [mode, hideVideo, navigate],
     );
+
+    if (hideVideo && mode === 'image') {
+      if (isHero) {
+        return (
+          <span className={styles.heroText} style={{ whiteSpace: 'nowrap' }}>
+            {imageLabel}
+          </span>
+        );
+      }
+
+      return (
+        <Flexbox horizontal align="center" className={styles.staticLabel} gap={6}>
+          <Icon icon={ImageIcon} size={16} />
+          <span style={{ whiteSpace: 'nowrap' }}>{imageLabel}</span>
+        </Flexbox>
+      );
+    }
 
     return (
       <Select

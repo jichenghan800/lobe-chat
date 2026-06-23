@@ -13,6 +13,7 @@ export const OSS_KIMI_PROVIDER = 'moonshot';
 // Image
 export const NEW_IMAGE_MODEL = 'gpt-image-2';
 export const NEW_IMAGE_MODEL_NAME = 'GPT Image 2';
+export const NEW_IMAGE_PROVIDER = 'azure';
 
 // Video
 export const NEW_VIDEO_MODEL = 'dreamina-seedance-2-0-260128';
@@ -33,6 +34,7 @@ export const BUSINESS_HOME_NEW_MODELS = [
   },
   {
     model: NEW_IMAGE_MODEL,
+    provider: NEW_IMAGE_PROVIDER,
     title: NEW_IMAGE_MODEL_NAME,
     type: 'image',
   },
@@ -58,6 +60,7 @@ export const OSS_HOME_NEW_MODELS = [
   },
   {
     model: NEW_IMAGE_MODEL,
+    provider: NEW_IMAGE_PROVIDER,
     title: NEW_IMAGE_MODEL_NAME,
     type: 'image',
   },

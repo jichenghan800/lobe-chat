@@ -4,6 +4,7 @@ import { serialize } from 'cookie';
 import debug from 'debug';
 import { z } from 'zod';
 
+import { feedbackReports } from '@/database/schemas';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { marketUserInfo, serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { DiscoverService } from '@/server/services/discover';
@@ -919,6 +920,24 @@ export const marketRouter = router({
 
       try {
         const result = await ctx.marketService.submitFeedback(input);
+        const marketUserInfo = ctx.marketUserInfo as
+          | { email?: string; userId?: string }
+          | undefined;
+
+        try {
+          await ctx.serverDB.insert(feedbackReports).values({
+            clientInfo: input.clientInfo,
+            issueUrl: result?.issueUrl,
+            message: input.message,
+            screenshotUrl: input.screenshotUrl,
+            title: input.title,
+            userEmail: input.email ?? marketUserInfo?.email,
+            userId: marketUserInfo?.userId,
+          });
+        } catch (dbError) {
+          log('Error storing feedback report locally: %O', dbError);
+        }
+
         return { issueUrl: result?.issueUrl, success: true };
       } catch (error) {
         console.error('Error submitting feedback: %O', error);

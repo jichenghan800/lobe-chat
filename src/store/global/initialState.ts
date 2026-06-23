@@ -43,6 +43,7 @@ export enum SettingsTabs {
   Advanced = 'advanced',
   /** @deprecated Use ServiceModel instead */
   Agent = 'agent',
+  AgentAccess = 'agent-access',
   APIKey = 'apikey',
   Appearance = 'appearance',
   Billing = 'billing',
@@ -53,6 +54,7 @@ export enum SettingsTabs {
   Credits = 'credits',
   Creds = 'creds',
   Devices = 'devices',
+  FeedbackAnalytics = 'feedback-analytics',
   Hotkey = 'hotkey',
   /** @deprecated Use ServiceModel instead */
   Image = 'image',
@@ -62,6 +64,8 @@ export enum SettingsTabs {
   Notification = 'notification',
   // business
   Plans = 'plans',
+  PlatformAnalytics = 'platform-analytics',
+  PlatformAudit = 'platform-audit',
   Profile = 'profile',
   Provider = 'provider',
   Proxy = 'proxy',

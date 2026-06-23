@@ -3,6 +3,7 @@ import { createStaticStyles, cx } from 'antd-style';
 import { ChevronDownIcon } from 'lucide-react';
 import { memo, useCallback } from 'react';
 
+import { getModelDisplayName } from '@/_custom/registry/modelDisplayName';
 import { useBusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import { usePermission } from '@/hooks/usePermission';
@@ -20,6 +21,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   name: css`
     overflow: hidden;
 
+    min-width: 48px;
     max-width: 160px;
 
     font-size: 12px;
@@ -50,15 +52,18 @@ const ModelLabel = memo(() => {
   const { allowed: canCreateContent, reason } = usePermission('create_content');
 
   const agentId = useAgentId();
-  const [model, provider, updateAgentConfigById] = useAgentStore((s) => [
+  const [model, provider, isAgentConfigLoading, updateAgentConfigById] = useAgentStore((s) => [
     agentByIdSelectors.getAgentModelById(agentId)(s),
     agentByIdSelectors.getAgentModelProviderById(agentId)(s),
+    agentByIdSelectors.isAgentConfigLoadingById(agentId)(s),
     s.updateAgentConfigById,
   ]);
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
-  const displayName = enabledModel?.displayName || model;
+  const displayName = isAgentConfigLoading
+    ? ''
+    : getModelDisplayName(provider, model, enabledModel?.displayName);
 
   const handleModelChange = useCallback(
     async (params: { model: string; provider: string }) => {

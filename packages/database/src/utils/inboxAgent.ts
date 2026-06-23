@@ -1,5 +1,7 @@
 import { DEFAULT_INBOX_AVATAR, DEFAULT_INBOX_TITLE, INBOX_SESSION_ID } from '@lobechat/const';
 
+import { getDefaultAssistantDisplayName } from '@/_custom/registry/branding';
+
 interface InboxAgentIdentity {
   slug?: string | null;
 }
@@ -25,7 +27,9 @@ export function normalizeInboxAgentTitle(
   title: string | null | undefined,
   identity: InboxAgentIdentity,
 ) {
-  return isInboxAgentIdentity(identity) && isBlank(title) ? DEFAULT_INBOX_TITLE : title;
+  return isInboxAgentIdentity(identity) && isBlank(title)
+    ? getDefaultAssistantDisplayName() || DEFAULT_INBOX_TITLE
+    : title;
 }
 
 export function normalizeInboxAgentAvatar(

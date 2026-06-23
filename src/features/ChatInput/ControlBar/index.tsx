@@ -4,6 +4,7 @@ import { memo } from 'react';
 
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
+import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 import ContextWindow from '../ActionBar/Token';
 import { useAgentId } from '../hooks/useAgentId';
@@ -48,6 +49,8 @@ const ControlBar = memo(() => {
     agentByIdSelectors.isAgentConfigLoadingById(agentId)(s),
     agentByIdSelectors.getAgentEnableModeById(agentId)(s),
   ]);
+  const enableCottiAgentAccess = useServerConfigStore(serverConfigSelectors.enableCottiAgentAccess);
+  const effectiveEnableAgentMode = enableCottiAgentAccess && enableAgentMode;
 
   // Skeleton placeholder to prevent layout jump during loading
   if (!agentId || isLoading) {
@@ -64,11 +67,11 @@ const ControlBar = memo(() => {
       {/* Left: chat-mode switcher + (agent-only) execution device + working directory */}
       <Flexbox horizontal align={'center'} className={styles.leftGroup} gap={4}>
         <ModeSelector />
-        {enableAgentMode && <WorkspaceControls agentId={agentId} />}
+        {effectiveEnableAgentMode && <WorkspaceControls agentId={agentId} />}
       </Flexbox>
 
       <Flexbox horizontal align={'center'} className={styles.rightGroup} gap={4}>
-        {enableAgentMode && <ApprovalMode />}
+        {effectiveEnableAgentMode && <ApprovalMode />}
         {showContextWindow && <ContextWindow />}
       </Flexbox>
     </Flexbox>

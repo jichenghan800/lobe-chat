@@ -1,6 +1,11 @@
 import { Flexbox } from '@lobehub/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  arePlatformManagementBannersHidden,
+  isAgentChannelUiHidden,
+  isMessengerSettingsHidden,
+} from '@/_custom/registry/platformManagement';
 import DragUploadZone, { useUploadFiles } from '@/components/DragUploadZone';
 import { type ActionKeys } from '@/features/ChatInput';
 import { ChatInputProvider, DesktopChatInput } from '@/features/ChatInput';
@@ -70,8 +75,10 @@ const InputArea = () => {
     if ((isLobehubSkillEnabled || isComposioEnabled) && !isSkillBannerDismissed) {
       candidates.push('skill');
     }
-    if (!isBotIntegrationBannerDismissed) candidates.push('botIntegration');
-    if (!isMessengerBannerDismissed) candidates.push('messenger');
+    if (!isAgentChannelUiHidden() && !isBotIntegrationBannerDismissed) {
+      candidates.push('botIntegration');
+    }
+    if (!isMessengerSettingsHidden() && !isMessengerBannerDismissed) candidates.push('messenger');
     if (candidates.length === 0) return;
 
     hasPickedRef.current = true;
@@ -129,8 +136,12 @@ const InputArea = () => {
         style={{ paddingBottom: visibleBanner ? 32 : 0, position: 'relative' }}
       >
         {visibleBanner === 'skill' && <SkillInstallBanner />}
-        {visibleBanner === 'botIntegration' && <BotIntegrationBanner />}
-        {visibleBanner === 'messenger' && <MessengerBanner />}
+        {!arePlatformManagementBannersHidden() && visibleBanner === 'botIntegration' && (
+          <BotIntegrationBanner />
+        )}
+        {!arePlatformManagementBannersHidden() && visibleBanner === 'messenger' && (
+          <MessengerBanner />
+        )}
         <DragUploadZone
           style={{ position: 'relative', zIndex: 1 }}
           onUploadFiles={handleUploadFiles}

@@ -784,6 +784,13 @@
       "when": 1781883177374,
       "tag": "0111_workspace_device_and_ai_infra_surrogate_pk",
       "breakpoints": true
+    },
+    {
+      "idx": 112,
+      "version": "7",
+      "when": 1782204899743,
+      "tag": "0112_add_cotti_platform_tables",
+      "breakpoints": true
     }
   ],
   "version": "6"

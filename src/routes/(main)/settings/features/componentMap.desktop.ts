@@ -8,13 +8,17 @@ import { SettingsTabs } from '@/store/global/initialState';
 
 import About from '../about';
 import Advanced from '../advanced';
+import AgentAccess from '../agent-access';
 import APIKey from '../apikey';
 import Appearance from '../appearance';
 import Creds from '../creds';
 import Devices from '../devices';
+import FeedbackAnalytics from '../feedback-analytics';
 import Hotkey from '../hotkey';
 import Memory from '../memory';
 import Messenger from '../messenger';
+import PlatformAnalytics from '../platform-analytics';
+import PlatformAudit from '../platform-audit';
 import Profile from '../profile';
 import Provider from '../provider';
 import Proxy from '../proxy';
@@ -27,6 +31,7 @@ import SystemTools from '../system-tools';
 
 export const componentMap = {
   [SettingsTabs.Advanced]: Advanced,
+  [SettingsTabs.AgentAccess]: AgentAccess,
   [SettingsTabs.Appearance]: Appearance,
   [SettingsTabs.Provider]: Provider,
   [SettingsTabs.ServiceModel]: ServiceModel,
@@ -45,10 +50,13 @@ export const componentMap = {
   [SettingsTabs.Usage]: Usage,
   [SettingsTabs.APIKey]: APIKey,
   [SettingsTabs.Creds]: Creds,
+  [SettingsTabs.FeedbackAnalytics]: FeedbackAnalytics,
   [SettingsTabs.Security]: Security,
   [SettingsTabs.Skill]: Skill,
 
   [SettingsTabs.Plans]: Plans,
+  [SettingsTabs.PlatformAnalytics]: PlatformAnalytics,
+  [SettingsTabs.PlatformAudit]: PlatformAudit,
   [SettingsTabs.Credits]: Credits,
   [SettingsTabs.Billing]: Billing,
   [SettingsTabs.Referral]: Referral,
