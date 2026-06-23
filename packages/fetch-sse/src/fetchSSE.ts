@@ -124,6 +124,24 @@ export interface FetchSSEOptions {
 
 const START_ANIMATION_SPEED = 10; // Default starting speed
 
+const isPrematureCloseError = (error: unknown): boolean => {
+  const item = error as
+    | {
+        body?: {
+          error?: { message?: unknown };
+          message?: unknown;
+        };
+        message?: unknown;
+      }
+    | undefined;
+
+  const message = [item?.message, item?.body?.message, item?.body?.error?.message]
+    .filter((value): value is string => typeof value === 'string')
+    .join('\n');
+
+  return /premature close/i.test(message);
+};
+
 const createSmoothMessage = (params: {
   onTextUpdate: (delta: string, text: string) => void;
   startSpeed?: number;
@@ -318,6 +336,11 @@ export const fetchSSE = async (url: string, options: RequestInit & FetchSSEOptio
         options?.onAbort?.(output);
         textController.stopAnimation();
       } else {
+        if (toolCalls?.length && isPrematureCloseError(error)) {
+          finishedType = 'tool_calls';
+          return;
+        }
+
         finishedType = 'error';
 
         const elapsedMs = Date.now() - fetchStartTime;
@@ -370,6 +393,11 @@ export const fetchSSE = async (url: string, options: RequestInit & FetchSSEOptio
 
       switch (ev.event) {
         case 'error': {
+          if (toolCalls?.length && isPrematureCloseError(data)) {
+            finishedType = 'tool_calls';
+            break;
+          }
+
           finishedType = 'error';
           options.onErrorHandle?.(data);
           break;

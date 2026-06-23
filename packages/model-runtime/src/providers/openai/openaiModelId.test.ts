@@ -76,6 +76,7 @@ describe('isGPT5ResponsesModel', () => {
     expect(isGPT5ResponsesModel('gpt-5.1-codex-mini')).toBe(true);
     expect(isGPT5ResponsesModel('gpt-5.2')).toBe(true);
     expect(isGPT5ResponsesModel('gpt-5.4-mini')).toBe(true);
+    expect(isGPT5ResponsesModel('gpt-5.5')).toBe(true);
     expect(isGPT5ResponsesModel('gpt-5.5-pro')).toBe(true);
   });
 

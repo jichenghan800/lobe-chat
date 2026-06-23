@@ -221,6 +221,33 @@ describe('MessageService', () => {
       expect(mockMessageModel.query).toHaveBeenCalled();
       expect(result).toEqual({ messages: mockMessages, success: true });
     });
+
+    it('should omit file content when returning updated agent messages', async () => {
+      const messageId = 'msg-1';
+      const value = { content: 'updated content' };
+      const mockMessages = [{ id: 'msg-1', content: 'updated content' }];
+      vi.mocked(mockMessageModel.query).mockResolvedValue(mockMessages as any);
+
+      const result = await messageService.updateMessage(messageId, value as any, {
+        agentId: 'agent-1',
+        topicId: 'topic-1',
+      });
+
+      expect(mockMessageModel.update).toHaveBeenCalledWith(messageId, value);
+      expect(mockMessageModel.query).toHaveBeenCalledWith(
+        {
+          agentId: 'agent-1',
+          groupId: undefined,
+          sessionId: undefined,
+          threadId: undefined,
+          topicId: 'topic-1',
+        },
+        expect.objectContaining({
+          includeFileContent: false,
+        }),
+      );
+      expect(result).toEqual({ messages: mockMessages, success: true });
+    });
   });
 
   describe('updateMetadata', () => {

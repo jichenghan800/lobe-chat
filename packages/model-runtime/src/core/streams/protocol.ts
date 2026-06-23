@@ -195,8 +195,10 @@ const isAbortError = (error: unknown): boolean => {
  * upstream failures across operations.
  */
 export type StreamErrorContext = {
+  isTerminalChunk?: (chunk: unknown) => boolean;
   model?: string;
   provider?: string;
+  shouldIgnoreErrorAfterTerminal?: (error: Error) => boolean;
 };
 
 /**
@@ -304,6 +306,29 @@ export function readableFromAsyncIterable<T>(
   context?: StreamErrorContext,
 ) {
   const it = iterable[Symbol.asyncIterator]();
+  let terminalChunkReceived = false;
+
+  const enqueue = (controller: ReadableStreamDefaultController<T>, value: T) => {
+    if (context?.isTerminalChunk?.(value)) terminalChunkReceived = true;
+    controller.enqueue(value);
+  };
+
+  const handleError = (controller: ReadableStreamDefaultController<T>, error: Error) => {
+    if (isAbortError(error)) {
+      controller.enqueue(ABORT_CHUNK as T);
+      controller.close();
+      return;
+    }
+
+    if (terminalChunkReceived && context?.shouldIgnoreErrorAfterTerminal?.(error)) {
+      controller.close();
+      return;
+    }
+
+    controller.enqueue(buildStreamErrorPayload(error, context) as T);
+    controller.close();
+  };
+
   return new ReadableStream<T>({
     async cancel(reason) {
       await it.return?.(reason);
@@ -313,18 +338,9 @@ export function readableFromAsyncIterable<T>(
       try {
         const { done, value } = await it.next();
         if (done) controller.close();
-        else controller.enqueue(value);
+        else enqueue(controller, value);
       } catch (e) {
-        const error = e as Error;
-
-        if (isAbortError(error)) {
-          controller.enqueue(ABORT_CHUNK as T);
-          controller.close();
-          return;
-        }
-
-        controller.enqueue(buildStreamErrorPayload(error, context) as T);
-        controller.close();
+        handleError(controller, e as Error);
       }
     },
   });
@@ -340,6 +356,28 @@ export const convertIterableToStream = <T>(
   // copy from https://github.com/vercel/ai/blob/d3aa5486529e3d1a38b30e3972b4f4c63ea4ae9a/packages/ai/streams/ai-stream.ts#L284
   // and add an error handle
   const it = iterable[Symbol.asyncIterator]();
+  let terminalChunkReceived = false;
+
+  const enqueue = (controller: ReadableStreamDefaultController<T>, value: T) => {
+    if (context?.isTerminalChunk?.(value)) terminalChunkReceived = true;
+    controller.enqueue(value);
+  };
+
+  const handleError = (controller: ReadableStreamDefaultController<T>, error: Error) => {
+    if (isAbortError(error)) {
+      controller.enqueue(ABORT_CHUNK as T);
+      controller.close();
+      return;
+    }
+
+    if (terminalChunkReceived && context?.shouldIgnoreErrorAfterTerminal?.(error)) {
+      controller.close();
+      return;
+    }
+
+    controller.enqueue(buildStreamErrorPayload(error, context) as T);
+    controller.close();
+  };
 
   return new ReadableStream<T>({
     async cancel(reason) {
@@ -349,18 +387,9 @@ export const convertIterableToStream = <T>(
       try {
         const { done, value } = await it.next();
         if (done) controller.close();
-        else controller.enqueue(value);
+        else enqueue(controller, value);
       } catch (e) {
-        const error = e as Error;
-
-        if (isAbortError(error)) {
-          controller.enqueue(ABORT_CHUNK as T);
-          controller.close();
-          return;
-        }
-
-        controller.enqueue(buildStreamErrorPayload(error, context) as T);
-        controller.close();
+        handleError(controller, e as Error);
       }
     },
 
@@ -368,18 +397,9 @@ export const convertIterableToStream = <T>(
       try {
         const { done, value } = await it.next();
         if (done) controller.close();
-        else controller.enqueue(value);
+        else enqueue(controller, value);
       } catch (e) {
-        const error = e as Error;
-
-        if (isAbortError(error)) {
-          controller.enqueue(ABORT_CHUNK as T);
-          controller.close();
-          return;
-        }
-
-        controller.enqueue(buildStreamErrorPayload(error, context) as T);
-        controller.close();
+        handleError(controller, e as Error);
       }
     },
   });

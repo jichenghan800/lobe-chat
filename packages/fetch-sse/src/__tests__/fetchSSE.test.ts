@@ -687,6 +687,57 @@ describe('fetchSSE', () => {
       expect(mockOnErrorHandle).toHaveBeenCalledWith(mockError);
     });
 
+    it('should ignore premature close after tool_calls and finish as tool_calls', async () => {
+      const mockOnErrorHandle = vi.fn();
+      const mockOnFinish = vi.fn();
+      const mockToolCall = {
+        function: { arguments: '{"code":"print(1)"}', name: 'executeCode' },
+        id: 'call_1',
+        index: 0,
+        type: 'function',
+      };
+      const mockError = {
+        body: {
+          errorType: 'ProviderBizError',
+          message: 'Premature close',
+          model: 'gpt-5.5',
+          provider: 'openai',
+        },
+        message: 'Premature close',
+        type: 'ProviderBizError',
+      };
+
+      (fetchEventSource as any).mockImplementationOnce(
+        (url: string, options: FetchEventSourceInit) => {
+          options.onopen!({ clone: () => ({ ok: true, headers: new Headers() }) } as any);
+          options.onmessage!({
+            data: JSON.stringify([mockToolCall]),
+            event: 'tool_calls',
+          } as any);
+          options.onmessage!({
+            data: JSON.stringify(mockError),
+            event: 'error',
+          } as any);
+        },
+      );
+
+      await fetchSSE('/', { onErrorHandle: mockOnErrorHandle, onFinish: mockOnFinish });
+
+      expect(mockOnErrorHandle).not.toHaveBeenCalled();
+      expect(mockOnFinish).toHaveBeenCalledWith('', {
+        observationId: null,
+        toolCalls: [
+          {
+            function: { arguments: '{"code":"print(1)"}', name: 'executeCode' },
+            id: 'call_1',
+            type: 'function',
+          },
+        ],
+        traceId: null,
+        type: 'tool_calls',
+      });
+    });
+
     it('should call onErrorHandle when stream chunk is not valid json', async () => {
       const mockOnErrorHandle = vi.fn();
       const mockError = 'abc';

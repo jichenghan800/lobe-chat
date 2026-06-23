@@ -1,6 +1,14 @@
 // @vitest-environment node
 import { type LobeChatDatabase } from '@lobechat/database';
-import { messages, sessions, topics } from '@lobechat/database/schemas';
+import {
+  agents,
+  documents,
+  files,
+  messages,
+  messagesFiles,
+  sessions,
+  topics,
+} from '@lobechat/database/schemas';
 import { getTestDB } from '@lobechat/database/test-utils';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,6 +19,7 @@ import { cleanupTestUser, createTestContext, createTestUser } from './setup';
 // Mock FileService to avoid S3 initialization issues in tests
 vi.mock('@/server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
+    getFileAccessUrl: vi.fn().mockResolvedValue('mock-url'),
     getFullFileUrl: vi.fn().mockResolvedValue('mock-url'),
     deleteFile: vi.fn().mockResolvedValue(undefined),
     deleteFiles: vi.fn().mockResolvedValue(undefined),
@@ -43,8 +52,6 @@ describe('Message Router Integration Tests', () => {
     testDB = serverDB; // Set the test DB for the mock
     userId = await createTestUser(serverDB);
 
-    // Create test agent
-    const { agents } = await import('@/database/schemas');
     const [agent] = await serverDB
       .insert(agents)
       .values({
@@ -669,6 +676,66 @@ describe('Message Router Integration Tests', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(msg1.id);
+    });
+
+    it('should omit file document content for agent mode history loads', async () => {
+      const caller = messageRouter.createCaller(createTestContext(userId));
+
+      await serverDB
+        .update(agents)
+        .set({ chatConfig: { enableAgentMode: true } })
+        .where(eq(agents.id, testAgentId));
+
+      const [message] = await serverDB
+        .insert(messages)
+        .values({
+          agentId: testAgentId,
+          content: 'Message with spreadsheet',
+          role: 'user',
+          sessionId: testSessionId,
+          topicId: testTopicId,
+          userId,
+        })
+        .returning();
+
+      const [file] = await serverDB
+        .insert(files)
+        .values({
+          fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          name: 'large.xlsx',
+          size: 5_000_000,
+          url: 'large.xlsx',
+          userId,
+        })
+        .returning();
+
+      await serverDB.insert(documents).values({
+        content: 'large parsed workbook content',
+        fileId: file.id,
+        fileType: file.fileType,
+        source: file.url,
+        sourceType: 'file',
+        totalCharCount: 29,
+        totalLineCount: 1,
+        userId,
+      });
+
+      await serverDB.insert(messagesFiles).values({
+        fileId: file.id,
+        messageId: message.id,
+        userId,
+      });
+
+      const result = await caller.getMessages({
+        agentId: testAgentId,
+        sessionId: testSessionId,
+        topicId: testTopicId,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].fileList).toHaveLength(1);
+      expect(result[0].fileList![0].id).toBe(file.id);
+      expect(result[0].fileList![0].content).toBeUndefined();
     });
   });
 

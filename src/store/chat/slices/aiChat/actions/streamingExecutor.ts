@@ -661,11 +661,13 @@ export class StreamingExecutorActionImpl {
       const result = await runtime.step(state, nextContext);
 
       log(
-        '[executeClientAgent] Step %d completed, events: %d, newStatus=%s, newState.messages=%d',
+        '[executeClientAgent] Step %d completed, events: %d, eventTypes=%o, newStatus=%s, newState.messages=%d, nextPhase=%s',
         stepCount,
         result.events.length,
+        result.events.map((event) => event.type),
         result.newState.status,
         result.newState.messages.length,
+        result.nextContext?.phase,
       );
 
       // After parallel tool batch completes, refresh messages to ensure all tool results are synced

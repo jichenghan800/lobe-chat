@@ -230,11 +230,20 @@ export const documentRouter = router({
     .input(
       z.object({
         id: z.string(),
+        returnContent: z.boolean().optional(),
         skipExist: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const lobeDocument = await ctx.documentService.parseFile(input.id);
+
+      if (input.returnContent === false) {
+        return {
+          ...lobeDocument,
+          content: null,
+          pages: undefined,
+        };
+      }
 
       return lobeDocument;
     }),

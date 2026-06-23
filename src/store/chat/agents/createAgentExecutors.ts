@@ -54,6 +54,12 @@ const TOOL_PRICING: Record<string, number> = {
   'lobe-web-browsing/search': 0.001,
 };
 
+const summarizeToolsForLog = (tools: ChatToolPayload[] = []) =>
+  tools.map(({ apiName, id, identifier, type }) => ({ apiName, id, identifier, type }));
+
+const summarizeRawToolCallsForLog = (toolCalls: MessageToolCall[] = []) =>
+  toolCalls.map(({ function: fn, id, type }) => ({ id, name: fn?.name, type }));
+
 const isAbortError = (error: unknown, abortController?: AbortController) =>
   !!abortController?.signal.aborted ||
   (error instanceof Error &&
@@ -577,7 +583,14 @@ export const createAgentExecutors = (context: {
         log(`[${sessionLogId}][reasoning]`, assistantMessage.reasoning.content);
       }
       if (toolCalls.length > 0) {
-        log(`[${sessionLogId}][toolsCalling] `, toolCalls);
+        log(
+          '[%s][toolsCalling] transformed=%d rawFinish=%d tools=%O rawNames=%O',
+          sessionLogId,
+          toolCalls.length,
+          tool_calls?.length ?? 0,
+          summarizeToolsForLog(toolCalls),
+          summarizeRawToolCallsForLog(tool_calls),
+        );
       }
 
       // Log usage
@@ -586,11 +599,15 @@ export const createAgentExecutors = (context: {
       }
 
       log(
-        '[%s:%d] call_llm completed, finishType: %s, outputMessages: %d',
+        '[%s:%d] call_llm completed, finishType: %s, outputMessages: %d, isFunctionCall: %s, transformedTools: %d, rawFinishTools: %d, contentLength: %d',
         state.operationId,
         state.stepCount,
         finishType,
         latestMessages.length,
+        isFunctionCall,
+        toolCalls.length,
+        tool_calls?.length ?? 0,
+        content.length,
       );
 
       // Accumulate usage and cost to state
@@ -674,13 +691,18 @@ export const createAgentExecutors = (context: {
       const events: AgentEvent[] = [];
       const sessionLogId = `${state.operationId}:${state.stepCount}`;
 
-      log('[%s][call_tool] Executor start, payload: %O', sessionLogId, payload);
-
       // Convert CallingToolPayload to ChatToolPayload for ToolExecutionService
       const chatToolPayload: ChatToolPayload = payload.toolCalling;
 
       const toolName = `${chatToolPayload.identifier}/${chatToolPayload.apiName}`;
       const startTime = performance.now();
+
+      log(
+        '[%s][call_tool] Executor start, tool=%s, toolCallId=%s',
+        sessionLogId,
+        toolName,
+        chatToolPayload.id,
+      );
 
       // Get context from operation
       const opContext = getOperationContext();

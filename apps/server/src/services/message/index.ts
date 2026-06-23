@@ -15,6 +15,7 @@ import { FileService } from '../file';
 interface QueryOptions {
   agentId?: string | null;
   groupId?: string | null;
+  includeFileContent?: boolean;
   sessionId?: string | null;
   threadId?: string | null;
   timingRequestId?: string;
@@ -94,7 +95,7 @@ export class MessageService {
       return { success: true };
     }
 
-    const { agentId, sessionId, topicId, groupId, threadId } = options;
+    const { agentId, sessionId, topicId, groupId, threadId, includeFileContent } = options;
 
     const queryStartedAt = Date.now();
     const modelTiming = createModelTiming(options, 'lambda.message.update.queryMessages');
@@ -102,6 +103,7 @@ export class MessageService {
       { agentId, groupId, sessionId, threadId, topicId },
       {
         ...this.getQueryOptions(),
+        includeFileContent: includeFileContent ?? (agentId ? false : undefined),
         ...(modelTiming ? { timing: modelTiming } : {}),
       },
     );
@@ -122,7 +124,10 @@ export class MessageService {
    * the same payload the client would otherwise fetch.
    */
   async queryMessages(params: QueryMessageParams): Promise<UIChatMessage[]> {
-    return this.messageModel.query(params, this.getQueryOptions());
+    return this.messageModel.query(params, {
+      ...this.getQueryOptions(),
+      includeFileContent: params.agentId ? false : undefined,
+    });
   }
 
   /**
@@ -151,6 +156,7 @@ export class MessageService {
         topicId: params.topicId,
       },
       {
+        includeFileContent: params.agentId ? false : undefined,
         postProcessUrl: this.postProcessUrl,
       },
     );
@@ -344,7 +350,10 @@ export class MessageService {
     // 1. Get messages that need to be summarized (before marking them as compressed)
     const allMessages = await this.messageModel.query(
       { topicId, ...options },
-      this.getQueryOptions(),
+      {
+        ...this.getQueryOptions(),
+        includeFileContent: options?.includeFileContent ?? (options?.agentId ? false : undefined),
+      },
     );
 
     const messagesToSummarize = allMessages.filter((msg) => messageIds.includes(msg.id));
@@ -360,7 +369,13 @@ export class MessageService {
     });
 
     // 3. Query updated messages (compressed messages will be grouped)
-    const messages = await this.messageModel.query({ topicId, ...options }, this.getQueryOptions());
+    const messages = await this.messageModel.query(
+      { topicId, ...options },
+      {
+        ...this.getQueryOptions(),
+        includeFileContent: options?.includeFileContent ?? (options?.agentId ? false : undefined),
+      },
+    );
 
     return {
       messageGroupId,
@@ -394,7 +409,10 @@ export class MessageService {
 
     // 2. Query final messages
     const queryOptions = { agentId, groupId, threadId, topicId };
-    const finalMessages = await this.messageModel.query(queryOptions, this.getQueryOptions());
+    const finalMessages = await this.messageModel.query(queryOptions, {
+      ...this.getQueryOptions(),
+      includeFileContent: false,
+    });
 
     return {
       messages: finalMessages,
@@ -412,7 +430,10 @@ export class MessageService {
   ): Promise<{ messages: UIChatMessage[] }> {
     await this.compressionRepository.updateMetadata(messageGroupId, metadata);
 
-    const messages = await this.messageModel.query(context, this.getQueryOptions());
+    const messages = await this.messageModel.query(context, {
+      ...this.getQueryOptions(),
+      includeFileContent: context.includeFileContent ?? (context.agentId ? false : undefined),
+    });
 
     return { messages };
   }
@@ -431,7 +452,10 @@ export class MessageService {
     await this.compressionRepository.deleteCompressionGroup(messageGroupId);
 
     // Query updated messages
-    const messages = await this.messageModel.query(context, this.getQueryOptions());
+    const messages = await this.messageModel.query(context, {
+      ...this.getQueryOptions(),
+      includeFileContent: context.includeFileContent ?? (context.agentId ? false : undefined),
+    });
 
     return { messages, success: true };
   }

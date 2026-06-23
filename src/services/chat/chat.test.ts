@@ -1779,7 +1779,7 @@ describe('ChatService', () => {
 
       expect(payload).toEqual(
         expect.objectContaining({
-          apiMode: 'chatCompletion',
+          apiMode: 'responses',
           deploymentName: 'prod-gpt-54',
           messages: [],
           model: 'gpt-5.4',

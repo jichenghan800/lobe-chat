@@ -21,6 +21,17 @@ import {
 } from '../protocol';
 import type { OpenAIStreamOptions } from './openai';
 
+const isPrematureCloseError = (error: Error) =>
+  error.message === 'Premature close' ||
+  error.message.includes('Premature close') ||
+  (error as { code?: unknown }).code === 'ERR_STREAM_PREMATURE_CLOSE';
+
+const isResponseTerminalChunk = (chunk: unknown) =>
+  typeof chunk === 'object' &&
+  chunk !== null &&
+  'type' in chunk &&
+  (chunk as { type?: unknown }).type === 'response.completed';
+
 const transformOpenAIStream = (
   chunk:
     | OpenAI.Responses.ResponseStreamEvent
@@ -220,7 +231,12 @@ export const OpenAIResponsesStream = (
   const readableStream =
     stream instanceof ReadableStream
       ? stream
-      : convertIterableToStream(stream, { model: payload?.model, provider: payload?.provider });
+      : convertIterableToStream(stream, {
+          isTerminalChunk: isResponseTerminalChunk,
+          model: payload?.model,
+          provider: payload?.provider,
+          shouldIgnoreErrorAfterTerminal: isPrematureCloseError,
+        });
 
   // use closure to pass payload to transformOpenAIStream
   const transformWithPayload: typeof transformOpenAIStream = (chunk, streamContext) =>

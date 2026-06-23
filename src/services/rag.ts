@@ -3,7 +3,7 @@ import { type SemanticSearchSchemaType } from '@/types/rag';
 
 class RAGService {
   parseFileContent = async (id: string, skipExist?: boolean) => {
-    return lambdaClient.document.parseFileContent.mutate({ id, skipExist });
+    return lambdaClient.document.parseFileContent.mutate({ id, returnContent: false, skipExist });
   };
 
   createParseFileTask = async (id: string, skipExist?: boolean) => {

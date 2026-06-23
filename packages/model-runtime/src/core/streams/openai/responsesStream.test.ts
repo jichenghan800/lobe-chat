@@ -6,6 +6,55 @@ import { createReadableStream, readStreamChunk } from '../utils';
 import { OpenAIResponsesStream } from './responsesStream';
 
 describe('OpenAIResponsesStream', () => {
+  it('should ignore premature close after response.completed', async () => {
+    const chunks = [
+      {
+        type: 'response.created',
+        response: {
+          id: 'resp_completed_then_close',
+          status: 'in_progress',
+        },
+      },
+      {
+        type: 'response.output_text.delta',
+        item_id: 'msg_completed_then_close',
+        delta: 'done',
+      },
+      {
+        type: 'response.completed',
+        response: {
+          id: 'resp_completed_then_close',
+          status: 'completed',
+          usage: {
+            input_tokens: 10,
+            input_tokens_details: { cached_tokens: 0 },
+            output_tokens: 1,
+            output_tokens_details: { reasoning_tokens: 0 },
+            total_tokens: 11,
+          },
+        },
+      },
+    ];
+    const error = new Error('Premature close') as Error & { code?: string };
+    error.code = 'ERR_STREAM_PREMATURE_CLOSE';
+    const mockOpenAIStream = {
+      async *[Symbol.asyncIterator]() {
+        for (const chunk of chunks) {
+          yield chunk;
+        }
+
+        throw error;
+      },
+    };
+
+    const protocolStream = OpenAIResponsesStream(mockOpenAIStream as any);
+    const results = await readStreamChunk(protocolStream);
+
+    expect(results.some((chunk) => chunk.includes('event: usage'))).toBe(true);
+    expect(results.some((chunk) => chunk.includes('event: error'))).toBe(false);
+    expect(results.join('')).toContain('done');
+  });
+
   it('should transform OpenAI stream to protocol stream', async () => {
     const mockOpenAIStream = createReadableStream([
       {

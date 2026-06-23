@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { notification } from '@/components/AntdStaticMethods';
+import { ragService } from '@/services/rag';
 import { agentByIdSelectors } from '@/store/agent/selectors';
 
 import { useFileStore as useStore } from '../../store';
@@ -143,6 +144,7 @@ describe('useFileStore:chat', () => {
 
     expect(toast.error).not.toHaveBeenCalled();
     expect(uploadWithProgress).toHaveBeenCalledTimes(1);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
   });
 
   it('uploadChatFiles should allow any file type for heterogeneous agents', async () => {
@@ -167,6 +169,7 @@ describe('useFileStore:chat', () => {
 
     expect(toast.error).not.toHaveBeenCalled();
     expect(uploadWithProgress).toHaveBeenCalledTimes(1);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
   });
 
   it('shows a permission denied description when upload is rejected by RBAC', async () => {

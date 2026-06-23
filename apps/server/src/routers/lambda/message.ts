@@ -13,6 +13,7 @@ import {
   cloudWorkspaceAuth,
   wsCompatProcedure,
 } from '@/business/server/trpc-middlewares/workspaceAuth';
+import { AgentModel } from '@/database/models/agent';
 import { MessageModel } from '@/database/models/message';
 import { TopicShareModel } from '@/database/models/topicShare';
 import { CompressionRepository } from '@/database/repositories/compression';
@@ -230,12 +231,25 @@ export const messageRouter = router({
           ctx.userId ?? undefined,
         );
 
+        let includeFileContent: boolean | undefined;
+        if (queryParams.agentId) {
+          try {
+            const agentModel = new AgentModel(ctx.serverDB, share.ownerId);
+            const agentConfig = await agentModel.getAgentConfigById(queryParams.agentId);
+            includeFileContent =
+              agentConfig?.chatConfig?.enableAgentMode === false ? undefined : false;
+          } catch (error) {
+            console.error('[message:getMessages] Failed to resolve shared agent mode:', error);
+          }
+        }
+
         const messageModel = new MessageModel(ctx.serverDB, share.ownerId);
         const fileService = new FileService(ctx.serverDB, share.ownerId);
 
         return messageModel.query(
           { ...queryParams, topicId: share.topicId },
           {
+            includeFileContent,
             postProcessUrl: (path, file) =>
               fileService.getFileAccessUrl({ id: file.id, url: path }),
           },
@@ -248,10 +262,23 @@ export const messageRouter = router({
       }
 
       const wsId = ctx.workspaceId ?? undefined;
+      let includeFileContent: boolean | undefined;
+      if (input.agentId) {
+        try {
+          const agentModel = new AgentModel(ctx.serverDB, ctx.userId, wsId);
+          const agentConfig = await agentModel.getAgentConfigById(input.agentId);
+          includeFileContent =
+            agentConfig?.chatConfig?.enableAgentMode === false ? undefined : false;
+        } catch (error) {
+          console.error('[message:getMessages] Failed to resolve agent mode:', error);
+        }
+      }
+
       const messageModel = new MessageModel(ctx.serverDB, ctx.userId, wsId);
       const fileService = new FileService(ctx.serverDB, ctx.userId, wsId);
 
       return messageModel.query(queryParams, {
+        includeFileContent,
         postProcessUrl: (path, file) => fileService.getFileAccessUrl({ id: file.id, url: path }),
       });
     }),
