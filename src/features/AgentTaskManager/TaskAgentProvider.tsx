@@ -33,8 +33,9 @@ export const TaskAgentProvider = memo<TaskAgentProviderProps>(({ children }) => 
   const syncedAgentIdRef = useRef<string | undefined>(undefined);
   const [scopedSelectedAgentId, setScopedSelectedAgentId] = useState<string | undefined>();
 
-  const detailMatch = useMatch('/task/:taskId');
-  const viewedTaskId = detailMatch?.params.taskId;
+  const taskDetailMatch = useMatch('/task/:taskId');
+  const agentTaskDetailMatch = useMatch('/agent/:aid/task/:taskId');
+  const viewedTaskId = taskDetailMatch?.params.taskId ?? agentTaskDetailMatch?.params.taskId;
 
   const selectedAgentId = scopedSelectedAgentId || taskAgentId;
 

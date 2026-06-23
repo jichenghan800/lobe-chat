@@ -37,7 +37,7 @@ const mocks = vi.hoisted(() => {
     initBuiltinAgent: vi.fn(),
     operationState: undefined,
     providerContexts: [] as any[],
-    routeMatch: undefined as { params: { taskId?: string } } | undefined,
+    routeMatches: {} as Record<string, { params: { taskId?: string } } | undefined>,
   };
 });
 
@@ -86,7 +86,7 @@ vi.mock('@/store/chat', () => ({
 }));
 
 vi.mock('react-router-dom', () => ({
-  useMatch: () => mocks.routeMatch,
+  useMatch: (pattern: string) => mocks.routeMatches[pattern],
 }));
 
 const SelectAgentButton = ({ agentId }: { agentId: string }) => {
@@ -105,7 +105,7 @@ describe('TaskAgentProvider', () => {
     mocks.chatState.switchTopic.mockClear();
     mocks.initBuiltinAgent.mockClear();
     mocks.providerContexts = [];
-    mocks.routeMatch = undefined;
+    mocks.routeMatches = {};
   });
 
   afterEach(() => {
@@ -131,7 +131,7 @@ describe('TaskAgentProvider', () => {
   });
 
   it('forwards the viewed task detail context from the route', () => {
-    mocks.routeMatch = { params: { taskId: 'T-1' } };
+    mocks.routeMatches['/task/:taskId'] = { params: { taskId: 'T-1' } };
 
     render(
       <TaskAgentProvider>
@@ -140,6 +140,18 @@ describe('TaskAgentProvider', () => {
     );
 
     expect(mocks.providerContexts.at(-1)?.viewedTask).toEqual({ taskId: 'T-1', type: 'detail' });
+  });
+
+  it('forwards the viewed task detail context from the agent task route', () => {
+    mocks.routeMatches['/agent/:aid/task/:taskId'] = { params: { taskId: 'T-3' } };
+
+    render(
+      <TaskAgentProvider>
+        <div>content</div>
+      </TaskAgentProvider>,
+    );
+
+    expect(mocks.providerContexts.at(-1)?.viewedTask).toEqual({ taskId: 'T-3', type: 'detail' });
   });
 
   it('defaults to the task agent when the global active agent comes from another page', async () => {
@@ -208,7 +220,7 @@ describe('TaskAgentProvider', () => {
 
     mocks.chatState.switchTopic.mockClear();
     mocks.chatState.activeTopicId = 'tpc_created';
-    mocks.routeMatch = { params: { taskId: 'T-1' } };
+    mocks.routeMatches['/task/:taskId'] = { params: { taskId: 'T-1' } };
 
     rerender(
       <TaskAgentProvider>

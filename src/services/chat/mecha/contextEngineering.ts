@@ -56,8 +56,6 @@ import {
   toolSelectors,
 } from '@/store/tool/selectors';
 import { KlavisServerStatus } from '@/store/tool/slices/klavisStore';
-import { applyCottiAssistantIdentity } from '@/_custom/registry/assistantIdentity';
-
 import { isCanUseVideo, isCanUseVision } from '../helper';
 import { combineUserMemoryData, resolveTopicMemories, resolveUserPersona } from './memoryManager';
 import { resolveClientSkills } from './skillEngineering';
@@ -644,7 +642,7 @@ export const contextEngineering = async ({
     historyCount,
     historySummary,
     inputTemplate,
-    systemRole: applyCottiAssistantIdentity(systemRole, { model, provider }),
+    systemRole,
 
     // Capability injection
     capabilities: {

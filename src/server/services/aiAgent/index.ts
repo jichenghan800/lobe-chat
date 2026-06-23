@@ -43,7 +43,6 @@ import { nanoid } from '@lobechat/utils';
 import debug from 'debug';
 
 import { resolveCottiAgentAccessForUser } from '@/_custom/registry/agentAccess.server';
-import { applyCottiAssistantIdentity } from '@/_custom/registry/assistantIdentity';
 import { AgentModel } from '@/database/models/agent';
 import { AgentOperationModel } from '@/database/models/agentOperation';
 import { AgentSkillModel } from '@/database/models/agentSkill';
@@ -493,12 +492,6 @@ export class AiAgentService {
         : instructions;
       log('execAgent: appended additional instructions to systemRole');
     }
-
-    agentConfig.systemRole = applyCottiAssistantIdentity(agentConfig.systemRole, {
-      model: agentConfig.model,
-      provider: agentConfig.provider,
-    });
-    log('execAgent: applied Cotti assistant identity guard to systemRole when model matches');
 
     let resumeParentMessage;
 

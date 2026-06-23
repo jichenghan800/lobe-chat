@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
     dbMessagesMap: {} as Record<string, unknown[]>,
     replaceMessages: vi.fn(),
   },
+  chatListProps: [] as Array<{ fetchResources?: boolean }>,
   serverConfigState: {
     serverConfig: {
       enableBusinessFeatures: false,
@@ -79,7 +80,10 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/features/Conversation', () => ({
-  ChatList: () => <div data-testid="chat-list" />,
+  ChatList: (props: { fetchResources?: boolean }) => {
+    mocks.chatListProps.push(props);
+    return <div data-testid="chat-list" />;
+  },
   ConversationProvider: ({ children }: { children?: ReactNode }) => <>{children}</>,
   MessageItem: ({ id }: { id: string }) => <div data-testid="message-item">{id}</div>,
 }));
@@ -140,6 +144,7 @@ describe('TopicChatDrawer', () => {
   beforeEach(() => {
     mocks.agentState.useHydrateAgentConfig.mockClear();
     mocks.chatState.replaceMessages.mockClear();
+    mocks.chatListProps = [];
     mocks.taskState.closeTopicDrawer.mockClear();
     mocks.taskState.activeTopicDrawerTopicId = 'topic-1';
   });
@@ -148,5 +153,11 @@ describe('TopicChatDrawer', () => {
     render(<TopicChatDrawer />);
 
     expect(mocks.agentState.useHydrateAgentConfig).toHaveBeenCalledWith(true, 'agt_assignee');
+  });
+
+  it('does not prefetch full chat resources in the read-only drawer', () => {
+    render(<TopicChatDrawer />);
+
+    expect(mocks.chatListProps[0]).toMatchObject({ fetchResources: false });
   });
 });

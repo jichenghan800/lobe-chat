@@ -3,6 +3,103 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-22
+
+### GPT-5.5 and Public Model Exposure
+
+- Runtime/source behavior: switch public `全能效率` from Azure exposure to the OpenAI provider key
+  `openai/gpt-5.5`, while keeping the display name unchanged as `全能效率`.
+- Runtime env: `OPENAI_PROXY_URL` points to the Singapore ModelVerse channel
+  `https://api-sg.umodelverse.ai/v1`; deployment packages copy this value into `.env` instead of
+  relying on an external `/opt/pptone/.env` reference.
+- Runtime env: keep the public model allow list aligned across source registry and production
+  scripts:
+  `vertexai/gemini-3.1-flash-lite`, `vertexai/gemini-3.5-flash`,
+  `volcengine/doubao-seed-1.6-flash`, `qwen/qwen3.7-plus`, and `openai/gpt-5.5`.
+- Boundary: Azure remains enabled for `gpt-image-2` image generation only; `gpt-5.5` is no longer
+  exposed through `AZURE_MODEL_LIST`.
+
+### Cotti Builtin Agent Identity
+
+- Replaced the official builtin inbox agent persona from `You are Lobe` to `You are Cotti`.
+- Replaced the official Agent Builder persona from `You are Lobe, an Agent Builder integrated into
+  LobeHub` to `You are Cotti, an Agent Builder integrated into CottiAI`.
+- Removed the runtime `applyCottiAssistantIdentity` system-role injection from normal chat context
+  engineering and server-side agent execution.
+- Boundary: this follows the upstream pattern of defining identity in builtin agent prompts instead
+  of appending an extra per-model identity guard; user-customized agent `systemRole` values are still
+  not overwritten by builtin runtime defaults.
+
+### Production Deployment and Runtime Guards
+
+- Added/updated production scripts under `src/_custom/deploy/` so the release package performs
+  explicit preflight, confirmation, image update, and acceptance checks.
+- Preflight now validates required deployment files, provider credentials, Redis URL scheme,
+  SearXNG JSON search support, registry manifest readability, compose render output, and database
+  readiness before mutating production.
+- Runtime env: production Redis URL must include `redis://` or `rediss://`; missing schemes fail
+  preflight because Node URL parsing otherwise treats the value ambiguously.
+- Runtime behavior: production compose explicitly mounts `./searxng-settings.yml` into
+  `/etc/searxng/settings.yml:ro`, preventing SearXNG from silently using an old anonymous-volume
+  config.
+- Runtime behavior: SearXNG search formats now include both `html` and `json`; LobeChat search
+  requests to `/search?format=json` are expected to return 200 instead of 403.
+- Operational boundary: production CPU/memory/PID limits can be removed at compose level, but the
+  2026-06-22 incident showed app CPU saturation was caused by request/data/config behavior rather
+  than Docker resource limits.
+- Known noise: Upstash/QStash startup warnings remain expected when `QSTASH_TOKEN` is not provided;
+  this release does not enable Upstash Workflow.
+
+### Production Diagnostics for Market, Skills, Documents, and Temp Files
+
+- Added targeted `debug` namespaces for production diagnosis:
+  `lobe-server:market-user-info`, `lobe-server:market:skill-router`,
+  `lobe-server:agent-skills-router`, `lobe-server:agent-document-router`, and
+  `lobe-server:temp-file-manager`.
+- Scope: logs include route duration/count/status metadata needed to distinguish slow backend
+  handlers from request storms, while avoiding secret values.
+- Incident finding: production app stalls around `agt_Nqi7UDs5vet3` / `T-10` correlated with
+  repeated SearchService 403 failures from SearXNG JSON being disabled in the running container,
+  not with PostgreSQL saturation.
+- Incident finding: `market.skill.* invalid_token` and Klavis-not-configured errors were noisy but
+  not sufficient alone to explain the final search-related CPU storm.
+
+### File Upload, Excel, and OSS Deletion
+
+- Image generation upload UI now validates oversized image files before submit so large images do
+  not silently fail without an error.
+- Excel loader capacity was raised and tested for larger `.xlsx` input handling.
+- Fixed Aliyun OSS delete behavior by supplying the required `Content-MD5` header for delete
+  payloads, resolving `MissingArgument: Content-MD5` from OSS.
+- File deletion flow now tolerates object-store delete misses and cleans local file records without
+  surfacing stale `File not found` errors after a partial remote delete.
+- Verification: S3 module and lambda file router tests pass after the OSS delete fix.
+
+### Agent Runtime Task Output
+
+- Fixed task output handling so agent-runtime generated content is persisted instead of leaving
+  completed automatic tasks without visible results.
+- Boundary: the broader AgentRuntime test suite still has a preexisting
+  `@lobechat/tool-runtime` import resolution blocker; targeted runtime executor tests were updated
+  with this change.
+
+### Task Detail Page Performance
+
+- Desktop task workspace now avoids mounting the right-side `AgentTaskManager` conversation while
+  the task agent panel is collapsed.
+- Runtime behavior: this prevents hidden `ChatInput`, agent config, tool, Search, and Klavis-related
+  initialization from slowing every task detail page load.
+- Fixed task-agent context detection for `/agent/:aid/task/:taskId`; previously only
+  `/task/:taskId` was recognized, causing agent task detail pages such as
+  `/agent/agt_4qC5zJhhJIbi/task/T-3` to fall back to task-list context.
+- Runtime behavior: task run drawers now render chat messages without prefetching full agent
+  resources. This avoids pulling every agent document body (for example 29 knowledge documents) when
+  opening a read-only run result such as `/agent/agt_4qC5zJhhJIbi/task/T-6`.
+- Boundary: normal chat pages keep the default resource fetch path, so continuing a conversation
+  with an agent still loads agent documents, notebook documents, and topic memories as before.
+- Verification: `TaskAgentProvider` and `TaskWorkspaceLayout` tests cover the collapsed-panel and
+  agent-task-route behavior.
+
 ## 2026-06-12
 
 ### Cotti Assistant Identity

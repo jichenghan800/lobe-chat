@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { memo, useCallback } from 'react';
 
 import { useFetchAgentDocuments } from '@/hooks/useFetchAgentDocuments';
@@ -39,6 +39,12 @@ export interface ChatListProps {
    */
   disableActionsBar?: boolean;
   /**
+   * Fetch context resources used by full chat composition, such as agent documents,
+   * notebook documents, and topic memories. Read-only embedded chat surfaces can
+   * disable this to avoid pulling large resource bodies while still fetching messages.
+   */
+  fetchResources?: boolean;
+  /**
    * Optional content rendered as the last item inside the virtualized list —
    * scrolls with the messages instead of being pinned to the viewport bottom.
    * Used e.g. for the SubAgent read-only hint after the last message.
@@ -71,6 +77,7 @@ const ChatList = memo<ChatListProps>(
   ({
     defaultWorkflowExpandLevel,
     disableActionsBar,
+    fetchResources = true,
     footerSlot,
     headerSlot,
     welcome,
@@ -99,6 +106,7 @@ const ChatList = memo<ChatListProps>(
 
     // Skip fetching notebook and memories for share pages (they require authentication)
     const isSharePage = !!context.topicShareId;
+    const shouldFetchResources = fetchResources && !isSharePage;
     // TODO: Migrate Agent Signal receipts behind a dedicated user-visible receipt capability.
     const canShowAgentSignalReceipts = enableAgentSelfIteration === true && !isSharePage;
     const { receiptsByAnchor } = useAgentSignalReceipts({
@@ -109,10 +117,10 @@ const ChatList = memo<ChatListProps>(
       topicId: canShowAgentSignalReceipts ? context.topicId : undefined,
     });
 
-    // Fetch notebook documents when topic is selected (skip for share pages)
-    useFetchAgentDocuments(isSharePage ? undefined : activeAgentId);
-    useFetchNotebookDocuments(isSharePage ? undefined : context.topicId!);
-    useFetchTopicMemories(enableUserMemories && !isSharePage ? context.topicId : undefined);
+    // Fetch context resources when topic is selected (skip for share pages or read-only embeds)
+    useFetchAgentDocuments(shouldFetchResources ? activeAgentId : undefined);
+    useFetchNotebookDocuments(shouldFetchResources ? context.topicId! : undefined);
+    useFetchTopicMemories(enableUserMemories && shouldFetchResources ? context.topicId : undefined);
 
     // Use selectors for data
 

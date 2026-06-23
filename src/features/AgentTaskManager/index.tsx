@@ -21,9 +21,11 @@ const AgentTaskManager = memo(() => {
       minWidth={320}
       onExpandChange={(next) => toggleTaskAgentPanel(next)}
     >
-      <TaskAgentProvider>
-        <Conversation />
-      </TaskAgentProvider>
+      {expand ? (
+        <TaskAgentProvider>
+          <Conversation />
+        </TaskAgentProvider>
+      ) : null}
     </RightPanel>
   );
 });

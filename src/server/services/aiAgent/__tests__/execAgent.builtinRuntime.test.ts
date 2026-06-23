@@ -222,7 +222,7 @@ describe('AiAgentService.execAgent - builtin agent runtime config', () => {
     // Verify createOperation was called with agentConfig containing the runtime systemRole
     expect(mockCreateOperation).toHaveBeenCalledTimes(1);
     const callArgs = mockCreateOperation.mock.calls[0][0];
-    expect(callArgs.agentConfig.systemRole).toContain('You are Lobe');
+    expect(callArgs.agentConfig.systemRole).toContain('You are Cotti');
     expect(callArgs.agentConfig.systemRole).toContain('{{model}}');
     expect(callArgs.agentConfig.systemRole).not.toContain('身份规则：我是 Cotti');
   });
@@ -276,27 +276,6 @@ describe('AiAgentService.execAgent - builtin agent runtime config', () => {
     expect(callArgs.agentConfig.systemRole).not.toContain('身份规则：我是 Cotti');
   });
 
-  it('should apply Cotti identity guard for Cotti models only', async () => {
-    mockGetAgentConfig.mockResolvedValue({
-      chatConfig: {},
-      id: 'agent-cotti',
-      model: 'gemini-3.1-flash-lite',
-      plugins: [],
-      provider: 'vertexai',
-      slug: 'my-custom-slug',
-      systemRole: 'You are helpful.',
-    });
-
-    await service.execAgent({
-      agentId: 'agent-cotti',
-      prompt: 'Hello',
-    });
-
-    const callArgs = mockCreateOperation.mock.calls[0][0];
-    expect(callArgs.agentConfig.systemRole).toContain('You are helpful.');
-    expect(callArgs.agentConfig.systemRole).toContain('身份规则：我是 Cotti');
-  });
-
   it('should not apply runtime config for non-builtin agents', async () => {
     mockGetAgentConfig.mockResolvedValue({
       chatConfig: {},
@@ -314,9 +293,9 @@ describe('AiAgentService.execAgent - builtin agent runtime config', () => {
     });
 
     const callArgs = mockCreateOperation.mock.calls[0][0];
-    // Should remain empty - no runtime config or Cotti identity applied.
+    // Should remain empty - no runtime config is applied.
     expect(callArgs.agentConfig.systemRole).toBe('');
-    expect(callArgs.agentConfig.systemRole).not.toContain('You are Lobe');
+    expect(callArgs.agentConfig.systemRole).not.toContain('You are Cotti');
   });
 
   it('should not apply runtime config for agents without slug', async () => {
@@ -336,7 +315,7 @@ describe('AiAgentService.execAgent - builtin agent runtime config', () => {
 
     const callArgs = mockCreateOperation.mock.calls[0][0];
     expect(callArgs.agentConfig.systemRole).toBe('');
-    expect(callArgs.agentConfig.systemRole).not.toContain('You are Lobe');
+    expect(callArgs.agentConfig.systemRole).not.toContain('You are Cotti');
   });
 
   it('should persist request trigger metadata on the created user message', async () => {
