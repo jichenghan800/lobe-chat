@@ -392,6 +392,17 @@ export const aiChatRouter = router({
 
       // retrieve latest messages and topic with
       log('retrieving messages and topics');
+      let includeFileContent: boolean | undefined;
+      if (input.agentId && input.newUserMessage.files?.length) {
+        try {
+          const agentConfig = await ctx.agentModel.getAgentConfigById(input.agentId);
+          includeFileContent =
+            agentConfig?.chatConfig?.enableAgentMode === false ? undefined : false;
+        } catch (error) {
+          console.error('[aiChat] Failed to resolve agent mode for file content response:', error);
+        }
+      }
+
       const { messages, topics } = await runTimedStage(
         timingContext,
         'lambda.aiChat.messagesAndTopics.query',
@@ -399,6 +410,7 @@ export const aiChatRouter = router({
           ctx.aiChatService.getMessagesAndTopics({
             agentId: input.agentId,
             groupId: input.groupId,
+            includeFileContent,
             includeTopic: isCreateNewTopic,
             sessionId,
             threadId,

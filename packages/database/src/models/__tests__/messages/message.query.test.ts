@@ -1635,6 +1635,59 @@ describe('MessageModel Query Tests', () => {
       expect(result[0].fileList![0].id).toBe(fileId);
       expect(result[0].fileList![0].content).toBe('This is the document content for testing');
     });
+
+    it('should omit document content when includeFileContent is false', async () => {
+      const fileId = uuid();
+
+      await serverDB.transaction(async (trx) => {
+        await trx.insert(sessions).values({ id: 'session1', userId });
+
+        await trx.insert(files).values({
+          fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          id: fileId,
+          name: 'large.xlsx',
+          size: 5_000_000,
+          url: 'large.xlsx',
+          userId,
+        });
+
+        await trx.insert(documents).values({
+          content: 'large parsed workbook content',
+          fileId,
+          fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          source: 'large.xlsx',
+          sourceType: 'file',
+          totalCharCount: 29,
+          totalLineCount: 1,
+          userId,
+        });
+
+        const messageId = uuid();
+        await trx.insert(messages).values({
+          content: 'Message with large spreadsheet',
+          id: messageId,
+          role: 'user',
+          sessionId: 'session1',
+          userId,
+        });
+
+        await trx.insert(messagesFiles).values({
+          fileId,
+          messageId,
+          userId,
+        });
+      });
+
+      const result = await messageModel.query(
+        { sessionId: 'session1' },
+        { includeFileContent: false },
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].fileList).toHaveLength(1);
+      expect(result[0].fileList![0].id).toBe(fileId);
+      expect(result[0].fileList![0].content).toBeUndefined();
+    });
   });
 
   describe('query messages with threadId filter', () => {

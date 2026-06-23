@@ -13,6 +13,7 @@ interface GetMessagesAndTopicsParams {
   agentId?: string;
   current?: number;
   groupId?: string;
+  includeFileContent?: boolean;
   includeTopic?: boolean;
   pageSize?: number;
   sessionId?: string;
@@ -40,8 +41,14 @@ export class AiChatService {
   }
 
   async getMessagesAndTopics(params: GetMessagesAndTopicsParams) {
-    const { topicFilter, topicPageSize, timingRequestId, timingStartedAt, ...messageParams } =
-      params;
+    const {
+      includeFileContent,
+      topicFilter,
+      topicPageSize,
+      timingRequestId,
+      timingStartedAt,
+      ...messageParams
+    } = params;
     const timingContext = toTimingContext({ timingRequestId, timingStartedAt });
     const messageTiming = createPrefixedTimingContext(
       timingContext,
@@ -56,6 +63,7 @@ export class AiChatService {
       'lambda.aiChat.messagesAndTopics.messageModel.query',
       () =>
         this.messageModel.query(messageParams, {
+          includeFileContent,
           postProcessUrl: (path, file) =>
             this.fileService.getFileAccessUrl({ id: file.id, url: path }),
           ...(messageTiming ? { timing: messageTiming } : {}),

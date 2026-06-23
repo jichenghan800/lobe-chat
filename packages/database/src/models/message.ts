@@ -86,6 +86,15 @@ export interface QueryMessagesOptions {
    */
   current?: number;
   /**
+   * Whether to include parsed document content in message fileList items.
+   *
+   * UI/list responses should leave this off for large files. Runtime code that
+   * explicitly needs file text should resolve attachments through the dedicated
+   * document/file services instead of relying on every message query carrying
+   * full document bodies.
+   */
+  includeFileContent?: boolean;
+  /**
    * Number of messages per page
    */
   pageSize?: number;
@@ -237,6 +246,7 @@ export class MessageModel {
       threadId,
     }: QueryMessageParams = {},
     options: {
+      includeFileContent?: boolean;
       postProcessUrl?: (
         path: string | null,
         file: { fileType: string; id?: string | null },
@@ -281,6 +291,7 @@ export class MessageModel {
         current,
         pageSize,
         postProcessUrl: options.postProcessUrl,
+        includeFileContent: options.includeFileContent,
         timing,
         // Thread queries optionally add agent/session scope if provided
         where: agentCondition ? and(agentCondition, threadCondition) : threadCondition,
@@ -306,6 +317,7 @@ export class MessageModel {
         current,
         pageSize,
         postProcessUrl: options.postProcessUrl,
+        includeFileContent: options.includeFileContent,
         timing,
         topicId: topicId ?? undefined,
         where: whereCondition,
@@ -329,6 +341,7 @@ export class MessageModel {
       current,
       pageSize,
       postProcessUrl: options.postProcessUrl,
+      includeFileContent: options.includeFileContent,
       timing,
       topicId: topicId ?? undefined,
       where: whereCondition,
@@ -356,7 +369,15 @@ export class MessageModel {
    * @returns Messages with all related data, including MessageGroup nodes
    */
   queryWithWhere = async (options: QueryMessagesOptions = {}): Promise<UIChatMessage[]> => {
-    const { where, current = 0, pageSize = 1000, postProcessUrl, topicId, timing } = options;
+    const {
+      where,
+      current = 0,
+      pageSize = 1000,
+      postProcessUrl,
+      topicId,
+      timing,
+      includeFileContent = true,
+    } = options;
     const totalStartedAt = Date.now();
     const offset = current * pageSize;
 
@@ -460,7 +481,7 @@ export class MessageModel {
       threadData,
     ] = await Promise.all([
       messageGroupNodesPromise,
-      this.queryMessageFileRelations(messageIds, postProcessUrl, timing),
+      this.queryMessageFileRelations(messageIds, { includeFileContent, postProcessUrl, timing }),
       this.queryMessageChunkRelations(messageIds, timing),
       this.queryMessageQueryRelations(messageIds, timing),
       this.queryMessageThreadRelations(taskMessageIds, timing),
@@ -642,8 +663,11 @@ export class MessageModel {
 
   private queryMessageFileRelations = async (
     messageIds: string[],
-    postProcessUrl: QueryMessagesOptions['postProcessUrl'],
-    timing?: ModelTimingContext,
+    {
+      includeFileContent = true,
+      postProcessUrl,
+      timing,
+    }: Pick<QueryMessagesOptions, 'includeFileContent' | 'postProcessUrl' | 'timing'>,
   ): Promise<MessageFileRelations> => {
     if (messageIds.length === 0) return { documentsMap: {}, relatedFileList: [] };
 
@@ -690,6 +714,8 @@ export class MessageModel {
     const fileIds = relatedFileList.map((file) => file.id).filter(Boolean);
 
     if (fileIds.length === 0) return { documentsMap: {}, relatedFileList };
+
+    if (!includeFileContent) return { documentsMap: {}, relatedFileList };
 
     const documentsList = await runTimedStage(
       timing,

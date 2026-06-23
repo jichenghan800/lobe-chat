@@ -60,6 +60,37 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   `sha256:fd756b08cb260a6abc3ab824420fa168e3287902b1f0ec16c31fa2f846e763a5`; previous dev
   container is retained as `lobehub-v228-stage0-prev-before-agent-trim-200017`.
 
+### Cloud Sandbox File Visibility
+
+- Finding: enabling Cloud Sandbox does not make Resource, Knowledge Base, or Agent document files
+  automatically visible to shell commands. The sandbox has an isolated filesystem, and command/file
+  tools can only see files that were explicitly synced into the sandbox.
+- Current upstream behavior: sandbox bootstrap only syncs files attached to messages in the current
+  topic and files attached to the topic's session, placing them under `/mnt/data`.
+- Boundary: files uploaded through Resource/Knowledge Base/Agent document management remain in
+  database/object storage and may be available to model context or knowledge search, but they are not
+  raw files in `/mnt/data` for Python, shell, `find`, or `pandas` unless separately attached/synced.
+- Limits: sandbox init skips files larger than 100 MB and syncs at most 50 files, so large Excel
+  workbooks can still be absent even when they are associated with the conversation.
+- Product direction: large Excel analysis should use a dedicated table-analysis flow that copies or
+  mounts the selected workbook into the sandbox, then runs Python/DuckDB/Pandas over that file. Plain
+  document chunking remains suitable only for semantic lookup, not exact spreadsheet analysis.
+
+### Agent Mode Attachment Response Payload
+
+- Incident: sending a direct-uploaded large Excel file from an Agent page could fail in the browser
+  with `Failed to fetch` / `ERR_INCOMPLETE_CHUNKED_ENCODING` before chunking or embedding started.
+- Root cause: after creating the user/assistant message pair, `sendMessageInServer` queried and
+  returned the latest message list. Message queries included parsed document bodies in
+  `fileList[].content`, so a large Excel attachment was serialized back to the browser in the TRPC
+  response.
+- Fix: add an `includeFileContent` switch to `MessageModel.query`. For Agent Mode sends with file
+  attachments, `sendMessageInServer` returns metadata-only file entries; ordinary Chat remains
+  unchanged so small direct attachments can still be read by the model through the existing direct
+  content path.
+- Boundary: this does not replace the large-Excel analysis flow. Agent Mode should still use sandbox
+  file sync plus Python/DuckDB/Pandas for exact spreadsheet analysis.
+
 ## 2026-06-22
 
 ### GPT-5.5 and Public Model Exposure
