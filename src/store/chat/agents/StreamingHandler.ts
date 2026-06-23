@@ -79,9 +79,7 @@ export class StreamingHandler {
   ) {
     // Initialize throttled tool calls update (max once per 300ms)
     this.throttledUpdateToolCalls = throttle(
-      (toolCalls) => {
-        const tools = this.callbacks.transformToolCalls(toolCalls);
-        this.tools = tools;
+      (tools) => {
         this.callbacks.onToolCallsUpdate(tools);
       },
       300,
@@ -281,7 +279,9 @@ export class StreamingHandler {
   }): void {
     this.isFunctionCall = true;
     this.callbacks.toggleToolCallingStreaming(this.context.messageId, chunk.isAnimationActives);
-    this.throttledUpdateToolCalls(chunk.tool_calls);
+    const tools = this.callbacks.transformToolCalls(chunk.tool_calls);
+    this.tools = tools;
+    this.throttledUpdateToolCalls(tools);
 
     // End reasoning timing
     this.endReasoningIfNeeded();

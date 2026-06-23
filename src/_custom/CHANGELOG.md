@@ -536,6 +536,9 @@ LobeHub` to `You are Cotti, an Agent Builder integrated into CottiAI`.
   runtime saw `toolsCalling=[]` and never entered the `call_tool` step.
 - Scope: preserve transformed tool calls on every streamed `tool_calls` chunk so the agent loop can
   execute activator/tool calls even when the finish payload does not repeat them.
+- Follow-up: store transformed tool calls synchronously when the stream chunk arrives; keep only the
+  UI repaint throttled. This avoids a race where the assistant card shows a tool call but the
+  runtime advances before `toolsCalling` is available.
 - Boundary: this is separate from Market/community login and sandbox authorization. If sandbox auth
   is expired, the tool execution path should still create a tool message and return an explicit
   authorization error.

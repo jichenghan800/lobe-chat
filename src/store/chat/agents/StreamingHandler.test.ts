@@ -256,6 +256,14 @@ describe('StreamingHandler', () => {
       });
 
       expect(handler.getIsFunctionCall()).toBe(true);
+      expect(handler.getTools()).toEqual([
+        {
+          id: 'call-1',
+          type: 'function',
+          function: { name: 'search', arguments: '{}' },
+          transformed: true,
+        },
+      ]);
       expect(callbacks.toggleToolCallingStreaming).toHaveBeenCalled();
     });
 
