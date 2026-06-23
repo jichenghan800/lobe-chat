@@ -259,6 +259,31 @@ describe('StreamingHandler', () => {
       expect(callbacks.toggleToolCallingStreaming).toHaveBeenCalled();
     });
 
+    it('should preserve streamed tool calls when finish payload omits toolCalls', async () => {
+      const callbacks = createMockCallbacks();
+      const handler = new StreamingHandler(mockContext, callbacks);
+
+      handler.handleChunk({
+        type: 'tool_calls',
+        tool_calls: [
+          { id: 'call-1', type: 'function', function: { name: 'search', arguments: '{}' } },
+        ],
+      });
+
+      const result = await handler.handleFinish({ type: 'stop' });
+
+      expect(handler.getIsFunctionCall()).toBe(true);
+      expect(handler.getTools()).toEqual([
+        {
+          id: 'call-1',
+          type: 'function',
+          function: { name: 'search', arguments: '{}' },
+          transformed: true,
+        },
+      ]);
+      expect(result.tools).toEqual(handler.getTools());
+    });
+
     it('should throttle tool calls updates', async () => {
       const callbacks = createMockCallbacks();
       const handler = new StreamingHandler(mockContext, callbacks);

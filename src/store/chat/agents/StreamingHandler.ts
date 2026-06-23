@@ -81,6 +81,7 @@ export class StreamingHandler {
     this.throttledUpdateToolCalls = throttle(
       (toolCalls) => {
         const tools = this.callbacks.transformToolCalls(toolCalls);
+        this.tools = tools;
         this.callbacks.onToolCallsUpdate(tools);
       },
       300,

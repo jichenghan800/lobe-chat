@@ -525,3 +525,17 @@ LobeHub` to `You are Cotti, an Agent Builder integrated into CottiAI`.
   intervention.
 - Boundary: this only affects LobeHub Market/community authorization state. Primary app login,
   Better Auth SSO, chat model access, and server-side Market APIs are unchanged.
+
+### Agent Dynamic Tool Activation
+
+- Incident: in Agent mode, Gemini/Vertex AI could stream an `activateTools` tool call for
+  `lobe-cloud-sandbox`, persist it on the assistant message, then stop without creating the
+  corresponding tool message or executing the activator.
+- Root cause: the streaming handler only persisted transformed tool calls for UI updates during
+  `tool_calls` chunks. If the provider omitted `toolCalls` from the final finish payload, the agent
+  runtime saw `toolsCalling=[]` and never entered the `call_tool` step.
+- Scope: preserve transformed tool calls on every streamed `tool_calls` chunk so the agent loop can
+  execute activator/tool calls even when the finish payload does not repeat them.
+- Boundary: this is separate from Market/community login and sandbox authorization. If sandbox auth
+  is expired, the tool execution path should still create a tool message and return an explicit
+  authorization error.
