@@ -21,6 +21,14 @@
 -- ===========================================================================
 
 -- 1) backfill rows still missing _id (no-op on prod; fills self-host history) --
+-- Some long-lived Cotti dev databases have a newer custom migration timestamp
+-- than upstream 0110, so Drizzle skips 0110 and reaches this migration without
+-- the nullable `_id` columns. Keep the 0110 column prep here as a guarded
+-- compatibility step before the backfill.
+ALTER TABLE "ai_providers" ADD COLUMN IF NOT EXISTS "_id" uuid;--> statement-breakpoint
+ALTER TABLE "ai_providers" ALTER COLUMN "_id" SET DEFAULT gen_random_uuid();--> statement-breakpoint
+ALTER TABLE "ai_models" ADD COLUMN IF NOT EXISTS "_id" uuid;--> statement-breakpoint
+ALTER TABLE "ai_models" ALTER COLUMN "_id" SET DEFAULT gen_random_uuid();--> statement-breakpoint
 UPDATE "ai_providers" SET "_id" = gen_random_uuid() WHERE "_id" IS NULL;--> statement-breakpoint
 UPDATE "ai_models" SET "_id" = gen_random_uuid() WHERE "_id" IS NULL;--> statement-breakpoint
 
