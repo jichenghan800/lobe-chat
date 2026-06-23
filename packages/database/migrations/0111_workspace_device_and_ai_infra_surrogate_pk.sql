@@ -22,10 +22,22 @@
 
 -- 1) backfill rows still missing _id (no-op on prod; fills self-host history) --
 -- Some long-lived Cotti dev databases have a newer custom migration timestamp
--- than upstream 0106~0110, so Drizzle skips those migrations and reaches this
--- migration without the workspace columns or nullable `_id` columns. Keep the
--- minimum column prep here as a guarded compatibility step before the backfill
--- and workspace-scoped indexes; 0113/0114 replay the full skipped DDL later.
+-- than upstream 0105~0110, so Drizzle skips those migrations and reaches this
+-- migration without the workspace table, workspace columns, or nullable `_id`
+-- columns. Keep the minimum table/column prep here as a guarded compatibility
+-- step before the backfill and workspace-scoped indexes; 0113/0114 replay the
+-- full skipped DDL later.
+CREATE TABLE IF NOT EXISTS "workspaces" (
+	"id" text PRIMARY KEY NOT NULL,
+	"slug" varchar(100) NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"description" varchar(1000),
+	"avatar" text,
+	"primary_owner_id" text NOT NULL,
+	"settings" jsonb DEFAULT '{}'::jsonb,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);--> statement-breakpoint
 ALTER TABLE "ai_providers" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
 ALTER TABLE "ai_models" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
 ALTER TABLE "devices" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
