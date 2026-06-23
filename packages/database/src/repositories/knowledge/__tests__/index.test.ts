@@ -58,6 +58,8 @@ describe('KnowledgeRepo', () => {
           id: 'doc-1',
           userId,
           title: 'My Note',
+          content: 'large note body',
+          editorData: { root: { children: [{ text: 'large editor body' }] } },
           fileType: 'custom/note',
           sourceType: 'topic',
           source: 'internal://note/doc-1',
@@ -223,6 +225,15 @@ describe('KnowledgeRepo', () => {
       expect(result.length).toBeGreaterThan(0);
       expect(result.every((item) => item.id !== 'other-file')).toBe(true);
       expect(result.every((item) => item.id !== 'other-doc')).toBe(true);
+    });
+
+    it('should omit large document fields from list results', async () => {
+      const result = await knowledgeRepo.query({ q: 'My Note' });
+      const item = result.find((entry) => entry.id === 'doc-1');
+
+      expect(item).toBeDefined();
+      expect(item?.content).toBeNull();
+      expect(item?.editorData).toBeNull();
     });
 
     it('should filter by category - Images', async () => {

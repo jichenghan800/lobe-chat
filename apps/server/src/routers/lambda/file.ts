@@ -391,6 +391,7 @@ export const fileRouter = router({
         const status = statusMap.get(item.id)!;
         resultItems.push({
           ...item,
+          content: null,
           editorData: null,
           url: await ctx.fileService.getFileAccessUrl(item),
           ...status,
@@ -402,6 +403,8 @@ export const fileRouter = router({
           chunkCount: null,
           chunkingError: null,
           chunkingStatus: null,
+          content: null,
+          editorData: null,
           embeddingError: null,
           embeddingStatus: null,
           finishEmbedding: false,

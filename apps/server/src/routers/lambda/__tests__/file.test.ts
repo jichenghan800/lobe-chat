@@ -650,6 +650,7 @@ describe('fileRouter', () => {
           sourceType: 'file' as const,
         },
         {
+          content: 'large document body',
           editorData: { content: 'test' },
           id: 'doc-1',
           name: 'Document 1',
@@ -681,7 +682,8 @@ describe('fileRouter', () => {
         chunkCount: null,
         chunkingError: null,
         chunkingStatus: null,
-        editorData: { content: 'test' },
+        content: null,
+        editorData: null,
         embeddingError: null,
         embeddingStatus: null,
         finishEmbedding: false,
