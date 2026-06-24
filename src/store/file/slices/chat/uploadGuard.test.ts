@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   audioMimeFromExtension,
   filterSupportedChatUploadFiles,
+  isLargeExcelFile,
   isSupportedChatUploadFile,
+  LARGE_EXCEL_UPLOAD_LIMIT_BYTES,
 } from './uploadGuard';
 
 describe('isSupportedChatUploadFile', () => {
@@ -34,6 +36,13 @@ describe('isSupportedChatUploadFile', () => {
     expect(
       isSupportedChatUploadFile(new File(['{}'], 'data.json', { type: 'application/json' })),
     ).toBe(true);
+    expect(
+      isSupportedChatUploadFile(
+        new File(['xlsx'], 'report.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }),
+      ),
+    ).toBe(true);
   });
 
   it('rejects unsupported archive formats before upload', () => {
@@ -51,6 +60,28 @@ describe('isSupportedChatUploadFile', () => {
     expect(isSupportedChatUploadFile(new File(['a'], 'voice.wav', { type: 'audio/wav' }))).toBe(
       true,
     );
+  });
+});
+
+describe('isLargeExcelFile', () => {
+  it('detects Excel files above the regular chat size limit', () => {
+    const largeExcel = new File(
+      [new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)],
+      'large.xlsx',
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    );
+    const smallExcel = new File([new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES)], 'small.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const largeCsv = new File([new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)], 'large.csv', {
+      type: 'text/csv',
+    });
+
+    expect(isLargeExcelFile(largeExcel)).toBe(true);
+    expect(isLargeExcelFile(smallExcel)).toBe(false);
+    expect(isLargeExcelFile(largeCsv)).toBe(false);
   });
 });
 

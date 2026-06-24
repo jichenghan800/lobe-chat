@@ -21,7 +21,7 @@ import { sleep } from '@/utils/sleep';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type FileStore } from '../../store';
-import { filterSupportedChatUploadFiles } from './uploadGuard';
+import { filterLargeExcelChatUploadFiles, filterSupportedChatUploadFiles } from './uploadGuard';
 
 const n = setNamespace('chat');
 
@@ -158,14 +158,27 @@ export class FileActionImpl {
     const isHeterogeneousAgent = agentByIdSelectors.isAgentHeterogeneousById(agentId)(agentState);
     const enforceFileTypeWhitelist = !enableAgentMode && !isHeterogeneousAgent;
 
-    const { supportedFiles, unsupportedFiles } = enforceFileTypeWhitelist
+    const { supportedFiles: typeSupportedFiles, unsupportedFiles } = enforceFileTypeWhitelist
       ? filterSupportedChatUploadFiles(filteredFiles)
       : { supportedFiles: filteredFiles, unsupportedFiles: [] as File[] };
+
+    const { allowedFiles: supportedFiles, largeExcelFiles } = enforceFileTypeWhitelist
+      ? filterLargeExcelChatUploadFiles(typeSupportedFiles)
+      : { allowedFiles: typeSupportedFiles, largeExcelFiles: [] as File[] };
 
     if (unsupportedFiles.length > 0) {
       toast.error(
         t('upload.validation.unsupportedFileType', {
           files: unsupportedFiles.map((file) => file.name).join(', '),
+          ns: 'chat',
+        }),
+      );
+    }
+
+    if (largeExcelFiles.length > 0) {
+      toast.error(
+        t('upload.validation.largeExcelFileInChat', {
+          files: largeExcelFiles.map((file) => file.name).join(', '),
           ns: 'chat',
         }),
       );

@@ -348,3 +348,23 @@ LobeChat 容器处理：
 
 - `--max-old-space-size=8192` 是运行时保护，不是根治内存增长的代码修复。
 - 如果再次出现内存持续上升，应重点继续查 `document.parseFileContent`、Excel 文件解析、Agent 文件绑定 / 解绑链路是否存在大对象驻留。
+
+## 2026-06-24 普通 chat 大 Excel 上传保护
+
+背景：
+
+- 普通 chat 上传 xls/xlsx 会走源码内置的 `document.parseFileContent`。
+- Excel loader 会全量读取工作簿、转 JSON，再转 Markdown 表格。
+- chatdev 实测一个约 2.4MB 的 xlsx 会让 `document.parseFileContent` 运行约 66s，Node 内存峰值接近 7GiB，最后模型仍未获得可用的表格分析能力。
+
+处理：
+
+- 在普通 chat 模式下，拦截超过 1MB 的 xls/xlsx 文件。
+- 弹出提示：较大的 Excel 不适合普通对话，请开启 Agent 智能模式，让 Agent 使用工具分析文件。
+- Agent 智能模式和异构 Agent 模式不拦截，因为这类文件应由沙箱 / Python / DuckDB 等工具处理。
+
+边界：
+
+- 这是前置保护，不改变官方 Excel loader。
+- 小 Excel 仍允许走普通 chat 的原解析链路。
+- 大 Excel 的推荐路径是 Agent 智能模式 + 沙箱文件分析。

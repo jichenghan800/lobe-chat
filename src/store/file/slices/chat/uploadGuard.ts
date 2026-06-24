@@ -101,7 +101,24 @@ const SUPPORTED_CHAT_DOCUMENT_MIME_TYPES = new Set([
   'text/plain',
 ]);
 
+export const LARGE_EXCEL_UPLOAD_LIMIT_BYTES = 1024 * 1024;
+
 const getExtension = (filename: string) => filename.split('.').pop()?.toLowerCase() || '';
+
+export const isExcelFile = (file: File) => {
+  const fileType = file.type.toLowerCase();
+  const extension = getExtension(file.name);
+
+  return (
+    extension === 'xls' ||
+    extension === 'xlsx' ||
+    fileType === 'application/vnd.ms-excel' ||
+    fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
+};
+
+export const isLargeExcelFile = (file: File) =>
+  isExcelFile(file) && file.size > LARGE_EXCEL_UPLOAD_LIMIT_BYTES;
 
 // Canonical audio mime for each supported extension. Audio containers like .m4a share the
 // ISO-BMFF box layout with .mp4, so the browser often reports an empty mime and byte-sniffing
@@ -166,4 +183,19 @@ export const filterSupportedChatUploadFiles = (files: File[]) => {
   }
 
   return { supportedFiles, unsupportedFiles };
+};
+
+export const filterLargeExcelChatUploadFiles = (files: File[]) => {
+  const allowedFiles: File[] = [];
+  const largeExcelFiles: File[] = [];
+
+  for (const file of files) {
+    if (isLargeExcelFile(file)) {
+      largeExcelFiles.push(file);
+    } else {
+      allowedFiles.push(file);
+    }
+  }
+
+  return { allowedFiles, largeExcelFiles };
 };

@@ -555,3 +555,12 @@ LobeHub` to `You are Cotti, an Agent Builder integrated into CottiAI`.
   chatdev container.
 - Boundary: this is an operational guard, not a parser leak fix. If memory climbs again, inspect
   `document.parseFileContent`, Excel parsing, and Agent file attach/detach paths.
+
+### Large Excel Guard In Regular Chat
+
+- Scope: regular chat now rejects xls/xlsx files larger than 1MB before upload and shows a prompt to
+  use Agent mode for tool-based analysis.
+- Reason: upstream regular chat parses Excel through `document.parseFileContent`; a 2.4MB workbook
+  took about 66s and peaked near 7GiB RSS on chatdev.
+- Boundary: Agent mode and heterogeneous agents remain unrestricted so sandbox / Python / DuckDB
+  workflows can handle large spreadsheets.

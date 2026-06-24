@@ -686,7 +686,7 @@ describe('Message Router Integration Tests', () => {
         .set({ chatConfig: { enableAgentMode: true } })
         .where(eq(agents.id, testAgentId));
 
-      const [message] = await serverDB
+      const [message] = (await serverDB
         .insert(messages)
         .values({
           agentId: testAgentId,
@@ -696,9 +696,9 @@ describe('Message Router Integration Tests', () => {
           topicId: testTopicId,
           userId,
         })
-        .returning();
+        .returning()) as Array<typeof messages.$inferSelect>;
 
-      const [file] = await serverDB
+      const [file] = (await serverDB
         .insert(files)
         .values({
           fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -707,7 +707,7 @@ describe('Message Router Integration Tests', () => {
           url: 'large.xlsx',
           userId,
         })
-        .returning();
+        .returning()) as Array<typeof files.$inferSelect>;
 
       await serverDB.insert(documents).values({
         content: 'large parsed workbook content',
