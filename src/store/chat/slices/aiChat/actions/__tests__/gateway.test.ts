@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as ConstVersion from '@/const/version';
 import { aiAgentService } from '@/services/aiAgent';
-import { messageService } from '@/services/message';
 
 import type { GatewayConnection } from '../gateway';
 import { GatewayActionImpl } from '../gateway';
@@ -700,12 +699,10 @@ describe('GatewayActionImpl', () => {
       );
     });
 
-    it('refreshes existing topic messages and skips websocket when gateway url is unavailable', async () => {
-      const { action, completeOperation, connectToGateway, replaceMessages, startOperation } =
+    it('skips websocket when gateway url is unavailable', async () => {
+      const { action, completeOperation, connectToGateway, startOperation } =
         createExecuteTestAction({ serverConfig: {} });
 
-      const fetchedMessages = [{ id: 'usr-1', role: 'user', content: 'Follow up' }] as any;
-      vi.mocked(messageService.getMessages).mockResolvedValueOnce(fetchedMessages);
       vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
         agentId: 'agent-1',
         assistantMessageId: 'ast-1',
@@ -727,20 +724,6 @@ describe('GatewayActionImpl', () => {
         parentOperationId: 'parent-op',
       });
 
-      expect(messageService.getMessages).toHaveBeenCalledWith({
-        agentId: 'agent-1',
-        scope: 'main',
-        threadId: null,
-        topicId: 'topic-1',
-      });
-      expect(replaceMessages).toHaveBeenCalledWith(fetchedMessages, {
-        context: {
-          agentId: 'agent-1',
-          scope: 'main',
-          threadId: null,
-          topicId: 'topic-1',
-        },
-      });
       expect(completeOperation).toHaveBeenCalledWith('parent-op');
       expect(startOperation).not.toHaveBeenCalled();
       expect(connectToGateway).not.toHaveBeenCalled();

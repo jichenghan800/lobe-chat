@@ -472,15 +472,6 @@ export class GatewayActionImpl {
     // Use the server-created topicId for the execution context
     const execContext = { ...context, topicId: result.topicId };
 
-    if (!isCreateNewTopic && result.topicId) {
-      try {
-        const messages = await messageService.getMessages(execContext);
-        this.#get().replaceMessages(messages, { context: execContext });
-      } catch (err) {
-        console.error('[Gateway] fetch messages after task start failed:', err);
-      }
-    }
-
     if (!agentGatewayUrl) {
       if (parentOperationId) this.#get().completeOperation(parentOperationId);
       return result;

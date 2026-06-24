@@ -13,10 +13,22 @@ import {
   insertFilesIntoEditor,
 } from '@/features/EditorCanvas/editorAttachments';
 import { useEnterToSend } from '@/hooks/useEnterToSend';
+import { messageService } from '@/services/message';
+import { useChatStore } from '@/store/chat';
+
+import { FALLBACK_REFRESH_DELAYS, hasAssistantResultForUserMessage } from './fallbackRefresh';
+
+const hasGatewayRealtimeChannel = () =>
+  !!globalThis.window?.global_serverConfigStore?.getState()?.serverConfig?.agentGatewayUrl;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const FeedbackInput = memo(() => {
   const { t } = useTranslation('chat');
   const editor = useEditor();
+  const context = useConversationStore((s) => s.context);
+  const replaceMessages = useConversationStore((s) => s.replaceMessages);
+  const replaceChatMessages = useChatStore((s) => s.replaceMessages);
   const sendMessage = useConversationStore((s) => s.sendMessage);
   const [submitting, setSubmitting] = useState(false);
   const [hasContent, setHasContent] = useState(false);
@@ -65,6 +77,8 @@ const FeedbackInput = memo(() => {
 
     setSubmitting(true);
     try {
+      const submittedAt = Date.now();
+
       // sendMessage is bound to this drawer's ConversationProvider context
       // (agentId + topicId + isolatedTopic), so the message continues this
       // topic's conversation. Files attached inline in the editor travel as
@@ -73,10 +87,33 @@ const FeedbackInput = memo(() => {
       // server-side path as the original `runTask` that spawned this topic,
       // regardless of the user's global local/cloud preference.
       await sendMessage({ editorData, forceRuntime: 'gateway', message: markdown });
+
+      if (!hasGatewayRealtimeChannel() && context.topicId) {
+        void (async () => {
+          for (const delay of FALLBACK_REFRESH_DELAYS) {
+            await sleep(delay);
+
+            let messages;
+            try {
+              messages = await messageService.getMessages(context);
+              replaceMessages(messages);
+              replaceChatMessages(messages, {
+                action: 'taskFollowUpFallbackRefresh',
+                context,
+              });
+            } catch (error) {
+              console.warn('[TaskFollowUp] fallback refresh failed:', error);
+              continue;
+            }
+
+            if (hasAssistantResultForUserMessage(messages, markdown, submittedAt)) return;
+          }
+        })();
+      }
     } finally {
       setSubmitting(false);
     }
-  }, [editor, sendMessage, submitting]);
+  }, [context, editor, replaceChatMessages, replaceMessages, sendMessage, submitting]);
 
   if (!expanded) {
     return (

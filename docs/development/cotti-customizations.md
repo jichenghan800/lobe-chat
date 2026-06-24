@@ -466,3 +466,38 @@ chatdev 验证：
 
 - 普通文本、PDF、图片等资源库文件保持原有知识库 / 视觉 / 上下文处理逻辑，不默认改走沙箱附件。
 - 该能力面向 Agent 智能模式的大表格分析；普通 chat 仍不建议处理大 Excel。
+
+## 2026-06-24 自动任务对话追加回复空白占位排查
+
+- 现象：任务 topic 抽屉内追加回复后，数据库已有 assistant 最终内容，但页面停留在空
+  assistant 占位，用户误以为 Agent 没有回复。
+- 对比官方 `v2.2.8` 后确认：官方 `FeedbackInput` 只负责调用
+  `sendMessage({ forceRuntime: 'gateway' })`，实时更新依赖 Gateway 通道回推。
+- 回退本地临时补丁：移除 `FeedbackInput` 中无条件 `refreshMessages` 和固定延迟刷新。
+- 同时移除 gateway 启动后对已有 topic 立即 `messageService.getMessages + replaceMessages`
+  的二开逻辑。该逻辑会在模型流式 / 最终写库完成前取回空 assistant 占位并覆盖前端状态，是更符合
+  现象的根因。
+- 当前开发环境未配置 `agentGatewayUrl`，任务 follow-up 只能收到 `aiAgent.execAgent` 的启动结果，
+  收不到服务端运行完成后的实时消息回推。
+- 因此只在 “任务抽屉 + 无 Gateway 实时通道” 场景增加局部轮询兜底：
+  - 追加消息发送成功后，按短周期调用 `message.getMessages`
+  - 直到本次提交时间之后出现有正文 / 错误的 assistant 为止
+  - 中间工具调用阶段仍允许刷新展示，但不会把工具调用 assistant 当作最终回复
+- v21 首轮验证发现不能用 `messageCount` 切片判断 “新消息”：任务抽屉的
+  `ConversationStore` 在部分挂载路径下不持有完整初始计数，第一轮轮询会把历史 assistant
+  正文误判为本次结果并提前停止。已改为基于 `createdAt / updatedAt >= submittedAt`
+  判断本次提交后的 assistant。
+- v22 验证发现只调用局部 `ConversationStore.replaceMessages` 不足以驱动任务抽屉父级重渲染：
+  抽屉正文数据源来自 `useChatStore((s) => s.dbMessagesMap[chatKey])`，因此 fallback 取回消息后
+  需要同时调用全局 `useChatStore.replaceMessages(messages, { context })`，与抽屉初始化的刷新路径保持一致。
+- v23 验证发现首轮 `message.getMessages` 可能取回本次 assistant 的加载占位，内容为
+  `"..."`，但最终正文尚未写库。停止条件不能只看 “提交时间之后出现 assistant 且 content
+  非空”，否则会把 `"..."` 当成有效回复提前停止。
+- 当前停止条件限定为：先匹配本次用户消息内容，再检查 `parentId` 指向该用户消息的 assistant；
+  只有 assistant 内容不是 `"..."`，或存在错误信息时，才认为本次追加回复已经落库。
+
+边界：
+
+- 不改任务 topic 抽屉的官方发送方式；有 Gateway 实时通道时仍走官方回推链路，不启用轮询。
+- 不影响普通 chat，也不影响主聊天页。
+- 任务详情页刷新 404 闪烁修复保留，属于任务详情数据加载态问题，不参与消息流式链路。
