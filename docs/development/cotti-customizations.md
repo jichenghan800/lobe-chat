@@ -278,6 +278,68 @@ LobeChat 容器处理：
   - Agent operation 已 `done`，消息无错误。
   - `task_topics` 和 `tasks` 仍停在 `running`。
   - QStash events 显示 `/api/workflows/task/on-topic-complete` 目标为 `http://127.0.0.1:3210/...` 且进入 retry。
+
+## 2026-06-24 自动任务运行时文档隔离
+
+现象：
+
+- Task：`T-10` / `task_q2yjC5Oa3LjZ`
+- 用户触发 “立即运行” 后，任务 prompt 本身只包含 `T-10 行业研究周报` 的任务信息，但执行结果仍会围绕 `AI 生成 PPT / 演示文稿赛道` 展开。
+- 页面右侧 “产物” 区域也保留了历史执行生成的 `AI 生成 PPT / 演示文稿赛道：2026年6月第5周行业研究简报（汇总版）`。
+
+关键证据：
+
+- 新运行的首条 user message 已无 `Workspace`、`Activities`、`AI生成PPT`、`lobe-agent-documents`、`lobe-knowledge-base`、`lobe-topic-reference`。
+- 但 v15 运行中 `serverMessagesEngine` 之前仍会从 `AgentRuntime/RuntimeExecutors.ts` 注入 Agent 文档、知识库文件内容和 Topic 引用摘要。
+- 因此污染点不在 `buildTaskPrompt`，而在最终 LLM 上下文拼装层。
+
+源码二开：
+
+- `apps/server/src/services/taskRunner/buildTaskPrompt.ts`
+  - 自动任务运行 prompt 不再拉取 task topics、briefs、pinned workspace documents。
+  - 只保留任务本体、依赖关系、父任务上下文和用户反馈。
+- `packages/prompts/src/prompts/task/index.ts`
+  - 增加 `includeActivityTimeline` 开关，任务执行场景关闭活动时间线。
+- `apps/server/src/modules/AgentRuntime/RuntimeExecutors.ts`
+  - 在 `call_llm` 最终上下文入口统一读取 `taskIsolationPolicy`。
+  - 带 `taskId` 的任务运行隐藏：
+    - Agent documents
+    - Knowledge base / runtime file contents
+    - Topic reference context
+  - 这是集中式隔离点，目的是让文档对任务运行时的模型上下文不可见，减少对工具链和普通 Agent 能力的误伤。
+
+测试：
+
+- `apps/server/src/services/taskRunner/buildTaskPrompt.test.ts`
+  - 覆盖任务 prompt 不包含历史 workspace/activity 文档标题。
+- `apps/server/src/modules/AgentRuntime/__tests__/RuntimeExecutors.test.ts`
+  - 覆盖带 `taskId` 的 `call_llm` 不向 `serverMessagesEngine` 传入 agent documents、knowledge file contents、knowledge bases、topic references。
+- 已通过：
+  - `bunx vitest run --silent='passed-only' apps/server/src/modules/AgentRuntime/__tests__/RuntimeExecutors.test.ts apps/server/src/services/taskRunner/buildTaskPrompt.test.ts apps/server/src/services/__tests__/taskIsolationPolicy.test.ts apps/server/src/modules/Mecha/AgentToolsEngine/__tests__/index.test.ts`
+  - `bun run type-check`
+
+chatdev 验证：
+
+- 镜像：`lobehub:v2.2.8-cotti-task-isolation-policy-v16`
+- 备份容器：`lobehub-v228-stage0-before-task-isolation-policy-v16-20260624200321`
+- 新容器：`lobehub-v228-stage0`
+- 触发 `T-10` “立即运行” 后最新 operation：
+  - `op_1782302653550_agt_4qC5zJhhJIbi_tpc_FEQxrk9Eq6EB_2G8tKTFM`
+  - 状态：`done`
+  - topic：`tpc_FEQxrk9Eq6EB`
+- 数据库检查新 topic：
+  - `AI 生成 PPT` / `AI生成PPT`：未命中
+  - `Workspace (`：未命中
+  - `Activities:`：未命中
+  - `lobe-agent-documents`：未命中
+  - `lobe-knowledge-base`：未命中
+  - `lobe-topic-reference`：未命中
+
+注意：
+
+- 页面 “产物” 区域里的 `AI 生成 PPT...` 是历史产物记录，不代表新一次执行仍被污染。
+- 是否删除该历史产物属于数据清理操作，未自动执行。
+- 容器日志里仍可见 `TaskLifecycle` 的 handoff/brief synthesis 偶发 `Premature close`，来源是 api-sg `/v1/responses` 尾部关闭问题；这是单独的渠道稳定性问题，不是本次文档污染根因。
 - 修正：
   - 将 LobeChat 容器内 `INTERNAL_APP_URL` 改为 `http://lobehub-v228-stage0:3210`。
   - 通过本地 QStash 补发当前 topic 的 `on-topic-complete` 到 `http://lobehub-v228-stage0:3210/api/workflows/task/on-topic-complete`。
