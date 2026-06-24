@@ -187,6 +187,8 @@ interface InternalExecAgentParams extends ExecAgentParams {
   botPlatformContext?: BotPlatformContext;
   /** Cron job ID that triggered this execution (if trigger is 'cron') */
   cronJobId?: string;
+  /** Disable agent-scoped documents for execution paths that must not inherit shared agent context. */
+  disableAgentDocuments?: boolean;
   /** Disable only local-system while preserving other tools. Useful for signal-only evals. */
   disableLocalSystem?: boolean;
   /** Disable the self-iteration declaration tool for reviewer/runtime paths. */
@@ -705,6 +707,7 @@ export class AiAgentService {
       taskId,
       evalContext,
       maxSteps,
+      disableAgentDocuments,
       disableLocalSystem,
       initialStepCount,
       signal,
@@ -1857,10 +1860,12 @@ export class AiAgentService {
           (kb: { enabled?: boolean | null }) => kb.enabled === true,
         ) ?? false;
 
-      try {
-        hasAgentDocuments = await this.agentDocumentsService.hasDocuments(resolvedAgentId);
-      } catch {
-        // Agent documents check is non-critical
+      if (!disableAgentDocuments) {
+        try {
+          hasAgentDocuments = await this.agentDocumentsService.hasDocuments(resolvedAgentId);
+        } catch {
+          // Agent documents check is non-critical
+        }
       }
 
       log('execAgent: isBotConversation=%s', isBotConversation);
@@ -1983,6 +1988,7 @@ export class AiAgentService {
               gatewayConfigured: true,
             }
           : undefined,
+        disableAgentDocuments,
         disableLocalSystem,
         executionPlan,
         globalMemoryEnabled,

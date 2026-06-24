@@ -186,6 +186,7 @@ export class TaskRunnerService {
         additionalPluginIds: pluginIds,
         ...(typeof taskConfig.model === 'string' && { model: taskConfig.model }),
         ...(typeof taskConfig.provider === 'string' && { provider: taskConfig.provider }),
+        disableAgentDocuments: true,
         hooks: [
           {
             handler: async (event) => {

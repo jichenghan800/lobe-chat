@@ -132,6 +132,7 @@ export const createServerAgentToolsEngine = (
     agentConfig,
     canUseDevice = false,
     deviceContext,
+    disableAgentDocuments = false,
     disableLocalSystem = false,
     executionPlan,
     globalMemoryEnabled = false,
@@ -251,6 +252,12 @@ export const createServerAgentToolsEngine = (
     [WebBrowsingManifest.identifier]: isSearchEnabled,
   };
 
+  const excludeIdentifiers = new Set<string>();
+  if (!canUseDevice) {
+    for (const identifier of DEVICE_TOOL_IDENTIFIERS) excludeIdentifiers.add(identifier);
+  }
+  if (disableAgentDocuments) excludeIdentifiers.add(AgentDocumentsManifest.identifier);
+
   return createServerToolsEngine(context, {
     // Pass additional manifests (e.g., LobeHub Skills)
     additionalManifests,
@@ -271,7 +278,7 @@ export const createServerAgentToolsEngine = (
     // filters the builtin source). Excluding the identifiers here drops
     // them from the combined `manifestSchemas` so the activator cannot
     // resolve them regardless of which manifest source declared them.
-    excludeIdentifiers: canUseDevice ? undefined : DEVICE_TOOL_IDENTIFIERS,
+    excludeIdentifiers: excludeIdentifiers.size > 0 ? excludeIdentifiers : undefined,
     enableChecker: createEnableChecker({
       // Allow lobe-activator to dynamically enable tools at runtime (e.g., lobe-creds, lobe-cron).
       // Only in agent mode; chat/custom modes can't let the activator bypass their fixed set.

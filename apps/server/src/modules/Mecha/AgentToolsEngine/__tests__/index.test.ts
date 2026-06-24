@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
 import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
@@ -230,6 +231,19 @@ describe('createServerAgentToolsEngine', () => {
     });
 
     expect(result.enabledToolIds).toContain(WebBrowsingManifest.identifier);
+  });
+
+  it('should physically remove Agent Documents when disabled for a run', () => {
+    const context = createMockContext();
+    const engine = createServerAgentToolsEngine(context, {
+      agentConfig: { plugins: [] },
+      disableAgentDocuments: true,
+      hasAgentDocuments: true,
+      model: 'gpt-4',
+      provider: 'openai',
+    });
+
+    expect(engine.getAvailablePlugins()).not.toContain(AgentDocumentsManifest.identifier);
   });
 
   it('should disable WebBrowsing when search mode is off', () => {

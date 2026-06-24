@@ -33,6 +33,13 @@ export interface TaskUpdatePayload {
 
 const TASK_DETAIL_POLL_INTERVAL = 10_000;
 
+const isTaskNotFoundError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+
+  const data = (error as { data?: { code?: unknown; httpStatus?: unknown } }).data;
+  return data?.code === 'NOT_FOUND' || data?.httpStatus === 404;
+};
+
 // Poll while the task itself or any topic activity is still in flight, so the
 // UI picks up status transitions (running → completed/failed) without needing
 // a manual refresh. Returns false once everything settles so SWR stops polling.
@@ -300,7 +307,10 @@ export class TaskDetailSliceActionImpl {
     return useClientDataSWR(
       taskId ? taskKeys.detail(taskId) : null,
       async ([, id]: [string, string]) => this.fetchTaskDetail(id),
-      { refreshInterval: shouldPoll ? TASK_DETAIL_POLL_INTERVAL : 0 },
+      {
+        refreshInterval: shouldPoll ? TASK_DETAIL_POLL_INTERVAL : 0,
+        shouldRetryOnError: (error) => !isTaskNotFoundError(error),
+      },
     );
   };
 

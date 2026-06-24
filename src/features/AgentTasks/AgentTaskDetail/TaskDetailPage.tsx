@@ -28,6 +28,7 @@ import TaskParentBar from './TaskParentBar';
 import TaskProperties from './TaskProperties';
 import TaskSubtasks from './TaskSubtasks';
 import TopicChatDrawer from './TopicChatDrawer';
+import { resolveTaskDetailViewState } from './viewState';
 
 interface TaskDetailPageProps {
   showTaskAgentPanelToggle?: boolean;
@@ -50,13 +51,12 @@ const TaskDetailPage = memo<TaskDetailPageProps>(({ taskId, showTaskAgentPanelTo
     return () => setActiveTaskId(undefined);
   }, [taskId, setActiveTaskId]);
 
-  const { isLoading } = useFetchTaskDetail(taskId);
+  const { error } = useFetchTaskDetail(taskId);
 
-  const isInitialLoading = isLoading && !hasTaskDetail;
-  // Only treat as not-found when there is no cached detail and the initial fetch
-  // has settled. A transient revalidation error (focus/reconnect/poll/5xx) must not
-  // hide an already-loaded task behind the 404 fallback.
-  const isNotFound = !isLoading && !hasTaskDetail;
+  // Only treat as not-found after the fetcher reports an explicit not-found
+  // result. SWR can report isLoading=false for a render before the first
+  // request starts, which otherwise flashes the 404 on page refresh.
+  const { isInitialLoading, isNotFound } = resolveTaskDetailViewState({ error, hasTaskDetail });
 
   if (isNotFound) {
     return (

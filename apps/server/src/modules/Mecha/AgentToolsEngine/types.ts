@@ -91,6 +91,8 @@ export interface ServerCreateAgentToolsEngineParams {
     deviceOnline?: boolean;
     gatewayConfigured: boolean;
   };
+  /** Whether to remove Agent Documents from manifest schemas so activator cannot enable it. */
+  disableAgentDocuments?: boolean;
   /** Whether to suppress the local-system builtin while preserving other tools. */
   disableLocalSystem?: boolean;
   /**

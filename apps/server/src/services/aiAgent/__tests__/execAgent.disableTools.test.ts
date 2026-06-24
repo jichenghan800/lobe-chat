@@ -7,6 +7,7 @@ const {
   mockCreateOperation,
   mockCreateServerAgentToolsEngine,
   mockGetAgentConfig,
+  mockHasAgentDocuments,
   mockGetComposioManifests,
   mockGetLobehubSkillManifests,
   mockMessageCreate,
@@ -18,6 +19,7 @@ const {
     getEnabledPluginManifests: vi.fn().mockReturnValue(new Map()),
   }),
   mockGetAgentConfig: vi.fn(),
+  mockHasAgentDocuments: vi.fn().mockResolvedValue(true),
   mockGetComposioManifests: vi.fn().mockResolvedValue([]),
   mockGetLobehubSkillManifests: vi.fn().mockResolvedValue([]),
   mockMessageCreate: vi.fn(),
@@ -48,6 +50,12 @@ vi.mock('@/database/models/agent', () => ({
 vi.mock('@/server/services/agent', () => ({
   AgentService: vi.fn().mockImplementation(() => ({
     getAgentConfig: mockGetAgentConfig,
+  })),
+}));
+
+vi.mock('@/server/services/agentDocuments', () => ({
+  AgentDocumentsService: vi.fn().mockImplementation(() => ({
+    hasDocuments: mockHasAgentDocuments,
   })),
 }));
 
@@ -198,5 +206,19 @@ describe('AiAgentService.execAgent - disableTools', () => {
     expect(mockGetLobehubSkillManifests).toHaveBeenCalledTimes(1);
     expect(mockGetComposioManifests).toHaveBeenCalledTimes(1);
     expect(mockCreateServerAgentToolsEngine).toHaveBeenCalledTimes(1);
+  });
+
+  it('should skip agent document discovery when disableAgentDocuments is true', async () => {
+    await service.execAgent({
+      agentId: 'agent-1',
+      disableAgentDocuments: true,
+      prompt: 'Hello',
+    } as any);
+
+    expect(mockHasAgentDocuments).not.toHaveBeenCalled();
+    expect(mockCreateServerAgentToolsEngine).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ disableAgentDocuments: true, hasAgentDocuments: false }),
+    );
   });
 });
