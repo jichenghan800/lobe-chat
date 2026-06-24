@@ -1,5 +1,5 @@
 import { buildTaskRunPrompt } from '@lobechat/prompts';
-import type { TaskItem, TaskTopicHandoff, WorkspaceData } from '@lobechat/types';
+import type { TaskItem } from '@lobechat/types';
 
 import type { BriefModel } from '@/database/models/brief';
 import type { TaskModel } from '@/database/models/task';
@@ -36,31 +36,25 @@ export async function buildTaskPrompt(
   deps: BuildTaskPromptDeps,
   extraPrompt?: string,
 ): Promise<BuiltTaskPrompt> {
-  const { briefModel, db, taskModel, taskTopicModel, userId, workspaceId } = deps;
+  const { db, taskModel, userId, workspaceId } = deps;
 
-  const [topics, briefs, comments, subtasks, dependencies, documents] = await Promise.all([
-    task.totalTopics && task.totalTopics > 0
-      ? taskTopicModel.findWithHandoff(task.id, 4).catch(() => [])
-      : Promise.resolve([]),
-    briefModel.findByTaskId(task.id).catch(() => []),
+  const [comments, subtasks, dependencies] = await Promise.all([
     taskModel.getComments(task.id).catch(() => []),
     taskModel.findSubtasks(task.id).catch(() => []),
     taskModel.getDependencies(task.id).catch(() => []),
-    taskModel
-      .getTreePinnedDocuments(task.id)
-      .catch((): WorkspaceData => ({ nodeMap: {}, tree: [] })),
   ]);
 
   // Derive fileIds from the persisted Lexical state. editor_data is the
   // single source of truth — fileId is recovered from the URL in each node
   // (proxy URL form via regex; pre-signed dev URLs via files.url lookup).
+  const userComments = comments.filter((c: any) => !c.authorAgentId);
   const extractCtx = { db, userId, workspaceId };
   const [taskFileIds, ...commentFileIdLists] = await Promise.all([
     extractFileIdsFromEditorData(task.editorData, extractCtx),
-    ...comments.map((c) => extractFileIdsFromEditorData(c.editorData, extractCtx)),
+    ...userComments.map((c) => extractFileIdsFromEditorData(c.editorData, extractCtx)),
   ]);
   const commentFileIdsMap: Record<string, string[]> = {};
-  comments.forEach((c, i) => {
+  userComments.forEach((c, i) => {
     const ids = commentFileIdLists[i];
     if (ids.length > 0) commentFileIdsMap[c.id] = ids;
   });
@@ -154,18 +148,7 @@ export async function buildTaskPrompt(
 
   const prompt = buildTaskRunPrompt({
     activities: {
-      briefs: briefs.map((b: any) => ({
-        createdAt: b.createdAt,
-        id: b.id,
-        priority: b.priority,
-        resolvedAction: b.resolvedAction,
-        resolvedAt: b.resolvedAt,
-        resolvedComment: b.resolvedComment,
-        summary: b.summary,
-        title: b.title,
-        type: b.type,
-      })),
-      comments: comments.map((c: any) => {
+      comments: userComments.map((c: any) => {
         const files = toFileMetas(commentFileIdsMap[c.id] ?? []);
         return {
           agentId: c.authorAgentId,
@@ -175,26 +158,9 @@ export async function buildTaskPrompt(
           id: c.id,
         };
       }),
-      subtasks: subtasks.map((s: any) => ({
-        createdAt: s.createdAt,
-        id: s.id,
-        identifier: s.identifier,
-        name: s.name,
-        status: s.status,
-      })),
-      topics: (topics as any[]).map((t) => {
-        const handoff = t.handoff as TaskTopicHandoff | null;
-        return {
-          createdAt: t.createdAt,
-          handoff,
-          id: t.topicId || t.id,
-          seq: t.seq,
-          status: t.status,
-          title: handoff?.title || t.title,
-        };
-      }),
     },
     extraPrompt,
+    includeActivityTimeline: false,
     parentTask: parentTaskContext,
     task: {
       assigneeAgentId: task.assigneeAgentId,
@@ -220,24 +186,6 @@ export async function buildTaskPrompt(
         status: s.status,
       })),
     },
-    workspace: documents.tree.map((rootNode) => {
-      const rootDoc = documents.nodeMap[rootNode.id];
-      return {
-        children: rootNode.children.map((child) => {
-          const childDoc = documents.nodeMap[child.id];
-          return {
-            createdAt: childDoc?.createdAt,
-            documentId: child.id,
-            size: childDoc?.charCount ?? undefined,
-            sourceTaskIdentifier: childDoc?.sourceTaskIdentifier ?? undefined,
-            title: childDoc?.title,
-          };
-        }),
-        createdAt: rootDoc?.createdAt,
-        documentId: rootNode.id,
-        title: rootDoc?.title,
-      };
-    }),
   });
 
   return { fileIds: allFileIds, prompt };

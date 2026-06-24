@@ -372,6 +372,8 @@ export interface TaskRunPromptInput {
   };
   /** --prompt flag content */
   extraPrompt?: string;
+  /** Include historical activity timeline in the task context. */
+  includeActivityTimeline?: boolean;
   /** Parent task context (when current task is a subtask) */
   parentTask?: {
     identifier: string;
@@ -452,7 +454,14 @@ const briefIcon = (type: string): string => {
  * 4. Original Task (instruction + description) — the base requirement
  */
 export const buildTaskRunPrompt = (input: TaskRunPromptInput, now?: Date): string => {
-  const { task, activities, extraPrompt, workspace, parentTask } = input;
+  const {
+    task,
+    activities,
+    extraPrompt,
+    includeActivityTimeline = true,
+    workspace,
+    parentTask,
+  } = input;
   const sections: string[] = [];
 
   // ── 1. High Priority Instruction ──
@@ -494,7 +503,7 @@ export const buildTaskRunPrompt = (input: TaskRunPromptInput, now?: Date): strin
   if (task.assigneeAgentId) taskLines.push(`Agent: ${task.assigneeAgentId}`);
   if (task.parentIdentifier) taskLines.push(`Parent: ${task.parentIdentifier}`);
 
-  const topicCount = activities?.topics?.length ?? 0;
+  const topicCount = includeActivityTimeline ? (activities?.topics?.length ?? 0) : 0;
   if (topicCount > 0) taskLines.push(`Topics: ${topicCount}`);
 
   if (task.dependencies && task.dependencies.length > 0) {
@@ -561,7 +570,7 @@ export const buildTaskRunPrompt = (input: TaskRunPromptInput, now?: Date): strin
   // Activities (chronological, flat list)
   const timelineEntries: { text: string; time: number }[] = [];
 
-  if (activities?.topics) {
+  if (includeActivityTimeline && activities?.topics) {
     for (const t of activities.topics) {
       const ago = timeAgo(t.createdAt, now);
       const status = t.status || 'completed';
@@ -574,7 +583,7 @@ export const buildTaskRunPrompt = (input: TaskRunPromptInput, now?: Date): strin
     }
   }
 
-  if (activities?.briefs) {
+  if (includeActivityTimeline && activities?.briefs) {
     for (const b of activities.briefs) {
       const ago = timeAgo(b.createdAt, now);
       let resolved = '';
@@ -590,7 +599,7 @@ export const buildTaskRunPrompt = (input: TaskRunPromptInput, now?: Date): strin
     }
   }
 
-  if (activities?.comments) {
+  if (includeActivityTimeline && activities?.comments) {
     for (const c of activities.comments) {
       const author = c.agentId ? '🤖 agent' : '👤 user';
       const ago = c.createdAt ? timeAgo(c.createdAt, now) : '';
