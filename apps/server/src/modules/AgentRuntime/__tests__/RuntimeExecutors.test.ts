@@ -2100,6 +2100,52 @@ describe('RuntimeExecutors', () => {
         });
       });
 
+      it('should hide runtime document context for task-isolated runs', async () => {
+        const ctxWithConfig: RuntimeExecutorContext = {
+          ...ctx,
+          agentConfig: {
+            files: [
+              { content: 'hidden file content', enabled: true, id: 'f1', name: 'hidden.pdf' },
+            ],
+            knowledgeBases: [{ enabled: true, id: 'kb1', name: 'Hidden KB' }],
+            plugins: [],
+            systemRole: 'test',
+          },
+        };
+        const executors = createRuntimeExecutors(ctxWithConfig);
+        const state = createMockState({
+          metadata: {
+            agentId: 'agent-123',
+            taskId: 'task-123',
+            threadId: 'thread-123',
+            topicId: 'topic-123',
+          },
+        });
+
+        const instruction = {
+          payload: {
+            messages: [
+              {
+                content: '<refer_topic id="topic-hidden" name="Hidden topic" />\nHello',
+                role: 'user',
+              },
+            ],
+            model: 'gpt-4',
+            provider: 'openai',
+          },
+          type: 'call_llm' as const,
+        };
+
+        await executors.call_llm!(instruction, state);
+
+        const callArgs = engineSpy.mock.calls[0][0];
+
+        expect(callArgs.agentDocuments).toBeUndefined();
+        expect(callArgs.topicReferences).toBeUndefined();
+        expect(callArgs.knowledge.fileContents).toEqual([]);
+        expect(callArgs.knowledge.knowledgeBases).toEqual([]);
+      });
+
       it('should skip topic reference resolution when messages already contain topic_reference_context', async () => {
         const ctxWithConfig: RuntimeExecutorContext = {
           ...ctx,

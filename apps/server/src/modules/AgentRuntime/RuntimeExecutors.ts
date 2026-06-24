@@ -101,7 +101,12 @@ import {
 import { FileService } from '@/server/services/file';
 import { MessageService } from '@/server/services/message';
 import { OnboardingService } from '@/server/services/onboarding';
-import { isTaskIsolatedRun } from '@/server/services/taskIsolationPolicy';
+import {
+  isTaskIsolatedRun,
+  shouldHideAgentDocuments,
+  shouldHideKnowledgeBase,
+  shouldHideTopicReference,
+} from '@/server/services/taskIsolationPolicy';
 import {
   type ServerAgentMemberRunner,
   type ServerSubAgentRunner,
@@ -1016,6 +1021,10 @@ export const createRuntimeExecutors = (
         const messagesForContext = shouldReplayAssistantReasoning
           ? (llmPayload.messages as UIChatMessage[])
           : stripAssistantReasoningForReplay(llmPayload.messages as UIChatMessage[]);
+        const taskIsolationContext = { taskId: state.metadata?.taskId };
+        const hideAgentDocuments = shouldHideAgentDocuments(taskIsolationContext);
+        const hideKnowledgeBase = shouldHideKnowledgeBase(taskIsolationContext);
+        const hideTopicReference = shouldHideTopicReference(taskIsolationContext);
 
         // Extract <refer_topic> tags from messages and fetch summaries.
         // Skip if messages already contain injected topic_reference_context
@@ -1027,7 +1036,7 @@ export const createRuntimeExecutors = (
           (m) => typeof m.content === 'string' && m.content.includes('topic_reference_context'),
         );
 
-        if (!alreadyHasTopicRefs && ctx.serverDB && ctx.userId) {
+        if (!hideTopicReference && !alreadyHasTopicRefs && ctx.serverDB && ctx.userId) {
           const topicModel = new TopicModel(ctx.serverDB, ctx.userId, ctx.workspaceId);
           const messageModel = new MessageModelClass(ctx.serverDB, ctx.userId, ctx.workspaceId);
           topicReferences = await resolveTopicReferences(
@@ -1050,7 +1059,7 @@ export const createRuntimeExecutors = (
         // Fetch agent documents for context injection
         let agentDocuments: AgentContextDocument[] | undefined;
         const agentId = state.metadata?.agentId;
-        if (agentId && ctx.serverDB && ctx.userId) {
+        if (!hideAgentDocuments && agentId && ctx.serverDB && ctx.userId) {
           try {
             const agentDocService = new AgentDocumentsService(
               ctx.serverDB,
@@ -1286,7 +1295,9 @@ export const createRuntimeExecutors = (
           }
         }
 
-        const runtimeFileContents = await resolveRuntimeFileContents(agentConfig.files, ctx);
+        const runtimeFileContents = hideKnowledgeBase
+          ? []
+          : await resolveRuntimeFileContents(agentConfig.files, ctx);
 
         const contextEngineInput = {
           agentDocuments,
@@ -1348,12 +1359,14 @@ export const createRuntimeExecutors = (
           initialContext: (state as any).initialContext?.initialContext,
           knowledge: {
             fileContents: runtimeFileContents,
-            knowledgeBases: agentConfig.knowledgeBases
-              ?.filter((kb: { enabled?: boolean | null }) => kb.enabled === true)
-              .map((kb: { id?: string; name?: string }) => ({
-                id: kb.id ?? '',
-                name: kb.name ?? '',
-              })),
+            knowledgeBases: hideKnowledgeBase
+              ? []
+              : agentConfig.knowledgeBases
+                  ?.filter((kb: { enabled?: boolean | null }) => kb.enabled === true)
+                  .map((kb: { id?: string; name?: string }) => ({
+                    id: kb.id ?? '',
+                    name: kb.name ?? '',
+                  })),
           },
           messages: messagesForContext,
           model,
