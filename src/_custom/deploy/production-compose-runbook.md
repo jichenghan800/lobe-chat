@@ -197,6 +197,7 @@ QSTASH_TOKEN=<from docker logs qstash-local>
 QSTASH_CURRENT_SIGNING_KEY=<from docker logs qstash-local>
 QSTASH_NEXT_SIGNING_KEY=<from docker logs qstash-local>
 AGENT_RUNTIME_MODE=queue
+NODE_OPTIONS=--max-old-space-size=8192 --dns-result-order=ipv4first --use-openssl-ca
 ```
 
 In this setup, do not leave `INTERNAL_APP_URL=http://127.0.0.1:3210`. Agent runtime completion
@@ -206,6 +207,12 @@ LobeChat app.
 
 `AGENT_RUNTIME_MODE=queue` also switches Agent runtime and queue service paths to queue-backed
 implementations. Enable it only when Redis and QStash are both configured.
+
+For chatdev-style Agent Excel testing, keep `NODE_OPTIONS` with `--max-old-space-size=8192`.
+On 2026-06-24 the app hit V8 heap OOM around 4.25GiB while `/trpc/lambda/*` requests stalled for
+300s. Raising the Node heap is an operational guard for dev workloads; if memory keeps growing,
+profile `document.parseFileContent`, Excel parsing, and Agent file attach/detach paths instead of
+treating the heap increase as a code fix.
 
 After restarting LobeChat, verify the setup without printing secrets:
 

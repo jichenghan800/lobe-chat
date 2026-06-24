@@ -542,3 +542,16 @@ LobeHub` to `You are Cotti, an Agent Builder integrated into CottiAI`.
 - Boundary: this is separate from Market/community login and sandbox authorization. If sandbox auth
   is expired, the tool execution path should still create a tool message and return an explicit
   authorization error.
+
+### Chatdev Node Heap Guard
+
+- Incident: reopening historical topic `tpc_cCkwJu5wpyuy` showed "fetching latest messages" because
+  the LobeChat Node process had hit V8 heap OOM; Nginx then timed out unrelated `/trpc/lambda/*`
+  requests after 300s.
+- Finding: the topic itself was small, with 22 messages and one 2.4MB xlsx attachment; no
+  chunk/embedding task or file chunks were involved.
+- Runtime env: set
+  `NODE_OPTIONS=--max-old-space-size=8192 --dns-result-order=ipv4first --use-openssl-ca` for the
+  chatdev container.
+- Boundary: this is an operational guard, not a parser leak fix. If memory climbs again, inspect
+  `document.parseFileContent`, Excel parsing, and Agent file attach/detach paths.

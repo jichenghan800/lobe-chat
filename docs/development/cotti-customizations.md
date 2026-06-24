@@ -298,3 +298,53 @@ LobeChat 容器处理：
 - 本地 QStash token 和 signing key 只从 `docker logs qstash-local` 查看，不写入 Git。
 - 如果重建 `qstash-local`，token/signing key 会变化，需要同步重启 LobeChat 容器。
 - 生产环境建议使用托管 Upstash/QStash 或同等级高可用调度，不建议把 dev server 当生产队列。
+
+## 2026-06-24 chatdev 历史 topic 慢加载 / OOM 复盘
+
+现象：
+
+- 重新打开历史 topic `tpc_cCkwJu5wpyuy` 时页面停在 “正在获取最新消息...”。
+- Nginx 对 `/trpc/lambda/*` 多个请求出现 300s upstream timeout，包括
+  `message.getMessages`、`agent.getAgentConfigById`、`device.listDevices`、`document.parseFileContent`。
+- 浏览器侧表现为历史消息加载慢或 `Failed to fetch`。
+
+排查结论：
+
+- 该 topic 本身不大：
+  - 22 条消息。
+  - 消息行数据约 48KB，正文约 40KB。
+  - 关联 1 个约 2.4MB 的 xlsx 文件。
+  - 无 `file_chunks`、`unstructured_chunks`、chunk/embedding async task。
+- 真正根因是 LobeChat Node 进程触发 V8 heap OOM：
+  - `FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory`
+  - OOM 前容器内存约 4.25GiB。
+- 因为 Node 进程卡住 / 异常，所有 topic 的 TRPC 请求都会被拖慢；这不是该历史 topic 的数据量问题。
+- 重启后同一 topic 的 `message.getMessages` 相关批量请求恢复到约 0.6-1.6s。
+
+处理：
+
+- 重启 LobeChat 恢复服务。
+- 保留旧容器：
+  - `lobehub-v228-stage0-before-heap-20260624113332`
+- 新 `lobehub-v228-stage0` 保留原镜像、端口、网络、restart policy 和环境变量，并将：
+  - `NODE_OPTIONS=--dns-result-order=ipv4first --use-openssl-ca`
+  - 调整为：
+  - `NODE_OPTIONS=--max-old-space-size=8192 --dns-result-order=ipv4first --use-openssl-ca`
+
+验证：
+
+- `https://chatdev.cotticoffee.com/` 返回 `302`，约 10ms。
+- `https://chatdev.cotticoffee.com/agent/agt_4qC5zJhhJIbi/tpc_cCkwJu5wpyuy` 返回 `302`，约 10ms。
+- LobeChat 启动日志包含：
+  - `QStash: Schedule created successfully.`
+  - `Gateway: Started successfully.`
+- 容器内访问 `http://qstash-local:8080/` 返回 `401 Unauthorized`，符合未带 token 的预期。
+- 本地 QStash schedule 仍为：
+  - `scheduleId=lobe-task-schedule-dispatch`
+  - `cron=*/10 * * * *`
+  - `destination=https://chatdev.cotticoffee.com/api/workflows/task/schedule-dispatch`
+
+后续风险：
+
+- `--max-old-space-size=8192` 是运行时保护，不是根治内存增长的代码修复。
+- 如果再次出现内存持续上升，应重点继续查 `document.parseFileContent`、Excel 文件解析、Agent 文件绑定 / 解绑链路是否存在大对象驻留。
