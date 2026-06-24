@@ -233,17 +233,19 @@ describe('createServerAgentToolsEngine', () => {
     expect(result.enabledToolIds).toContain(WebBrowsingManifest.identifier);
   });
 
-  it('should physically remove Agent Documents when disabled for a run', () => {
+  it('should physically remove agent knowledge tools when disabled for a run', () => {
     const context = createMockContext();
     const engine = createServerAgentToolsEngine(context, {
-      agentConfig: { plugins: [] },
+      agentConfig: { plugins: [KnowledgeBaseManifest.identifier] },
       disableAgentDocuments: true,
       hasAgentDocuments: true,
+      hasEnabledKnowledgeBases: true,
       model: 'gpt-4',
       provider: 'openai',
     });
 
     expect(engine.getAvailablePlugins()).not.toContain(AgentDocumentsManifest.identifier);
+    expect(engine.getAvailablePlugins()).not.toContain(KnowledgeBaseManifest.identifier);
   });
 
   it('should disable WebBrowsing when search mode is off', () => {

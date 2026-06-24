@@ -1,4 +1,5 @@
 import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
+import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import type * as ModelBankModule from 'model-bank';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -210,6 +211,16 @@ describe('AiAgentService.execAgent - disableTools', () => {
   });
 
   it('should skip agent document discovery when disableAgentDocuments is true', async () => {
+    mockGetAgentConfig.mockResolvedValueOnce({
+      chatConfig: {},
+      id: 'agent-1',
+      knowledgeBases: [{ enabled: true }],
+      model: 'gpt-4',
+      plugins: [KnowledgeBaseManifest.identifier],
+      provider: 'openai',
+      systemRole: 'You are a helper',
+    });
+
     await service.execAgent({
       agentId: 'agent-1',
       disableAgentDocuments: true,
@@ -219,10 +230,15 @@ describe('AiAgentService.execAgent - disableTools', () => {
     expect(mockHasAgentDocuments).not.toHaveBeenCalled();
     expect(mockCreateServerAgentToolsEngine).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ disableAgentDocuments: true, hasAgentDocuments: false }),
+      expect.objectContaining({
+        disableAgentDocuments: true,
+        hasAgentDocuments: false,
+        hasEnabledKnowledgeBases: false,
+      }),
     );
 
     const callArgs = mockCreateOperation.mock.calls[0][0];
     expect(callArgs.toolSet.manifestMap).not.toHaveProperty(AgentDocumentsManifest.identifier);
+    expect(callArgs.toolSet.manifestMap).not.toHaveProperty(KnowledgeBaseManifest.identifier);
   });
 });

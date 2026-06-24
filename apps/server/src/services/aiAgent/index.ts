@@ -3,6 +3,7 @@ import { BUILTIN_AGENT_SLUGS, getAgentRuntimeConfig } from '@lobechat/builtin-ag
 import { builtinSkills } from '@lobechat/builtin-skills';
 import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
 import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
+import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LobeAgentIdentifier, LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MessageToolIdentifier } from '@lobechat/builtin-tool-message';
@@ -1994,7 +1995,7 @@ export class AiAgentService {
         executionPlan,
         globalMemoryEnabled,
         hasAgentDocuments,
-        hasEnabledKnowledgeBases,
+        hasEnabledKnowledgeBases: disableAgentDocuments ? false : hasEnabledKnowledgeBases,
         isBotConversation,
         model,
         provider,
@@ -2036,7 +2037,9 @@ export class AiAgentService {
       // every future manifest source automatically inherits the wall.
       const isManifestIngestAllowed = (identifier: string): boolean =>
         (canUseDevice || !isDeviceToolIdentifier(identifier)) &&
-        (!disableAgentDocuments || identifier !== AgentDocumentsManifest.identifier);
+        (!disableAgentDocuments ||
+          (identifier !== AgentDocumentsManifest.identifier &&
+            identifier !== KnowledgeBaseManifest.identifier));
 
       // Start with the scoped manifest map (pluginIds + defaultToolIds)
       const manifestMap = toolsEngine.getEnabledPluginManifests(pluginIds);
@@ -2078,6 +2081,7 @@ export class AiAgentService {
       }
       if (disableAgentDocuments) {
         delete toolManifestMap[AgentDocumentsManifest.identifier];
+        delete toolManifestMap[KnowledgeBaseManifest.identifier];
       }
       for (const tool of allowedBuiltinTools) {
         if (!isManifestIngestAllowed(tool.identifier)) continue;

@@ -197,8 +197,10 @@ export const createServerAgentToolsEngine = (
   // its own runtime gate (KB needs enabled bases, memory needs global toggle,
   // web-browsing needs search on). `allowExplicitActivation` is off so the
   // activator can't smuggle anything else in.
+  const canUseKnowledgeBase = !disableAgentDocuments && hasEnabledKnowledgeBases;
+
   const chatModeRules = {
-    [KnowledgeBaseManifest.identifier]: hasEnabledKnowledgeBases,
+    [KnowledgeBaseManifest.identifier]: canUseKnowledgeBase,
     [MemoryManifest.identifier]: globalMemoryEnabled,
     [WebBrowsingManifest.identifier]: isSearchEnabled,
   };
@@ -216,7 +218,7 @@ export const createServerAgentToolsEngine = (
     ...Object.fromEntries(alwaysOnToolIds.map((id) => [id, true])),
     // System-level rules (may override user selection for specific tools)
     [CloudSandboxManifest.identifier]: runtimeMode === 'cloud',
-    [KnowledgeBaseManifest.identifier]: hasEnabledKnowledgeBases,
+    [KnowledgeBaseManifest.identifier]: canUseKnowledgeBase,
     // Local-system: the user must have opted into local runtime
     // (`runtimeMode === 'local'`) AND have an online, auto-activated device
     // registered with the device-gateway. Access policy (external bot
@@ -256,7 +258,10 @@ export const createServerAgentToolsEngine = (
   if (!canUseDevice) {
     for (const identifier of DEVICE_TOOL_IDENTIFIERS) excludeIdentifiers.add(identifier);
   }
-  if (disableAgentDocuments) excludeIdentifiers.add(AgentDocumentsManifest.identifier);
+  if (disableAgentDocuments) {
+    excludeIdentifiers.add(AgentDocumentsManifest.identifier);
+    excludeIdentifiers.add(KnowledgeBaseManifest.identifier);
+  }
 
   return createServerToolsEngine(context, {
     // Pass additional manifests (e.g., LobeHub Skills)
