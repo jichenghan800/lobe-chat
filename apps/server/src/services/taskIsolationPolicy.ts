@@ -39,6 +39,8 @@ export const sanitizeLobehubSkillForTaskRun = (skill: BuiltinSkill): BuiltinSkil
       .replace('| `lh file` | File management |\n', '')
       .replace('| `lh doc` | Document management (create, parse, organize) |\n', '')
       .replace('| `lh agent` | Agent management (create, configure, run) |\n', '')
+      .replace('| `lh topic` | Conversation topic management |\n', '')
+      .replace('| `lh message` | Message management |\n', '')
       .replace('# List knowledge bases\nlh kb list\n\n', '')
       .replace(
         '# Create a document in a knowledge base\nlh kb create-doc <kbId> -t "Meeting Notes" -c "..."\n\n',
@@ -53,7 +55,7 @@ export const sanitizeLobehubSkillForTaskRun = (skill: BuiltinSkill): BuiltinSkil
 };
 
 const isBlockedTaskResourceCommand = (command: string) =>
-  /(?:^|&&|\|\||;)\s*lh\s+(?:agent|doc|file|kb)(?:\s|$)/.test(command);
+  /(?:^|&&|\|\||;)\s*lh\s+(?:agent|doc|file|kb|message|topic)(?:\s|$)/.test(command);
 
 const isLhCommand = (command: string) => /^\s*lh\s+/.test(command);
 
@@ -89,7 +91,8 @@ export const guardTaskRunCommand = (
   if (isBlockedTaskResourceCommand(command)) {
     return {
       allowed: false,
-      stderr: 'Agent, file, document, and knowledge-base CLI access is disabled for this task run.',
+      stderr:
+        'Agent, file, document, knowledge-base, topic, and message CLI access is disabled for this task run.',
     };
   }
 
@@ -111,11 +114,14 @@ const sanitizeTaskLhHelpOutput = (output: string) =>
       const normalized = line.trim();
 
       if (/^(?:agent|doc|file|kb)\s/.test(normalized)) return false;
+      if (/^(?:message|topic)\s/.test(normalized)) return false;
       if (normalized.includes('Knowledge base')) return false;
       if (normalized.includes('Manage knowledge bases')) return false;
       if (normalized.includes('Manage documents')) return false;
       if (normalized.includes('Manage files')) return false;
       if (normalized.includes('Manage agents')) return false;
+      if (normalized.includes('Manage messages')) return false;
+      if (normalized.includes('Manage topics')) return false;
       if (normalized.includes('Filter by type: agent,')) return false;
       if (normalized.includes('message, page, memory, mcp, plugin,')) return false;
       if (normalized.includes('communityAgent, knowledgeBase')) return false;

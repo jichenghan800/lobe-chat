@@ -32,6 +32,12 @@ describe('taskIsolationPolicy', () => {
     expect(guardTaskRunCommand({ taskId: 'task-1' }, 'lh search -q "AI PPT"')).toMatchObject({
       allowed: false,
     });
+    expect(guardTaskRunCommand({ taskId: 'task-1' }, 'lh topic list')).toMatchObject({
+      allowed: false,
+    });
+    expect(guardTaskRunCommand({ taskId: 'task-1' }, 'lh message list')).toMatchObject({
+      allowed: false,
+    });
     expect(guardTaskRunCommand({ taskId: 'task-1' }, 'lh search -q "AI PPT" --web')).toEqual({
       allowed: true,
     });
@@ -41,7 +47,7 @@ describe('taskIsolationPolicy', () => {
   it('sanitizes LobeHub skill resources and command examples for task runs', () => {
     const skill = sanitizeLobehubSkillForTaskRun({
       content:
-        '| `lh doc` | Document management (create, parse, organize) |\n| `lh kb` | Knowledge base management (create, upload, organize) |\n# Run an agent\nlh agent run -a <agentId> -p "Summarize today\'s tasks"\n',
+        '| `lh doc` | Document management (create, parse, organize) |\n| `lh kb` | Knowledge base management (create, upload, organize) |\n| `lh topic` | Conversation topic management |\n| `lh message` | Message management |\n# Run an agent\nlh agent run -a <agentId> -p "Summarize today\'s tasks"\n',
       description: 'LobeHub',
       identifier: LobeHubIdentifier,
       name: 'LobeHub',
@@ -55,6 +61,8 @@ describe('taskIsolationPolicy', () => {
     expect(skill.content).not.toContain('lh doc');
     expect(skill.content).not.toContain('lh kb');
     expect(skill.content).not.toContain('lh agent');
+    expect(skill.content).not.toContain('lh topic');
+    expect(skill.content).not.toContain('lh message');
     expect(skill.resources).not.toHaveProperty('references/doc');
     expect(skill.resources).toHaveProperty('references/search');
   });
