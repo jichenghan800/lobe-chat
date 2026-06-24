@@ -182,3 +182,42 @@
 - 源站直连 `/trpc/lambda/config.getGlobalConfig` 不再返回 `Content-Encoding: gzip`，且不再由源站使用 chunked framing。
 - 公网经 ESA 后仍可能显示 `Transfer-Encoding: chunked`，但 `Content-Encoding` 已为空。
 - 浏览器同源 fetch 验证通过：TRPC 返回 200，约 53KB，`contentEncoding: null`，未再触发 `ERR_INCOMPLETE_CHUNKED_ENCODING`。
+
+## 2026-06-24 开发环境任务调度兜底
+
+现象：
+
+- Task：`T-8` / `task_HDzW5d7P2IXF`
+- 配置：`automation_mode=schedule`，`schedule_pattern=0 10 * * *`，`schedule_timezone=Asia/Shanghai`
+- 2026-06-24 10:00 CST 应触发一次，但任务未自动运行。
+
+关键证据：
+
+- 10 点后数据库中 `T-8` 仍为 `scheduled`，`last_heartbeat_at` 为空，`task_topics` 无运行记录。
+- 09:50-10:06 期间 Nginx access log 无 `/api/workflows/task/schedule-dispatch` 或 `/schedule-execute` 请求。
+- 开发容器环境中 `QSTASH_TOKEN` 未设置，启动日志也提示跳过 QStash schedule 创建。
+- 代码路径依赖外部 cron/QStash 调用 `/api/workflows/task/schedule-dispatch`，Next 进程本身不会自带常驻定时扫描。
+
+处理：
+
+- 单独补触发 `T-8`：
+  - POST `http://127.0.0.1:3210/api/workflows/task/schedule-execute`
+  - body：`{"taskId":"task_HDzW5d7P2IXF","userId":"user_dYvjtNqQU2PONweL5GrTuV3Cf2F"}`
+- 返回：`{"success":true,"ran":true,"taskIdentifier":"T-8"}`
+- 生成 topic：`tpc_UAEegzIk7F0T`
+- `task_topics` 最终状态：`completed`
+
+开发环境兜底配置：
+
+- 新增机器级 cron 文件：`/etc/cron.d/lobechat-task-scheduler`
+- 每 5 分钟调用一次：
+  - POST `http://127.0.0.1:3210/api/workflows/task/schedule-dispatch`
+  - body：`{}`
+- 使用 `flock` 防止重叠执行。
+- 日志输出到：`/var/log/lobechat-task-scheduler.log`
+
+注意：
+
+- 这是开发环境替代 QStash 的机器级配置，不是源码二开。
+- 如果后续启用 QStash，应删除该 cron 兜底，避免双重调度。
+- 本次补跑后 TaskLifecycle 的 handoff/brief synthesis 曾出现 `Premature close`，但任务 topic 主体已完成；这是收尾摘要失败，不等同于 schedule 未触发。
