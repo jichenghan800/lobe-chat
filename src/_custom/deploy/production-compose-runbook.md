@@ -190,12 +190,19 @@ docker logs qstash-local
 Required LobeChat environment variables:
 
 ```bash
+APP_URL=https://chatdev.cotticoffee.com
+INTERNAL_APP_URL=http://lobehub-v228-stage0:3210
 QSTASH_URL=http://qstash-local:8080
 QSTASH_TOKEN=<from docker logs qstash-local>
 QSTASH_CURRENT_SIGNING_KEY=<from docker logs qstash-local>
 QSTASH_NEXT_SIGNING_KEY=<from docker logs qstash-local>
 AGENT_RUNTIME_MODE=queue
 ```
+
+In this setup, do not leave `INTERNAL_APP_URL=http://127.0.0.1:3210`. Agent runtime completion
+hooks resolve relative webhook URLs with `INTERNAL_APP_URL`; QStash delivers those webhooks from the
+`qstash-local` container, where `127.0.0.1` points to the QStash container itself rather than the
+LobeChat app.
 
 `AGENT_RUNTIME_MODE=queue` also switches Agent runtime and queue service paths to queue-backed
 implementations. Enable it only when Redis and QStash are both configured.
@@ -230,6 +237,12 @@ curl -sS -H "Authorization: Bearer $TOKEN" http://127.0.0.1:18088/v2/schedules
 
 For chatdev, the expected schedule is `lobe-task-schedule-dispatch`, cron `*/10 * * * *`, destination
 `https://chatdev.cotticoffee.com/api/workflows/task/schedule-dispatch`.
+
+For task run completion hooks, local QStash should deliver to the container-network URL:
+
+```bash
+http://lobehub-v228-stage0:3210/api/workflows/task/on-topic-complete
+```
 
 ## Publish Image
 

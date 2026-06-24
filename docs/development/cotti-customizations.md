@@ -249,6 +249,8 @@ LobeChat 容器处理：
 - 原 `lobehub-v228-stage0` 已重命名保留为：
   - `lobehub-v228-stage0-before-qstash-20260624102310`
 - 新 `lobehub-v228-stage0` 保留原镜像、端口、网络、restart policy 和运行时环境变量，并追加：
+  - `APP_URL=https://chatdev.cotticoffee.com`
+  - `INTERNAL_APP_URL=http://lobehub-v228-stage0:3210`
   - `QSTASH_URL=http://qstash-local:8080`
   - `QSTASH_TOKEN=<from docker logs qstash-local>`
   - `QSTASH_CURRENT_SIGNING_KEY=<from docker logs qstash-local>`
@@ -266,6 +268,24 @@ LobeChat 容器处理：
   - `cron=*/10 * * * *`
   - `destination=https://chatdev.cotticoffee.com/api/workflows/task/schedule-dispatch`
 - 手动通过本地 QStash publish 到 `https://chatdev.cotticoffee.com/api/workflows/task/schedule-dispatch` 后，Nginx access log 显示 `Upstash-QStash` 请求返回 `200`。
+
+2026-06-24 追加修正：
+
+- 发现 task completion hook 会按 `INTERNAL_APP_URL` 拼出相对 webhook URL。
+- 原 `INTERNAL_APP_URL=http://127.0.0.1:3210` 对 LobeChat 容器自己可用，但对 `qstash-local` 容器不成立；QStash 投递时 `127.0.0.1` 指向 QStash 容器自身。
+- 表现：
+  - `T-8` 在 10:30 被 schedule 正常触发。
+  - Agent operation 已 `done`，消息无错误。
+  - `task_topics` 和 `tasks` 仍停在 `running`。
+  - QStash events 显示 `/api/workflows/task/on-topic-complete` 目标为 `http://127.0.0.1:3210/...` 且进入 retry。
+- 修正：
+  - 将 LobeChat 容器内 `INTERNAL_APP_URL` 改为 `http://lobehub-v228-stage0:3210`。
+  - 通过本地 QStash 补发当前 topic 的 `on-topic-complete` 到 `http://lobehub-v228-stage0:3210/api/workflows/task/on-topic-complete`。
+- 验证：
+  - `T-8` 回到 `scheduled`。
+  - `task_topics` 两条记录均为 `completed`。
+  - `messages.error` 为 0。
+  - 两次 `agent_operations` 均为 `done`。
 
 清理：
 
