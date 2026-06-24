@@ -1,3 +1,4 @@
+import { LobeHubIdentifier } from '@lobechat/builtin-skills';
 import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
 import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import type * as ModelBankModule from 'model-bank';
@@ -9,11 +10,14 @@ const {
   mockCreateOperation,
   mockCreateServerAgentToolsEngine,
   mockGetAgentConfig,
+  mockGetAgentSkills,
   mockHasAgentDocuments,
   mockGetComposioManifests,
   mockGetLobehubSkillManifests,
+  mockSkillFindAll,
   mockMessageCreate,
   mockPluginQuery,
+  mockResolveTask,
 } = vi.hoisted(() => ({
   mockCreateOperation: vi.fn(),
   mockCreateServerAgentToolsEngine: vi.fn().mockReturnValue({
@@ -21,11 +25,14 @@ const {
     getEnabledPluginManifests: vi.fn().mockReturnValue(new Map()),
   }),
   mockGetAgentConfig: vi.fn(),
+  mockGetAgentSkills: vi.fn().mockResolvedValue([]),
   mockHasAgentDocuments: vi.fn().mockResolvedValue(true),
   mockGetComposioManifests: vi.fn().mockResolvedValue([]),
   mockGetLobehubSkillManifests: vi.fn().mockResolvedValue([]),
+  mockSkillFindAll: vi.fn().mockResolvedValue({ data: [] }),
   mockMessageCreate: vi.fn(),
   mockPluginQuery: vi.fn().mockResolvedValue([]),
+  mockResolveTask: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/libs/trusted-client', () => ({
@@ -57,7 +64,14 @@ vi.mock('@/server/services/agent', () => ({
 
 vi.mock('@/server/services/agentDocuments', () => ({
   AgentDocumentsService: vi.fn().mockImplementation(() => ({
+    getAgentSkills: mockGetAgentSkills,
     hasDocuments: mockHasAgentDocuments,
+  })),
+}));
+
+vi.mock('@/database/models/agentSkill', () => ({
+  AgentSkillModel: vi.fn().mockImplementation(() => ({
+    findAll: mockSkillFindAll,
   })),
 }));
 
@@ -92,6 +106,12 @@ vi.mock('@/database/models/thread', () => ({
     create: vi.fn(),
     findById: vi.fn(),
     update: vi.fn(),
+  })),
+}));
+
+vi.mock('@/database/models/task', () => ({
+  TaskModel: vi.fn().mockImplementation(() => ({
+    resolve: mockResolveTask,
   })),
 }));
 
@@ -157,6 +177,15 @@ describe('AiAgentService.execAgent - disableTools', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockMessageCreate.mockResolvedValue({ id: 'msg-1' });
+    mockResolveTask.mockResolvedValue(undefined);
+    mockGetAgentSkills.mockResolvedValue([
+      {
+        description: 'agent document skill',
+        identifier: 'agent-skills:doc-skill',
+        name: 'agent-skills:doc-skill',
+      },
+    ]);
+    mockSkillFindAll.mockResolvedValue({ data: [] });
     mockCreateOperation.mockResolvedValue({
       autoStarted: true,
       messageId: 'queue-msg-1',
@@ -210,7 +239,8 @@ describe('AiAgentService.execAgent - disableTools', () => {
     expect(mockCreateServerAgentToolsEngine).toHaveBeenCalledTimes(1);
   });
 
-  it('should skip agent document discovery when disableAgentDocuments is true', async () => {
+  it('should skip agent document discovery for task runs', async () => {
+    mockResolveTask.mockResolvedValueOnce({ id: 'task-1' });
     mockGetAgentConfig.mockResolvedValueOnce({
       chatConfig: {},
       id: 'agent-1',
@@ -223,8 +253,8 @@ describe('AiAgentService.execAgent - disableTools', () => {
 
     await service.execAgent({
       agentId: 'agent-1',
-      disableAgentDocuments: true,
       prompt: 'Hello',
+      taskId: 'T-1',
     } as any);
 
     expect(mockHasAgentDocuments).not.toHaveBeenCalled();
@@ -240,5 +270,19 @@ describe('AiAgentService.execAgent - disableTools', () => {
     const callArgs = mockCreateOperation.mock.calls[0][0];
     expect(callArgs.toolSet.manifestMap).not.toHaveProperty(AgentDocumentsManifest.identifier);
     expect(callArgs.toolSet.manifestMap).not.toHaveProperty(KnowledgeBaseManifest.identifier);
+    expect(mockGetAgentSkills).not.toHaveBeenCalled();
+    const skillIdentifiers = callArgs.operationSkillSet?.skills.map(
+      (skill: any) => skill.identifier,
+    );
+    expect(skillIdentifiers).toContain(LobeHubIdentifier);
+    expect(skillIdentifiers).not.toContain('agent-skills:doc-skill');
+
+    const lobehubSkill = callArgs.operationSkillSet?.skills.find(
+      (skill: any) => skill.identifier === LobeHubIdentifier,
+    );
+    expect(lobehubSkill?.content).not.toContain('lh doc');
+    expect(lobehubSkill?.content).not.toContain('lh kb');
+    expect(lobehubSkill?.content).not.toContain('lh file');
+    expect(lobehubSkill?.content).not.toContain('lh agent');
   });
 });

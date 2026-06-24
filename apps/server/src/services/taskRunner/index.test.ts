@@ -128,7 +128,7 @@ describe('TaskRunnerService', () => {
     });
   });
 
-  it('disables inherited agent documents for task runs', async () => {
+  it('passes task identity so execAgent can isolate inherited agent documents', async () => {
     const service = new TaskRunnerService(db, userId);
 
     await service.runTask({ taskId: 'T-1' });
@@ -137,7 +137,6 @@ describe('TaskRunnerService', () => {
     expect(mockExecAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         agentId: 'agt_1',
-        disableAgentDocuments: true,
         prompt: 'task prompt',
         taskId: 'task_1',
       }),

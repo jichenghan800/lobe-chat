@@ -119,6 +119,8 @@ export interface ToolExecutionContext {
    * result; the member barrier backfills + resumes/finishes the parked supervisor.
    */
   agentMember?: ServerAgentMemberRunner;
+  /** Disable implicit agent document / knowledge-base access for this tool call. */
+  disableAgentDocuments?: boolean;
   /** Current page document ID for page-scoped conversations */
   documentId?: string | null;
   /**

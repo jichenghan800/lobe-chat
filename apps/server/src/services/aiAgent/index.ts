@@ -113,6 +113,11 @@ import { resolveAttachmentsByFileIds } from '@/server/services/file/resolveAttac
 import { HeterogeneousAgentService } from '@/server/services/heterogeneousAgent';
 import type { ConversationHistoryEntry } from '@/server/services/heterogeneousAgent/cloudHeteroContext';
 import { MarketService } from '@/server/services/market';
+import {
+  sanitizeLobehubSkillForTaskRun,
+  shouldHideAgentDocuments,
+  shouldHideKnowledgeBase,
+} from '@/server/services/taskIsolationPolicy';
 import { markdownToTxt } from '@/utils/markdownToTxt';
 
 import { resolveDeviceAccessPolicy } from './deviceAccessPolicy';
@@ -189,8 +194,6 @@ interface InternalExecAgentParams extends ExecAgentParams {
   botPlatformContext?: BotPlatformContext;
   /** Cron job ID that triggered this execution (if trigger is 'cron') */
   cronJobId?: string;
-  /** Disable agent-scoped documents for execution paths that must not inherit shared agent context. */
-  disableAgentDocuments?: boolean;
   /** Disable only local-system while preserving other tools. Useful for signal-only evals. */
   disableLocalSystem?: boolean;
   /** Disable the self-iteration declaration tool for reviewer/runtime paths. */
@@ -709,7 +712,6 @@ export class AiAgentService {
       taskId,
       evalContext,
       maxSteps,
-      disableAgentDocuments,
       disableLocalSystem,
       initialStepCount,
       signal,
@@ -735,6 +737,9 @@ export class AiAgentService {
     log('execAgent: identifier=%s, prompt=%s', identifier, prompt.slice(0, 50));
 
     const operationTaskId = await this.resolveOperationTaskId(taskId ?? appContext?.taskId);
+    const taskIsolationContext = { taskId: operationTaskId };
+    const disableAgentDocuments = shouldHideAgentDocuments(taskIsolationContext);
+    const hideKnowledgeBase = shouldHideKnowledgeBase(taskIsolationContext);
 
     const assistantMessageRef: { current?: string } = {};
     const updateAbortedAssistantMessage = async (errorMessage: string) => {
@@ -1995,7 +2000,7 @@ export class AiAgentService {
         executionPlan,
         globalMemoryEnabled,
         hasAgentDocuments,
-        hasEnabledKnowledgeBases: disableAgentDocuments ? false : hasEnabledKnowledgeBases,
+        hasEnabledKnowledgeBases: hideKnowledgeBase ? false : hasEnabledKnowledgeBases,
         isBotConversation,
         model,
         provider,
@@ -2037,7 +2042,7 @@ export class AiAgentService {
       // every future manifest source automatically inherits the wall.
       const isManifestIngestAllowed = (identifier: string): boolean =>
         (canUseDevice || !isDeviceToolIdentifier(identifier)) &&
-        (!disableAgentDocuments ||
+        (!hideKnowledgeBase ||
           (identifier !== AgentDocumentsManifest.identifier &&
             identifier !== KnowledgeBaseManifest.identifier));
 
@@ -2079,7 +2084,7 @@ export class AiAgentService {
         delete toolManifestMap[RemoteDeviceManifest.identifier];
         delete toolManifestMap[LocalSystemManifest.identifier];
       }
-      if (disableAgentDocuments) {
+      if (disableAgentDocuments || hideKnowledgeBase) {
         delete toolManifestMap[AgentDocumentsManifest.identifier];
         delete toolManifestMap[KnowledgeBaseManifest.identifier];
       }
@@ -2655,7 +2660,10 @@ export class AiAgentService {
     // plugin IDs for downstream SkillResolver consumption.
     let operationSkillSet;
     try {
-      const builtinMetas = builtinSkills.map((s) => ({
+      const builtinSkillSources = disableAgentDocuments
+        ? builtinSkills.map(sanitizeLobehubSkillForTaskRun)
+        : builtinSkills;
+      const builtinMetas = builtinSkillSources.map((s) => ({
         content: s.content,
         description: s.description,
         identifier: s.identifier,
@@ -2676,7 +2684,9 @@ export class AiAgentService {
       // / DB skill names, and we re-use it as `name` so the prompt's
       // `<skill name="...">` line and the model's `activateSkill(name)` call
       // carry the same value.
-      const agentSkills = await this.agentDocumentsService.getAgentSkills(resolvedAgentId);
+      const agentSkills = disableAgentDocuments
+        ? []
+        : await this.agentDocumentsService.getAgentSkills(resolvedAgentId);
       const agentSkillMetas = agentSkills.map((skill) => ({
         description: skill.description,
         identifier: skill.identifier,

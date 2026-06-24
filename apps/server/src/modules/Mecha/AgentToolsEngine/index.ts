@@ -37,6 +37,10 @@ import {
   buildAllowedBuiltinTools,
   DEVICE_TOOL_IDENTIFIERS,
 } from '@/server/services/aiAgent/deviceToolRegistry';
+import {
+  shouldHideAgentDocuments,
+  shouldHideKnowledgeBase,
+} from '@/server/services/taskIsolationPolicy';
 
 import {
   type ServerAgentToolsContext,
@@ -197,7 +201,9 @@ export const createServerAgentToolsEngine = (
   // its own runtime gate (KB needs enabled bases, memory needs global toggle,
   // web-browsing needs search on). `allowExplicitActivation` is off so the
   // activator can't smuggle anything else in.
-  const canUseKnowledgeBase = !disableAgentDocuments && hasEnabledKnowledgeBases;
+  const isolationContext = { isolated: disableAgentDocuments };
+  const canUseKnowledgeBase =
+    !shouldHideKnowledgeBase(isolationContext) && hasEnabledKnowledgeBases;
 
   const chatModeRules = {
     [KnowledgeBaseManifest.identifier]: canUseKnowledgeBase,
@@ -258,7 +264,7 @@ export const createServerAgentToolsEngine = (
   if (!canUseDevice) {
     for (const identifier of DEVICE_TOOL_IDENTIFIERS) excludeIdentifiers.add(identifier);
   }
-  if (disableAgentDocuments) {
+  if (shouldHideAgentDocuments(isolationContext)) {
     excludeIdentifiers.add(AgentDocumentsManifest.identifier);
     excludeIdentifiers.add(KnowledgeBaseManifest.identifier);
   }

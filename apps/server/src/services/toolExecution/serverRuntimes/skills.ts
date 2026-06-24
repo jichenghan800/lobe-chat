@@ -27,6 +27,11 @@ import { FileService } from '@/server/services/file';
 import { MarketService } from '@/server/services/market';
 import { createSandboxService, normalizeSandboxCommandResult } from '@/server/services/sandbox';
 import { SkillResourceService } from '@/server/services/skill/resource';
+import {
+  guardTaskRunCommand,
+  sanitizeLobehubSkillForTaskRun,
+  sanitizeTaskCommandResult,
+} from '@/server/services/taskIsolationPolicy';
 import { preprocessLhCommand } from '@/server/services/toolExecution/preprocessLhCommand';
 
 import { type ServerRuntimeRegistration } from './types';
@@ -46,25 +51,31 @@ class SkillServerRuntimeService implements SkillRuntimeService {
   private fileService: FileService;
   private fileModel: FileModel;
   private serverDB: LobeChatDatabase;
+  private disableAgentDocuments: boolean;
+  private taskId?: string;
   private topicId?: string;
   private userId: string;
 
   constructor(options: {
     fileModel: FileModel;
     fileService: FileService;
+    disableAgentDocuments?: boolean;
     marketService: MarketService;
     resourceService: SkillResourceService;
     serverDB: LobeChatDatabase;
     skillModel: AgentSkillModel;
+    taskId?: string;
     topicId?: string;
     userId: string;
   }) {
     this.skillModel = options.skillModel;
     this.resourceService = options.resourceService;
     this.marketService = options.marketService;
+    this.disableAgentDocuments = options.disableAgentDocuments === true;
     this.fileService = options.fileService;
     this.fileModel = options.fileModel;
     this.serverDB = options.serverDB;
+    this.taskId = options.taskId;
     this.topicId = options.topicId;
     this.userId = options.userId;
   }
@@ -91,6 +102,19 @@ class SkillServerRuntimeService implements SkillRuntimeService {
   runCommand = async (options: { command: string }): Promise<CommandResult> => {
     if (!this.topicId) {
       throw new Error('topicId is required for runCommand');
+    }
+
+    const guard = guardTaskRunCommand(
+      { isolated: this.disableAgentDocuments, taskId: this.taskId },
+      options.command,
+    );
+    if (!guard.allowed) {
+      return {
+        exitCode: 1,
+        output: '',
+        stderr: guard.stderr ?? 'Command is disabled for this task run.',
+        success: false,
+      };
     }
 
     // Preprocess lh commands: rewrite to npx @lobehub/cli + inject auth env vars
@@ -120,7 +144,15 @@ class SkillServerRuntimeService implements SkillRuntimeService {
         };
       }
 
-      return normalizeSandboxCommandResult(response);
+      const commandResult = normalizeSandboxCommandResult(response);
+
+      return this.disableAgentDocuments
+        ? sanitizeTaskCommandResult(
+            { isolated: this.disableAgentDocuments, taskId: this.taskId },
+            options.command,
+            commandResult,
+          )
+        : commandResult;
     } catch (error) {
       log('Error running command: %O', error);
       return {
@@ -290,12 +322,14 @@ export const skillsRuntime: ServerRuntimeRegistration = {
     const fileModel = new FileModel(context.serverDB, context.userId, context.workspaceId);
 
     const service = new SkillServerRuntimeService({
+      disableAgentDocuments: context.disableAgentDocuments,
       fileModel,
       fileService,
       marketService,
       resourceService,
       serverDB: context.serverDB,
       skillModel,
+      taskId: context.taskId,
       topicId: context.topicId,
       userId: context.userId,
     });
@@ -310,24 +344,25 @@ export const skillsRuntime: ServerRuntimeRegistration = {
     // `BuiltinSkill`; the runtime re-tags `source: 'agent'` in the activateSkill
     // result based on the identifier prefix so the inspector can show
     // "Activate Agent Skill" + the friendly `title`.
-    const agentSkillBuiltins: BuiltinSkill[] = context.agentId
-      ? await new AgentDocumentsService(context.serverDB, context.userId, context.workspaceId)
-          .getAgentSkills(context.agentId)
-          .then((skills) =>
-            skills.map((skill) => ({
-              content: skill.content,
-              description: skill.description,
-              identifier: skill.identifier,
-              name: skill.name,
-              source: 'builtin' as const,
-              ...(skill.title && { title: skill.title }),
-            })),
-          )
-          .catch((error) => {
-            log('failed to load agent skills for agent %s: %O', context.agentId, error);
-            return [];
-          })
-      : [];
+    const agentSkillBuiltins: BuiltinSkill[] =
+      context.agentId && !context.disableAgentDocuments
+        ? await new AgentDocumentsService(context.serverDB, context.userId, context.workspaceId)
+            .getAgentSkills(context.agentId)
+            .then((skills) =>
+              skills.map((skill) => ({
+                content: skill.content,
+                description: skill.description,
+                identifier: skill.identifier,
+                name: skill.name,
+                source: 'builtin' as const,
+                ...(skill.title && { title: skill.title }),
+              })),
+            )
+            .catch((error) => {
+              log('failed to load agent skills for agent %s: %O', context.agentId, error);
+              return [];
+            })
+        : [];
 
     // Project skills live on the device filesystem. Read them through the
     // device gateway by reusing the local-system tools — no special
@@ -390,7 +425,12 @@ export const skillsRuntime: ServerRuntimeRegistration = {
     }
 
     return new SkillsExecutionRuntime({
-      builtinSkills: [...filterBuiltinSkills(builtinSkills), ...agentSkillBuiltins],
+      builtinSkills: [
+        ...(context.disableAgentDocuments
+          ? filterBuiltinSkills(builtinSkills).map(sanitizeLobehubSkillForTaskRun)
+          : filterBuiltinSkills(builtinSkills)),
+        ...agentSkillBuiltins,
+      ],
       deviceFileAccess,
       projectSkills,
       service,

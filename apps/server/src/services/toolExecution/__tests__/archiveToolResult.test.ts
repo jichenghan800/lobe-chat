@@ -122,6 +122,27 @@ describe('archiveToolResultIfNeeded', () => {
     expect(AgentDocumentVfsService).not.toHaveBeenCalled();
   });
 
+  it('does not archive to agent documents when task document access is disabled', async () => {
+    const result = await archiveToolResultIfNeeded({
+      agentId: 'agent-1',
+      content: '0123456789',
+      disableAgentDocuments: true,
+      limit: 5,
+      serverDB: db,
+      toolCallId: 'call_1',
+      topicId: 'topic-1',
+      userId: 'user-1',
+    });
+
+    expect(result.archived).toBe(false);
+    expect(result.archivePath).toBeUndefined();
+    expect(result.content).toContain('01234');
+    expect(result.content).toContain('Content truncated');
+    expect(result.content).not.toContain('lobe-agent-documents');
+    expect(result.content).not.toContain('agent-document VFS');
+    expect(AgentDocumentVfsService).not.toHaveBeenCalled();
+  });
+
   it('bypasses archive entirely for lobe-agent-documents tool results', async () => {
     const result = await archiveToolResultIfNeeded({
       agentId: 'agent-1',

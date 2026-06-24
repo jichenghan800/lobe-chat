@@ -2,6 +2,7 @@ import type { LobeChatDatabase } from '@lobechat/database';
 
 import { TopicDocumentModel } from '@/database/models/topicDocument';
 import { AgentDocumentVfsService } from '@/server/services/agentDocumentVfs';
+import { shouldSkipAgentDocumentArchive } from '@/server/services/taskIsolationPolicy';
 import {
   ARCHIVE_BYPASS_IDENTIFIERS,
   DEFAULT_TOOL_RESULT_MAX_LENGTH,
@@ -22,9 +23,11 @@ export interface ToolResultArchiveOutcome {
 interface ArchiveToolResultParams {
   agentId?: string | null;
   content: string;
+  disableAgentDocuments?: boolean;
   identifier?: string;
   limit?: number;
   serverDB?: LobeChatDatabase;
+  taskId?: string | null;
   toolCallId?: string;
   topicId?: string | null;
   userId?: string;
@@ -40,9 +43,11 @@ const getErrorMessage = (error: unknown) =>
 export const archiveToolResultIfNeeded = async ({
   agentId,
   content,
+  disableAgentDocuments,
   identifier,
   limit,
   serverDB,
+  taskId,
   toolCallId,
   topicId,
   userId,
@@ -59,6 +64,10 @@ export const archiveToolResultIfNeeded = async ({
   }
 
   const truncatedContent = truncateToolResult(content, maxLength);
+
+  if (shouldSkipAgentDocumentArchive({ isolated: disableAgentDocuments, taskId })) {
+    return { archived: false, content: truncatedContent };
+  }
 
   if (!agentId || !topicId || !toolCallId || !serverDB || !userId) {
     return { archived: false, content: truncatedContent };

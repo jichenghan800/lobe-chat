@@ -101,6 +101,7 @@ import {
 import { FileService } from '@/server/services/file';
 import { MessageService } from '@/server/services/message';
 import { OnboardingService } from '@/server/services/onboarding';
+import { isTaskIsolatedRun } from '@/server/services/taskIsolationPolicy';
 import {
   type ServerAgentMemberRunner,
   type ServerSubAgentRunner,
@@ -281,18 +282,22 @@ const archiveRuntimeToolResult = async (
   result: ToolExecutionResultResponse,
   {
     agentId,
+    disableAgentDocuments,
     identifier,
     limit,
     serverDB,
+    taskId,
     toolCallId,
     topicId,
     userId,
     workspaceId,
   }: {
     agentId?: string | null;
+    disableAgentDocuments?: boolean;
     identifier?: string;
     limit?: number;
     serverDB: LobeChatDatabase;
+    taskId?: string | null;
     toolCallId?: string;
     topicId?: string | null;
     userId?: string;
@@ -302,9 +307,11 @@ const archiveRuntimeToolResult = async (
   const archive = await archiveToolResultIfNeeded({
     agentId,
     content: result.content,
+    disableAgentDocuments,
     identifier,
     limit,
     serverDB,
+    taskId,
     toolCallId,
     topicId,
     userId,
@@ -2718,6 +2725,7 @@ export const createRuntimeExecutors = (
                   payload.parentMessageId,
                 ),
                 documentId: state.metadata?.documentId,
+                disableAgentDocuments: isTaskIsolatedRun({ taskId: state.metadata?.taskId }),
                 editingAgentId: state.metadata?.editingAgentId,
                 execSubAgent: ctx.execSubAgent,
                 executionTimeoutMs: timeoutMs,
@@ -2804,9 +2812,11 @@ export const createRuntimeExecutors = (
 
         const executionResult = await archiveRuntimeToolResult(execution.result, {
           agentId: state.metadata?.agentId,
+          disableAgentDocuments: isTaskIsolatedRun({ taskId: state.metadata?.taskId }),
           identifier: chatToolPayload.identifier,
           limit: toolResultMaxLength,
           serverDB: ctx.serverDB,
+          taskId: state.metadata?.taskId,
           toolCallId: chatToolPayload.id,
           topicId: ctx.topicId ?? state.metadata?.topicId,
           userId: ctx.userId,
@@ -3311,6 +3321,7 @@ export const createRuntimeExecutors = (
                       payload.parentMessageId,
                     ),
                     documentId: state.metadata?.documentId,
+                    disableAgentDocuments: isTaskIsolatedRun({ taskId: state.metadata?.taskId }),
                     execSubAgent: ctx.execSubAgent,
                     executionTimeoutMs: timeoutMs,
                     groupId: state.metadata?.groupId,
@@ -3359,9 +3370,11 @@ export const createRuntimeExecutors = (
 
             const executionResult = await archiveRuntimeToolResult(execution.result, {
               agentId: state.metadata?.agentId,
+              disableAgentDocuments: isTaskIsolatedRun({ taskId: state.metadata?.taskId }),
               identifier: chatToolPayload.identifier,
               limit: batchAgentConfig?.chatConfig?.toolResultMaxLength,
               serverDB: ctx.serverDB,
+              taskId: state.metadata?.taskId,
               toolCallId: chatToolPayload.id,
               topicId: ctx.topicId ?? state.metadata?.topicId,
               userId: ctx.userId,
