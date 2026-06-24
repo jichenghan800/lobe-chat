@@ -139,6 +139,98 @@ SEARXNG_URL=http://searxng:8080
 
 Keep external Redis, S3, SMTP, auth, and model provider secrets in `.env`.
 
+## QStash and Scheduled Tasks
+
+Task automation does not run from an in-process timer. Scheduled tasks require an external caller
+to invoke `/api/workflows/task/schedule-dispatch`. Use exactly one scheduler source:
+
+- Managed Upstash/QStash for production.
+- Local QStash dev server for chatdev or local validation.
+- Machine cron fallback only when QStash is not configured.
+
+When QStash is enabled, remove the machine cron fallback to avoid duplicate or unsigned dispatches.
+If `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY` are set, direct cron calls without a
+QStash signature are rejected by the workflow middleware.
+
+### Local QStash for Chatdev
+
+Run the local QStash server after the LobeChat Docker network exists. The host port is `18088`
+because `8080` may already be used locally; the container still listens on `8080`.
+
+```bash
+docker run -d \
+  --name qstash-local \
+  --restart unless-stopped \
+  --network lobehub_default \
+  -p 18088:8080 \
+  -p 18089:8081 \
+  node:22-alpine \
+  sh -lc 'npx -y @upstash/qstash-cli@latest dev -port 8080 -log-port 8081'
+```
+
+If the container was created before joining the app network, connect it once:
+
+```bash
+docker network connect lobehub_default qstash-local
+```
+
+Use this address in Upstash Console Local Mode:
+
+```bash
+http://localhost:18088
+```
+
+Read the local credentials from container logs and inject them into the LobeChat app container or
+Compose `.env`. Do not commit these values.
+
+```bash
+docker logs qstash-local
+```
+
+Required LobeChat environment variables:
+
+```bash
+QSTASH_URL=http://qstash-local:8080
+QSTASH_TOKEN=<from docker logs qstash-local>
+QSTASH_CURRENT_SIGNING_KEY=<from docker logs qstash-local>
+QSTASH_NEXT_SIGNING_KEY=<from docker logs qstash-local>
+AGENT_RUNTIME_MODE=queue
+```
+
+`AGENT_RUNTIME_MODE=queue` also switches Agent runtime and queue service paths to queue-backed
+implementations. Enable it only when Redis and QStash are both configured.
+
+After restarting LobeChat, verify the setup without printing secrets:
+
+```bash
+docker exec lobehub-v228-stage0 sh -lc '
+for k in QSTASH_URL QSTASH_TOKEN QSTASH_CURRENT_SIGNING_KEY QSTASH_NEXT_SIGNING_KEY AGENT_RUNTIME_MODE; do
+  if [ -n "$(printenv "$k")" ]; then echo "$k=<set>"; else echo "$k=<missing>"; fi
+done
+'
+
+docker exec lobehub-v228-stage0 sh -lc 'wget -qS -O- --timeout=3 http://qstash-local:8080/ 2>&1 | sed -n "1,6p"'
+```
+
+A `401 Unauthorized` response from `qstash-local:8080` is expected for the second command because
+the request intentionally omits the bearer token; it proves network connectivity.
+
+Check that LobeChat registered the scheduler:
+
+```bash
+docker logs --since 2m lobehub-v228-stage0 2>&1 | rg 'QStash: Schedule created successfully'
+```
+
+Check the local QStash schedule list:
+
+```bash
+TOKEN="$(docker logs qstash-local 2>&1 | sed -n 's/^QSTASH_TOKEN=//p' | tail -n 1)"
+curl -sS -H "Authorization: Bearer $TOKEN" http://127.0.0.1:18088/v2/schedules
+```
+
+For chatdev, the expected schedule is `lobe-task-schedule-dispatch`, cron `*/10 * * * *`, destination
+`https://chatdev.cotticoffee.com/api/workflows/task/schedule-dispatch`.
+
 ## Publish Image
 
 Build and push an immutable image tag before production deployment:

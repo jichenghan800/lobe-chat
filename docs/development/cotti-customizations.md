@@ -221,3 +221,60 @@
 - 这是开发环境替代 QStash 的机器级配置，不是源码二开。
 - 如果后续启用 QStash，应删除该 cron 兜底，避免双重调度。
 - 本次补跑后 TaskLifecycle 的 handoff/brief synthesis 曾出现 `Premature close`，但任务 topic 主体已完成；这是收尾摘要失败，不等同于 schedule 未触发。
+
+## 2026-06-24 开发环境本地 QStash 接入
+
+目标：
+
+- 用本地 QStash dev server 替代机器 cron fallback。
+- 让 chatdev 的 scheduled task 走正式 QStash 签名链路，靠近官方部署方式。
+- 支持 Upstash Console Local Mode 查看本地 QStash schedule/log。
+
+运行状态：
+
+- QStash 容器：`qstash-local`
+- 镜像：`node:22-alpine`
+- 命令：`npx -y @upstash/qstash-cli@latest dev -port 8080 -log-port 8081`
+- Host 端口：
+  - `18088 -> 8080`：QStash API
+  - `18089 -> 8081`：QStash log server
+- Docker 网络：
+  - `bridge`
+  - `lobehub_default`
+- Upstash Console Local Mode 地址：
+  - `http://localhost:18088`
+
+LobeChat 容器处理：
+
+- 原 `lobehub-v228-stage0` 已重命名保留为：
+  - `lobehub-v228-stage0-before-qstash-20260624102310`
+- 新 `lobehub-v228-stage0` 保留原镜像、端口、网络、restart policy 和运行时环境变量，并追加：
+  - `QSTASH_URL=http://qstash-local:8080`
+  - `QSTASH_TOKEN=<from docker logs qstash-local>`
+  - `QSTASH_CURRENT_SIGNING_KEY=<from docker logs qstash-local>`
+  - `QSTASH_NEXT_SIGNING_KEY=<from docker logs qstash-local>`
+  - `AGENT_RUNTIME_MODE=queue`
+
+验证：
+
+- `docker exec lobehub-v228-stage0` 检查上述 5 个变量均为 `<set>`。
+- LobeChat 容器内访问 `http://qstash-local:8080/` 返回 `401 Unauthorized`，符合未带 token 的预期，证明网络连通。
+- LobeChat 启动日志出现：
+  - `QStash: Schedule created successfully.`
+- 本地 QStash schedule 列表出现：
+  - `scheduleId=lobe-task-schedule-dispatch`
+  - `cron=*/10 * * * *`
+  - `destination=https://chatdev.cotticoffee.com/api/workflows/task/schedule-dispatch`
+- 手动通过本地 QStash publish 到 `https://chatdev.cotticoffee.com/api/workflows/task/schedule-dispatch` 后，Nginx access log 显示 `Upstash-QStash` 请求返回 `200`。
+
+清理：
+
+- 已停用机器 cron fallback：
+  - `/etc/cron.d/lobechat-task-scheduler.disabled-20260624102407`
+- 原因：开启 QStash signing key 后，机器 cron 直调 `/schedule-dispatch` 不带 QStash signature，会被中间件拒绝；同时保留 cron 和 QStash 也可能导致重复调度。
+
+注意：
+
+- 本地 QStash token 和 signing key 只从 `docker logs qstash-local` 查看，不写入 Git。
+- 如果重建 `qstash-local`，token/signing key 会变化，需要同步重启 LobeChat 容器。
+- 生产环境建议使用托管 Upstash/QStash 或同等级高可用调度，不建议把 dev server 当生产队列。
