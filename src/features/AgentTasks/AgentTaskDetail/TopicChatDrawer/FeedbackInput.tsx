@@ -1,10 +1,11 @@
 import { ChatInput, ChatInputActionBar, SendButton, useEditor } from '@lobehub/editor/react';
-import { Button } from '@lobehub/ui';
+import { Button, Flexbox, Text } from '@lobehub/ui';
 import { $getRoot } from 'lexical';
 import { MessageCirclePlus } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import DotsLoading from '@/components/DotsLoading';
 import { AttachmentUploadButton } from '@/features/AttachmentInput';
 import { useConversationStore } from '@/features/Conversation';
 import { EditorCanvas } from '@/features/EditorCanvas';
@@ -34,6 +35,7 @@ const FeedbackInput = memo(() => {
   const [hasContent, setHasContent] = useState(false);
   const [hasAttachments, setHasAttachments] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [waitingForReply, setWaitingForReply] = useState(false);
   const shouldSendOnEnter = useEnterToSend();
 
   const canSubmit = hasContent || hasAttachments;
@@ -76,6 +78,7 @@ const FeedbackInput = memo(() => {
     setHasAttachments(false);
 
     setSubmitting(true);
+    setWaitingForReply(true);
     try {
       const submittedAt = Date.now();
 
@@ -90,26 +93,35 @@ const FeedbackInput = memo(() => {
 
       if (!hasGatewayRealtimeChannel() && context.topicId) {
         void (async () => {
-          for (const delay of FALLBACK_REFRESH_DELAYS) {
-            await sleep(delay);
+          try {
+            for (const delay of FALLBACK_REFRESH_DELAYS) {
+              await sleep(delay);
 
-            let messages;
-            try {
-              messages = await messageService.getMessages(context);
-              replaceMessages(messages);
-              replaceChatMessages(messages, {
-                action: 'taskFollowUpFallbackRefresh',
-                context,
-              });
-            } catch (error) {
-              console.warn('[TaskFollowUp] fallback refresh failed:', error);
-              continue;
+              let messages;
+              try {
+                messages = await messageService.getMessages(context);
+                replaceMessages(messages);
+                replaceChatMessages(messages, {
+                  action: 'taskFollowUpFallbackRefresh',
+                  context,
+                });
+              } catch (error) {
+                console.warn('[TaskFollowUp] fallback refresh failed:', error);
+                continue;
+              }
+
+              if (hasAssistantResultForUserMessage(messages, markdown, submittedAt)) return;
             }
-
-            if (hasAssistantResultForUserMessage(messages, markdown, submittedAt)) return;
+          } finally {
+            setWaitingForReply(false);
           }
         })();
+      } else {
+        setWaitingForReply(false);
       }
+    } catch (error) {
+      setWaitingForReply(false);
+      throw error;
     } finally {
       setSubmitting(false);
     }
@@ -124,40 +136,50 @@ const FeedbackInput = memo(() => {
   }
 
   return (
-    <ChatInput
-      maxHeight={240}
-      minHeight={64}
-      footer={
-        <ChatInputActionBar
-          left={<AttachmentUploadButton onFiles={handleAttach} />}
-          style={{ paddingInline: 8 }}
-          right={
-            <SendButton
-              disabled={!canSubmit && !submitting}
-              loading={submitting}
-              shape={'round'}
-              title={t('taskDetail.replyInThread')}
-              type={'primary'}
-              onClick={handleSubmit}
-            />
-          }
+    <Flexbox gap={8}>
+      {waitingForReply ? (
+        <Flexbox horizontal align={'center'} gap={8} style={{ paddingInline: 4 }}>
+          <DotsLoading size={3} />
+          <Text fontSize={12} type={'secondary'}>
+            {t('taskDetail.followUpWaiting')}
+          </Text>
+        </Flexbox>
+      ) : undefined}
+      <ChatInput
+        maxHeight={240}
+        minHeight={64}
+        footer={
+          <ChatInputActionBar
+            left={<AttachmentUploadButton onFiles={handleAttach} />}
+            style={{ paddingInline: 8 }}
+            right={
+              <SendButton
+                disabled={!canSubmit && !submitting}
+                loading={submitting}
+                shape={'round'}
+                title={t('taskDetail.replyInThread')}
+                type={'primary'}
+                onClick={handleSubmit}
+              />
+            }
+          />
+        }
+      >
+        <EditorCanvas
+          editor={editor}
+          floatingToolbar={false}
+          placeholder={t('taskDetail.replyPlaceholder')}
+          style={{ paddingBlock: 0 }}
+          onContentChange={handleContentChange}
+          onPressEnter={({ event }) => {
+            if (shouldSendOnEnter(event)) {
+              handleSubmit();
+              return true;
+            }
+          }}
         />
-      }
-    >
-      <EditorCanvas
-        editor={editor}
-        floatingToolbar={false}
-        placeholder={t('taskDetail.replyPlaceholder')}
-        style={{ paddingBlock: 0 }}
-        onContentChange={handleContentChange}
-        onPressEnter={({ event }) => {
-          if (shouldSendOnEnter(event)) {
-            handleSubmit();
-            return true;
-          }
-        }}
-      />
-    </ChatInput>
+      </ChatInput>
+    </Flexbox>
   );
 });
 

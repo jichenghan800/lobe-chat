@@ -662,6 +662,7 @@
   "taskDetail.deleteConfirm.content": "此操作不可撤销。",
   "taskDetail.deleteConfirm.ok": "删除",
   "taskDetail.deleteConfirm.title": "确认删除此任务？",
+  "taskDetail.followUpWaiting": "Agent 正在处理，回复会自动出现…",
   "taskDetail.instruction": "任务说明",
   "taskDetail.instructionPlaceholder": "点击编辑任务说明…",
   "taskDetail.latestActivity.brief": "简要：{{title}}",

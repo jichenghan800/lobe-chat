@@ -19,11 +19,16 @@ export const isTaskNotFoundError = (error: unknown): boolean => {
   );
 };
 
-export const resolveTaskDetailViewState = (params: { error?: unknown; hasTaskDetail: boolean }) => {
+export const resolveTaskDetailViewState = (params: {
+  deferNotFound?: boolean;
+  error?: unknown;
+  hasTaskDetail: boolean;
+}) => {
   const taskNotFound = isTaskNotFoundError(params.error);
+  const shouldShowNotFound = taskNotFound && !params.deferNotFound;
 
   return {
-    isInitialLoading: !params.hasTaskDetail && !taskNotFound,
-    isNotFound: !params.hasTaskDetail && taskNotFound,
+    isInitialLoading: !params.hasTaskDetail && !shouldShowNotFound,
+    isNotFound: !params.hasTaskDetail && shouldShowNotFound,
   };
 };

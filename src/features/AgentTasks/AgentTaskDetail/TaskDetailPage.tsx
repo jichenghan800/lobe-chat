@@ -1,5 +1,5 @@
 import { Button, Flexbox } from '@lobehub/ui';
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
@@ -30,6 +30,8 @@ import TaskSubtasks from './TaskSubtasks';
 import TopicChatDrawer from './TopicChatDrawer';
 import { resolveTaskDetailViewState } from './viewState';
 
+const NOT_FOUND_CONFIRM_DELAY = 1200;
+
 interface TaskDetailPageProps {
   showTaskAgentPanelToggle?: boolean;
   taskId: string;
@@ -52,11 +54,26 @@ const TaskDetailPage = memo<TaskDetailPageProps>(({ taskId, showTaskAgentPanelTo
   }, [taskId, setActiveTaskId]);
 
   const { error } = useFetchTaskDetail(taskId);
+  const rawViewState = resolveTaskDetailViewState({ error, hasTaskDetail });
+  const [confirmNotFound, setConfirmNotFound] = useState(false);
+
+  useEffect(() => {
+    setConfirmNotFound(false);
+    if (!rawViewState.isNotFound) return;
+
+    const timer = window.setTimeout(() => setConfirmNotFound(true), NOT_FOUND_CONFIRM_DELAY);
+
+    return () => window.clearTimeout(timer);
+  }, [rawViewState.isNotFound, taskId]);
 
   // Only treat as not-found after the fetcher reports an explicit not-found
   // result. SWR can report isLoading=false for a render before the first
   // request starts, which otherwise flashes the 404 on page refresh.
-  const { isInitialLoading, isNotFound } = resolveTaskDetailViewState({ error, hasTaskDetail });
+  const { isInitialLoading, isNotFound } = resolveTaskDetailViewState({
+    deferNotFound: rawViewState.isNotFound && !confirmNotFound,
+    error,
+    hasTaskDetail,
+  });
 
   if (isNotFound) {
     return (

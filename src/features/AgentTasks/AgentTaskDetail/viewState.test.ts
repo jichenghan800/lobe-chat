@@ -22,6 +22,19 @@ describe('resolveTaskDetailViewState', () => {
     });
   });
 
+  it('keeps loading while an explicit task-not-found error is deferred', () => {
+    expect(
+      resolveTaskDetailViewState({
+        deferNotFound: true,
+        error: new Error('Task not found: T-10'),
+        hasTaskDetail: false,
+      }),
+    ).toEqual({
+      isInitialLoading: true,
+      isNotFound: false,
+    });
+  });
+
   it('shows not found for tRPC NOT_FOUND errors', () => {
     expect(
       resolveTaskDetailViewState({

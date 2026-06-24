@@ -787,6 +787,7 @@ export default {
   'taskDetail.replyInThread': 'Reply in this thread',
   'taskDetail.replyPlaceholder': 'Reply in this thread...',
   'taskDetail.sendFollowUp': 'Send follow up message',
+  'taskDetail.followUpWaiting': 'Agent is working. The reply will appear automatically...',
   'taskDetail.deleteConfirm.content': 'This action cannot be undone.',
   'taskDetail.deleteConfirm.ok': 'Delete',
   'taskDetail.deleteConfirm.title': 'Delete this task?',
