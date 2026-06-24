@@ -19,6 +19,8 @@ export const shouldHideAgentDocuments = isTaskIsolatedRun;
 
 export const shouldHideKnowledgeBase = isTaskIsolatedRun;
 
+export const shouldHideTopicReference = isTaskIsolatedRun;
+
 export const shouldSkipAgentDocumentArchive = isTaskIsolatedRun;
 
 export const sanitizeLobehubSkillForTaskRun = (skill: BuiltinSkill): BuiltinSkill => {

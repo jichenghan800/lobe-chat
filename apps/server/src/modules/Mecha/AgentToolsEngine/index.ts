@@ -16,6 +16,7 @@ import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { MessageManifest } from '@lobechat/builtin-tool-message';
 import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
+import { TopicReferenceManifest } from '@lobechat/builtin-tool-topic-reference';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import {
   alwaysOnToolIds,
@@ -40,6 +41,7 @@ import {
 import {
   shouldHideAgentDocuments,
   shouldHideKnowledgeBase,
+  shouldHideTopicReference,
 } from '@/server/services/taskIsolationPolicy';
 
 import {
@@ -267,6 +269,9 @@ export const createServerAgentToolsEngine = (
   if (shouldHideAgentDocuments(isolationContext)) {
     excludeIdentifiers.add(AgentDocumentsManifest.identifier);
     excludeIdentifiers.add(KnowledgeBaseManifest.identifier);
+  }
+  if (shouldHideTopicReference(isolationContext)) {
+    excludeIdentifiers.add(TopicReferenceManifest.identifier);
   }
 
   return createServerToolsEngine(context, {

@@ -8,6 +8,7 @@ import {
   sanitizeTaskCommandResult,
   shouldHideAgentDocuments,
   shouldHideKnowledgeBase,
+  shouldHideTopicReference,
   shouldSkipAgentDocumentArchive,
 } from '../taskIsolationPolicy';
 
@@ -16,6 +17,7 @@ describe('taskIsolationPolicy', () => {
     expect(isTaskIsolatedRun({ taskId: 'task-1' })).toBe(true);
     expect(shouldHideAgentDocuments({ taskId: 'task-1' })).toBe(true);
     expect(shouldHideKnowledgeBase({ taskId: 'task-1' })).toBe(true);
+    expect(shouldHideTopicReference({ taskId: 'task-1' })).toBe(true);
     expect(shouldSkipAgentDocumentArchive({ taskId: 'task-1' })).toBe(true);
     expect(isTaskIsolatedRun({})).toBe(false);
   });

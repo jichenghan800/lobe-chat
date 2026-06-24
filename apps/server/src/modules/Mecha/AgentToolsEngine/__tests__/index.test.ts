@@ -5,6 +5,7 @@ import { LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
+import { TopicReferenceManifest } from '@lobechat/builtin-tool-topic-reference';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { builtinTools } from '@lobechat/builtin-tools';
 import { ToolsEngine } from '@lobechat/context-engine';
@@ -246,6 +247,7 @@ describe('createServerAgentToolsEngine', () => {
 
     expect(engine.getAvailablePlugins()).not.toContain(AgentDocumentsManifest.identifier);
     expect(engine.getAvailablePlugins()).not.toContain(KnowledgeBaseManifest.identifier);
+    expect(engine.getAvailablePlugins()).not.toContain(TopicReferenceManifest.identifier);
   });
 
   it('should disable WebBrowsing when search mode is off', () => {
