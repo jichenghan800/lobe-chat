@@ -1,6 +1,7 @@
 import type { AgentRuntimeContext, AgentState } from '@lobechat/agent-runtime';
 import { BUILTIN_AGENT_SLUGS, getAgentRuntimeConfig } from '@lobechat/builtin-agents';
 import { builtinSkills } from '@lobechat/builtin-skills';
+import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
 import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
 import { LobeAgentIdentifier, LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
@@ -2034,7 +2035,8 @@ export class AiAgentService {
       // (). Centralising the check at the ingest layer means
       // every future manifest source automatically inherits the wall.
       const isManifestIngestAllowed = (identifier: string): boolean =>
-        canUseDevice || !isDeviceToolIdentifier(identifier);
+        (canUseDevice || !isDeviceToolIdentifier(identifier)) &&
+        (!disableAgentDocuments || identifier !== AgentDocumentsManifest.identifier);
 
       // Start with the scoped manifest map (pluginIds + defaultToolIds)
       const manifestMap = toolsEngine.getEnabledPluginManifests(pluginIds);
@@ -2074,7 +2076,11 @@ export class AiAgentService {
         delete toolManifestMap[RemoteDeviceManifest.identifier];
         delete toolManifestMap[LocalSystemManifest.identifier];
       }
+      if (disableAgentDocuments) {
+        delete toolManifestMap[AgentDocumentsManifest.identifier];
+      }
       for (const tool of allowedBuiltinTools) {
+        if (!isManifestIngestAllowed(tool.identifier)) continue;
         // lobe-cloud-sandbox is only activator-discoverable when runtimeMode resolves
         // to 'cloud' (i.e. executionTarget='sandbox').
         if (tool.identifier === CloudSandboxManifest.identifier && agentRuntimeMode !== 'cloud')

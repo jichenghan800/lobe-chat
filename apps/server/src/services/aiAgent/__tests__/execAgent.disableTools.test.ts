@@ -1,3 +1,4 @@
+import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
 import type * as ModelBankModule from 'model-bank';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -220,5 +221,8 @@ describe('AiAgentService.execAgent - disableTools', () => {
       expect.anything(),
       expect.objectContaining({ disableAgentDocuments: true, hasAgentDocuments: false }),
     );
+
+    const callArgs = mockCreateOperation.mock.calls[0][0];
+    expect(callArgs.toolSet.manifestMap).not.toHaveProperty(AgentDocumentsManifest.identifier);
   });
 });
