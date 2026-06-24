@@ -359,12 +359,18 @@ LobeChat 容器处理：
 
 处理：
 
-- 在普通 chat 模式下，拦截超过 1MB 的 xls/xlsx 文件。
+- 在普通 chat 模式下，拦截超过 128KB 的 xls/xlsx 文件。
+- 在普通 chat 模式下，同一次上传包含多个 Excel 时也拦截。
+- 在普通 chat 模式下，单个 Excel 如果包含多个有内容的 sheet，也拦截。
 - 弹出提示：较大的 Excel 不适合普通对话，请开启 Agent 智能模式，让 Agent 使用工具分析文件。
-- Agent 智能模式和异构 Agent 模式不拦截，因为这类文件应由沙箱 / Python / DuckDB 等工具处理。
+- Agent 智能模式和异构 Agent 模式不拦截上传，因为这类文件应由沙箱 / Python / DuckDB
+  等工具处理。
+- Agent 模式发送模型请求时，Excel 附件只保留文件名、类型、大小和 URL，不再把解析后的
+  Excel 正文注入 `<files_info>`。chatdev 实测约 999.8KB 的 `维修.xlsx` 会把请求体放大到
+  3.39MB，已经超过上游 1,048,576 bytes 输入限制。
 
 边界：
 
 - 这是前置保护，不改变官方 Excel loader。
 - 小 Excel 仍允许走普通 chat 的原解析链路。
-- 大 Excel 的推荐路径是 Agent 智能模式 + 沙箱文件分析。
+- 超过 128KB 的 Excel 推荐路径是 Agent 智能模式 + 沙箱文件分析。

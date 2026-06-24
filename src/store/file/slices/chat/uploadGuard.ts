@@ -101,7 +101,7 @@ const SUPPORTED_CHAT_DOCUMENT_MIME_TYPES = new Set([
   'text/plain',
 ]);
 
-export const LARGE_EXCEL_UPLOAD_LIMIT_BYTES = 1024 * 1024;
+export const LARGE_EXCEL_UPLOAD_LIMIT_BYTES = 128 * 1024;
 
 const getExtension = (filename: string) => filename.split('.').pop()?.toLowerCase() || '';
 
@@ -185,17 +185,61 @@ export const filterSupportedChatUploadFiles = (files: File[]) => {
   return { supportedFiles, unsupportedFiles };
 };
 
-export const filterLargeExcelChatUploadFiles = (files: File[]) => {
+const getExcelContentSheetCount = async (file: File): Promise<number> => {
+  const XLSX = await import('xlsx');
+  const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+
+  return workbook.SheetNames.filter((sheetName) => {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet?.['!ref']) return false;
+
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+      blankrows: false,
+      header: 1,
+    });
+
+    return rows.some((row) =>
+      row.some((cell) => cell !== undefined && cell !== null && String(cell).trim() !== ''),
+    );
+  }).length;
+};
+
+export const filterExcelChatUploadFiles = async (files: File[]) => {
+  const excelFiles = files.filter(isExcelFile);
+
+  if (excelFiles.length > 1) {
+    return {
+      allowedFiles: files.filter((file) => !isExcelFile(file)),
+      excelFilesRequiringAgentMode: excelFiles,
+    };
+  }
+
   const allowedFiles: File[] = [];
-  const largeExcelFiles: File[] = [];
+  const excelFilesRequiringAgentMode: File[] = [];
 
   for (const file of files) {
-    if (isLargeExcelFile(file)) {
-      largeExcelFiles.push(file);
-    } else {
+    if (!isExcelFile(file)) {
       allowedFiles.push(file);
+      continue;
+    }
+
+    if (isLargeExcelFile(file)) {
+      excelFilesRequiringAgentMode.push(file);
+      continue;
+    }
+
+    try {
+      const contentSheetCount = await getExcelContentSheetCount(file);
+
+      if (contentSheetCount > 1) {
+        excelFilesRequiringAgentMode.push(file);
+      } else {
+        allowedFiles.push(file);
+      }
+    } catch {
+      excelFilesRequiringAgentMode.push(file);
     }
   }
 
-  return { allowedFiles, largeExcelFiles };
+  return { allowedFiles, excelFilesRequiringAgentMode };
 };

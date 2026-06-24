@@ -447,6 +447,39 @@ describe('MessagesEngine', () => {
 
       expect(content[0].text).toContain('url="https://files.example.com/test.txt"');
     });
+
+    it('should omit Excel body content by default in agent mode', async () => {
+      const params = createBasicParams({
+        enableAgentMode: true,
+        messages: [
+          {
+            content: 'Analyze this workbook',
+            createdAt: Date.now(),
+            fileList: [
+              {
+                content: 'expanded excel markdown that should not be sent',
+                fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                id: 'excel1',
+                name: 'report.xlsx',
+                size: 512_000,
+                url: 'https://files.example.com/report.xlsx',
+              },
+            ],
+            id: 'msg-1',
+            role: 'user',
+            updatedAt: Date.now(),
+          } as UIChatMessage,
+        ],
+      });
+      const engine = new MessagesEngine(params);
+
+      const result = await engine.process();
+      const userMessage = result.messages.find((message) => message.role === 'user');
+      const content = userMessage?.content as any[];
+
+      expect(content[0].text).toContain('name="report.xlsx"');
+      expect(content[0].text).not.toContain('expanded excel markdown');
+    });
   });
 
   describe('tools config', () => {

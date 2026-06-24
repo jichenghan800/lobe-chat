@@ -1,12 +1,31 @@
 import { describe, expect, it } from 'vitest';
+import * as XLSX from 'xlsx';
 
 import {
   audioMimeFromExtension,
+  filterExcelChatUploadFiles,
   filterSupportedChatUploadFiles,
   isLargeExcelFile,
   isSupportedChatUploadFile,
   LARGE_EXCEL_UPLOAD_LIMIT_BYTES,
 } from './uploadGuard';
+
+const createWorkbookFile = (
+  sheets: Array<{ data: unknown[][]; name: string }>,
+  name = 'test.xlsx',
+) => {
+  const workbook = XLSX.utils.book_new();
+
+  for (const sheet of sheets) {
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(sheet.data), sheet.name);
+  }
+
+  const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+  return new File([buffer], name, {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+};
 
 describe('isSupportedChatUploadFile', () => {
   it('accepts supported chat image formats', () => {
@@ -82,6 +101,61 @@ describe('isLargeExcelFile', () => {
     expect(isLargeExcelFile(largeExcel)).toBe(true);
     expect(isLargeExcelFile(smallExcel)).toBe(false);
     expect(isLargeExcelFile(largeCsv)).toBe(false);
+  });
+});
+
+describe('filterExcelChatUploadFiles', () => {
+  it('requires agent mode when uploading multiple Excel files in regular chat', async () => {
+    const firstExcel = createWorkbookFile([{ data: [['a']], name: 'Sheet1' }], 'first.xlsx');
+    const secondExcel = createWorkbookFile([{ data: [['b']], name: 'Sheet1' }], 'second.xlsx');
+    const textFile = new File(['note'], 'note.txt', { type: 'text/plain' });
+
+    const result = await filterExcelChatUploadFiles([firstExcel, textFile, secondExcel]);
+
+    expect(result.allowedFiles).toEqual([textFile]);
+    expect(result.excelFilesRequiringAgentMode).toEqual([firstExcel, secondExcel]);
+  });
+
+  it('requires agent mode for a single Excel file with multiple non-empty sheets', async () => {
+    const multiSheetExcel = createWorkbookFile([
+      {
+        data: [
+          ['工程师', '工单'],
+          ['张三', 'A001'],
+        ],
+        name: '安装',
+      },
+      {
+        data: [
+          ['工程师', '工单'],
+          ['李四', 'R001'],
+        ],
+        name: '维修',
+      },
+    ]);
+
+    const result = await filterExcelChatUploadFiles([multiSheetExcel]);
+
+    expect(result.allowedFiles).toEqual([]);
+    expect(result.excelFilesRequiringAgentMode).toEqual([multiSheetExcel]);
+  });
+
+  it('allows a small single-sheet Excel file in regular chat', async () => {
+    const singleSheetExcel = createWorkbookFile([
+      {
+        data: [
+          ['工程师', '工单'],
+          ['张三', 'A001'],
+        ],
+        name: '安装',
+      },
+      { data: [], name: '空表' },
+    ]);
+
+    const result = await filterExcelChatUploadFiles([singleSheetExcel]);
+
+    expect(result.allowedFiles).toEqual([singleSheetExcel]);
+    expect(result.excelFilesRequiringAgentMode).toEqual([]);
   });
 });
 

@@ -558,9 +558,11 @@ LobeHub` to `You are Cotti, an Agent Builder integrated into CottiAI`.
 
 ### Large Excel Guard In Regular Chat
 
-- Scope: regular chat now rejects xls/xlsx files larger than 1MB before upload and shows a prompt to
-  use Agent mode for tool-based analysis.
+- Scope: regular chat now rejects xls/xlsx files larger than 128KB before upload and shows a prompt
+  to use Agent mode for tool-based analysis. It also rejects multiple Excel files in one upload, and
+  a single Excel file with multiple non-empty sheets.
 - Reason: upstream regular chat parses Excel through `document.parseFileContent`; a 2.4MB workbook
   took about 66s and peaked near 7GiB RSS on chatdev.
-- Boundary: Agent mode and heterogeneous agents remain unrestricted so sandbox / Python / DuckDB
-  workflows can handle large spreadsheets.
+- Boundary: Agent mode and heterogeneous agents remain unrestricted for upload so sandbox / Python /
+  DuckDB workflows can handle spreadsheets. In Agent mode, Excel attachment prompts keep only file
+  references and omit parsed Excel body content from `<files_info>`.
