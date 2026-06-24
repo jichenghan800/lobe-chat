@@ -4,12 +4,14 @@ import {
 } from '@lobechat/builtin-tool-cloud-sandbox';
 
 /** Marker file written once the uploaded files have been synced for a session. */
-export const SANDBOX_FILES_INIT_MARKER = `${SANDBOX_UPLOADED_FILES_DIR}/.lobe-files-initialized`;
+export const SANDBOX_FILES_INIT_MARKER_PREFIX = `${SANDBOX_UPLOADED_FILES_DIR}/.lobe-files-initialized`;
+export const SANDBOX_FILES_INIT_MARKER = SANDBOX_FILES_INIT_MARKER_PREFIX;
 
 /** Timeout (ms) for the bootstrap download command. */
 export const SANDBOX_INIT_TIMEOUT_MS = 120_000;
 
 export interface SandboxInitDownload {
+  id?: string;
   name: string;
   /** A download URL (e.g. presigned) the sandbox can fetch with curl. */
   url: string;
@@ -25,9 +27,15 @@ const shellQuote = (value: string): string => `'${value.replaceAll("'", String.r
  * Downloads are best-effort: a single failed fetch does not abort the rest, and
  * the marker is always written so the sync is not retried on every tool call.
  */
-export const buildSandboxFilesInitCommand = (downloads: SandboxInitDownload[]): string => {
+export const buildSandboxFilesInitCommand = (
+  downloads: SandboxInitDownload[],
+  fingerprint?: string,
+): string => {
   const dir = shellQuote(SANDBOX_UPLOADED_FILES_DIR);
-  const marker = shellQuote(SANDBOX_FILES_INIT_MARKER);
+  const markerPath = fingerprint
+    ? `${SANDBOX_FILES_INIT_MARKER_PREFIX}-${fingerprint}`
+    : SANDBOX_FILES_INIT_MARKER_PREFIX;
+  const marker = shellQuote(markerPath);
 
   const seen = new Set<string>();
   const curls: string[] = [];
@@ -42,7 +50,8 @@ export const buildSandboxFilesInitCommand = (downloads: SandboxInitDownload[]): 
 
   if (curls.length === 0) return `mkdir -p ${dir}`;
 
-  const body = [...curls, `touch ${marker}`].join('; ');
+  const clearOldMarkers = `find ${dir} -maxdepth 1 -type f -name '.lobe-files-initialized-*' -delete || true`;
+  const body = [clearOldMarkers, ...curls, `touch ${marker}`].join('; ');
 
   return `mkdir -p ${dir}; if [ ! -f ${marker} ]; then ${body}; fi`;
 };

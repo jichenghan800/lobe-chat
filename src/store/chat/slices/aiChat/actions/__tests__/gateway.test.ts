@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as ConstVersion from '@/const/version';
 import { aiAgentService } from '@/services/aiAgent';
+import { messageService } from '@/services/message';
 
 import type { GatewayConnection } from '../gateway';
 import { GatewayActionImpl } from '../gateway';
@@ -495,7 +496,7 @@ describe('GatewayActionImpl', () => {
   });
 
   describe('executeGatewayAgent', () => {
-    function createExecuteTestAction() {
+    function createExecuteTestAction(options?: { serverConfig?: Record<string, unknown> }) {
       const mockClient = createMockClient();
       const state: Record<string, any> = { gatewayConnections: {}, topicDataMap: {} };
       const set = vi.fn((updater: any) => {
@@ -505,24 +506,36 @@ describe('GatewayActionImpl', () => {
           Object.assign(state, updater);
         }
       });
+      const associateMessageWithOperation = vi.fn();
+      const completeOperation = vi.fn();
+      const connectToGateway = vi.fn();
+      const getOperationAbortSignal = vi.fn();
+      const internal_dispatchTopic = vi.fn();
+      const internal_updateTopicLoading = vi.fn();
+      const onOperationCancel = vi.fn();
+      const replaceMessages = vi.fn();
+      const startOperation = vi.fn(() => ({ operationId: 'gw-op-1' }));
+      const switchTopic = vi.fn();
 
       const get = vi.fn(() => ({
         ...state,
-        associateMessageWithOperation: vi.fn(),
-        connectToGateway: vi.fn(),
-        internal_dispatchTopic: vi.fn(),
-        internal_updateTopicLoading: vi.fn(),
-        onOperationCancel: vi.fn(),
-        replaceMessages: vi.fn(),
-        startOperation: vi.fn(() => ({ operationId: 'gw-op-1' })),
-        switchTopic: vi.fn(),
+        associateMessageWithOperation,
+        completeOperation,
+        connectToGateway,
+        getOperationAbortSignal,
+        internal_dispatchTopic,
+        internal_updateTopicLoading,
+        onOperationCancel,
+        replaceMessages,
+        startOperation,
+        switchTopic,
       })) as any;
 
       // Set up window.global_serverConfigStore
       (globalThis as any).window = {
         global_serverConfigStore: {
           getState: () => ({
-            serverConfig: { agentGatewayUrl: 'https://gateway.test.com' },
+            serverConfig: options?.serverConfig ?? { agentGatewayUrl: 'https://gateway.test.com' },
           }),
         },
       };
@@ -530,7 +543,18 @@ describe('GatewayActionImpl', () => {
       const action = new GatewayActionImpl(set as any, get, undefined);
       action.createClient = vi.fn(() => mockClient);
 
-      return { action, get, mockClient, set, state };
+      return {
+        action,
+        associateMessageWithOperation,
+        completeOperation,
+        connectToGateway,
+        get,
+        mockClient,
+        replaceMessages,
+        set,
+        startOperation,
+        state,
+      };
     }
 
     afterEach(() => {
@@ -674,6 +698,53 @@ describe('GatewayActionImpl', () => {
         }),
         expect.anything(),
       );
+    });
+
+    it('refreshes existing topic messages and skips websocket when gateway url is unavailable', async () => {
+      const { action, completeOperation, connectToGateway, replaceMessages, startOperation } =
+        createExecuteTestAction({ serverConfig: {} });
+
+      const fetchedMessages = [{ id: 'usr-1', role: 'user', content: 'Follow up' }] as any;
+      vi.mocked(messageService.getMessages).mockResolvedValueOnce(fetchedMessages);
+      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
+        agentId: 'agent-1',
+        assistantMessageId: 'ast-1',
+        autoStarted: true,
+        createdAt: new Date().toISOString(),
+        message: 'ok',
+        operationId: 'server-op-1',
+        status: 'created',
+        success: true,
+        timestamp: new Date().toISOString(),
+        token: 'test-token',
+        topicId: 'topic-1',
+        userMessageId: 'usr-1',
+      });
+
+      await action.executeGatewayAgent({
+        context: { agentId: 'agent-1', scope: 'main', threadId: null, topicId: 'topic-1' },
+        message: 'Follow up',
+        parentOperationId: 'parent-op',
+      });
+
+      expect(messageService.getMessages).toHaveBeenCalledWith({
+        agentId: 'agent-1',
+        scope: 'main',
+        threadId: null,
+        topicId: 'topic-1',
+      });
+      expect(replaceMessages).toHaveBeenCalledWith(fetchedMessages, {
+        context: {
+          agentId: 'agent-1',
+          scope: 'main',
+          threadId: null,
+          topicId: 'topic-1',
+        },
+      });
+      expect(completeOperation).toHaveBeenCalledWith('parent-op');
+      expect(startOperation).not.toHaveBeenCalled();
+      expect(connectToGateway).not.toHaveBeenCalled();
+      expect(action.createClient).not.toHaveBeenCalled();
     });
 
     it('should forward empty prompt for continue generation', async () => {

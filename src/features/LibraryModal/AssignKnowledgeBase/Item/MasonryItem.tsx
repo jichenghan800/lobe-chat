@@ -65,7 +65,7 @@ const MasonryItem = memo<KnowledgeItem>(({ id, fileType, name, type, description
           </Text>
         )}
         <Flexbox align={'center'} justify={'flex-end'}>
-          <Actions enabled={enabled} id={id} type={type} />
+          <Actions enabled={enabled} fileType={fileType} id={id} name={name} type={type} />
         </Flexbox>
       </Flexbox>
     </div>

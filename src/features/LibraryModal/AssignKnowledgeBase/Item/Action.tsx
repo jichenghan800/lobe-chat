@@ -4,19 +4,26 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAgentStore } from '@/store/agent';
+import { useFileStore } from '@/store/file';
 import { useServerConfigStore } from '@/store/serverConfig';
 import { KnowledgeType } from '@/types/knowledgeBase';
+import { isSpreadsheetFileNameOrType } from '@/utils/spreadsheet';
 
 interface ActionsProps {
   enabled?: boolean;
+  fileType?: string;
   id: string;
+  name: string;
   type: KnowledgeType;
 }
 
-const Actions = memo<ActionsProps>(({ id, type, enabled }) => {
-  const { t } = useTranslation('chat');
+const Actions = memo<ActionsProps>(({ id, name, type, enabled, fileType }) => {
+  const { t } = useTranslation(['chat', 'components']);
 
   const mobile = useServerConfigStore((s) => s.isMobile);
+  const attachResourceSpreadsheetFilesToChat = useFileStore(
+    (s) => s.attachResourceSpreadsheetFilesToChat,
+  );
   const [
     addFilesToAgent,
     addKnowledgeBasesToAgent,
@@ -30,11 +37,16 @@ const Actions = memo<ActionsProps>(({ id, type, enabled }) => {
   ]);
 
   const [loading, setLoading] = useState(false);
+  const isSpreadsheetFile =
+    type === KnowledgeType.File && isSpreadsheetFileNameOrType(name, fileType);
 
   const assignKnowledge = async () => {
     setLoading(true);
     if (type === KnowledgeType.KnowledgeBase) {
       await addKnowledgeBasesToAgent(id);
+    } else if (isSpreadsheetFile) {
+      if (enabled) await removeFilesFromAgent(id);
+      await attachResourceSpreadsheetFilesToChat([id]);
     } else {
       await addFilesToAgent([id], true);
     }
@@ -53,7 +65,11 @@ const Actions = memo<ActionsProps>(({ id, type, enabled }) => {
 
   return (
     <Flexbox horizontal align={'center'}>
-      {enabled ? (
+      {isSpreadsheetFile ? (
+        <Button loading={loading} size={mobile ? 'small' : undefined} onClick={assignKnowledge}>
+          {t('FileManager.actions.attachSpreadsheetToAgent', { ns: 'components' })}
+        </Button>
+      ) : enabled ? (
         <DropdownMenu
           placement="bottomRight"
           items={[

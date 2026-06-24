@@ -17,6 +17,7 @@ const styles = createStaticStyles(({ css }) => ({
 
 export type MultiSelectActionType =
   | 'addToKnowledgeBase'
+  | 'attachToAgent'
   | 'moveToOtherKnowledgeBase'
   | 'batchChunking'
   | 'delete'

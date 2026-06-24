@@ -1,3 +1,5 @@
+import { getFileExtension, isExcelFileNameOrType } from '@/utils/spreadsheet';
+
 const SUPPORTED_CHAT_IMAGE_TYPES = new Set([
   'image/gif',
   'image/jpeg',
@@ -103,18 +105,8 @@ const SUPPORTED_CHAT_DOCUMENT_MIME_TYPES = new Set([
 
 export const LARGE_EXCEL_UPLOAD_LIMIT_BYTES = 128 * 1024;
 
-const getExtension = (filename: string) => filename.split('.').pop()?.toLowerCase() || '';
-
 export const isExcelFile = (file: File) => {
-  const fileType = file.type.toLowerCase();
-  const extension = getExtension(file.name);
-
-  return (
-    extension === 'xls' ||
-    extension === 'xlsx' ||
-    fileType === 'application/vnd.ms-excel' ||
-    fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  );
+  return isExcelFileNameOrType(file.name, file.type);
 };
 
 export const isLargeExcelFile = (file: File) =>
@@ -143,11 +135,11 @@ const AUDIO_EXTENSION_MIME_TYPES: Record<string, string> = {
  * file is classified and rendered as audio. See lobehub/lobehub#15988.
  */
 export const audioMimeFromExtension = (filename: string): string | undefined =>
-  AUDIO_EXTENSION_MIME_TYPES[getExtension(filename)];
+  AUDIO_EXTENSION_MIME_TYPES[getFileExtension(filename)];
 
 export const isSupportedChatUploadFile = (file: File) => {
   const fileType = file.type.toLowerCase();
-  const extension = getExtension(file.name);
+  const extension = getFileExtension(file.name);
 
   if (fileType.startsWith('image/')) {
     return SUPPORTED_CHAT_IMAGE_TYPES.has(fileType);

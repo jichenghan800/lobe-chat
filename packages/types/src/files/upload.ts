@@ -44,6 +44,11 @@ export interface UploadFileItem {
   fileUrl?: string;
   id: string;
   /**
+   * Existing resource files can be attached to the chat input without being
+   * uploaded again. Removing them from the input must not delete the source file.
+   */
+  preserveServerFileOnRemove?: boolean;
+  /**
    * blob url for local preview
    * it will use in the file preview before send the message
    */

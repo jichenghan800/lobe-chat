@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { notification } from '@/components/AntdStaticMethods';
+import { fileService } from '@/services/file';
 import { ragService } from '@/services/rag';
 import { agentByIdSelectors } from '@/store/agent/selectors';
 
@@ -28,6 +29,8 @@ vi.mock('zustand/traditional');
 vi.mock('@lobehub/ui/base-ui', () => ({
   toast: {
     error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
   },
 }));
 
@@ -35,6 +38,18 @@ vi.mock('@lobehub/ui/base-ui', () => ({
 vi.mock('@/components/AntdStaticMethods', () => ({
   notification: {
     error: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/file', () => ({
+  FileService: vi.fn().mockImplementation(() => ({
+    getFolderBreadcrumb: vi.fn(),
+    getKnowledgeItem: vi.fn(),
+    getKnowledgeItems: vi.fn(),
+  })),
+  fileService: {
+    getKnowledgeItem: vi.fn(),
+    removeFile: vi.fn(),
   },
 }));
 
@@ -250,5 +265,84 @@ describe('useFileStore:chat', () => {
       description: 'You do not have permission to upload files in this workspace.',
       message: 'File upload failed.',
     });
+  });
+
+  it('attaches resource spreadsheets to chat without parsing or re-uploading', async () => {
+    const { result } = renderHook(() => useStore());
+
+    vi.mocked(fileService.getKnowledgeItem).mockImplementation(async (id) => {
+      if (id === 'file-xlsx') {
+        return {
+          chunkCount: null,
+          chunkingError: null,
+          embeddingError: null,
+          fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          finishEmbedding: false,
+          id,
+          name: 'report.xlsx',
+          size: 1024,
+          sourceType: 'file',
+          url: 'https://files.example.com/report.xlsx',
+        } as any;
+      }
+
+      return {
+        chunkCount: null,
+        chunkingError: null,
+        embeddingError: null,
+        fileType: 'application/pdf',
+        finishEmbedding: false,
+        id,
+        name: 'readme.pdf',
+        size: 1024,
+        sourceType: 'file',
+        url: 'https://files.example.com/readme.pdf',
+      } as any;
+    });
+
+    await act(async () => {
+      const count = await result.current.attachResourceSpreadsheetFilesToChat([
+        'file-xlsx',
+        'file-pdf',
+      ]);
+      expect(count).toBe(1);
+    });
+
+    expect(result.current.chatUploadFileList).toHaveLength(1);
+    expect(result.current.chatUploadFileList[0]).toMatchObject({
+      fileUrl: 'https://files.example.com/report.xlsx',
+      id: 'file-xlsx',
+      preserveServerFileOnRemove: true,
+      status: 'success',
+    });
+    expect(result.current.chatUploadFileList[0].file.name).toBe('report.xlsx');
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('does not delete the source resource when removing an attached resource spreadsheet', async () => {
+    const { result } = renderHook(() => useStore());
+
+    act(() => {
+      useStore.setState({
+        chatUploadFileList: [
+          {
+            file: new File([], 'report.xlsx', {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }),
+            id: 'file-xlsx',
+            preserveServerFileOnRemove: true,
+            status: 'success',
+          },
+        ] as any,
+      });
+    });
+
+    await act(async () => {
+      await result.current.removeChatUploadFile('file-xlsx');
+    });
+
+    expect(result.current.chatUploadFileList).toEqual([]);
+    expect(fileService.removeFile).not.toHaveBeenCalled();
   });
 });

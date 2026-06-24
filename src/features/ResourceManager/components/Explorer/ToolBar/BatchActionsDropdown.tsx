@@ -7,6 +7,7 @@ import {
   BookPlusIcon,
   CircleEllipsisIcon,
   FileBoxIcon,
+  PaperclipIcon,
   Trash2Icon,
 } from 'lucide-react';
 import { memo, useMemo } from 'react';
@@ -22,6 +23,7 @@ import ActionIconWithChevron from './ActionIconWithChevron';
 
 export type MultiSelectActionType =
   | 'addToKnowledgeBase'
+  | 'attachToAgent'
   | 'moveToOtherKnowledgeBase'
   | 'batchChunking'
   | 'delete'
@@ -47,7 +49,17 @@ const BatchActionsDropdown = memo<BatchActionsDropdownProps>(({ selectCount, onA
   const { allowed: canEditResources, reason } = usePermission('edit_own_content');
 
   const menuItems = useMemo<DropdownItem[]>(() => {
-    const items: DropdownItem[] = [];
+    const items: DropdownItem[] = [
+      {
+        disabled: selectCount === 0,
+        icon: <Icon icon={PaperclipIcon} />,
+        key: 'attachToAgent',
+        label: t('FileManager.actions.attachSpreadsheetToAgent'),
+        onClick: async () => {
+          await onActionClick('attachToAgent');
+        },
+      },
+    ];
 
     // Show delete library option only when in a knowledge base and no files selected
     if (!canEditResources) return items;

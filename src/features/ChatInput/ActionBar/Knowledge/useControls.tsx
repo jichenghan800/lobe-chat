@@ -10,6 +10,8 @@ import FileIcon from '@/components/FileIcon';
 import RepoIcon from '@/components/LibIcon';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
+import { useFileStore } from '@/store/file';
+import { isSpreadsheetFileNameOrType } from '@/utils/spreadsheet';
 
 import { useAgentId } from '../../hooks/useAgentId';
 import CheckboxItem from '../components/CheckboxWithLoading';
@@ -82,8 +84,18 @@ export const useControls = ({
     s.toggleFile,
     s.toggleKnowledgeBase,
   ]);
+  const [chatUploadFileList, attachResourceSpreadsheetFilesToChat, removeChatUploadFile] =
+    useFileStore(
+      (s) => [s.chatUploadFileList, s.attachResourceSpreadsheetFilesToChat, s.removeChatUploadFile],
+      isEqual,
+    );
+  const chatAttachmentIds = new Set(chatUploadFileList.map((item) => item.id));
   const enabledCount =
-    files.filter((item) => item.enabled).length +
+    files.filter((item) => item.enabled && !isSpreadsheetFileNameOrType(item.name, item.type))
+      .length +
+    files.filter(
+      (item) => isSpreadsheetFileNameOrType(item.name, item.type) && chatAttachmentIds.has(item.id),
+    ).length +
     knowledgeBases.filter((item) => item.enabled).length;
 
   const libraryItems = knowledgeBases.map((item) => ({
@@ -103,22 +115,38 @@ export const useControls = ({
     ),
   }));
 
-  const fileItems = files.map((item) => ({
-    icon: <FileIcon fileName={item.name} fileType={item.type} size={20} />,
-    key: item.id,
-    label: (
-      <CheckboxItem
-        checked={item.enabled}
-        hasPadding={false}
-        id={item.id}
-        label={item.name}
-        labelMaxWidth={labelMaxWidth}
-        onUpdate={async (id, enabled) => {
-          await toggleFile(id, enabled);
-        }}
-      />
-    ),
-  }));
+  const fileItems = files.map((item) => {
+    const isSpreadsheetFile = isSpreadsheetFileNameOrType(item.name, item.type);
+
+    return {
+      icon: <FileIcon fileName={item.name} fileType={item.type} size={20} />,
+      key: item.id,
+      label: (
+        <CheckboxItem
+          checked={isSpreadsheetFile ? chatAttachmentIds.has(item.id) : item.enabled}
+          hasPadding={false}
+          id={item.id}
+          label={item.name}
+          labelMaxWidth={labelMaxWidth}
+          onUpdate={async (id, enabled) => {
+            if (!isSpreadsheetFile) {
+              await toggleFile(id, enabled);
+              return;
+            }
+
+            if (item.enabled) await toggleFile(id, false);
+
+            if (enabled) {
+              await attachResourceSpreadsheetFilesToChat([id]);
+              return;
+            }
+
+            await removeChatUploadFile(id);
+          }}
+        />
+      ),
+    };
+  });
 
   // Flat list (no "Libraries" / "Files" group headers): libraries first, then files.
   const relatedGroups: ItemType[] = [

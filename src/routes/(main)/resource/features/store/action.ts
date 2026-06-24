@@ -10,6 +10,7 @@ import { initialState } from './initialState';
 
 export type MultiSelectActionType =
   | 'addToKnowledgeBase'
+  | 'attachToAgent'
   | 'moveToOtherKnowledgeBase'
   | 'batchChunking'
   | 'delete'
@@ -85,6 +86,13 @@ export class ResourceManagerStoreActionImpl {
 
       case 'addToKnowledgeBase':
       case 'moveToOtherKnowledgeBase': {
+        return;
+      }
+
+      case 'attachToAgent': {
+        const resourceIds = await resolveSelectedResourceIds();
+        const attachedCount = await fileStore.attachResourceSpreadsheetFilesToChat(resourceIds);
+        if (attachedCount > 0) this.#set({ selectAllState: 'none', selectedFileIds: [] });
         return;
       }
 

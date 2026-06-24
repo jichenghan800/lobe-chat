@@ -78,14 +78,21 @@ export class SandboxMiddlewareService implements SandboxService {
             const url = await fileService
               .createCachedPreSignedUrlForPreview(file.url)
               .catch(() => '');
-            return url ? { name: file.name, url } : null;
+            return url ? { id: file.id, name: file.name, url } : null;
           }),
         )
       ).filter((item): item is SandboxInitDownload => item !== null);
 
       if (downloads.length === 0) return;
 
-      const command = buildSandboxFilesInitCommand(downloads);
+      const fingerprint = sha256(
+        JSON.stringify(
+          downloads
+            .map(({ id, name }) => ({ id, name }))
+            .sort((a, b) => `${a.id}:${a.name}`.localeCompare(`${b.id}:${b.name}`)),
+        ),
+      ).slice(0, 16);
+      const command = buildSandboxFilesInitCommand(downloads, fingerprint);
       const result = await this.provider.callTool('runCommand', {
         command,
         timeout: SANDBOX_INIT_TIMEOUT_MS,

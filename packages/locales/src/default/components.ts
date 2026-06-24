@@ -12,6 +12,13 @@ export default {
   'DragUpload.dragMixedTitle': 'Reference Folder & Upload Files',
   'DragUpload.dragTitle': 'Upload Images',
   'FileManager.actions.addToLibrary': 'Add to Library',
+  'FileManager.actions.attachSpreadsheetToAgent': 'Use as Agent attachment',
+  'FileManager.actions.attachSpreadsheetToAgent.already':
+    'The spreadsheet file is already in the chat input.',
+  'FileManager.actions.attachSpreadsheetToAgent.none':
+    'Select Excel or CSV files to use as Agent attachments.',
+  'FileManager.actions.attachSpreadsheetToAgent.success':
+    'Added {{count}} spreadsheet file(s) to the chat input.',
   'FileManager.actions.batchChunking': 'Batch Chunking',
   'FileManager.actions.chunking': 'Chunking',
   'FileManager.actions.chunkingTooltip':

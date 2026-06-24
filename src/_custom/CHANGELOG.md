@@ -65,11 +65,16 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Finding: enabling Cloud Sandbox does not make Resource, Knowledge Base, or Agent document files
   automatically visible to shell commands. The sandbox has an isolated filesystem, and command/file
   tools can only see files that were explicitly synced into the sandbox.
-- Current upstream behavior: sandbox bootstrap only syncs files attached to messages in the current
+- Current behavior: sandbox bootstrap syncs files attached to messages in the current
   topic and files attached to the topic's session, placing them under `/mnt/data`.
 - Boundary: files uploaded through Resource/Knowledge Base/Agent document management remain in
   database/object storage and may be available to model context or knowledge search, but they are not
   raw files in `/mnt/data` for Python, shell, `find`, or `pandas` unless separately attached/synced.
+- Cotti extension: Resource Excel/CSV selections can be explicitly attached to the current Agent
+  chat input. This reuses the uploaded-attachment path, does not trigger chunking/embedding, and
+  lets the sandbox preload the raw workbook under `/mnt/data` after the message is sent.
+- Cotti fix: sandbox file-init markers include a fingerprint of the attachment list so newly
+  attached files can be synced even if the topic had initialized a sandbox earlier.
 - Limits: sandbox init skips files larger than 100 MB and syncs at most 50 files, so large Excel
   workbooks can still be absent even when they are associated with the conversation.
 - Product direction: large Excel analysis should use a dedicated table-analysis flow that copies or
@@ -566,3 +571,16 @@ LobeHub` to `You are Cotti, an Agent Builder integrated into CottiAI`.
 - Boundary: Agent mode and heterogeneous agents remain unrestricted for upload so sandbox / Python /
   DuckDB workflows can handle spreadsheets. In Agent mode, Excel attachment prompts keep only file
   references and omit parsed Excel body content from `<files_info>`.
+
+### Resource Spreadsheet Attachments For Agent
+
+- Scope: resource-manager spreadsheet files can be added to the current Agent input as completed
+  attachments without re-uploading, parsing, chunking, or embedding.
+- Scope: the Agent input `+ -> Attachments` inline submenu and its `View more` library modal now
+  route Excel/CSV files to the same current input attachment path instead of `addFilesToAgent`. If a
+  spreadsheet was already enabled as an Agent file relation, clicking it removes that stale relation
+  first and then attaches it to the input. The inline submenu checkbox state for spreadsheets follows
+  the current input attachment list, not the Agent file-resource `enabled` state.
+- Runtime: sandbox file initialization fingerprints the selected file list, so adding files after an
+  earlier no-file sandbox initialization downloads them into `/mnt/data` on the next run.
+- Boundary: non-spreadsheet resource files keep the upstream knowledge-base / Agent-resource flow.

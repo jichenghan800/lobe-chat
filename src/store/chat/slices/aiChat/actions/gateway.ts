@@ -367,7 +367,7 @@ export class GatewayActionImpl {
     } = params;
 
     const agentGatewayUrl =
-      window.global_serverConfigStore!.getState().serverConfig.agentGatewayUrl!;
+      window.global_serverConfigStore?.getState()?.serverConfig?.agentGatewayUrl;
 
     const isCreateNewTopic = !context.topicId;
     const taskId = context.viewedTask?.type === 'detail' ? context.viewedTask.taskId : undefined;
@@ -471,6 +471,20 @@ export class GatewayActionImpl {
 
     // Use the server-created topicId for the execution context
     const execContext = { ...context, topicId: result.topicId };
+
+    if (!isCreateNewTopic && result.topicId) {
+      try {
+        const messages = await messageService.getMessages(execContext);
+        this.#get().replaceMessages(messages, { context: execContext });
+      } catch (err) {
+        console.error('[Gateway] fetch messages after task start failed:', err);
+      }
+    }
+
+    if (!agentGatewayUrl) {
+      if (parentOperationId) this.#get().completeOperation(parentOperationId);
+      return result;
+    }
 
     if (result.topicId) {
       this.#get().internal_updateTopicLoading(result.topicId, true);

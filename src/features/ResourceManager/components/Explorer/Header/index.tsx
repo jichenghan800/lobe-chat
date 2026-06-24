@@ -4,7 +4,7 @@ import { ActionIcon, Flexbox } from '@lobehub/ui';
 import { confirmModal } from '@lobehub/ui/base-ui';
 import { App } from 'antd';
 import { cssVar } from 'antd-style';
-import { BookMinusIcon, FileBoxIcon, Trash2Icon } from 'lucide-react';
+import { BookMinusIcon, FileBoxIcon, PaperclipIcon, Trash2Icon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -77,6 +77,14 @@ const Header = memo(() => {
           }}
         />
       ) : null}
+
+      <ActionIcon
+        icon={PaperclipIcon}
+        title={t('FileManager.actions.attachSpreadsheetToAgent')}
+        onClick={async () => {
+          await onActionClick('attachToAgent');
+        }}
+      />
 
       <ActionIcon
         disabled={!canEditResources}

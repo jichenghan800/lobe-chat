@@ -18,6 +18,7 @@ import { type FileListItem } from '@/types/files';
 import { type UploadFileItem } from '@/types/files/upload';
 import { isChunkingUnsupported } from '@/utils/isChunkingUnsupported';
 import { sleep } from '@/utils/sleep';
+import { isSpreadsheetFileNameOrType } from '@/utils/spreadsheet';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type FileStore } from '../../store';
@@ -60,6 +61,20 @@ const getUploadErrorDescription = (error: unknown): string => {
     : t('upload.unknownError', { ns: 'error', reason: getErrorMessage(error) });
 };
 
+const isSpreadsheetResource = (item: FileListItem) => {
+  if (item.sourceType !== 'file') return false;
+
+  return isSpreadsheetFileNameOrType(item.name, item.fileType);
+};
+
+const resourceToUploadFileItem = (item: FileListItem): UploadFileItem => ({
+  file: new File([], item.name, { type: item.fileType }),
+  fileUrl: item.url,
+  id: item.id,
+  preserveServerFileOnRemove: true,
+  status: 'success',
+});
+
 export class FileActionImpl {
   readonly #get: () => FileStore;
   readonly #set: Setter;
@@ -99,9 +114,58 @@ export class FileActionImpl {
 
   removeChatUploadFile = async (id: string): Promise<void> => {
     const { dispatchChatUploadFileList } = this.#get();
+    const file = this.#get().chatUploadFileList.find((item) => item.id === id);
 
     dispatchChatUploadFileList({ id, type: 'removeFile' });
+    if (file?.preserveServerFileOnRemove) return;
+
     await fileService.removeFile(id);
+  };
+
+  attachResourceSpreadsheetFilesToChat = async (ids: string[]): Promise<number> => {
+    const uniqueIds = [...new Set(ids)];
+    if (uniqueIds.length === 0) return 0;
+
+    const existingIds = new Set(this.#get().chatUploadFileList.map((item) => item.id));
+    const resources = (
+      await Promise.all(
+        uniqueIds.map(async (id) => {
+          try {
+            return await fileService.getKnowledgeItem(id);
+          } catch (error) {
+            console.error('Failed to resolve resource file for chat attachment:', error);
+            return null;
+          }
+        }),
+      )
+    ).filter((item): item is FileListItem => !!item);
+
+    const spreadsheetResources = resources.filter(isSpreadsheetResource);
+    const files = spreadsheetResources
+      .filter((item) => !existingIds.has(item.id))
+      .map(resourceToUploadFileItem);
+
+    if (spreadsheetResources.length === 0) {
+      toast.warning(t('FileManager.actions.attachSpreadsheetToAgent.none', { ns: 'components' }));
+      return 0;
+    }
+
+    if (files.length === 0) {
+      toast.success(
+        t('FileManager.actions.attachSpreadsheetToAgent.already', { ns: 'components' }),
+      );
+      return spreadsheetResources.length;
+    }
+
+    this.#get().dispatchChatUploadFileList({ files, type: 'addFiles' });
+    toast.success(
+      t('FileManager.actions.attachSpreadsheetToAgent.success', {
+        count: files.length,
+        ns: 'components',
+      }),
+    );
+
+    return files.length;
   };
 
   startAsyncTask = async (
