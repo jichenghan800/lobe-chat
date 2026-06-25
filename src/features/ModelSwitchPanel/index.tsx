@@ -18,6 +18,7 @@ const ModelSwitchPanel = memo<ModelSwitchPanelProps>(
     ModelItemComponent,
     children,
     enabledList,
+    includeAgentOnlyModels,
     model: modelProp,
     onModelChange,
     onOpenChange,
@@ -50,6 +51,7 @@ const ModelSwitchPanel = memo<ModelSwitchPanelProps>(
                 <PanelContent
                   ModelItemComponent={ModelItemComponent}
                   enabledList={enabledList}
+                  includeAgentOnlyModels={includeAgentOnlyModels}
                   model={modelProp}
                   pricingMode={pricingMode}
                   provider={providerProp}

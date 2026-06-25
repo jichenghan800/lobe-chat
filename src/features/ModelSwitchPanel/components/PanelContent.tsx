@@ -18,6 +18,7 @@ import { Toolbar } from './Toolbar';
 
 interface PanelContentProps {
   enabledList?: EnabledProviderWithModels[];
+  includeAgentOnlyModels?: boolean;
   model?: string;
   ModelItemComponent?: ComponentType<any>;
   onModelChange?: (params: { model: string; provider: string }) => Promise<void>;
@@ -29,13 +30,14 @@ interface PanelContentProps {
 export const PanelContent: FC<PanelContentProps> = ({
   ModelItemComponent,
   enabledList: enabledListProp,
+  includeAgentOnlyModels,
   model: modelProp,
   onModelChange: onModelChangeProp,
   onOpenChange,
   pricingMode,
   provider: providerProp,
 }) => {
-  const chatEnabledList = useEnabledChatModels();
+  const chatEnabledList = useEnabledChatModels({ includeAgentOnlyModels });
   const enabledList = enabledListProp ?? chatEnabledList;
   const [searchKeyword, setSearchKeyword] = useState('');
   const isDevMode = useUserStore((s) => userGeneralSettingsSelectors.config(s).isDevMode);
@@ -57,6 +59,7 @@ export const PanelContent: FC<PanelContentProps> = ({
         ModelItemComponent={ModelItemComponent}
         enabledList={enabledList}
         groupMode={isDevMode ? groupMode : 'byModel'}
+        includeAgentOnlyModels={includeAgentOnlyModels}
         model={modelProp}
         pricingMode={pricingMode}
         provider={providerProp}

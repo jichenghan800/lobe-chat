@@ -54,6 +54,11 @@ export interface ModelSwitchPanelProps {
    */
   enabledList?: EnabledProviderWithModels[];
   /**
+   * Whether to include models reserved for Agent mode in the default chat model list.
+   * Defaults to true so non-chat callers keep the full runtime model set.
+   */
+  includeAgentOnlyModels?: boolean;
+  /**
    * Current model ID. If not provided, uses currentAgentModel from store.
    */
   model?: string;

@@ -2,7 +2,9 @@ import { Center, Flexbox, Tooltip } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { ChevronDownIcon } from 'lucide-react';
 import { memo, useCallback } from 'react';
+import { useLocation } from 'react-router';
 
+import { isAgentModelRoute } from '@/_custom/registry/modelAvailability';
 import { getModelDisplayName } from '@/_custom/registry/modelDisplayName';
 import { useBusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
@@ -49,6 +51,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 const ModelLabel = memo(() => {
   const { dropdownPlacement } = useActionBarContext();
+  const { pathname } = useLocation();
   const { allowed: canCreateContent, reason } = usePermission('create_content');
 
   const agentId = useAgentId();
@@ -59,6 +62,7 @@ const ModelLabel = memo(() => {
     s.updateAgentConfigById,
   ]);
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
+  const includeAgentOnlyModels = isAgentModelRoute(pathname);
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
   const displayName = isAgentConfigLoading
@@ -97,6 +101,7 @@ const ModelLabel = memo(() => {
 
   return (
     <ModelSwitchPanel
+      includeAgentOnlyModels={includeAgentOnlyModels}
       model={model}
       openOnHover={false}
       placement={dropdownPlacement}

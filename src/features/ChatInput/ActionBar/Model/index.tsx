@@ -2,7 +2,9 @@ import { ModelIcon } from '@lobehub/icons';
 import { Center, Tooltip } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { memo, useCallback } from 'react';
+import { useLocation } from 'react-router';
 
+import { isAgentModelRoute } from '@/_custom/registry/modelAvailability';
 import { useBusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import { usePermission } from '@/hooks/usePermission';
@@ -48,6 +50,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 const ModelSwitch = memo(() => {
   const { actionSize, dropdownPlacement } = useActionBarContext();
+  const { pathname } = useLocation();
   const blockSize = actionSize?.blockSize ?? 32;
   const iconSize = actionSize?.size ?? 20;
   const { allowed: canCreateContent, reason } = usePermission('create_content');
@@ -59,6 +62,7 @@ const ModelSwitch = memo(() => {
     s.updateAgentConfigById,
   ]);
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
+  const includeAgentOnlyModels = isAgentModelRoute(pathname);
 
   const handleModelChange = useCallback(
     async (params: { model: string; provider: string }) => {
@@ -90,6 +94,7 @@ const ModelSwitch = memo(() => {
 
   return (
     <ModelSwitchPanel
+      includeAgentOnlyModels={includeAgentOnlyModels}
       model={model}
       placement={dropdownPlacement}
       provider={provider}

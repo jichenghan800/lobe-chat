@@ -21,6 +21,7 @@ import { ListItemRenderer } from './ListItemRenderer';
 interface ListProps {
   enabledList?: EnabledProviderWithModels[];
   groupMode: GroupMode;
+  includeAgentOnlyModels?: boolean;
   model?: string;
   ModelItemComponent?: ComponentType<any>;
   onModelChange?: (params: { model: string; provider: string }) => Promise<void>;
@@ -34,6 +35,7 @@ export const List: FC<ListProps> = ({
   ModelItemComponent,
   enabledList: enabledListProp,
   groupMode,
+  includeAgentOnlyModels,
   model: modelProp,
   onModelChange: onModelChangeProp,
   onOpenChange,
@@ -46,7 +48,7 @@ export const List: FC<ListProps> = ({
   const { isModelRestricted, onRestrictedModelClick } = useBusinessModelListGuard();
   const proLabel = isModelRestricted ? tCommon('pro') : undefined;
 
-  const chatEnabledList = useEnabledChatModels();
+  const chatEnabledList = useEnabledChatModels({ includeAgentOnlyModels });
   const enabledList = enabledListProp ?? chatEnabledList;
   const { model, provider } = useModelAndProvider(modelProp, providerProp);
   const { handleModelChange, handleClose } = usePanelHandlers({
