@@ -12,6 +12,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
 import { aiModelSelectors, useAiInfraStore } from '@/store/aiInfra';
+import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 import { useAgentId } from '../../hooks/useAgentId';
 import { useActionBarContext } from '../context';
@@ -55,14 +56,18 @@ const ModelLabel = memo(() => {
   const { allowed: canCreateContent, reason } = usePermission('create_content');
 
   const agentId = useAgentId();
-  const [model, provider, isAgentConfigLoading, updateAgentConfigById] = useAgentStore((s) => [
-    agentByIdSelectors.getAgentModelById(agentId)(s),
-    agentByIdSelectors.getAgentModelProviderById(agentId)(s),
-    agentByIdSelectors.isAgentConfigLoadingById(agentId)(s),
-    s.updateAgentConfigById,
-  ]);
+  const [model, provider, enableAgentMode, isAgentConfigLoading, updateAgentConfigById] =
+    useAgentStore((s) => [
+      agentByIdSelectors.getAgentModelById(agentId)(s),
+      agentByIdSelectors.getAgentModelProviderById(agentId)(s),
+      agentByIdSelectors.getAgentEnableModeById(agentId)(s),
+      agentByIdSelectors.isAgentConfigLoadingById(agentId)(s),
+      s.updateAgentConfigById,
+    ]);
+  const enableCottiAgentAccess = useServerConfigStore(serverConfigSelectors.enableCottiAgentAccess);
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
-  const includeAgentOnlyModels = isAgentModelRoute(pathname);
+  const includeAgentOnlyModels =
+    isAgentModelRoute(pathname) || (enableCottiAgentAccess && enableAgentMode);
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
   const displayName = isAgentConfigLoading
