@@ -2,7 +2,6 @@ import { ModelIcon } from '@lobehub/icons';
 import { Center, Tooltip } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { memo, useCallback } from 'react';
-import { useLocation } from 'react-router';
 
 import { shouldIncludeAgentOnlyChatModels } from '@/_custom/registry/modelAvailability';
 import { useBusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
@@ -51,7 +50,6 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 const ModelSwitch = memo(() => {
   const { actionSize, dropdownPlacement } = useActionBarContext();
-  const { pathname } = useLocation();
   const blockSize = actionSize?.blockSize ?? 32;
   const iconSize = actionSize?.size ?? 20;
   const { allowed: canCreateContent, reason } = usePermission('create_content');
@@ -68,7 +66,6 @@ const ModelSwitch = memo(() => {
   const includeAgentOnlyModels = shouldIncludeAgentOnlyChatModels({
     enableAgentMode,
     enableCottiAgentAccess,
-    pathname,
   });
 
   const handleModelChange = useCallback(

@@ -2,7 +2,6 @@ import { Center, Flexbox, Tooltip } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { ChevronDownIcon } from 'lucide-react';
 import { memo, useCallback } from 'react';
-import { useLocation } from 'react-router';
 
 import { shouldIncludeAgentOnlyChatModels } from '@/_custom/registry/modelAvailability';
 import { getModelDisplayName } from '@/_custom/registry/modelDisplayName';
@@ -52,7 +51,6 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 const ModelLabel = memo(() => {
   const { dropdownPlacement } = useActionBarContext();
-  const { pathname } = useLocation();
   const { allowed: canCreateContent, reason } = usePermission('create_content');
 
   const agentId = useAgentId();
@@ -69,7 +67,6 @@ const ModelLabel = memo(() => {
   const includeAgentOnlyModels = shouldIncludeAgentOnlyChatModels({
     enableAgentMode,
     enableCottiAgentAccess,
-    pathname,
   });
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));

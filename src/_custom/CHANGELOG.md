@@ -16,12 +16,11 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Verification: unit coverage for the Cotti model availability filter passed; `bun run type-check`
   passed; targeted eslint passed. Browser verification on `chatdev` confirmed active Agent mode still
   shows both models, while Chat mode hides both.
-- Follow-up: keep the boundary mode-based, not route-only. Normal Chat entries and Agent-route
-  `对话` mode hide these two models; `/agent/...` routes only include them after the input switches to
-  Agent mode.
-- Deployment: dev container image `lobehub:v2.2.8-cotti-chat-agent-model-split-v30` is running on
+- Follow-up: keep the boundary mode-based, not route-based. Home and Agent-route `对话` mode hide
+  these two models; switching the same input to `智能` mode includes them.
+- Deployment: dev container image `lobehub:v2.2.8-cotti-chat-agent-model-split-v31` is running on
   `chatdev`; previous dev container is retained as
-  `lobehub-v228-stage0-before-chat-mode-model-split-fix-20260625121640`.
+  `lobehub-v228-stage0-before-home-agent-mode-model-split-fix-20260625175417`.
 
 ### Marketplace Agent Model Normalization
 

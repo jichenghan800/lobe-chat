@@ -43,12 +43,11 @@ describe('modelAvailability', () => {
     expect(isAgentModelRoute('/chat')).toBe(false);
   });
 
-  it('only includes agent-only chat models for active agent mode on agent routes', () => {
+  it('only includes agent-only chat models for active agent mode', () => {
     expect(
       shouldIncludeAgentOnlyChatModels({
         enableAgentMode: true,
         enableCottiAgentAccess: true,
-        pathname: '/agent/agt_1',
       }),
     ).toBe(true);
 
@@ -56,7 +55,6 @@ describe('modelAvailability', () => {
       shouldIncludeAgentOnlyChatModels({
         enableAgentMode: false,
         enableCottiAgentAccess: true,
-        pathname: '/agent/agt_1',
       }),
     ).toBe(false);
 
@@ -64,15 +62,6 @@ describe('modelAvailability', () => {
       shouldIncludeAgentOnlyChatModels({
         enableAgentMode: true,
         enableCottiAgentAccess: false,
-        pathname: '/agent/agt_1',
-      }),
-    ).toBe(false);
-
-    expect(
-      shouldIncludeAgentOnlyChatModels({
-        enableAgentMode: true,
-        enableCottiAgentAccess: true,
-        pathname: '/',
       }),
     ).toBe(false);
   });

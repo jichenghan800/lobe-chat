@@ -21,15 +21,12 @@ export const isAgentModelRoute = (pathname: string) =>
 interface AgentOnlyModelVisibilityOptions {
   enableAgentMode: boolean;
   enableCottiAgentAccess: boolean;
-  pathname: string;
 }
 
 export const shouldIncludeAgentOnlyChatModels = ({
   enableAgentMode,
   enableCottiAgentAccess,
-  pathname,
-}: AgentOnlyModelVisibilityOptions) =>
-  isAgentModelRoute(pathname) && enableCottiAgentAccess && enableAgentMode;
+}: AgentOnlyModelVisibilityOptions) => enableCottiAgentAccess && enableAgentMode;
 
 export const filterAgentOnlyChatModels = <T extends ModelLike, P extends ProviderModelListLike<T>>(
   providers: P[],
