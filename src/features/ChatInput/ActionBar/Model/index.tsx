@@ -4,12 +4,13 @@ import { createStaticStyles, cx } from 'antd-style';
 import { memo, useCallback } from 'react';
 import { useLocation } from 'react-router';
 
-import { isAgentModelRoute } from '@/_custom/registry/modelAvailability';
+import { shouldIncludeAgentOnlyChatModels } from '@/_custom/registry/modelAvailability';
 import { useBusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import { usePermission } from '@/hooks/usePermission';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
+import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 import { useAgentId } from '../../hooks/useAgentId';
 import { useActionBarContext } from '../context';
@@ -56,13 +57,19 @@ const ModelSwitch = memo(() => {
   const { allowed: canCreateContent, reason } = usePermission('create_content');
 
   const agentId = useAgentId();
-  const [model, provider, updateAgentConfigById] = useAgentStore((s) => [
+  const [model, provider, enableAgentMode, updateAgentConfigById] = useAgentStore((s) => [
     agentByIdSelectors.getAgentModelById(agentId)(s),
     agentByIdSelectors.getAgentModelProviderById(agentId)(s),
+    agentByIdSelectors.getAgentEnableModeById(agentId)(s),
     s.updateAgentConfigById,
   ]);
+  const enableCottiAgentAccess = useServerConfigStore(serverConfigSelectors.enableCottiAgentAccess);
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
-  const includeAgentOnlyModels = isAgentModelRoute(pathname);
+  const includeAgentOnlyModels = shouldIncludeAgentOnlyChatModels({
+    enableAgentMode,
+    enableCottiAgentAccess,
+    pathname,
+  });
 
   const handleModelChange = useCallback(
     async (params: { model: string; provider: string }) => {

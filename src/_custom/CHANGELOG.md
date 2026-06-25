@@ -8,19 +8,20 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 ### Chat and Agent Model Visibility Split
 
 - Change: hide `gpt-5.5` (`全能效率`) and `glm-5.2` (`智谱-GLM5.2`) from the normal Chat model
-  switcher, while keeping both models available on Agent routes.
+  switcher, while keeping both models available when the input is actively in Agent mode.
 - Boundary: runtime provider configuration and existing Agent configs are not rewritten. Other model
   selectors keep the full enabled model list unless they explicitly opt into the Chat-only filter.
 - Reason: both models are intended for Agent/tool workloads in the current Cotti deployment; normal
   Chat should steer users toward the lighter Cotti models.
 - Verification: unit coverage for the Cotti model availability filter passed; `bun run type-check`
-  passed; targeted eslint passed. Browser verification on `chatdev` confirmed Agent routes still
-  show both models, while the normal Chat model switcher hides both.
-- Follow-up: keep the boundary route-based. Normal Chat entries, including the home-page input, hide
-  these two models; dedicated `/agent/...` routes keep them available.
-- Deployment: dev container image `lobehub:v2.2.8-cotti-chat-agent-model-split-v29` is running on
+  passed; targeted eslint passed. Browser verification on `chatdev` confirmed active Agent mode still
+  shows both models, while Chat mode hides both.
+- Follow-up: keep the boundary mode-based, not route-only. Normal Chat entries and Agent-route
+  `对话` mode hide these two models; `/agent/...` routes only include them after the input switches to
+  Agent mode.
+- Deployment: dev container image `lobehub:v2.2.8-cotti-chat-agent-model-split-v30` is running on
   `chatdev`; previous dev container is retained as
-  `lobehub-v228-stage0-before-chat-route-model-split-fix-20260625120723`.
+  `lobehub-v228-stage0-before-chat-mode-model-split-fix-20260625121640`.
 
 ### Marketplace Agent Model Normalization
 

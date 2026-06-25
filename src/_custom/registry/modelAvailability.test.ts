@@ -4,6 +4,7 @@ import {
   filterAgentOnlyChatModels,
   isAgentModelRoute,
   isAgentOnlyChatModel,
+  shouldIncludeAgentOnlyChatModels,
 } from './modelAvailability';
 
 describe('modelAvailability', () => {
@@ -40,5 +41,39 @@ describe('modelAvailability', () => {
     expect(isAgentModelRoute('/workspace-a/agent/agt_1')).toBe(true);
     expect(isAgentModelRoute('/')).toBe(false);
     expect(isAgentModelRoute('/chat')).toBe(false);
+  });
+
+  it('only includes agent-only chat models for active agent mode on agent routes', () => {
+    expect(
+      shouldIncludeAgentOnlyChatModels({
+        enableAgentMode: true,
+        enableCottiAgentAccess: true,
+        pathname: '/agent/agt_1',
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldIncludeAgentOnlyChatModels({
+        enableAgentMode: false,
+        enableCottiAgentAccess: true,
+        pathname: '/agent/agt_1',
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldIncludeAgentOnlyChatModels({
+        enableAgentMode: true,
+        enableCottiAgentAccess: false,
+        pathname: '/agent/agt_1',
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldIncludeAgentOnlyChatModels({
+        enableAgentMode: true,
+        enableCottiAgentAccess: true,
+        pathname: '/',
+      }),
+    ).toBe(false);
   });
 });

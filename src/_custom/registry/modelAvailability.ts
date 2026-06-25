@@ -18,6 +18,19 @@ export const isAgentModelRoute = (pathname: string) =>
   pathname.startsWith('/popup/agent/') ||
   /^\/[^/]+\/agent(?:\/|$)/.test(pathname);
 
+interface AgentOnlyModelVisibilityOptions {
+  enableAgentMode: boolean;
+  enableCottiAgentAccess: boolean;
+  pathname: string;
+}
+
+export const shouldIncludeAgentOnlyChatModels = ({
+  enableAgentMode,
+  enableCottiAgentAccess,
+  pathname,
+}: AgentOnlyModelVisibilityOptions) =>
+  isAgentModelRoute(pathname) && enableCottiAgentAccess && enableAgentMode;
+
 export const filterAgentOnlyChatModels = <T extends ModelLike, P extends ProviderModelListLike<T>>(
   providers: P[],
 ) =>
