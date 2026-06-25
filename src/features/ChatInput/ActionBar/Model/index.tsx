@@ -10,7 +10,6 @@ import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import { usePermission } from '@/hooks/usePermission';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
-import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 import { useAgentId } from '../../hooks/useAgentId';
 import { useActionBarContext } from '../context';
@@ -57,16 +56,13 @@ const ModelSwitch = memo(() => {
   const { allowed: canCreateContent, reason } = usePermission('create_content');
 
   const agentId = useAgentId();
-  const [model, provider, enableAgentMode, updateAgentConfigById] = useAgentStore((s) => [
+  const [model, provider, updateAgentConfigById] = useAgentStore((s) => [
     agentByIdSelectors.getAgentModelById(agentId)(s),
     agentByIdSelectors.getAgentModelProviderById(agentId)(s),
-    agentByIdSelectors.getAgentEnableModeById(agentId)(s),
     s.updateAgentConfigById,
   ]);
-  const enableCottiAgentAccess = useServerConfigStore(serverConfigSelectors.enableCottiAgentAccess);
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
-  const includeAgentOnlyModels =
-    isAgentModelRoute(pathname) || (enableCottiAgentAccess && enableAgentMode);
+  const includeAgentOnlyModels = isAgentModelRoute(pathname);
 
   const handleModelChange = useCallback(
     async (params: { model: string; provider: string }) => {

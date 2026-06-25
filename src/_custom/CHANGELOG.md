@@ -16,12 +16,11 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Verification: unit coverage for the Cotti model availability filter passed; `bun run type-check`
   passed; targeted eslint passed. Browser verification on `chatdev` confirmed Agent routes still
   show both models, while the normal Chat model switcher hides both.
-- Follow-up: model visibility now also treats the Chat input's `智能` Agent Mode as Agent scope, not
-  only `/agent/...` routes. This keeps `gpt-5.5` and `glm-5.2` available when users enable Agent
-  Mode from the normal Chat entry.
-- Deployment: dev container image `lobehub:v2.2.8-cotti-chat-agent-model-split-v28` is running on
+- Follow-up: keep the boundary route-based. Normal Chat entries, including the home-page input, hide
+  these two models; dedicated `/agent/...` routes keep them available.
+- Deployment: dev container image `lobehub:v2.2.8-cotti-chat-agent-model-split-v29` is running on
   `chatdev`; previous dev container is retained as
-  `lobehub-v228-stage0-before-agent-mode-model-split-fix-20260625120012`.
+  `lobehub-v228-stage0-before-chat-route-model-split-fix-20260625120723`.
 
 ### Marketplace Agent Model Normalization
 
