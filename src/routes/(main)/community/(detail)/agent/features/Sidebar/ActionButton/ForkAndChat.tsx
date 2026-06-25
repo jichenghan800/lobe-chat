@@ -14,6 +14,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 import { lambdaClient } from '@/libs/trpc/client';
 import { agentService } from '@/services/agent';
+import { applyCottiMarketplaceModel } from '@/services/cottiMarketplaceModel';
 import { discoverService } from '@/services/discover';
 import { marketApiService } from '@/services/marketApi';
 import { useAgentStore } from '@/store/agent';
@@ -124,7 +125,7 @@ const ForkAndChat = memo<{ mobile?: boolean }>(({ mobile }) => {
       if (!config) throw new Error('Agent config is missing');
 
       const agentData = {
-        config: {
+        config: applyCottiMarketplaceModel({
           ...config,
           editorData,
           ...meta,
@@ -134,7 +135,7 @@ const ForkAndChat = memo<{ mobile?: boolean }>(({ mobile }) => {
             forkedFromIdentifier: identifier, // Store the source agent identifier
           },
           title: forkResult.agent.name,
-        },
+        }),
       };
 
       // Step 4: Add to local agent list

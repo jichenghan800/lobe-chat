@@ -14,6 +14,10 @@ import { usePermission } from '@/hooks/usePermission';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 import { lambdaClient } from '@/libs/trpc/client';
 import { chatGroupService } from '@/services/chatGroup';
+import {
+  COTTI_MARKETPLACE_AGENT_MODEL,
+  COTTI_MARKETPLACE_AGENT_PROVIDER,
+} from '@/services/cottiMarketplaceModel';
 import { discoverService } from '@/services/discover';
 import { marketApiService } from '@/services/marketApi';
 import { useAgentGroupStore } from '@/store/agentGroup';
@@ -138,10 +142,10 @@ const ForkGroupAndChat = memo<{ mobile?: boolean }>(() => {
           backgroundColor: currentVersion.backgroundColor,
           chatConfig: currentVersion.config?.chatConfig || currentVersion.chatConfig,
           description: currentVersion.description,
-          model: currentVersion.config?.model || currentVersion.model,
+          model: COTTI_MARKETPLACE_AGENT_MODEL,
           params: currentVersion.config?.params || currentVersion.params,
           plugins: currentVersion.config?.plugins || currentVersion.plugins,
-          provider: currentVersion.config?.provider || currentVersion.provider,
+          provider: COTTI_MARKETPLACE_AGENT_PROVIDER,
           systemRole:
             currentVersion.config?.systemRole ||
             currentVersion.config?.systemPrompt ||
@@ -185,9 +189,9 @@ const ForkGroupAndChat = memo<{ mobile?: boolean }>(() => {
             backgroundColor: currentVersion.backgroundColor,
             chatConfig: currentVersion.config?.chatConfig || currentVersion.chatConfig,
             description: currentVersion.description,
-            model: currentVersion.config?.model || currentVersion.model,
+            model: COTTI_MARKETPLACE_AGENT_MODEL,
             plugins: currentVersion.config?.plugins || currentVersion.plugins,
-            provider: currentVersion.config?.provider || currentVersion.provider,
+            provider: COTTI_MARKETPLACE_AGENT_PROVIDER,
             systemRole:
               currentVersion.config?.systemRole ||
               currentVersion.config?.systemPrompt ||

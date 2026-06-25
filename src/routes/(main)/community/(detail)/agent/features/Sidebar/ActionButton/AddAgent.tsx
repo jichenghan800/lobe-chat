@@ -12,6 +12,7 @@ import { SESSION_CHAT_URL } from '@/const/url';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 import { usePermission } from '@/hooks/usePermission';
 import { agentService } from '@/services/agent';
+import { applyCottiMarketplaceModel } from '@/services/cottiMarketplaceModel';
 import { discoverService } from '@/services/discover';
 import { useAgentStore } from '@/store/agent';
 import { useHomeStore } from '@/store/home';
@@ -73,11 +74,11 @@ const AddAgent = memo<{ mobile?: boolean }>(({ mobile }) => {
 
     // Note: agentService.createAgent automatically normalizes market config (handles model as object)
     const agentData = {
-      config: {
+      config: applyCottiMarketplaceModel({
         ...config,
         editorData,
         ...meta,
-      },
+      }),
     };
 
     const result = await createAgent(agentData);

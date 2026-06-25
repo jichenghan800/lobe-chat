@@ -2,6 +2,7 @@ import type { InstallMarketplaceAgentSummary } from '@lobechat/builtin-tool-web-
 import { customAlphabet } from 'nanoid/non-secure';
 
 import { agentService } from '@/services/agent';
+import { applyCottiMarketplaceModel } from '@/services/cottiMarketplaceModel';
 import { discoverService } from '@/services/discover';
 import { marketApiService } from '@/services/marketApi';
 import { useAgentStore } from '@/store/agent';
@@ -103,7 +104,7 @@ export const installMarketplaceAgents = async (
       }
       const fork = outcome.data;
       const result = await createAgent({
-        config: {
+        config: applyCottiMarketplaceModel({
           ...detail.config,
           avatar: detail.avatar,
           backgroundColor: detail.backgroundColor,
@@ -116,7 +117,7 @@ export const installMarketplaceAgents = async (
           },
           tags: detail.tags,
           title: fork.agent.name,
-        },
+        }),
       });
 
       discoverService.reportAgentEvent({

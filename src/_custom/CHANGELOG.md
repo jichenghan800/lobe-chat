@@ -3,6 +3,24 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-25
+
+### Marketplace Agent Model Normalization
+
+- Incident: agents imported or forked from the LobeHub community can keep the marketplace author's
+  original model provider, for example `newapi/gemini-2.5-pro`. In the Cotti deployment that provider
+  is not enabled, so the first chat request can fail and prompt the user to enter a custom New API key.
+- Fix: normalize Cotti marketplace imports to `vertexai/gemini-3.1-flash-lite` (`COTTI-快速`) at the
+  local creation boundary. This applies to direct community add, fork-and-chat, onboarding/batch
+  marketplace installs, and community group-agent member creation.
+- Boundary: this only affects newly imported/forked marketplace agents. Existing agents and manual
+  user model switches are not rewritten.
+- Verification: `bunx vitest run --silent='passed-only' src/services/installMarketplaceAgents.test.ts`
+  passed; `bun run type-check` passed.
+- Deployment: dev container image `lobehub:v2.2.8-cotti-marketplace-cotti-fast-v26` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-marketplace-cotti-fast-20260625105437`.
+
 ## 2026-06-23
 
 ### Composio Server Configuration

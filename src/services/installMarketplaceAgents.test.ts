@@ -84,6 +84,53 @@ describe('installMarketplaceAgents', () => {
     expect(refreshAgentList).toHaveBeenCalledTimes(1);
   });
 
+  it('installs marketplace agents with the COTTI fast model regardless of market config', async () => {
+    vi.spyOn(agentService, 'getAgentByForkedFromIdentifier').mockResolvedValue(null);
+    vi.spyOn(discoverService, 'getAssistantDetail').mockResolvedValue({
+      avatar: 'avatar',
+      backgroundColor: '#fff',
+      category: 'engineering',
+      config: { model: 'gemini-2.5-pro', params: {}, provider: 'newapi' } as any,
+      description: 'desc',
+      editorData: {},
+      identifier: 'src-a',
+      summary: 'summary',
+      tags: [],
+      title: 'Title',
+    } as any);
+    vi.spyOn(marketApiService, 'forkAgent').mockResolvedValue([
+      {
+        data: {
+          agent: {
+            createdAt: '2026-01-01',
+            forkedFromAgentId: 1,
+            id: 1,
+            identifier: 'fork-a',
+            name: 'Forked Title',
+            ownerId: 1,
+            updatedAt: '2026-01-01',
+          },
+          source: { agentId: 1, identifier: 'src-a', versionNumber: 1 },
+          version: { agentId: 1, createdAt: '2026-01-01', id: 1, versionNumber: 1 },
+        },
+        sourceIdentifier: 'src-a',
+        success: true,
+      },
+    ]);
+    createAgent.mockResolvedValue({ agentId: 'agent-src-a' });
+
+    await installMarketplaceAgents(['src-a']);
+
+    expect(createAgent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          model: 'gemini-3.1-flash-lite',
+          provider: 'vertexai',
+        }),
+      }),
+    );
+  });
+
   it('skips already-forked agents at the dedupe step', async () => {
     const sourceIds = ['src-a', 'src-b', 'src-c'];
 

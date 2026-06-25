@@ -12,6 +12,10 @@ import urlJoin from 'url-join';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 import { usePermission } from '@/hooks/usePermission';
 import { chatGroupService } from '@/services/chatGroup';
+import {
+  COTTI_MARKETPLACE_AGENT_MODEL,
+  COTTI_MARKETPLACE_AGENT_PROVIDER,
+} from '@/services/cottiMarketplaceModel';
 import { discoverService } from '@/services/discover';
 import { useAgentGroupStore } from '@/store/agentGroup';
 
@@ -109,9 +113,9 @@ const AddGroupAgent = memo<{ mobile?: boolean }>(() => {
         avatar: currentVersion.avatar,
         backgroundColor: currentVersion.backgroundColor,
         description: currentVersion.description,
-        model: currentVersion.config?.model || currentVersion.model,
+        model: COTTI_MARKETPLACE_AGENT_MODEL,
         params: currentVersion.config?.params || currentVersion.params,
-        provider: currentVersion.config?.provider || currentVersion.provider,
+        provider: COTTI_MARKETPLACE_AGENT_PROVIDER,
         systemRole:
           currentVersion.config?.systemRole ||
           currentVersion.config?.systemPrompt ||
@@ -154,9 +158,9 @@ const AddGroupAgent = memo<{ mobile?: boolean }>(() => {
           avatar: currentVersion.avatar,
           backgroundColor: currentVersion.backgroundColor,
           description: currentVersion.description,
-          model: currentVersion.config?.model || currentVersion.model,
+          model: COTTI_MARKETPLACE_AGENT_MODEL,
           plugins: currentVersion.plugins,
-          provider: currentVersion.config?.provider || currentVersion.provider,
+          provider: COTTI_MARKETPLACE_AGENT_PROVIDER,
           systemRole:
             currentVersion.config?.systemRole ||
             currentVersion.config?.systemPrompt ||
