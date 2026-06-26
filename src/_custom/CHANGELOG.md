@@ -644,3 +644,12 @@ LobeHub` to `You are Cotti, an Agent Builder integrated into CottiAI`.
 - Runtime: sandbox file initialization fingerprints the selected file list, so adding files after an
   earlier no-file sandbox initialization downloads them into `/mnt/data` on the next run.
 - Boundary: non-spreadsheet resource files keep the upstream knowledge-base / Agent-resource flow.
+
+### Production Model Channel Alignment
+
+- Scope: production deployment env now matches the working dev channel for "全能效率":
+  `gpt-5.5` is exposed as `azure/gpt-5.5`, not `openai/gpt-5.5`.
+- Scope: production model allow/display defaults remove `glm-5.2`; GLM remains excluded from the
+  production visible model list.
+- Boundary: chat/agent visibility rules are unchanged. `gpt-5.5` remains an Agent-only model when
+  Cotti Agent access is enabled.

@@ -14,8 +14,8 @@ describe('modelDisplayName', () => {
       getModelDisplayName('volcengine', 'doubao-seed-1.6-flash', 'Doubao Seed 1.6 Flash'),
     ).toBe('豆包1.6-Flash');
     expect(getModelDisplayName('qwen', 'qwen3.7-plus', 'Qwen3.7 Plus')).toBe('千问3.7-Plus');
-    expect(getModelDisplayName('openai', 'gpt-5.5', 'GPT-5.5')).toBe('全能效率');
-    expect(getModelDisplayName('openai', 'glm-5.2', 'GLM-5.2')).toBe('智谱-GLM5.2');
+    expect(getModelDisplayName('azure', 'gpt-5.5', 'GPT-5.5')).toBe('全能效率');
+    expect(getModelDisplayName('openai', 'glm-5.2', 'GLM-5.2')).toBe('GLM-5.2');
   });
 
   it('normalizes provider model lists without dropping provider fields', () => {
@@ -39,12 +39,14 @@ describe('modelDisplayName', () => {
         name: 'Aliyun Bailian',
       },
       {
-        children: [
-          { displayName: 'GPT-5.5', id: 'gpt-5.5' },
-          { displayName: 'GLM-5.2', id: 'glm-5.2' },
-        ],
+        children: [{ displayName: 'GLM-5.2', id: 'glm-5.2' }],
         id: 'openai',
         name: 'OpenAI',
+      },
+      {
+        children: [{ displayName: 'GPT-5.5', id: 'gpt-5.5' }],
+        id: 'azure',
+        name: 'Azure OpenAI',
       },
     ]);
 
@@ -68,12 +70,14 @@ describe('modelDisplayName', () => {
         name: 'Aliyun Bailian',
       },
       {
-        children: [
-          { displayName: '全能效率', id: 'gpt-5.5' },
-          { displayName: '智谱-GLM5.2', id: 'glm-5.2' },
-        ],
+        children: [{ displayName: 'GLM-5.2', id: 'glm-5.2' }],
         id: 'openai',
         name: 'OpenAI',
+      },
+      {
+        children: [{ displayName: '全能效率', id: 'gpt-5.5' }],
+        id: 'azure',
+        name: 'Azure OpenAI',
       },
     ]);
   });
