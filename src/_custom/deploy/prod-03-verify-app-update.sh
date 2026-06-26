@@ -59,6 +59,12 @@ const keys = [
   'NEXT_PUBLIC_MODEL_VISIBLE_ALLOW',
   'NEXT_PUBLIC_MODEL_DISPLAY_NAMES',
   'NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW',
+  'INTERNAL_APP_URL',
+  'QSTASH_URL',
+  'QSTASH_TOKEN',
+  'QSTASH_CURRENT_SIGNING_KEY',
+  'QSTASH_NEXT_SIGNING_KEY',
+  'AGENT_RUNTIME_MODE',
   'ENABLED_OPENAI',
   'OPENAI_PROXY_URL',
   'OPENAI_MODEL_LIST',
@@ -93,13 +99,34 @@ if (missing.length > 0) {
 "
 
 echo
-echo "== 5. App health =="
+echo "== 5. QStash health =="
+docker compose -f docker-compose.prod.yml --env-file .env ps qstash
+docker exec "$APP_CONTAINER" /bin/node -e "
+const required = ['QSTASH_URL', 'QSTASH_TOKEN', 'QSTASH_CURRENT_SIGNING_KEY', 'QSTASH_NEXT_SIGNING_KEY'];
+const missing = [];
+for (const key of required) {
+  const present = Boolean(process.env[key]);
+  console.log(key + '=' + (present ? 'set' : 'missing'));
+  if (!present) missing.push(key);
+}
+console.log('AGENT_RUNTIME_MODE=' + (process.env.AGENT_RUNTIME_MODE ?? ''));
+console.log('INTERNAL_APP_URL=' + (process.env.INTERNAL_APP_URL ?? ''));
+if (missing.length > 0 || process.env.AGENT_RUNTIME_MODE !== 'queue') {
+  console.error('QStash queue runtime is not fully configured');
+  process.exit(2);
+}
+"
+docker exec "$APP_CONTAINER" sh -lc 'wget -qS -O- --timeout=5 "$QSTASH_URL/" 2>&1 | sed -n "1,8p"' | grep -q '401 Unauthorized' \
+  || fail "app container cannot reach QStash or QStash did not return expected 401"
+
+echo
+echo "== 6. App health =="
 PORT="$(read_env LOBECHAT_PORT)"
 PORT="${PORT:-3210}"
 curl -fsSI --max-time 20 "http://127.0.0.1:${PORT}/" | sed -n '1,12p'
 
 echo
-echo "== 6. Migration and startup logs =="
+echo "== 7. Migration and startup logs =="
 docker logs --tail 200 "$APP_CONTAINER" | grep -E 'Start to migration|database migration pass|Ready|Gateway|migrate failed|ERROR|Error' || true
 docker logs --tail 200 "$APP_CONTAINER" | grep -q 'database migration pass' \
   || fail "database migration success log not found in recent app logs"
@@ -107,7 +134,7 @@ docker logs --tail 200 "$APP_CONTAINER" | grep -q 'Ready' \
   || fail "Next.js Ready log not found in recent app logs"
 
 echo
-echo "== 7. Database tables used by this release =="
+echo "== 8. Database tables used by this release =="
 POSTGRES_USER="$(read_env_default POSTGRES_USER paradedb)"
 POSTGRES_DB="$(read_env_default POSTGRES_DB lobehub)"
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \

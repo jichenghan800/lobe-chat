@@ -142,15 +142,28 @@ Keep external Redis, S3, SMTP, auth, and model provider secrets in `.env`.
 ## QStash and Scheduled Tasks
 
 Task automation does not run from an in-process timer. Scheduled tasks require an external caller
-to invoke `/api/workflows/task/schedule-dispatch`. Use exactly one scheduler source:
+to invoke `/api/workflows/task/schedule-dispatch`. Cotti production currently uses the same
+self-hosted QStash local-server mode as chatdev:
 
-- Managed Upstash/QStash for production.
-- Local QStash dev server for chatdev or local validation.
-- Machine cron fallback only when QStash is not configured.
+- Compose service: `qstash`
+- Container: `lobechat-qstash`
+- Internal app URL for callbacks: `http://lobechat-app:3210`
+- App queue mode: `AGENT_RUNTIME_MODE=queue`
+- App QStash URL: `http://qstash:8080`
+- Host debug ports: `127.0.0.1:18088` and `127.0.0.1:18089`
 
-When QStash is enabled, remove the machine cron fallback to avoid duplicate or unsigned dispatches.
+Use exactly one scheduler source. When QStash is enabled, remove the machine cron fallback to avoid
+duplicate or unsigned dispatches.
 If `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY` are set, direct cron calls without a
 QStash signature are rejected by the workflow middleware.
+
+The production app update script starts `lobechat-qstash`, reads `QSTASH_TOKEN`,
+`QSTASH_CURRENT_SIGNING_KEY`, and `QSTASH_NEXT_SIGNING_KEY` from its startup logs, writes them into
+the production `.env`, then restarts `lobechat-app`. This is required because Agent queue callbacks
+verify the QStash signature.
+
+Security boundary: this follows the current chatdev local-server deployment pattern. Keep the
+QStash host ports bound to `127.0.0.1`; do not expose them publicly.
 
 ### Local QStash for Chatdev
 

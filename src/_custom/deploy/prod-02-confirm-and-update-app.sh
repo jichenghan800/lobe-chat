@@ -62,6 +62,26 @@ require_env_value() {
   fi
 }
 
+wait_for_qstash_credentials() {
+  local container="$1"
+
+  for _ in $(seq 1 60); do
+    if docker logs "$container" 2>&1 | grep -q '^QSTASH_NEXT_SIGNING_KEY='; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "Timed out waiting for QStash credentials in $container logs" >&2
+  exit 1
+}
+
+read_qstash_log_value() {
+  local container="$1"
+  local key="$2"
+  docker logs "$container" 2>&1 | sed -n "s/^${key}=//p" | tail -n 1
+}
+
 require_file .env
 require_file docker-compose.prod.yml
 
@@ -104,7 +124,7 @@ echo "QWEN_API_KEY=set"
 
 echo
 echo "== Database impact =="
-echo "This script updates only the compose app service image."
+echo "This script updates the compose app service image and ensures local QStash is running."
 echo "PostgreSQL and SearXNG images are not changed."
 echo "The app container startup runs Drizzle migrations automatically when DATABASE_DRIVER is set."
 echo "No manual DML script is required for this release."
@@ -114,9 +134,10 @@ echo "== Planned actions =="
 echo "1. Backup .env into backups/"
 echo "2. Sync image/chat model exposure env values"
 echo "3. Set LOBECHAT_IMAGE to the target image"
-echo "4. docker compose pull app"
-echo "5. docker compose up -d app"
-echo "6. Show app status and recent logs"
+echo "4. Start local QStash and sync QStash credentials into .env"
+echo "5. docker compose pull app qstash"
+echo "6. docker compose up -d app"
+echo "7. Show app status and recent logs"
 
 if [[ "${AUTO_APPROVE:-0}" != "1" ]]; then
   echo
@@ -157,10 +178,32 @@ set_env .env QWEN_MODEL_LIST "-all,+qwen3.7-plus=千问3.7-Plus<262144:reasoning
 set_env .env COTTI_AUDIT_RISK_MODEL_PROVIDER "vertexai"
 set_env .env COTTI_AUDIT_RISK_MODEL "gemini-3.1-flash-lite"
 set_env .env LOBECHAT_IMAGE "$TARGET_IMAGE"
+set_env .env INTERNAL_APP_URL "http://lobechat-app:3210"
+set_env .env QSTASH_URL "http://qstash:8080"
+set_env .env AGENT_RUNTIME_MODE "queue"
 
 echo
-echo "Pulling app image..."
-docker compose -f docker-compose.prod.yml --env-file .env pull app
+echo "Starting local QStash..."
+docker compose -f docker-compose.prod.yml --env-file .env up -d qstash
+wait_for_qstash_credentials lobechat-qstash
+
+QSTASH_TOKEN_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_TOKEN)"
+QSTASH_CURRENT_SIGNING_KEY_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_CURRENT_SIGNING_KEY)"
+QSTASH_NEXT_SIGNING_KEY_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_NEXT_SIGNING_KEY)"
+
+if [[ -z "$QSTASH_TOKEN_VALUE" || -z "$QSTASH_CURRENT_SIGNING_KEY_VALUE" || -z "$QSTASH_NEXT_SIGNING_KEY_VALUE" ]]; then
+  echo "Failed to parse QStash credentials from lobechat-qstash logs" >&2
+  exit 1
+fi
+
+set_env .env QSTASH_TOKEN "$QSTASH_TOKEN_VALUE"
+set_env .env QSTASH_CURRENT_SIGNING_KEY "$QSTASH_CURRENT_SIGNING_KEY_VALUE"
+set_env .env QSTASH_NEXT_SIGNING_KEY "$QSTASH_NEXT_SIGNING_KEY_VALUE"
+echo "QStash credentials synced into .env"
+
+echo
+echo "Pulling app and QStash images..."
+docker compose -f docker-compose.prod.yml --env-file .env pull app qstash
 
 echo
 echo "Restarting app service..."
@@ -173,6 +216,10 @@ docker compose -f docker-compose.prod.yml --env-file .env ps
 echo
 echo "Recent app logs:"
 docker logs --tail 120 "$APP_CONTAINER" || true
+
+echo
+echo "Recent QStash logs:"
+docker logs --tail 40 lobechat-qstash || true
 
 echo
 echo "Update command finished. Run prod-03-verify-app-update.sh for acceptance checks."

@@ -16,6 +16,10 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   `sha256:6040b94fa65519f4cd7b31a7f63257727329e1f909ae3f6180e74853317a9b32`.
 - Boundary: no secrets are committed. The generated update package still relies on the production
   server's existing `.env` and only updates `LOBECHAT_IMAGE` plus the known model exposure env keys.
+- QStash: production Compose now includes the self-hosted `lobechat-qstash` service, matching the
+  chatdev local-server pattern. The update script starts QStash, reads its token/signing keys from
+  startup logs, writes them into the server `.env`, sets `AGENT_RUNTIME_MODE=queue`, and points
+  `QSTASH_URL` to the Compose service URL `http://qstash:8080`.
 - Rollback: production script keeps a timestamped `.env` backup before changing runtime config; image
   rollback is done by restoring the previous `LOBECHAT_IMAGE` and restarting the Compose `app`
   service.
