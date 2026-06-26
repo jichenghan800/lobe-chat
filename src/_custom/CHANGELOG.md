@@ -20,6 +20,10 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   chatdev local-server pattern. The update script starts QStash, reads its token/signing keys from
   startup logs, writes them into the server `.env`, sets `AGENT_RUNTIME_MODE=queue`, and points
   `QSTASH_URL` to the Compose service URL `http://qstash:8080`.
+- Model access: production env keeps `gpt-5.5` (`全能效率`) available for Agent mode while hiding it
+  from normal Chat mode. `glm-5.2` (`智谱-GLM5.2`) is removed from the production visible model allow
+  list, display-name mapping, and OpenAI model list. The app update script also writes
+  `COTTI_AGENT_ACCESS_MODE=open` so Agent-mode model access is not blocked by the env allowlist.
 - Rollback: production script keeps a timestamped `.env` backup before changing runtime config; image
   rollback is done by restoring the previous `LOBECHAT_IMAGE` and restarting the Compose `app`
   service.

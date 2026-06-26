@@ -43,6 +43,6 @@ describe('modelVisibility', () => {
     ]);
     expect(providers[1].children.map((model) => model.id)).toEqual(['doubao-seed-1.6-flash']);
     expect(providers[2].children.map((model) => model.id)).toEqual(['qwen3.7-plus']);
-    expect(providers[3].children.map((model) => model.id)).toEqual(['gpt-5.5', 'glm-5.2']);
+    expect(providers[3].children.map((model) => model.id)).toEqual(['gpt-5.5']);
   });
 });
