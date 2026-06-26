@@ -8,15 +8,33 @@ SRC_ENV="${SRC_ENV:-.env}"
 PROD_HOST="${PROD_HOST:-47.236.135.3}"
 PROD_DIR="${PROD_DIR:-/opt/lobechat-main}"
 OUT_DIR="${1:-src/_custom/deploy/dist/production-$(date +%Y%m%d-%H%M%S)}"
+COMPOSE_SOURCE="${COMPOSE_SOURCE:-}"
+TEMPLATE_ENV="${TEMPLATE_ENV:-.env.production.example}"
 
 if [[ ! -f "$SRC_ENV" ]]; then
   echo "Missing source env file: $SRC_ENV" >&2
   exit 1
 fi
 
-if [[ ! -f docker-compose.prod.yml ]]; then
-  echo "Missing docker-compose.prod.yml" >&2
+if [[ -z "$COMPOSE_SOURCE" ]]; then
+  if [[ -f docker-compose.prod.yml ]]; then
+    COMPOSE_SOURCE="docker-compose.prod.yml"
+  else
+    COMPOSE_SOURCE="src/_custom/deploy/docker-compose.prod.yml"
+  fi
+fi
+
+if [[ ! -f "$COMPOSE_SOURCE" ]]; then
+  echo "Missing production compose file: $COMPOSE_SOURCE" >&2
   exit 1
+fi
+
+if [[ ! -f "$TEMPLATE_ENV" ]]; then
+  if [[ -f docker-compose/deploy/.env.example ]]; then
+    TEMPLATE_ENV="docker-compose/deploy/.env.example"
+  else
+    TEMPLATE_ENV="/dev/null"
+  fi
 fi
 
 read_env() {
@@ -26,7 +44,7 @@ read_env() {
 
 read_template() {
   local key="$1"
-  awk -F= -v key="$key" '$1 == key { print substr($0, index($0, "=") + 1); exit }' .env.production.example
+  awk -F= -v key="$key" '$1 == key { print substr($0, index($0, "=") + 1); exit }' "$TEMPLATE_ENV"
 }
 
 set_env() {
@@ -62,7 +80,7 @@ require_value() {
 }
 
 mkdir -p "$OUT_DIR"
-cp docker-compose.prod.yml "$OUT_DIR/docker-compose.prod.yml"
+cp "$COMPOSE_SOURCE" "$OUT_DIR/docker-compose.prod.yml"
 cp docker-compose/deploy/searxng-settings.yml "$OUT_DIR/searxng-settings.yml"
 cp "$SRC_ENV" "$OUT_DIR/.env"
 

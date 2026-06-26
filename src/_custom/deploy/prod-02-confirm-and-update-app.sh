@@ -13,7 +13,7 @@ if [[ -f release.env ]]; then
   set +a
 fi
 
-TARGET_IMAGE="${TARGET_IMAGE:-${LOBECHAT_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-image-video-audit-ui-env-models-v2-20260614}}"
+TARGET_IMAGE="${TARGET_IMAGE:-${LOBECHAT_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad}}"
 TARGET_DIGEST="${TARGET_DIGEST:-${LOBECHAT_IMAGE_DIGEST:-}}"
 
 read_env() {

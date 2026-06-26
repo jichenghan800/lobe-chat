@@ -3,6 +3,23 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-26
+
+### Production App Update Package Preparation
+
+- Change: add a tracked production Compose source at `src/_custom/deploy/docker-compose.prod.yml`
+  and make the app-update package generator use it when no root `docker-compose.prod.yml` exists.
+- Release target: prepare immutable production image tag
+  `sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad`
+  from the chatdev-validated local image `lobehub:v2.2.8-cotti-chat-agent-model-split-v31`;
+  pushed registry digest is
+  `sha256:6040b94fa65519f4cd7b31a7f63257727329e1f909ae3f6180e74853317a9b32`.
+- Boundary: no secrets are committed. The generated update package still relies on the production
+  server's existing `.env` and only updates `LOBECHAT_IMAGE` plus the known model exposure env keys.
+- Rollback: production script keeps a timestamped `.env` backup before changing runtime config; image
+  rollback is done by restoring the previous `LOBECHAT_IMAGE` and restarting the Compose `app`
+  service.
+
 ## 2026-06-25
 
 ### Chat and Agent Model Visibility Split

@@ -118,7 +118,7 @@ real production `.env` from dev with `generate-production-package.sh`; do not co
 At minimum, confirm these values before running Compose:
 
 ```bash
-LOBECHAT_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
+LOBECHAT_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad
 PG_CLIENT_IMAGE=postgres:18-alpine
 POSTGRES_USER=paradedb
 POSTGRES_PASSWORD=<new-strong-password>
@@ -256,25 +256,36 @@ http://lobehub-v228-stage0:3210/api/workflows/task/on-topic-complete
 Build and push an immutable image tag before production deployment:
 
 ```bash
-docker tag lobehub-cotti:v2.2.1-cotti-market-auth-recovery \
-  sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
+docker tag lobehub:v2.2.8-cotti-chat-agent-model-split-v31 \
+  sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad
 
-docker push sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
+docker push sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad
 ```
 
 Then set the same image in production `.env` as `LOBECHAT_IMAGE`.
 
-Current pushed image:
+Current target image:
 
 ```bash
-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.1-cotti-20260531-212414-ea0b6997f2-eef7f94
+sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad
 ```
 
 Registry digest:
 
 ```bash
-sha256:d69b5f1d1f9e2ba156e68cb70addc003945ff9f0e2521a5f382a2be04c36ef9d
+sha256:6040b94fa65519f4cd7b31a7f63257727329e1f909ae3f6180e74853317a9b32
 ```
+
+For routine app-only releases, generate the update package from the tracked compose source:
+
+```bash
+TARGET_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad \
+  TARGET_DIGEST=sha256:6040b94fa65519f4cd7b31a7f63257727329e1f909ae3f6180e74853317a9b32 \
+  src/_custom/deploy/create-production-app-update-package.sh
+```
+
+The generated package is written to `src/_custom/deploy/dist/` and includes `release.env`,
+`docker-compose.prod.yml`, and the three production update scripts. It contains no secrets.
 
 ## Stage Files
 
