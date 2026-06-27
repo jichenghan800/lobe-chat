@@ -7,12 +7,10 @@ import { shouldIncludeAgentOnlyChatModels } from '@/_custom/registry/modelAvaila
 import { useBusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import { usePermission } from '@/hooks/usePermission';
-import { useAgentStore } from '@/store/agent';
-import { agentByIdSelectors } from '@/store/agent/selectors';
 import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
-import { useAgentId } from '../../hooks/useAgentId';
 import { useActionBarContext } from '../context';
+import { useTopicAwareModelDisplay } from './useTopicAwareModelDisplay';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   icon: css`
@@ -54,13 +52,14 @@ const ModelSwitch = memo(() => {
   const iconSize = actionSize?.size ?? 20;
   const { allowed: canCreateContent, reason } = usePermission('create_content');
 
-  const agentId = useAgentId();
-  const [model, provider, enableAgentMode, updateAgentConfigById] = useAgentStore((s) => [
-    agentByIdSelectors.getAgentModelById(agentId)(s),
-    agentByIdSelectors.getAgentModelProviderById(agentId)(s),
-    agentByIdSelectors.getAgentEnableModeById(agentId)(s),
-    s.updateAgentConfigById,
-  ]);
+  const {
+    agentId,
+    enableAgentMode,
+    isModelDisplayLoading,
+    model,
+    provider,
+    updateAgentConfigById,
+  } = useTopicAwareModelDisplay();
   const enableCottiAgentAccess = useServerConfigStore(serverConfigSelectors.enableCottiAgentAccess);
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
   const includeAgentOnlyModels = shouldIncludeAgentOnlyChatModels({
@@ -84,10 +83,16 @@ const ModelSwitch = memo(() => {
       width={blockSize}
     >
       <div className={styles.icon}>
-        <ModelIcon model={model} size={iconSize} />
+        {isModelDisplayLoading ? (
+          <div style={{ height: iconSize, width: iconSize }} />
+        ) : (
+          <ModelIcon model={model} size={iconSize} />
+        )}
       </div>
     </Center>
   );
+
+  if (isModelDisplayLoading) return trigger;
 
   if (!canCreateContent)
     return (

@@ -5,6 +5,14 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 ## 2026-06-28
 
+### Agent Topic Model Display Hydration
+
+- Avoid showing the agent's later model config during the first frames of an `/agent/:agentId/:topicId`
+  route while the topic summary is still hydrating.
+- The chat input model icon and label now keep an empty loading state for topic URLs until a topic or
+  message model snapshot arrives, prefer that snapshot when present, and only then fall back to the
+  agent config. This prevents GLM task runs from briefly flashing GPT5.5 in the model selector.
+
 ### Home Agent Model Selection Send Race
 
 - Incident: selecting an Agent-only model such as `智谱-GLM5.2` on the home input could briefly show
