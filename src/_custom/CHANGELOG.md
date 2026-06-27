@@ -98,6 +98,23 @@ type-check` passed.
   `chatdev`; previous dev container is retained as
   `lobehub-v228-stage0-before-route-preload-off-20260627190858`.
 
+### Production App Update Package for v35
+
+- Release target: prepare immutable production image tag
+  `sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260627-10d70f5ecd`
+  from the chatdev-validated local image `lobehub:v2.2.8-cotti-route-preload-off-v35`;
+  pushed registry digest is
+  `sha256:c0612e18793e18c63d15263757213b71f52d54259a30ab67978b11736c9c1c16`.
+- Package: generated production app-update package
+  `src/_custom/deploy/dist/lobechat-prod-app-update-v2.2.8-cotti-20260627-10d70f5ecd.tar.gz`.
+  The package contains `release.env`, the tracked production compose file, and the three production
+  update scripts. It contains no secrets.
+- Scope: this package carries the 2026-06-27 dev-validated fixes for Doubao SSE undefined chunks,
+  home Cotti starter models, runtime-state model pruning, and SPA route preload reduction.
+- Boundary: only the image and update package have been prepared. The production server has not run
+  `02-confirm-and-update-app.sh`, so the running production container is unchanged until the package
+  is copied to production and the update script is confirmed there.
+
 ## 2026-06-26
 
 ### Production App Update Package Preparation
