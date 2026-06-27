@@ -22,13 +22,34 @@ describe('modelBuiltinSearch', () => {
     expect(model.settings).toEqual({ searchImpl: 'params', searchProvider: 'google' });
   });
 
-  it('keeps builtin search for allow-listed Doubao and Qwen models', () => {
-    const allowList = 'vertexai/gemini-*,volcengine/doubao-seed-2-1-pro-260628,qwen/qwen3.7-plus';
+  it('keeps builtin search for allow-listed Qwen models', () => {
+    const allowList = 'vertexai/gemini-*,qwen/qwen3.7-plus';
 
-    expect(isModelBuiltinSearchAllowed('volcengine', 'doubao-seed-2-1-pro-260628', allowList)).toBe(
-      true,
-    );
     expect(isModelBuiltinSearchAllowed('qwen', 'qwen3.7-plus', allowList)).toBe(true);
+  });
+
+  it('strips builtin search from Doubao 2.1 Pro in the Cotti allow list', () => {
+    const previousAllow = process.env.NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW;
+    process.env.NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW =
+      'vertexai/gemini-*,google/gemini-*,qwen/qwen3.7-plus';
+
+    try {
+      const model = normalizeModelBuiltinSearch('volcengine', {
+        abilities: { functionCall: true, search: true },
+        id: 'doubao-seed-2-1-pro-260628',
+        providerId: 'volcengine',
+        settings: { extendParams: ['gpt5ReasoningEffort'], searchImpl: 'params' },
+      });
+
+      expect(model.abilities).toEqual({ functionCall: true, search: false });
+      expect(model.settings).toEqual({ extendParams: ['gpt5ReasoningEffort'] });
+    } finally {
+      if (previousAllow === undefined) {
+        delete process.env.NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW;
+      } else {
+        process.env.NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW = previousAllow;
+      }
+    }
   });
 
   it('strips builtin search from non-allow-listed models and preserves other settings', () => {

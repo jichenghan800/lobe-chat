@@ -3,6 +3,27 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-28
+
+### Chat and Agent Cotti Model Pools
+
+- Change: split the Cotti visible chat model list by input mode. Normal Chat hides
+  `volcengine/doubao-seed-2-1-pro-260628`, `qwen/glm-5.2`, and `azure/gpt-5.5`; Agent intelligent
+  mode hides `vertexai/gemini-3.1-flash-lite` (`COTTI-快速`).
+- Defaults: normal Chat keeps `COTTI-快速` (`vertexai/gemini-3.1-flash-lite`) as the default model.
+  Switching into Agent mode from a Chat-only model falls back to `COTTI-专业`
+  (`vertexai/gemini-3.5-flash`); switching back to Chat from an Agent-only model falls back to
+  `COTTI-快速`.
+- Doubao boundary: keep the upstream/source Doubao Seed 2.1 Pro model capabilities and Volcengine
+  Responses API support intact, including its source `search` metadata. Cotti runtime env removes
+  Doubao from `NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW`, so the enterprise UI does not expose
+  builtin 联网 for Doubao by default.
+- Deployment: production update script now writes the same model visibility/display/search allow-list
+  policy and includes Bailian `qwen/glm-5.2` for Agent-mode-only exposure.
+- Dev deployment: dev container image `lobehub:v2.2.8-cotti-chat-agent-pools-v38` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-chat-agent-pools-20260628003644`.
+
 ## 2026-06-27
 
 ### Bailian GLM-5.2 Channel Switch

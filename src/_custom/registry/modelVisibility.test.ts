@@ -30,7 +30,7 @@ describe('modelVisibility', () => {
         id: 'volcengine',
       },
       {
-        children: [{ id: 'qwen3.7-plus' }, { id: 'hidden-qwen' }],
+        children: [{ id: 'glm-5.2' }, { id: 'qwen3.7-plus' }, { id: 'hidden-qwen' }],
         id: 'qwen',
       },
     ]);
@@ -46,7 +46,7 @@ describe('modelVisibility', () => {
       'gemini-3.5-flash',
     ]);
     expect(providers[1].children.map((model) => model.id)).toEqual(['doubao-seed-2-1-pro-260628']);
-    expect(providers[2].children.map((model) => model.id)).toEqual(['qwen3.7-plus']);
+    expect(providers[2].children.map((model) => model.id)).toEqual(['qwen3.7-plus', 'glm-5.2']);
     expect(providers[3].children.map((model) => model.id)).toEqual(['gpt-5.5']);
   });
 });

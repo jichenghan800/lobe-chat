@@ -1,6 +1,9 @@
 import isEqual from 'fast-deep-equal';
 
-import { filterAgentOnlyChatModels } from '@/_custom/registry/modelAvailability';
+import {
+  filterAgentModeModelLists,
+  filterChatModeModelLists,
+} from '@/_custom/registry/modelAvailability';
 import { normalizeProviderModelDisplayNames } from '@/_custom/registry/modelDisplayName';
 import { filterVisibleProviderModelLists } from '@/_custom/registry/modelVisibility';
 import { useAiInfraStore } from '@/store/aiInfra';
@@ -19,7 +22,7 @@ export const useEnabledChatModels = ({
 
   return normalizeProviderModelDisplayNames(
     includeAgentOnlyModels
-      ? visibleProviderModelLists
-      : filterAgentOnlyChatModels(visibleProviderModelLists),
+      ? filterAgentModeModelLists(visibleProviderModelLists)
+      : filterChatModeModelLists(visibleProviderModelLists),
   );
 };
