@@ -52,6 +52,7 @@ export const createAgentSlice = (set: Setter, get: () => AgentStore, _api?: unkn
 export class AgentSliceActionImpl {
   readonly #get: () => AgentStore;
   readonly #set: Setter;
+  readonly #pendingAgentConfigUpdates = new Map<string, Promise<void>>();
   readonly #pendingAgentDocuments = new Map<string, Promise<AgentContextDocument[] | undefined>>();
 
   constructor(set: Setter, get: () => AgentStore, _api?: unknown) {
@@ -211,9 +212,7 @@ export class AgentSliceActionImpl {
 
     if (!activeAgentId) return;
 
-    const controller = this.#get().internal_createAbortController('updateAgentConfigSignal');
-
-    await this.#get().optimisticUpdateAgentConfig(activeAgentId, config, controller.signal);
+    await this.#get().updateAgentConfigById(activeAgentId, config);
   };
 
   updateAgentConfigById = async (
@@ -224,7 +223,21 @@ export class AgentSliceActionImpl {
 
     const controller = this.#get().internal_createAbortController('updateAgentConfigSignal');
 
-    await this.#get().optimisticUpdateAgentConfig(agentId, config, controller.signal);
+    const update = this.#get().optimisticUpdateAgentConfig(agentId, config, controller.signal);
+    this.#pendingAgentConfigUpdates.set(agentId, update);
+
+    try {
+      await update;
+    } finally {
+      if (this.#pendingAgentConfigUpdates.get(agentId) === update) {
+        this.#pendingAgentConfigUpdates.delete(agentId);
+      }
+    }
+  };
+
+  waitForAgentConfigUpdateById = async (agentId: string): Promise<void> => {
+    const pending = this.#pendingAgentConfigUpdates.get(agentId);
+    if (pending) await pending;
   };
 
   updateAgentRuntimeEnvConfigById = async (
@@ -298,6 +311,11 @@ export class AgentSliceActionImpl {
       {
         onData: (data) => {
           if (!data) return;
+          const pendingUpdate = this.#pendingAgentConfigUpdates.get(agentId);
+          if (pendingUpdate) {
+            void pendingUpdate.finally(() => mutate(agentConfigKeys.config(agentId)));
+            return;
+          }
           this.#get().internal_dispatchAgentMap(agentId, data);
           // Only adopt the fetched agent as the active one when nothing is
           // active yet. The active agent is owned by the route-level sync

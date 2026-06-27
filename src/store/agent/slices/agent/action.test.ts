@@ -387,6 +387,38 @@ describe('AgentSlice Actions', () => {
         expect.any(AbortSignal),
       );
     });
+
+    it('should let callers wait for a pending config update by agent id', async () => {
+      const { result } = renderHook(() => useAgentStore());
+      let resolveUpdate!: (value: any) => void;
+      vi.mocked(agentService.updateAgentConfig).mockReturnValue(
+        new Promise((resolve) => {
+          resolveUpdate = resolve;
+        }) as any,
+      );
+
+      act(() => {
+        void result.current.updateAgentConfigById('agent-1', { model: 'glm-5.2' });
+      });
+
+      expect(result.current.agentMap['agent-1']).toEqual({ model: 'glm-5.2' });
+
+      let waited = false;
+      const waitPromise = result.current.waitForAgentConfigUpdateById('agent-1').then(() => {
+        waited = true;
+      });
+
+      await Promise.resolve();
+      expect(waited).toBe(false);
+
+      await act(async () => {
+        resolveUpdate({ agent: { model: 'glm-5.2', provider: 'qwen' }, success: true });
+        await waitPromise;
+      });
+
+      expect(waited).toBe(true);
+      expect(result.current.agentMap['agent-1']).toEqual({ model: 'glm-5.2', provider: 'qwen' });
+    });
   });
 
   describe('updateAgentMeta', () => {
@@ -640,6 +672,46 @@ describe('AgentSlice Actions', () => {
       await waitFor(() => expect(result.current.data).toEqual(mockAgentConfig));
 
       expect(useAgentStore.getState().agentConfigErrorMap['agent-1']).toBeUndefined();
+    });
+
+    it('should not let a stale fetch overwrite an in-flight optimistic config update', async () => {
+      let resolveUpdate!: (value: any) => void;
+      vi.mocked(agentService.updateAgentConfig).mockReturnValue(
+        new Promise((resolve) => {
+          resolveUpdate = resolve;
+        }) as any,
+      );
+      vi.mocked(agentService.getAgentConfigById).mockResolvedValueOnce({
+        id: 'agent-1',
+        model: 'doubao-seed-2-1-pro-260628',
+        provider: 'volcengine',
+      } as any);
+
+      act(() => {
+        void useAgentStore
+          .getState()
+          .updateAgentConfigById('agent-1', { model: 'glm-5.2', provider: 'qwen' });
+      });
+
+      const { result } = renderHook(() => useAgentStore().useFetchAgentConfig(true, 'agent-1'), {
+        wrapper: withSWR,
+      });
+
+      await waitFor(() => expect(result.current.data?.model).toBe('doubao-seed-2-1-pro-260628'));
+      expect(useAgentStore.getState().agentMap['agent-1']).toEqual({
+        model: 'glm-5.2',
+        provider: 'qwen',
+      });
+
+      await act(async () => {
+        resolveUpdate({ agent: { model: 'glm-5.2', provider: 'qwen' }, success: true });
+        await useAgentStore.getState().waitForAgentConfigUpdateById('agent-1');
+      });
+
+      expect(useAgentStore.getState().agentMap['agent-1']).toEqual({
+        model: 'glm-5.2',
+        provider: 'qwen',
+      });
     });
   });
 

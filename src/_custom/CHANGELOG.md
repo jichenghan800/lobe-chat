@@ -16,8 +16,13 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Fix: before the home default send creates the isolated topic, persist the current runtime
   `model/provider` and Agent-mode flag for the selected home agent. The routed page and gateway now
   start from the same model the user selected on the home page.
+- Follow-up fix: agent config saves are now awaitable by agent id, and `useFetchAgentConfig` skips
+  applying stale server config while a save is in flight. This prevents a fast home select-and-send
+  path from aborting the model selection save or rehydrating an older server-side model over the
+  optimistic selection.
 - Verification: added a focused home input regression test that asserts `glm-5.2/qwen` is saved
-  before `sendMessage` is called.
+  before `sendMessage` is called, plus agent-store tests for waiting on a pending config save and
+  blocking stale fetch overwrite while the save is in flight.
 - Dev deployment: dev container image `lobehub:v2.2.8-cotti-home-model-send-race-v39` is running on
   `chatdev`; previous dev container is retained as
   `lobehub-v228-stage0-before-home-model-send-race-20260628010424`.

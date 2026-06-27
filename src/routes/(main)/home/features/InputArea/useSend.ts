@@ -47,6 +47,8 @@ const buildRuntimeConfigForSend = (config: LobeAgentConfig): PartialDeep<LobeAge
 };
 
 const persistRuntimeConfigBeforeSend = async (agentId: string): Promise<void> => {
+  await useAgentStore.getState().waitForAgentConfigUpdateById(agentId);
+
   const agentState = useAgentStore.getState();
   const config = agentState.agentMap[agentId] as LobeAgentConfig | undefined;
   if (!config?.model || !config?.provider) return;

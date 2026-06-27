@@ -15,6 +15,7 @@ const routerMock = vi.hoisted(() => ({
 
 const sendMessageMock = vi.hoisted(() => vi.fn());
 const updateAgentConfigByIdMock = vi.hoisted(() => vi.fn());
+const waitForAgentConfigUpdateByIdMock = vi.hoisted(() => vi.fn());
 const clearContentMock = vi.hoisted(() => vi.fn());
 const clearChatUploadFileListMock = vi.hoisted(() => vi.fn());
 const clearChatContextSelectionsMock = vi.hoisted(() => vi.fn());
@@ -59,6 +60,7 @@ const agentState = vi.hoisted(() => ({
   inboxAgentId: 'agt_inbox',
   internal_dispatchAgentMap: vi.fn(),
   updateAgentConfigById: updateAgentConfigByIdMock,
+  waitForAgentConfigUpdateById: waitForAgentConfigUpdateByIdMock,
 }));
 
 const globalState = vi.hoisted(() => ({
@@ -141,6 +143,7 @@ describe('Home InputArea useSend', () => {
     routerMock.replace.mockReset();
     sendMessageMock.mockReset();
     updateAgentConfigByIdMock.mockReset();
+    waitForAgentConfigUpdateByIdMock.mockReset();
     clearContentMock.mockReset();
     clearChatUploadFileListMock.mockReset();
     clearChatContextSelectionsMock.mockReset();
@@ -172,6 +175,10 @@ describe('Home InputArea useSend', () => {
       model: 'glm-5.2',
       provider: 'qwen',
     });
+    expect(waitForAgentConfigUpdateByIdMock).toHaveBeenCalledWith('agt_inbox');
+    expect(updateAgentConfigByIdMock.mock.invocationCallOrder[0]).toBeGreaterThan(
+      waitForAgentConfigUpdateByIdMock.mock.invocationCallOrder[0],
+    );
     expect(sendMessageMock).toHaveBeenCalledWith(
       expect.objectContaining({
         context: { agentId: 'agt_inbox', isolatedTopic: true },
