@@ -5,6 +5,20 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 ## 2026-06-28
 
+### Home Agent Model Selection Send Race
+
+- Incident: selecting an Agent-only model such as `智谱-GLM5.2` on the home input could briefly show
+  the selected model, then flip back to the previous server-side model (for example Doubao) after the
+  task page opened and execution started.
+- Root cause: home model switching updates the client store optimistically, while the task page and
+  gateway read the persisted agent config during startup. A fast select-and-send path could create
+  the topic before the selected `model/provider` was saved, so the next page rehydrated stale config.
+- Fix: before the home default send creates the isolated topic, persist the current runtime
+  `model/provider` and Agent-mode flag for the selected home agent. The routed page and gateway now
+  start from the same model the user selected on the home page.
+- Verification: added a focused home input regression test that asserts `glm-5.2/qwen` is saved
+  before `sendMessage` is called.
+
 ### Chat and Agent Cotti Model Pools
 
 - Change: split the Cotti visible chat model list by input mode. Normal Chat hides

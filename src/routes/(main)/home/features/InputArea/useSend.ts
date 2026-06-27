@@ -1,5 +1,6 @@
 import { SESSION_CHAT_TOPIC_URL, SESSION_CHAT_URL } from '@lobechat/const';
 import { useCallback } from 'react';
+import type { PartialDeep } from 'type-fest';
 
 import type { SendButtonHandler } from '@/features/ChatInput/store/initialState';
 import { useHomeDailyBrief } from '@/hooks/useHomeDailyBrief';
@@ -9,6 +10,7 @@ import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';
 import { fileChatSelectors, useFileStore } from '@/store/file';
 import { useHomeStore } from '@/store/home';
+import type { LobeAgentConfig } from '@/types/agent';
 
 import { useResolvedHomeAgentId } from '../AgentSelect/useResolvedHomeAgentId';
 
@@ -32,6 +34,27 @@ const ensureAgentConfigLoaded = async (agentId: string): Promise<void> => {
   if (agentState.agentMap[agentId]) return;
   const config = await agentService.getAgentConfigById(agentId);
   if (config) agentState.internal_dispatchAgentMap(agentId, config);
+};
+
+const buildRuntimeConfigForSend = (config: LobeAgentConfig): PartialDeep<LobeAgentConfig> => {
+  const enableAgentMode = config.chatConfig?.enableAgentMode;
+
+  return {
+    ...(typeof enableAgentMode === 'boolean' && { chatConfig: { enableAgentMode } }),
+    model: config.model,
+    provider: config.provider,
+  };
+};
+
+const persistRuntimeConfigBeforeSend = async (agentId: string): Promise<void> => {
+  const agentState = useAgentStore.getState();
+  const config = agentState.agentMap[agentId] as LobeAgentConfig | undefined;
+  if (!config?.model || !config?.provider) return;
+
+  // Home model switching is optimistic. Persist the current runtime choice
+  // before creating the topic so the routed page and gateway don't read stale
+  // server config and flip the selected model back during startup.
+  await agentState.updateAgentConfigById(agentId, buildRuntimeConfigForSend(config));
 };
 
 export const useSend = () => {
@@ -119,6 +142,7 @@ export const useSend = () => {
             // First-time selections from AgentSelect have no entry in `agentMap`
             // yet — block on the fetch so sendMessage finds a real config below.
             await ensureAgentConfigLoaded(activeAgentId);
+            await persistRuntimeConfigBeforeSend(activeAgentId);
 
             sendMessage({
               context: { agentId: activeAgentId, isolatedTopic: true },

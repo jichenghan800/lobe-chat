@@ -14,6 +14,7 @@ const routerMock = vi.hoisted(() => ({
 }));
 
 const sendMessageMock = vi.hoisted(() => vi.fn());
+const updateAgentConfigByIdMock = vi.hoisted(() => vi.fn());
 const clearContentMock = vi.hoisted(() => vi.fn());
 const clearChatUploadFileListMock = vi.hoisted(() => vi.fn());
 const clearChatContextSelectionsMock = vi.hoisted(() => vi.fn());
@@ -49,10 +50,15 @@ const homeState = vi.hoisted(() => ({
 
 const agentState = vi.hoisted(() => ({
   agentMap: {
-    agt_inbox: {},
+    agt_inbox: {
+      chatConfig: { enableAgentMode: true },
+      model: 'glm-5.2',
+      provider: 'qwen',
+    },
   },
   inboxAgentId: 'agt_inbox',
   internal_dispatchAgentMap: vi.fn(),
+  updateAgentConfigById: updateAgentConfigByIdMock,
 }));
 
 const globalState = vi.hoisted(() => ({
@@ -134,12 +140,18 @@ describe('Home InputArea useSend', () => {
     routerMock.push.mockReset();
     routerMock.replace.mockReset();
     sendMessageMock.mockReset();
+    updateAgentConfigByIdMock.mockReset();
     clearContentMock.mockReset();
     clearChatUploadFileListMock.mockReset();
     clearChatContextSelectionsMock.mockReset();
     homeDailyBriefState.advance.mockReset();
     homeDailyBriefState.currentPair = undefined;
     chatState.inputMessage = 'hello';
+    agentState.agentMap.agt_inbox = {
+      chatConfig: { enableAgentMode: true },
+      model: 'glm-5.2',
+      provider: 'qwen',
+    };
   });
 
   it('routes cold homepage sends to the created topic instead of relying on ChatHydration timing', async () => {
@@ -155,12 +167,20 @@ describe('Home InputArea useSend', () => {
       await result.current.send(params);
     });
 
+    expect(updateAgentConfigByIdMock).toHaveBeenCalledWith('agt_inbox', {
+      chatConfig: { enableAgentMode: true },
+      model: 'glm-5.2',
+      provider: 'qwen',
+    });
     expect(sendMessageMock).toHaveBeenCalledWith(
       expect.objectContaining({
         context: { agentId: 'agt_inbox', isolatedTopic: true },
         message: 'hello',
         onTopicCreated: expect.any(Function),
       }),
+    );
+    expect(sendMessageMock.mock.invocationCallOrder[0]).toBeGreaterThan(
+      updateAgentConfigByIdMock.mock.invocationCallOrder[0],
     );
     expect(routerMock.push).toHaveBeenCalledWith('/agent/agt_inbox');
 
