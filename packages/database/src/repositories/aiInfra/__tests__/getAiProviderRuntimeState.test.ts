@@ -1,8 +1,7 @@
-import type { AiProviderRuntimeConfig, EnabledProvider } from '@lobechat/types';
+import type { AiProviderRuntimeConfig, EnabledProvider, ProviderConfig } from '@lobechat/types';
 import type { EnabledAiModel } from 'model-bank';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getTestDB } from '../../../core/getTestDB';
 import type { LobeChatDatabase } from '../../../type';
 import { AiInfraRepos } from '../index';
 
@@ -10,29 +9,44 @@ const userId = 'test-user-id';
 const mockProviderConfigs = {
   openai: { enabled: true },
   anthropic: { enabled: false },
-};
+  fal: {
+    enabled: true,
+    serverModelLists: [
+      { id: 'flux/schnell', providerId: 'fal', type: 'image' },
+      { id: 'flux-kontext/dev', providerId: 'fal', type: 'image' },
+    ],
+  },
+  vertexai: {
+    enabled: true,
+    serverModelLists: [
+      { id: 'gemini-3.1-flash-lite', providerId: 'vertexai', type: 'chat' },
+      { id: 'gemini-3.5-flash', providerId: 'vertexai', type: 'chat' },
+    ],
+  },
+} as unknown as Record<string, ProviderConfig>;
 
-let serverDB: LobeChatDatabase;
 let repo: AiInfraRepos;
-
-beforeAll(async () => {
-  serverDB = await getTestDB();
-}, 30000);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  repo = new AiInfraRepos(serverDB, userId, mockProviderConfigs);
+  repo = new AiInfraRepos({} as LobeChatDatabase, userId, mockProviderConfigs);
 });
 
 describe('AiInfraRepos', () => {
   describe('getAiProviderRuntimeState', () => {
     it('should return complete runtime state', async () => {
       const mockRuntimeConfig = {
-        openai: { apiKey: 'test-key' },
+        vertexai: { apiKey: 'test-key' },
       } as unknown as Record<string, AiProviderRuntimeConfig>;
-      const mockEnabledProviders = [{ id: 'openai', name: 'OpenAI' }] as EnabledProvider[];
+      const mockEnabledProviders = [{ id: 'vertexai', name: 'Vertex AI' }] as EnabledProvider[];
       const mockEnabledModels = [
-        { id: 'gpt-4', providerId: 'openai', enabled: true },
+        {
+          abilities: {},
+          enabled: true,
+          id: 'gemini-3.1-flash-lite',
+          providerId: 'vertexai',
+          type: 'chat',
+        },
       ] as EnabledAiModel[];
 
       vi.spyOn(repo.aiProviderModel, 'getAiProviderRuntimeConfig').mockResolvedValue(
@@ -52,7 +66,7 @@ describe('AiInfraRepos', () => {
 
     it('should return provider runtime state', async () => {
       const mockRuntimeConfig = {
-        openai: {
+        vertexai: {
           apiKey: 'test-key',
         },
       } as unknown as Record<string, AiProviderRuntimeConfig>;
@@ -63,6 +77,7 @@ describe('AiInfraRepos', () => {
 
       vi.spyOn(repo, 'getUserEnabledProviderList').mockResolvedValue([
         { id: 'openai', logo: 'logo1', name: 'OpenAI', source: 'builtin' },
+        { id: 'vertexai', logo: 'logo2', name: 'Vertex AI', source: 'builtin' },
       ]);
 
       vi.spyOn(repo, 'getEnabledModels').mockResolvedValue([
@@ -73,6 +88,13 @@ describe('AiInfraRepos', () => {
           providerId: 'openai',
           type: 'chat',
         },
+        {
+          abilities: {},
+          enabled: true,
+          id: 'gemini-3.1-flash-lite',
+          providerId: 'vertexai',
+          type: 'chat',
+        },
       ]);
 
       const result = await repo.getAiProviderRuntimeState();
@@ -81,21 +103,24 @@ describe('AiInfraRepos', () => {
         enabledAiModels: [
           expect.objectContaining({
             enabled: true,
-            id: 'gpt-4',
-            providerId: 'openai',
+            id: 'gemini-3.1-flash-lite',
+            providerId: 'vertexai',
           }),
         ],
-        enabledAiProviders: [{ id: 'openai', logo: 'logo1', name: 'OpenAI', source: 'builtin' }],
-        enabledChatAiProviders: [
+        enabledAiProviders: [
           { id: 'openai', logo: 'logo1', name: 'OpenAI', source: 'builtin' },
+          { id: 'vertexai', logo: 'logo2', name: 'Vertex AI', source: 'builtin' },
+        ],
+        enabledChatAiProviders: [
+          { id: 'vertexai', logo: 'logo2', name: 'Vertex AI', source: 'builtin' },
         ],
         enabledImageAiProviders: [],
         enabledVideoAiProviders: [],
         runtimeConfig: {
-          openai: {
+          vertexai: expect.objectContaining({
             apiKey: 'test-key',
             enabled: true,
-          },
+          }),
         },
       });
     });
@@ -105,8 +130,8 @@ describe('AiInfraRepos', () => {
         fal: {
           apiKey: 'test-fal-key',
         },
-        openai: {
-          apiKey: 'test-openai-key',
+        vertexai: {
+          apiKey: 'test-vertexai-key',
         },
       } as unknown as Record<string, AiProviderRuntimeConfig>;
 
@@ -116,8 +141,8 @@ describe('AiInfraRepos', () => {
 
       // Mock providers including fal for image generation
       vi.spyOn(repo, 'getUserEnabledProviderList').mockResolvedValue([
-        { id: 'openai', logo: 'openai-logo', name: 'OpenAI', source: 'builtin' },
         { id: 'fal', logo: 'fal-logo', name: 'Fal', source: 'builtin' },
+        { id: 'vertexai', logo: 'vertexai-logo', name: 'Vertex AI', source: 'builtin' },
       ]);
 
       // Mock models including image models from fal
@@ -125,8 +150,8 @@ describe('AiInfraRepos', () => {
         {
           abilities: {},
           enabled: true,
-          id: 'gpt-4',
-          providerId: 'openai',
+          id: 'gemini-3.1-flash-lite',
+          providerId: 'vertexai',
           type: 'chat',
         },
         {
@@ -143,6 +168,13 @@ describe('AiInfraRepos', () => {
           providerId: 'fal',
           type: 'image',
         },
+        {
+          abilities: {},
+          enabled: true,
+          id: 'flux-pro/v1.1',
+          providerId: 'fal',
+          type: 'image',
+        },
       ]);
 
       const result = await repo.getAiProviderRuntimeState();
@@ -151,8 +183,8 @@ describe('AiInfraRepos', () => {
         enabledAiModels: [
           expect.objectContaining({
             enabled: true,
-            id: 'gpt-4',
-            providerId: 'openai',
+            id: 'gemini-3.1-flash-lite',
+            providerId: 'vertexai',
             type: 'chat',
           }),
           expect.objectContaining({
@@ -169,11 +201,11 @@ describe('AiInfraRepos', () => {
           }),
         ],
         enabledAiProviders: [
-          { id: 'openai', logo: 'openai-logo', name: 'OpenAI', source: 'builtin' },
           { id: 'fal', logo: 'fal-logo', name: 'Fal', source: 'builtin' },
+          { id: 'vertexai', logo: 'vertexai-logo', name: 'Vertex AI', source: 'builtin' },
         ],
         enabledChatAiProviders: [
-          { id: 'openai', logo: 'openai-logo', name: 'OpenAI', source: 'builtin' },
+          { id: 'vertexai', logo: 'vertexai-logo', name: 'Vertex AI', source: 'builtin' },
         ],
         enabledImageAiProviders: [
           expect.objectContaining({
@@ -183,16 +215,20 @@ describe('AiInfraRepos', () => {
         ],
         enabledVideoAiProviders: [],
         runtimeConfig: {
-          fal: {
+          fal: expect.objectContaining({
             apiKey: 'test-fal-key',
-            enabled: undefined,
-          },
-          openai: {
-            apiKey: 'test-openai-key',
             enabled: true,
-          },
+          }),
+          vertexai: expect.objectContaining({
+            apiKey: 'test-vertexai-key',
+            enabled: true,
+          }),
         },
       });
+
+      expect(result.enabledAiModels).not.toContainEqual(
+        expect.objectContaining({ id: 'flux-pro/v1.1', providerId: 'fal' }),
+      );
     });
   });
 });

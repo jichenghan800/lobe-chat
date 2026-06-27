@@ -8,7 +8,12 @@ import type {
   ProviderConfig,
 } from '@lobechat/types';
 import { isEmpty } from 'es-toolkit/compat';
-import type { AIChatModelCard, AiProviderModelListItem, EnabledAiModel } from 'model-bank';
+import type {
+  AIChatModelCard,
+  AiModelType,
+  AiProviderModelListItem,
+  EnabledAiModel,
+} from 'model-bank';
 import { AiModelSourceEnum, isAiModelVisible, normalizeAiModelType } from 'model-bank';
 import { DEFAULT_MODEL_PROVIDER_LIST } from 'model-bank/modelProviders';
 import pMap from 'p-map';
@@ -33,6 +38,36 @@ const resolveCottiPublicModelEnabled = (
   if (isModelVisible(providerId, modelId)) return true;
 
   return enabled;
+};
+
+const isServerConfiguredModel = (
+  providerConfigs: Record<string, ProviderConfig>,
+  model: EnabledAiModel,
+) => {
+  const serverModelLists = providerConfigs[model.providerId]?.serverModelLists;
+
+  if (!serverModelLists?.length) return false;
+
+  return serverModelLists.some(
+    (item) => item.id === model.id && normalizeAiModelType(item.type) === model.type,
+  );
+};
+
+const isRuntimeStateModelIncluded = (
+  providerConfigs: Record<string, ProviderConfig>,
+  model: EnabledAiModel,
+) => {
+  if (isModelVisible(model.providerId, model.id)) return true;
+
+  if (normalizeAiModelType(model.type) === 'chat') return false;
+
+  return isServerConfiguredModel(providerConfigs, model);
+};
+
+const getEnabledProviderIdsByModelType = (enabledAiModels: EnabledAiModel[], type: AiModelType) => {
+  return new Set(
+    enabledAiModels.filter((model) => model.type === type).map((model) => model.providerId),
+  );
 };
 
 /**
@@ -300,16 +335,23 @@ export class AiInfraRepos {
     Object.entries(result).forEach(([key, value]) => {
       runtimeConfig[key] = merge(this.providerConfigs[key] || {}, value);
     });
-    const enabledAiModels = allModels.filter((model) => model.enabled);
-    const enabledChatAiProviders = enabledAiProviders.filter((provider) => {
-      return allModels.some((model) => model.providerId === provider.id && model.type === 'chat');
-    });
-    const enabledImageAiProviders = enabledAiProviders.filter((provider) => {
-      return allModels.some((model) => model.providerId === provider.id && model.type === 'image');
-    });
-    const enabledVideoAiProviders = enabledAiProviders.filter((provider) => {
-      return allModels.some((model) => model.providerId === provider.id && model.type === 'video');
-    });
+    const enabledAiModels = allModels.filter(
+      (model) => model.enabled && isRuntimeStateModelIncluded(this.providerConfigs, model),
+    );
+
+    const enabledChatProviderIds = getEnabledProviderIdsByModelType(enabledAiModels, 'chat');
+    const enabledImageProviderIds = getEnabledProviderIdsByModelType(enabledAiModels, 'image');
+    const enabledVideoProviderIds = getEnabledProviderIdsByModelType(enabledAiModels, 'video');
+
+    const enabledChatAiProviders = enabledAiProviders.filter((provider) =>
+      enabledChatProviderIds.has(provider.id),
+    );
+    const enabledImageAiProviders = enabledAiProviders.filter((provider) =>
+      enabledImageProviderIds.has(provider.id),
+    );
+    const enabledVideoAiProviders = enabledAiProviders.filter((provider) =>
+      enabledVideoProviderIds.has(provider.id),
+    );
 
     return {
       enabledAiModels,

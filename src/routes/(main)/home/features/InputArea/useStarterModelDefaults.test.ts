@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { NEW_GLM_MODEL } from './starterModels';
+import { COTTI_FAST_MODEL } from './starterModels';
 import { useStarterModelDefaults } from './useStarterModelDefaults';
 
 const mocks = vi.hoisted(() => ({
@@ -25,23 +25,24 @@ describe('useStarterModelDefaults', () => {
   it('uses the OSS fallback home new model entries in the current product order', () => {
     const { result } = renderHook(() => useStarterModelDefaults());
 
-    expect(NEW_GLM_MODEL).toBe('glm-5.2');
-    expect(result.current.fallbackChatProvider).toBe('zhipu');
+    expect(COTTI_FAST_MODEL).toBe('gemini-3.1-flash-lite');
+    expect(result.current.fallbackChatProvider).toBe('vertexai');
     expect(result.current.defaultHomeNewModels).toEqual([
       {
-        model: 'glm-5.2',
-        provider: 'zhipu',
-        title: 'GLM-5.2',
+        model: 'gemini-3.1-flash-lite',
+        provider: 'vertexai',
+        title: 'COTTI-快速',
         type: 'chat',
       },
       {
-        model: 'kimi-k2.7-code',
-        provider: 'moonshot',
-        title: 'Kimi K2.7 Code',
+        model: 'gemini-3.5-flash',
+        provider: 'vertexai',
+        title: 'COTTI-专业',
         type: 'chat',
       },
       {
         model: 'gpt-image-2',
+        provider: 'azure',
         title: 'GPT Image 2',
         type: 'image',
       },
@@ -61,19 +62,20 @@ describe('useStarterModelDefaults', () => {
     expect(result.current.fallbackChatProvider).toBe('lobehub');
     expect(result.current.defaultHomeNewModels).toEqual([
       {
-        model: 'glm-5.2',
+        model: 'gemini-3.1-flash-lite',
         provider: 'lobehub',
-        title: 'GLM-5.2',
+        title: 'COTTI-快速',
         type: 'chat',
       },
       {
-        model: 'kimi-k2.7-code',
+        model: 'gemini-3.5-flash',
         provider: 'lobehub',
-        title: 'Kimi K2.7 Code',
+        title: 'COTTI-专业',
         type: 'chat',
       },
       {
         model: 'gpt-image-2',
+        provider: 'azure',
         title: 'GPT Image 2',
         type: 'image',
       },

@@ -608,6 +608,24 @@ describe('createSSEProtocolTransformer', () => {
     expect(results).toEqual([`id: 1\n`, `event: text\n`, `data: ${JSON.stringify('hello')}\n\n`]);
   });
 
+  it('should serialize undefined chunk data as JSON null', async () => {
+    const transformerFn = (chunk: any) => ({ type: 'text', id: chunk.id, data: undefined });
+    const transformer = createSSEProtocolTransformer(transformerFn as any);
+
+    const results = await processChunk(transformer, { id: '1' });
+
+    expect(results).toEqual([`id: 1\n`, `event: text\n`, `data: null\n\n`]);
+  });
+
+  it('should skip undefined transformer results', async () => {
+    const transformerFn = () => undefined;
+    const transformer = createSSEProtocolTransformer(transformerFn as any);
+
+    const results = await processChunk(transformer, { id: '1' });
+
+    expect(results).toEqual([]);
+  });
+
   it('should not emit flush error if a terminal event was received (enforced)', async () => {
     const transformerFn = (chunk: any) => ({ type: 'stop', id: chunk.id, data: chunk.data });
     const transformer = createSSEProtocolTransformer(

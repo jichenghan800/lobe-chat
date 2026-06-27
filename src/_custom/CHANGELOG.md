@@ -3,6 +3,84 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-27
+
+### Doubao Streaming Undefined SSE Guard
+
+- Incident: Doubao / Volcengine chat streaming could fail in the browser with
+  `"undefined" is not valid JSON`; the client error context showed the raw stream chunk as
+  `undefined`.
+- Root cause: the shared model-runtime SSE formatter wrote
+  `data: ${JSON.stringify(data)}`. When an upstream-compatible stream transformer produced a
+  protocol chunk whose `data` was `undefined`, `JSON.stringify(undefined)` returned `undefined`,
+  which the template string serialized onto the wire as `data: undefined`. The browser-side
+  `fetchSSE` parser expects every SSE `data` field to be valid JSON, so `JSON.parse('undefined')`
+  failed before the response could continue.
+- Fix: serialize undefined-like protocol data as JSON `null` before emitting SSE, and ignore
+  undefined transformer results. This is intentionally implemented in the shared SSE protocol layer
+  instead of the Volcengine adapter so any OpenAI-compatible provider that emits sparse chunks gets
+  the same wire-format guard.
+- Boundary: normal empty-string text chunks, explicit `null` chunks, usage chunks, stop chunks, and
+  provider error chunks keep their existing semantics. This change only prevents invalid
+  `data: undefined` frames from leaving the server.
+- Verification: `bunx vitest run --silent='passed-only' src/core/streams/protocol.test.ts` passed
+  from `packages/model-runtime`; `bun run type-check` passed.
+- Deployment: dev container image `lobehub:v2.2.8-cotti-doubao-stream-null-v32` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-doubao-stream-null-20260627114741`.
+
+### Home New Model Cotti Replacement
+
+- Change: replace the home `上新` chat shortcuts from `GLM-5.2` and `Kimi K2.7 Code` to
+  `COTTI-快速` and `COTTI-专业`.
+- Runtime mapping: `COTTI-快速` uses `vertexai/gemini-3.1-flash-lite`; `COTTI-专业` uses
+  `vertexai/gemini-3.5-flash`. The business-mode shortcut keeps the existing `lobehub` provider
+  branch while using the same model ids.
+- Icon behavior: the shortcut buttons now render model icons from the Cotti/Gemini model ids instead
+  of the previous GLM and Kimi model ids.
+- Verification: `bunx vitest run --silent='passed-only'
+'src/routes/(main)/home/features/InputArea/useStarterModelDefaults.test.ts'` passed.
+- Deployment: dev container image `lobehub:v2.2.8-cotti-home-new-cotti-models-v33` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-home-new-cotti-models-20260627130749`.
+
+### Chatdev SPA Static Asset Cache Header
+
+- Incident: after the dev image switch, opening `https://chatdev.cotticoffee.com/` could feel
+  abnormally slow because the SPA build emits many hashed JS/CSS chunks while the `chatdev` reverse
+  proxy was serving `/_spa/` assets with `Cache-Control: public, max-age=0`.
+- Fix: update the host Nginx `chatdev` config to override only `/_spa/` and `/_spa-auth/`
+  `assets` / `i18n` / `vendor` static build files with
+  `Cache-Control: public, max-age=31536000, immutable`. HTML, tRPC, streaming chat endpoints, and
+  non-matching files remain uncached.
+- Rollback: Nginx config backup is
+  `/etc/nginx/conf.d/chatdev.conf.bak.20260627134915-spa-cache`.
+- Verification: `nginx -t` passed; `nginx -s reload` completed; sampled SPA asset responses now
+  include the immutable cache header while `/spa/desktop` and `/trpc/` still return `no-cache`, and
+  a missing root-level `/_spa/sw.js` response does not get immutable caching.
+
+### AI Provider Runtime State Model Pruning
+
+- Incident: the home initialization request
+  `/trpc/lambda/aiProvider.getAiProviderRuntimeState` returned the enabled model state after loading
+  the full upstream model bank, while Cotti only exposes a fixed enterprise model set. Under ESA,
+  the browser waterfall showed the dynamic JSON response spending time in content download even
+  though the source server response was fast.
+- Fix: prune `enabledAiModels` on the server before returning runtime state. Models in
+  `NEXT_PUBLIC_MODEL_VISIBLE_ALLOW` are kept, and non-chat models are kept only when they come from
+  explicit Docker/runtime `*_MODEL_LIST` server model configuration. Chat providers, image
+  providers, and video providers are now derived from the pruned model list so provider/model state
+  stays consistent.
+- Boundary: this does not add public caching for `/trpc`; runtime config and login-aware provider
+  state remain dynamic. Future enterprise model changes continue to be controlled by Docker env,
+  restart, or rebuild.
+- Verification: `cd packages/database && bunx vitest run --silent='passed-only'
+src/repositories/aiInfra/__tests__/getAiProviderRuntimeState.test.ts` passed; `bun run
+type-check` passed.
+- Deployment: dev container image `lobehub:v2.2.8-cotti-runtime-state-pruned-v34` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-runtime-state-pruned-20260627174821`.
+
 ## 2026-06-26
 
 ### Production App Update Package Preparation

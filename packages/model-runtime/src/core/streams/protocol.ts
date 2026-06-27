@@ -164,6 +164,12 @@ export interface StreamProtocolToolCallChunk {
 export const generateToolCallId = (index: number, functionName?: string) =>
   `${functionName || 'unknown_tool_call'}_${index}_${nanoid()}`;
 
+const serializeSSEData = (data: unknown) => {
+  const serialized = JSON.stringify(data);
+
+  return serialized === undefined ? 'null' : serialized;
+};
+
 const chatStreamable = async function* <T>(stream: AsyncIterable<T>) {
   for await (const response of stream) {
     yield response;
@@ -437,10 +443,10 @@ export const createSSEProtocolTransformer = (
 
       const buffers = Array.isArray(result) ? result : [result];
 
-      buffers.forEach(({ type, id, data }) => {
+      buffers.filter(Boolean).forEach(({ type, id, data }) => {
         controller.enqueue(`id: ${id}\n`);
         controller.enqueue(`event: ${type}\n`);
-        controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
+        controller.enqueue(`data: ${serializeSSEData(data)}\n\n`);
 
         // mark terminal when receiving any of these events
         if (type === 'stop' || type === 'usage' || type === 'error') hasTerminalEvent = true;
