@@ -81,6 +81,23 @@ type-check` passed.
   `chatdev`; previous dev container is retained as
   `lobehub-v228-stage0-before-runtime-state-pruned-20260627174821`.
 
+### Chatdev SPA Route Preload Reduction
+
+- Incident: the web SPA shell was injecting route-level `modulepreload` links for the large desktop
+  route preload manifest and a post-load idle route warmup queue. On refresh, this made the browser
+  request many chunks for routes that were not needed by the current page.
+- Fix: expose `LOBE_ROUTE_CHUNK_PRELOAD` as a Docker build argument so self-hosted Cotti builds can
+  disable the Vite route preload plugin without source edits. The dev image was built with
+  `--build-arg LOBE_ROUTE_CHUNK_PRELOAD=false`.
+- Boundary: this only changes SPA asset preloading. Route code splitting, runtime dynamic imports,
+  tRPC behavior, and static asset cache headers are unchanged.
+- Verification: local `/spa/desktop` HTML from the dev container now has 66 `modulepreload` links
+  and no `idleRoutePreload` script. The previous v34 build had roughly 247 static `modulepreload`
+  links plus an idle route warmup queue.
+- Deployment: dev container image `lobehub:v2.2.8-cotti-route-preload-off-v35` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-route-preload-off-20260627190858`.
+
 ## 2026-06-26
 
 ### Production App Update Package Preparation
