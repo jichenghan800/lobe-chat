@@ -18,6 +18,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
   start from the same model the user selected on the home page.
 - Verification: added a focused home input regression test that asserts `glm-5.2/qwen` is saved
   before `sendMessage` is called.
+- Dev deployment: dev container image `lobehub:v2.2.8-cotti-home-model-send-race-v39` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-home-model-send-race-20260628010424`.
 
 ### Chat and Agent Cotti Model Pools
 
