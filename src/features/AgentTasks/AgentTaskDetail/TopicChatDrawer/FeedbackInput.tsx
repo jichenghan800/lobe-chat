@@ -1,13 +1,14 @@
 import { ChatInput, ChatInputActionBar, SendButton, useEditor } from '@lobehub/editor/react';
 import { Button, Flexbox, Text } from '@lobehub/ui';
+import { cssVar } from 'antd-style';
 import { $getRoot } from 'lexical';
 import { MessageCirclePlus } from 'lucide-react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import DotsLoading from '@/components/DotsLoading';
 import { AttachmentUploadButton } from '@/features/AttachmentInput';
-import { useConversationStore } from '@/features/Conversation';
+import { conversationSelectors, useConversationStore } from '@/features/Conversation';
 import { EditorCanvas } from '@/features/EditorCanvas';
 import {
   getAttachmentFileIdsFromEditor,
@@ -28,6 +29,7 @@ const FeedbackInput = memo(() => {
   const { t } = useTranslation('chat');
   const editor = useEditor();
   const context = useConversationStore((s) => s.context);
+  const displayMessages = useConversationStore(conversationSelectors.displayMessages);
   const replaceMessages = useConversationStore((s) => s.replaceMessages);
   const replaceChatMessages = useChatStore((s) => s.replaceMessages);
   const sendMessage = useConversationStore((s) => s.sendMessage);
@@ -36,13 +38,40 @@ const FeedbackInput = memo(() => {
   const [hasAttachments, setHasAttachments] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [waitingForReply, setWaitingForReply] = useState(false);
+  const submittedAtRef = useRef<number | undefined>(undefined);
+  const submittedContentRef = useRef<string | undefined>(undefined);
   const shouldSendOnEnter = useEnterToSend();
 
   const canSubmit = hasContent || hasAttachments;
 
+  const clearReplyWaiting = useCallback(() => {
+    submittedAtRef.current = undefined;
+    submittedContentRef.current = undefined;
+    setWaitingForReply(false);
+  }, []);
+
   useEffect(() => {
     if (expanded) editor?.focus?.();
   }, [expanded, editor]);
+
+  useEffect(() => {
+    if (
+      !waitingForReply ||
+      submittedAtRef.current === undefined ||
+      submittedContentRef.current === undefined
+    )
+      return;
+
+    if (
+      hasAssistantResultForUserMessage(
+        displayMessages,
+        submittedContentRef.current,
+        submittedAtRef.current,
+      )
+    ) {
+      clearReplyWaiting();
+    }
+  }, [clearReplyWaiting, displayMessages, waitingForReply]);
 
   const handleContentChange = useCallback(() => {
     const lexicalEditor = editor?.getLexicalEditor?.();
@@ -81,6 +110,8 @@ const FeedbackInput = memo(() => {
     setWaitingForReply(true);
     try {
       const submittedAt = Date.now();
+      submittedAtRef.current = submittedAt;
+      submittedContentRef.current = markdown;
 
       // sendMessage is bound to this drawer's ConversationProvider context
       // (agentId + topicId + isolatedTopic), so the message continues this
@@ -113,19 +144,25 @@ const FeedbackInput = memo(() => {
               if (hasAssistantResultForUserMessage(messages, markdown, submittedAt)) return;
             }
           } finally {
-            setWaitingForReply(false);
+            clearReplyWaiting();
           }
         })();
-      } else {
-        setWaitingForReply(false);
       }
     } catch (error) {
-      setWaitingForReply(false);
+      clearReplyWaiting();
       throw error;
     } finally {
       setSubmitting(false);
     }
-  }, [context, editor, replaceChatMessages, replaceMessages, sendMessage, submitting]);
+  }, [
+    clearReplyWaiting,
+    context,
+    editor,
+    replaceChatMessages,
+    replaceMessages,
+    sendMessage,
+    submitting,
+  ]);
 
   if (!expanded) {
     return (
@@ -136,11 +173,11 @@ const FeedbackInput = memo(() => {
   }
 
   return (
-    <Flexbox gap={8}>
+    <Flexbox gap={12}>
       {waitingForReply ? (
-        <Flexbox horizontal align={'center'} gap={8} style={{ paddingInline: 4 }}>
-          <DotsLoading size={3} />
-          <Text fontSize={12} type={'secondary'}>
+        <Flexbox horizontal align={'center'} gap={8} style={{ paddingInline: 6 }}>
+          <DotsLoading color={cssVar.colorPrimary} size={4} />
+          <Text fontSize={14} style={{ color: cssVar.colorPrimary, lineHeight: 1.5 }} weight={500}>
             {t('taskDetail.followUpWaiting')}
           </Text>
         </Flexbox>

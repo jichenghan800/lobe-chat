@@ -69,4 +69,43 @@ describe('hasAssistantResultForUserMessage', () => {
       ),
     ).toBe(true);
   });
+
+  it('returns true when the submitted user message has an assistant group result', () => {
+    expect(
+      hasAssistantResultForUserMessage(
+        [
+          message({ content: 'follow up', id: 'user-1', role: 'user' }),
+          message({
+            children: [{ content: 'agent answer', id: 'block-1' }] as any,
+            content: '',
+            id: 'assistant-group-1',
+            parentId: 'user-1',
+            role: 'assistantGroup',
+          }),
+        ],
+        'follow up',
+        900,
+      ),
+    ).toBe(true);
+  });
+
+  it('returns true for a later assistant-like message without parent id', () => {
+    expect(
+      hasAssistantResultForUserMessage(
+        [
+          message({ content: 'follow up', createdAt: 1000, id: 'user-1', role: 'user' }),
+          message({
+            content: 'supervisor answer',
+            createdAt: 1200,
+            id: 'supervisor-1',
+            parentId: null,
+            role: 'supervisor',
+            updatedAt: 1200,
+          }),
+        ],
+        'follow up',
+        900,
+      ),
+    ).toBe(true);
+  });
 });

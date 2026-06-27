@@ -115,6 +115,37 @@ type-check` passed.
   `02-confirm-and-update-app.sh`, so the running production container is unchanged until the package
   is copied to production and the update script is confirmed there.
 
+### Agent Task Follow-Up Waiting Hint
+
+- Change: make the task drawer follow-up waiting hint more visible by increasing the text size,
+  using the theme primary color, matching the loading dots to that color, and adding a little more
+  vertical space above the reply editor.
+- Fix: hide the waiting hint as soon as the submitted follow-up receives a visible Agent reply in
+  the current drawer conversation. The detection now covers normal assistant messages plus
+  Agent-style `assistantGroup` and `supervisor` replies, including replies that arrive through the
+  realtime message store before the fallback polling finishes.
+- Boundary: this only changes the right-side task topic drawer follow-up input. It does not change
+  task execution, gateway scheduling, QStash, or message persistence.
+- Verification: `bunx vitest run --silent='passed-only'
+src/features/AgentTasks/AgentTaskDetail/TopicChatDrawer/fallbackRefresh.test.ts` passed; targeted
+  eslint passed for the changed task drawer files.
+
+### Chatdev Static 404 Cache Guard
+
+- Change: update host Nginx `chatdev.cotticoffee.com` static SPA location to intercept missing
+  `/_spa/` and `/_spa-auth/` static resources and return 404 with
+  `Cache-Control: no-store, no-cache, must-revalidate, max-age=0`,
+  `CDN-Cache-Control: no-store`, and `Vercel-CDN-Cache-Control: no-store`.
+- Scope: the guard only applies to static build-file extensions under `assets`, `i18n`, and
+  `vendor`. Real hashed static resources continue to return
+  `Cache-Control: public, max-age=31536000, immutable`.
+- Boundary: this is a source Nginx safeguard only. ESA still needs its static-resource browser cache
+  policy changed from custom one-year override to following origin headers; otherwise ESA can still
+  rewrite a 404 response to browser `Cache-Control: max-age=31536000`.
+- Verification: `nginx -t` passed and Nginx was reloaded. Direct-origin checks with
+  `--resolve chatdev.cotticoffee.com:443:127.0.0.1` confirmed static 404 responses are now
+  `no-store`, while existing i18n static resources still return one-year immutable cache headers.
+
 ## 2026-06-26
 
 ### Production App Update Package Preparation
