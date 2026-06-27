@@ -12,6 +12,9 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - The chat input model icon and label now keep an empty loading state for topic URLs until a topic or
   message model snapshot arrives, prefer that snapshot when present, and only then fall back to the
   agent config. This prevents GLM task runs from briefly flashing GPT5.5 in the model selector.
+- Dev deployment: dev container image `lobehub:v2.2.8-cotti-topic-model-display-v41` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-topic-model-display-20260628014807`.
 
 ### Home Agent Model Selection Send Race
 
