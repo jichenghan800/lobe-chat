@@ -215,6 +215,68 @@ const doubaoChatModels: AIChatModelCard[] = [
       vision: true,
       search: true,
     },
+    contextWindowTokens: 256_000,
+    description:
+      'Doubao-Seed-2.1-pro is a flagship multimodal deep-reasoning model on Volcano Ark, supporting text generation, multimodal understanding, deep thinking, and tool calling.',
+    displayName: 'Doubao Seed 2.1 Pro',
+    enabled: true,
+    family: 'doubao',
+    generation: 'doubao-2.1',
+    id: 'doubao-seed-2-1-pro-260628',
+    maxOutput: 128_000,
+    pricing: {
+      currency: 'CNY',
+      units: [
+        {
+          lookup: {
+            prices: {
+              '[0, 0.032]': 3.2,
+              '[0.032, 0.128]': 4.8,
+              '[0.128, 0.256]': 9.6,
+            },
+            pricingParams: ['textInputRange'],
+          },
+          name: 'textInput',
+          strategy: 'lookup',
+          unit: 'millionTokens',
+        },
+        {
+          lookup: {
+            prices: {
+              '[0, 0.032]': 16,
+              '[0.032, 0.128]': 24,
+              '[0.128, 0.256]': 48,
+            },
+            pricingParams: ['textInputRange'],
+          },
+          name: 'textOutput',
+          strategy: 'lookup',
+          unit: 'millionTokens',
+        },
+        { name: 'textInput_cacheRead', rate: 0.64, strategy: 'fixed', unit: 'millionTokens' },
+        {
+          lookup: { prices: { '1h': 0.017 }, pricingParams: ['ttl'] },
+          name: 'textInput_cacheWrite',
+          strategy: 'lookup',
+          unit: 'millionTokens',
+        },
+      ],
+    },
+    releasedAt: '2026-06-28',
+    settings: {
+      extendParams: ['gpt5ReasoningEffort'],
+      searchImpl: 'params',
+    },
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      reasoning: true,
+      video: true,
+      vision: true,
+      search: true,
+    },
     config: {
       deploymentName: 'doubao-seed-2-0-lite-260428',
     },

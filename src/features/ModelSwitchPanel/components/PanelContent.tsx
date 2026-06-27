@@ -10,6 +10,7 @@ import { userGeneralSettingsSelectors } from '@/store/user/slices/settings/selec
 import type { EnabledProviderWithModels } from '@/types/aiProvider';
 
 import { DEFAULT_WIDTH, ENABLE_RESIZING, MAX_WIDTH, MIN_WIDTH } from '../const';
+import { useBuildListItems } from '../hooks/useBuildListItems';
 import { usePanelSize } from '../hooks/usePanelSize';
 import { usePanelState } from '../hooks/usePanelState';
 import { List } from './List';
@@ -42,7 +43,9 @@ export const PanelContent: FC<PanelContentProps> = ({
   const [searchKeyword, setSearchKeyword] = useState('');
   const isDevMode = useUserStore((s) => userGeneralSettingsSelectors.config(s).isDevMode);
   const { groupMode, handleGroupModeChange } = usePanelState();
-  const { panelHeight, panelWidth, handlePanelWidthChange } = usePanelSize(enabledList.length);
+  const resolvedGroupMode = isDevMode ? groupMode : 'byModel';
+  const listItems = useBuildListItems(enabledList, resolvedGroupMode, searchKeyword);
+  const { panelHeight, panelWidth, handlePanelWidthChange } = usePanelSize(listItems);
 
   useBusinessModelPricingPrefetch();
 
@@ -58,12 +61,12 @@ export const PanelContent: FC<PanelContentProps> = ({
       <List
         ModelItemComponent={ModelItemComponent}
         enabledList={enabledList}
-        groupMode={isDevMode ? groupMode : 'byModel'}
         includeAgentOnlyModels={includeAgentOnlyModels}
+        listItems={listItems}
         model={modelProp}
+        panelHeight={panelHeight}
         pricingMode={pricingMode}
         provider={providerProp}
-        searchKeyword={searchKeyword}
         onModelChange={onModelChangeProp}
         onOpenChange={onOpenChange}
       />

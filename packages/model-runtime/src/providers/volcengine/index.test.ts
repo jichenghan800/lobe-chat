@@ -27,6 +27,7 @@ describe('LobeVolcengineAI - custom features', () => {
     vi.spyOn(instance['client'].chat.completions, 'create').mockResolvedValue(
       new ReadableStream() as any,
     );
+    vi.spyOn(instance['client'].responses, 'create').mockResolvedValue(new ReadableStream() as any);
   });
 
   describe('handlePayload', () => {
@@ -56,6 +57,16 @@ describe('LobeVolcengineAI - custom features', () => {
 
       const calledPayload = (instance['client'].chat.completions.create as any).mock.calls[0][0];
       expect(calledPayload.thinking).toEqual({ type: 'enabled' });
+    });
+
+    it('should use Responses API for Doubao Seed 2.1 Pro', async () => {
+      await instance.chat({
+        messages: [{ content: 'Describe this image', role: 'user' }],
+        model: 'doubao-seed-2-1-pro-260628',
+      });
+
+      expect(instance['client'].responses.create).toHaveBeenCalled();
+      expect(instance['client'].chat.completions.create).not.toHaveBeenCalled();
     });
   });
 });

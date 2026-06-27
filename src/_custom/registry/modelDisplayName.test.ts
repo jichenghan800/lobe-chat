@@ -11,8 +11,8 @@ describe('modelDisplayName', () => {
       'COTTI-专业',
     );
     expect(
-      getModelDisplayName('volcengine', 'doubao-seed-1.6-flash', 'Doubao Seed 1.6 Flash'),
-    ).toBe('豆包1.6-Flash');
+      getModelDisplayName('volcengine', 'doubao-seed-2-1-pro-260628', 'Doubao Seed 2.1 Pro'),
+    ).toBe('豆包2.1-Pro');
     expect(getModelDisplayName('qwen', 'qwen3.7-plus', 'Qwen3.7 Plus')).toBe('千问3.7-Plus');
     expect(getModelDisplayName('azure', 'gpt-5.5', 'GPT-5.5')).toBe('全能效率');
     expect(getModelDisplayName('openai', 'glm-5.2', 'GLM-5.2')).toBe('GLM-5.2');
@@ -29,7 +29,7 @@ describe('modelDisplayName', () => {
         name: 'Vertex AI',
       },
       {
-        children: [{ displayName: 'Doubao Seed 1.6 Flash', id: 'doubao-seed-1.6-flash' }],
+        children: [{ displayName: 'Doubao Seed 2.1 Pro', id: 'doubao-seed-2-1-pro-260628' }],
         id: 'volcengine',
         name: 'Volcengine',
       },
@@ -60,7 +60,7 @@ describe('modelDisplayName', () => {
         name: 'Vertex AI',
       },
       {
-        children: [{ displayName: '豆包1.6-Flash', id: 'doubao-seed-1.6-flash' }],
+        children: [{ displayName: '豆包2.1-Pro', id: 'doubao-seed-2-1-pro-260628' }],
         id: 'volcengine',
         name: 'Volcengine',
       },

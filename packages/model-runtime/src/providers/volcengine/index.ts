@@ -29,6 +29,7 @@ export const LobeVolcengineAI = createOpenAICompatibleRuntime({
         ...(reasoning_effort && { reasoning_effort }),
       } as any;
     },
+    useResponseModels: ['doubao-seed-2-1-pro-260628'],
   },
   createImage: createVolcengineImage,
   createVideo: createVolcengineVideo,

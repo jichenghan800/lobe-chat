@@ -5,13 +5,13 @@ export const MIN_WIDTH = 280;
 export const MAX_WIDTH = 600;
 export const MAX_PANEL_HEIGHT = 460;
 export const TOOLBAR_HEIGHT = 40;
-export const FOOTER_HEIGHT = 48;
+export const PANEL_VERTICAL_PADDING = 8;
 
 export const ITEM_HEIGHT = {
-  'empty-model': 32,
+  'empty-model': 38,
   'group-header': 32,
-  'model-item': 32,
-  'no-provider': 32,
+  'model-item': 38,
+  'no-provider': 38,
 } as const;
 
 export const ENABLE_RESIZING = {

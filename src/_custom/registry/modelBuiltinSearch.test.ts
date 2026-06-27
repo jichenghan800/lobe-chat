@@ -23,9 +23,9 @@ describe('modelBuiltinSearch', () => {
   });
 
   it('keeps builtin search for allow-listed Doubao and Qwen models', () => {
-    const allowList = 'vertexai/gemini-*,volcengine/doubao-seed-1.6-flash,qwen/qwen3.7-plus';
+    const allowList = 'vertexai/gemini-*,volcengine/doubao-seed-2-1-pro-260628,qwen/qwen3.7-plus';
 
-    expect(isModelBuiltinSearchAllowed('volcengine', 'doubao-seed-1.6-flash', allowList)).toBe(
+    expect(isModelBuiltinSearchAllowed('volcengine', 'doubao-seed-2-1-pro-260628', allowList)).toBe(
       true,
     );
     expect(isModelBuiltinSearchAllowed('qwen', 'qwen3.7-plus', allowList)).toBe(true);

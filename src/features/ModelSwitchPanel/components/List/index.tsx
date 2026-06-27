@@ -1,18 +1,17 @@
 import { Flexbox } from '@lobehub/ui';
 import { type ComponentType, type FC } from 'react';
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useBusinessModelListGuard } from '@/business/client/hooks/useBusinessModelListGuard';
 import { useEnabledChatModels } from '@/hooks/useEnabledChatModels';
 import type { EnabledProviderWithModels } from '@/types/aiProvider';
 
-import { FOOTER_HEIGHT, ITEM_HEIGHT, MAX_PANEL_HEIGHT, TOOLBAR_HEIGHT } from '../../const';
-import { useBuildListItems } from '../../hooks/useBuildListItems';
+import { TOOLBAR_HEIGHT } from '../../const';
 import { useModelAndProvider } from '../../hooks/useModelAndProvider';
 import { usePanelHandlers } from '../../hooks/usePanelHandlers';
 import { styles } from '../../styles';
-import { type GroupMode } from '../../types';
+import { type ListItem } from '../../types';
 import { menuKey } from '../../utils';
 import type { PricingMode } from '../ModelDetailPanel';
 import GenerationListItemRenderer from './GenerationListItemRenderer';
@@ -20,28 +19,28 @@ import { ListItemRenderer } from './ListItemRenderer';
 
 interface ListProps {
   enabledList?: EnabledProviderWithModels[];
-  groupMode: GroupMode;
   includeAgentOnlyModels?: boolean;
+  listItems: ListItem[];
   model?: string;
   ModelItemComponent?: ComponentType<any>;
   onModelChange?: (params: { model: string; provider: string }) => Promise<void>;
   onOpenChange?: (open: boolean) => void;
+  panelHeight: number;
   pricingMode?: PricingMode;
   provider?: string;
-  searchKeyword?: string;
 }
 
 export const List: FC<ListProps> = ({
   ModelItemComponent,
   enabledList: enabledListProp,
-  groupMode,
   includeAgentOnlyModels,
+  listItems,
   model: modelProp,
   onModelChange: onModelChangeProp,
   onOpenChange,
+  panelHeight,
   pricingMode,
   provider: providerProp,
-  searchKeyword = '',
 }) => {
   const { t: tCommon } = useTranslation('common');
   const newLabel = tCommon('new');
@@ -55,15 +54,6 @@ export const List: FC<ListProps> = ({
     onModelChange: onModelChangeProp,
     onOpenChange,
   });
-  const listItems = useBuildListItems(enabledList, groupMode, searchKeyword);
-
-  const panelHeight = useMemo(
-    () =>
-      enabledList.length === 0
-        ? TOOLBAR_HEIGHT + ITEM_HEIGHT['no-provider'] + FOOTER_HEIGHT
-        : MAX_PANEL_HEIGHT,
-    [enabledList.length],
-  );
 
   const activeKey = menuKey(provider, model);
 
@@ -76,7 +66,7 @@ export const List: FC<ListProps> = ({
     activeNodeRef.current = node;
   }, []);
 
-  const listHeight = panelHeight - TOOLBAR_HEIGHT - FOOTER_HEIGHT;
+  const listHeight = panelHeight - TOOLBAR_HEIGHT;
 
   const scrollListenersRef = useRef(new Set<() => void>());
   const subscribeScroll = useCallback((cb: () => void) => {

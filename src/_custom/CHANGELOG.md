@@ -5,6 +5,31 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 ## 2026-06-27
 
+### Volcengine Doubao 2.1 Pro Replacement
+
+- Change: replace the Cotti-visible Volcengine chat model from `豆包1.6-Flash`
+  (`volcengine/doubao-seed-1.6-flash`) to `豆包2.1-Pro`
+  (`volcengine/doubao-seed-2-1-pro-260628`).
+- Runtime: add the Seed 2.1 Pro model card with 256k context, reasoning, vision, video, function
+  calling, and builtin-search capability metadata, and force this model through the Volcengine
+  Responses API path so image/multimodal requests match the Ark `/responses` contract.
+- Deployment: update Cotti default visibility/display/search allow-list values, local Docker env
+  model exposure, and production app update scripts. Seedream image model exposure is unchanged.
+- Boundary: no Ark API key is added or changed in source; environments continue to provide
+  `VOLCENGINE_API_KEY` through deployment/runtime config.
+- Dev deployment: dev container image `lobehub:v2.2.8-cotti-doubao-2-1-pro-v36` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-doubao-2-1-pro-20260627234819`.
+
+### Model Switch Panel Height
+
+- Scope: make the chat input model switch dropdown height follow the current visible model rows
+  instead of always using the 460px maximum panel height.
+- Fix: remove the unused footer height reservation from the model list area so small Cotti model
+  sets no longer leave a large blank area below the options.
+- Boundary: model visibility, provider runtime state, pricing/detail popovers, and selected-model
+  behavior are unchanged.
+
 ### Doubao Streaming Undefined SSE Guard
 
 - Incident: Doubao / Volcengine chat streaming could fail in the browser with

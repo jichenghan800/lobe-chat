@@ -26,7 +26,7 @@ describe('modelVisibility', () => {
         id: 'vertexai',
       },
       {
-        children: [{ id: 'doubao-seed-1.6-flash' }, { id: 'hidden-doubao' }],
+        children: [{ id: 'doubao-seed-2-1-pro-260628' }, { id: 'hidden-doubao' }],
         id: 'volcengine',
       },
       {
@@ -45,7 +45,7 @@ describe('modelVisibility', () => {
       'gemini-3.1-flash-lite',
       'gemini-3.5-flash',
     ]);
-    expect(providers[1].children.map((model) => model.id)).toEqual(['doubao-seed-1.6-flash']);
+    expect(providers[1].children.map((model) => model.id)).toEqual(['doubao-seed-2-1-pro-260628']);
     expect(providers[2].children.map((model) => model.id)).toEqual(['qwen3.7-plus']);
     expect(providers[3].children.map((model) => model.id)).toEqual(['gpt-5.5']);
   });
