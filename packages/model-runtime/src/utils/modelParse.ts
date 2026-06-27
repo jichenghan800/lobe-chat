@@ -102,8 +102,9 @@ export const MODEL_LIST_CONFIGS = {
       'qwen2',
       'qwen2.5',
       'qwen3',
+      'glm-5',
     ],
-    reasoningKeywords: ['qvq', 'qwq', 'qwen3', '!-instruct-', '!-coder-'],
+    reasoningKeywords: ['qvq', 'qwq', 'qwen3', 'glm-5', '!-instruct-', '!-coder-'],
     visionKeywords: ['qvq', '-vl', '-omni', 'qwen3.'],
   },
   replicate: {

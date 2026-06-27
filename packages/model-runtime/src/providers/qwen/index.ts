@@ -40,6 +40,7 @@ export const params = {
         ...rest
       } = payload;
       const isDeepSeekV4Model = model.startsWith('deepseek-v4');
+      const isGLM5Model = model.toLowerCase().startsWith('glm-5');
       const thinkingExplicitlyDisabled = thinking?.type === 'disabled';
 
       // Resolve parameters with model-specific constraints
@@ -80,26 +81,27 @@ export const params = {
         ...rest,
         ...(isDeepSeekV4Model
           ? {
-            ...(thinking?.type === 'enabled' || thinkingExplicitlyDisabled
-              ? { enable_thinking: !thinkingExplicitlyDisabled }
-              : {}),
-            ...(!thinkingExplicitlyDisabled && reasoning_effort && { reasoning_effort }),
-          }
+              ...(thinking?.type === 'enabled' || thinkingExplicitlyDisabled
+                ? { enable_thinking: !thinkingExplicitlyDisabled }
+                : {}),
+              ...(!thinkingExplicitlyDisabled && reasoning_effort && { reasoning_effort }),
+            }
           : model.includes('-thinking')
             ? {
-              enable_thinking: true,
-              thinking_budget:
-                thinking?.budget_tokens === 0 ? 0 : thinking?.budget_tokens || undefined,
-            }
-            : thinking
-              ? {
-                ...(thinking.type !== undefined && {
-                  enable_thinking: thinking.type === 'enabled',
-                }),
+                enable_thinking: true,
                 thinking_budget:
                   thinking?.budget_tokens === 0 ? 0 : thinking?.budget_tokens || undefined,
               }
+            : thinking
+              ? {
+                  ...(thinking.type !== undefined && {
+                    enable_thinking: thinking.type === 'enabled',
+                  }),
+                  thinking_budget:
+                    thinking?.budget_tokens === 0 ? 0 : thinking?.budget_tokens || undefined,
+                }
               : {}),
+        ...(isGLM5Model && reasoning_effort && { reasoning_effort }),
         ...(typeof preserveThinking === 'boolean' && { preserve_thinking: preserveThinking }),
         frequency_penalty: undefined,
         messages,

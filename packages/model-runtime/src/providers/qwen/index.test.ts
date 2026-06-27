@@ -97,6 +97,22 @@ describe('LobeQwenAI - custom features', () => {
       expect(calledPayload.enable_thinking).toBe(true);
       expect(calledPayload.thinking_budget).toBe(4096);
     });
+
+    it('should forward reasoning_effort for Bailian GLM-5.2 models', async () => {
+      await instance.chat({
+        messages: [{ content: 'Hello', role: 'user' }],
+        model: 'glm-5.2',
+        reasoning_effort: 'max',
+        thinking: {
+          type: 'enabled',
+        },
+      });
+
+      const calledPayload = (instance['client'].chat.completions.create as any).mock.calls[0][0];
+
+      expect(calledPayload.enable_thinking).toBe(true);
+      expect(calledPayload.reasoning_effort).toBe('max');
+    });
   });
 
   describe('preserve thinking mapping', () => {

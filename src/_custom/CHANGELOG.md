@@ -5,6 +5,20 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 ## 2026-06-27
 
+### Bailian GLM-5.2 Channel Switch
+
+- Change: switch the dev GLM-5.2 exposure from `openai/glm-5.2` to Bailian `qwen/glm-5.2`,
+  keeping the user-facing display name as `智谱-GLM5.2`.
+- Runtime: keep GLM-5.2 on the Qwen/Bailian OpenAI-compatible Chat Completions path and forward the
+  GLM-specific `reasoning_effort` value so the existing GLM-5.2 reasoning control remains effective.
+- Model parsing: mark Qwen-provider `glm-5` models as function-call and reasoning capable when they
+  are discovered from Bailian model metadata.
+- Boundary: no Bailian API key is added or changed in source; environments continue to provide
+  `QWEN_API_KEY` through deployment/runtime config.
+- Dev deployment: dev container image `lobehub:v2.2.8-cotti-bailian-glm52-v37` is running on
+  `chatdev`; previous dev container is retained as
+  `lobehub-v228-stage0-before-bailian-glm52-20260628000430`.
+
 ### Volcengine Doubao 2.1 Pro Replacement
 
 - Change: replace the Cotti-visible Volcengine chat model from `豆包1.6-Flash`

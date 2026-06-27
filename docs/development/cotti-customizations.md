@@ -13,6 +13,8 @@
 - `openai/gpt-5.5`（显示名：全能效率）在统一渠道支持 `/v1/responses`。
 - `openai/gpt-5.5` 在 `/v1/responses` 下支持 function tool 调用，非流式和流式 SSE 均验证通过。
 - `openai/glm-5.2`（显示名：智谱 - GLM5.2）普通 `/v1/responses` 文本请求可用，但 `/v1/responses` + function tools 当前不稳定 / 不兼容；Agent 工具调用继续走 `/v1/chat/completions`。
+- 2026-06-27 更新：开发环境 GLM-5.2 渠道切换为百炼 `qwen/glm-5.2`，使用百炼 OpenAI 兼容
+  `/compatible-mode/v1` 调用链，不再通过 `openai/glm-5.2` 暴露。
 - `vertexai/gemini-3.5-flash`（显示名：COTTI - 专业）走 Vertex AI 原生调用链，不走 OpenAI `/v1/responses`。
 
 代码策略：
@@ -20,6 +22,8 @@
 - 保持按模型分流，不全局切换 provider。
 - `gpt-5.5` 由 OpenAI runtime 的 `isResponsesAPIModel` 规则进入 Responses API。
 - `glm-5.2` 不纳入 Responses API 强制路由，避免工具调用失败。
+- 百炼 `qwen/glm-5.2` 仍走 Chat Completions 兼容接口，并透传 GLM-5.2 的
+  `reasoning_effort` 推理强度参数。
 
 开发库临时配置：
 
