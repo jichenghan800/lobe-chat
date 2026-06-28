@@ -134,6 +134,16 @@ const isAbortError = (error: unknown, abortController?: AbortController) =>
 const createAbortError = () =>
   Object.assign(new Error('Compression cancelled'), { name: 'AbortError' });
 
+const getAssistantRuntimeModel = (
+  messages: UIChatMessage[],
+  assistantMessageId: string,
+): { model: string; provider: string } | undefined => {
+  const assistant = messages.find((item) => item.id === assistantMessageId);
+  if (!assistant?.model || !assistant.provider) return;
+
+  return { model: assistant.model, provider: assistant.provider };
+};
+
 const attachSendTimeMetadataToUserMessage = (
   messages: UIChatMessage[],
   userMessageId: string,
@@ -1114,10 +1124,27 @@ export class ConversationLifecycleActionImpl {
             activeTopicDocumentInitialContext,
             agentRuntimeInitialContext,
           );
+          const runtimeModel = getAssistantRuntimeModel(data.messages, data.assistantMessageId);
+          const existingPayload =
+            mergedAgentRuntimeInitialContext?.payload &&
+            typeof mergedAgentRuntimeInitialContext.payload === 'object'
+              ? (mergedAgentRuntimeInitialContext.payload as Record<string, unknown>)
+              : {};
+          const runtimeInitialContext = runtimeModel
+            ? {
+                ...mergedAgentRuntimeInitialContext,
+                payload: {
+                  ...existingPayload,
+                  model: runtimeModel.model,
+                  provider: runtimeModel.provider,
+                },
+                phase: mergedAgentRuntimeInitialContext?.phase ?? ('init' as const),
+              }
+            : mergedAgentRuntimeInitialContext;
 
           await executeClientAgent({
             context: execContext,
-            initialContext: mergedAgentRuntimeInitialContext,
+            initialContext: runtimeInitialContext,
             metadata: requestMetadata,
             messages: displayMessages,
             parentMessageId: data.assistantMessageId,

@@ -1085,6 +1085,82 @@ describe('StreamingExecutor actions', () => {
       });
     });
 
+    it('should lock runtime model to initialContext payload when agent config changes', () => {
+      act(() => {
+        useChatStore.setState({ executeClientAgent: realExecAgentRuntime });
+      });
+
+      const { result } = renderHook(() => useChatStore());
+      const userMessage = createMockMessage({
+        id: TEST_IDS.USER_MESSAGE_ID,
+        role: 'user',
+      });
+      const generateToolsDetailed = vi.fn().mockReturnValue({
+        enabledManifests: [],
+        enabledToolIds: [],
+        tools: [],
+      });
+      const createAgentToolsEngineSpy = vi
+        .spyOn(toolEngineering, 'createAgentToolsEngine')
+        .mockReturnValue({
+          generateToolsDetailed,
+        } as any);
+
+      vi.spyOn(agentConfigResolver, 'resolveAgentConfig').mockReturnValue({
+        agentConfig: createMockAgentConfig({
+          model: 'doubao-seed-2-1-pro-260628',
+          provider: 'volcengine',
+        }),
+        chatConfig: createMockChatConfig(),
+        isBuiltinAgent: false,
+        plugins: [],
+      });
+
+      const { operationId } = result.current.startOperation({
+        context: {
+          agentId: TEST_IDS.SESSION_ID,
+          topicId: TEST_IDS.TOPIC_ID,
+        },
+        type: 'execAgentRuntime',
+      });
+
+      const { agentConfig, context, state } = result.current.internal_createAgentState({
+        messages: [userMessage],
+        parentMessageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+        agentId: TEST_IDS.SESSION_ID,
+        topicId: TEST_IDS.TOPIC_ID,
+        operationId,
+        initialContext: {
+          payload: {
+            model: 'glm-5.2',
+            provider: 'qwen',
+          },
+          phase: 'init',
+        },
+      });
+
+      expect(state.modelRuntimeConfig?.model).toBe('glm-5.2');
+      expect(state.modelRuntimeConfig?.provider).toBe('qwen');
+      expect(context.payload).toEqual(
+        expect.objectContaining({
+          model: 'glm-5.2',
+          provider: 'qwen',
+        }),
+      );
+      expect(agentConfig.agentConfig.model).toBe('glm-5.2');
+      expect(agentConfig.agentConfig.provider).toBe('qwen');
+      expect(createAgentToolsEngineSpy.mock.calls[0]?.[0]).toEqual({
+        model: 'glm-5.2',
+        provider: 'qwen',
+      });
+      expect(generateToolsDetailed.mock.calls[0]?.[0]).toEqual(
+        expect.objectContaining({
+          model: 'glm-5.2',
+          provider: 'qwen',
+        }),
+      );
+    });
+
     it('should not inject page editor context outside page scope', () => {
       act(() => {
         useChatStore.setState({ executeClientAgent: realExecAgentRuntime });

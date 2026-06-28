@@ -89,6 +89,18 @@ const getVisualMediaAvailability = (messages: UIChatMessage[]) => ({
   hasVideos: messages.some((message) => message.role === 'user' && !!message.videoList?.length),
 });
 
+const getRuntimeModelOverride = (
+  initialContext?: AgentRuntimeContext,
+): { model: string; provider: string } | undefined => {
+  const payload = initialContext?.payload;
+  if (!payload || typeof payload !== 'object') return;
+
+  const { model, provider } = payload as Record<string, unknown>;
+  if (typeof model !== 'string' || typeof provider !== 'string') return;
+
+  return { model, provider };
+};
+
 /**
  * Core streaming execution actions for AI chat
  */
@@ -170,11 +182,19 @@ export class StreamingExecutorActionImpl {
     });
 
     const { agentConfig: agentConfigData, plugins: pluginIds } = agentConfig;
+    const runtimeModelOverride = getRuntimeModelOverride(initialContext);
+    const runtimeAgentConfigData = runtimeModelOverride
+      ? {
+          ...agentConfigData,
+          model: runtimeModelOverride.model,
+          provider: runtimeModelOverride.provider,
+        }
+      : agentConfigData;
     const selectedToolIds = initialContext?.initialContext?.selectedTools?.map(
       (tool) => tool.identifier,
     );
 
-    if (!agentConfigData || !agentConfigData.model) {
+    if (!runtimeAgentConfigData || !runtimeAgentConfigData.model) {
       throw new Error(
         `[internal_createAgentState] Agent config not found or incomplete for agentId: ${effectiveAgentId}, scope: ${scope}`,
       );
@@ -189,9 +209,9 @@ export class StreamingExecutorActionImpl {
     const shouldEnableVisualUnderstanding =
       visualUnderstandingConfigured &&
       ((visualMediaAvailability.hasImages &&
-        !isCanUseVision(agentConfigData.model, agentConfigData.provider!)) ||
+        !isCanUseVision(runtimeAgentConfigData.model, runtimeAgentConfigData.provider!)) ||
         (visualMediaAvailability.hasVideos &&
-          !isCanUseVideo(agentConfigData.model, agentConfigData.provider!)));
+          !isCanUseVideo(runtimeAgentConfigData.model, runtimeAgentConfigData.provider!)));
     const runtimePluginIds = [
       ...new Set([
         ...(pluginIds || []),
@@ -216,7 +236,7 @@ export class StreamingExecutorActionImpl {
     // Generate tools using ToolsEngine (centralized here, passed to chatService via agentConfig)
     // When disableTools is true (broadcast mode), skipDefaultTools prevents default tools from being added
     const toolsEngine = createAgentToolsEngine(
-      { model: agentConfigData.model, provider: agentConfigData.provider! },
+      { model: runtimeAgentConfigData.model, provider: runtimeAgentConfigData.provider! },
       effectivePluginIds,
     );
     // When skillActivateMode is 'manual':
@@ -226,8 +246,8 @@ export class StreamingExecutorActionImpl {
 
     const toolsDetailed = toolsEngine.generateToolsDetailed({
       excludeDefaultToolIds: isManualMode ? manualModeExcludeToolIds : undefined,
-      model: agentConfigData.model,
-      provider: agentConfigData.provider!,
+      model: runtimeAgentConfigData.model,
+      provider: runtimeAgentConfigData.provider!,
       skipDefaultTools: disableTools || undefined,
       toolIds: mergedToolIds,
     });
@@ -249,6 +269,7 @@ export class StreamingExecutorActionImpl {
     // Merge tools generation result into agentConfig for chatService to use
     const agentConfigWithTools = {
       ...agentConfig,
+      agentConfig: runtimeAgentConfigData,
       enabledManifests,
       enabledToolIds,
       tools,
@@ -270,11 +291,11 @@ export class StreamingExecutorActionImpl {
     // Build modelRuntimeConfig for compression and other runtime features
     const modelRuntimeConfig = {
       compressionModel: {
-        model: agentConfigData.model,
-        provider: agentConfigData.provider!,
+        model: runtimeAgentConfigData.model,
+        provider: runtimeAgentConfigData.provider!,
       },
-      model: agentConfigData.model,
-      provider: agentConfigData.provider!,
+      model: runtimeAgentConfigData.model,
+      provider: runtimeAgentConfigData.provider!,
     };
 
     const topicWorkingDirectory = topicSelectors.currentTopicWorkingDirectory(this.#get());
@@ -382,9 +403,9 @@ export class StreamingExecutorActionImpl {
         : undefined;
 
     const defaultPayload = {
-      model: agentConfigData.model,
+      model: runtimeAgentConfigData.model,
       parentMessageId,
-      provider: agentConfigData.provider,
+      provider: runtimeAgentConfigData.provider,
     };
     const existingPayload =
       initialContext?.payload && typeof initialContext.payload === 'object'

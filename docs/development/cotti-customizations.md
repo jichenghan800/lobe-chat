@@ -510,3 +510,56 @@ chatdev 验证：
 - 不改任务 topic 抽屉的官方发送方式；有 Gateway 实时通道时仍走官方回推链路，不启用轮询。
 - 不影响普通 chat，也不影响主聊天页。
 - 任务详情页刷新 404 闪烁修复保留，属于任务详情数据加载态问题，不参与消息流式链路。
+
+## 2026-06-28 Agent 模型显示恢复官方语义与单次运行模型锁定
+
+背景：
+
+- chatdev 发现同一 Agent 的不同 topic 之间会互相影响模型显示：用户在 topic A 使用豆包后，
+  topic B 选择 GLM 开始任务，任务失败后页面又显示为豆包。
+- 对照官方 `v2.2.8` 后确认，官方模型按钮 / 文案只读取当前 Agent 配置，不读取
+  `topics.model/provider` 或最新 assistant 消息模型。
+- 本地二开曾新增 `useTopicAwareModelDisplay`，优先显示 topic 汇总模型 / 最新消息模型。
+  但官方 `topics.model/provider` 是用量统计投影，按 assistant token 最大的模型汇总，不是 “当前选择模型”。
+  这会把历史或续跑中的 dominant model 错当作当前下拉框选择。
+- 进一步排查发现：模型选择是 Agent 级配置，不是 topic 级配置。同一个 Agent 在另一个 topic
+  切到豆包会写回 Agent 全局配置。当前 topic 发送时虽然先创建了 GLM 的 assistant 占位消息，
+  但如果 runtime 启动前 Agent 全局配置被旧 topic / SWR 刷新覆盖为豆包，后续工具续跑创建的
+  assistant 会从豆包开始。
+
+处理：
+
+- 移除 `src/features/ChatInput/ActionBar/Model/useTopicAwareModelDisplay.ts`。
+- `Model` 图标按钮和 `ModelLabel` 文案恢复官方语义：显示 / 切换都以当前 Agent 配置为准。
+- 保留 COTTI 模型可见性二开：
+  - chat/agent 模型范围过滤仍由 `shouldIncludeAgentOnlyChatModels` 控制。
+  - COTTI 展示名仍由 `getModelDisplayName` 控制。
+- 在发送服务端创建 user/assistant 消息后，从返回的 assistant 消息读取本次 `model/provider`，
+  作为 `executeClientAgent` 的显式 runtime payload。
+- `internal_createAgentState` 支持显式 runtime model/provider：
+  - 后续 `modelRuntimeConfig`
+  - compression model
+  - 工具生成能力判断
+  - 传给 LLM 的默认 payload
+  - 传给 `createAgentExecutors` 的 resolved agent config
+    都使用本次运行锁定的模型，而不是重新读取可能已被其他 topic 覆盖的 Agent 全局配置。
+
+边界：
+
+- 不改变官方 `topics.model/provider` 的用量统计设计。
+- 不把 topic 汇总模型作为当前选择模型。
+- 不引入 topic 级模型持久化；本次仅保证 “单次发送 / 单次 agent runtime” 模型固定。
+- 如果用户在同一个 Agent 的另一个 topic 主动切模型，后续新发送仍会按 Agent 级配置生效，这是官方语义。
+
+验证：
+
+- `bunx vitest run --silent='passed-only' src/store/chat/slices/aiChat/actions/__tests__/streamingExecutor.test.ts`
+  - 44 passed
+- `bunx vitest run --silent='passed-only' src/store/chat/slices/aiChat/actions/__tests__/conversationLifecycle.test.ts`
+  - 36 passed
+- `git diff --check`
+  - passed
+- `bun run type-check`
+  - 仍失败于既有无关错误：
+    `src/features/AgentTasks/AgentTaskDetail/TopicChatDrawer/fallbackRefresh.test.ts(101,13):
+Type 'null' is not assignable to type 'string | undefined'.`

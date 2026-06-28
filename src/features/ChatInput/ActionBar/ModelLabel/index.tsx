@@ -8,11 +8,13 @@ import { getModelDisplayName } from '@/_custom/registry/modelDisplayName';
 import { useBusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import { usePermission } from '@/hooks/usePermission';
+import { useAgentStore } from '@/store/agent';
+import { agentByIdSelectors } from '@/store/agent/selectors';
 import { aiModelSelectors, useAiInfraStore } from '@/store/aiInfra';
 import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
+import { useAgentId } from '../../hooks/useAgentId';
 import { useActionBarContext } from '../context';
-import { useTopicAwareModelDisplay } from '../Model/useTopicAwareModelDisplay';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   chevron: css`
@@ -51,14 +53,13 @@ const ModelLabel = memo(() => {
   const { dropdownPlacement } = useActionBarContext();
   const { allowed: canCreateContent, reason } = usePermission('create_content');
 
-  const {
-    agentId,
-    enableAgentMode,
-    isModelDisplayLoading,
-    model,
-    provider,
-    updateAgentConfigById,
-  } = useTopicAwareModelDisplay();
+  const agentId = useAgentId();
+  const [model, provider, enableAgentMode, updateAgentConfigById] = useAgentStore((s) => [
+    agentByIdSelectors.getAgentModelById(agentId)(s),
+    agentByIdSelectors.getAgentModelProviderById(agentId)(s),
+    agentByIdSelectors.getAgentEnableModeById(agentId)(s),
+    s.updateAgentConfigById,
+  ]);
   const enableCottiAgentAccess = useServerConfigStore(serverConfigSelectors.enableCottiAgentAccess);
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
   const includeAgentOnlyModels = shouldIncludeAgentOnlyChatModels({
@@ -67,9 +68,7 @@ const ModelLabel = memo(() => {
   });
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
-  const displayName = isModelDisplayLoading
-    ? ''
-    : getModelDisplayName(provider, model, enabledModel?.displayName);
+  const displayName = getModelDisplayName(provider, model, enabledModel?.displayName);
 
   const handleModelChange = useCallback(
     async (params: { model: string; provider: string }) => {
