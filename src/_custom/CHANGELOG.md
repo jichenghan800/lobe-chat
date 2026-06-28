@@ -12,6 +12,13 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 - Only providers and `serverModelLists` / `enabledModels` entries referenced by the visible model
   allow-list are returned. This drops unused provider metadata such as Ollama from the first global
   config payload while keeping server-side `getServerGlobalConfig()` untouched for runtime internals.
+- Dev deployment: dev container image
+  `lobehub:v2.2.8-cotti-global-config-ai-provider-prune-v42` is running on `chatdev`; previous dev
+  container is retained as
+  `lobehub-v228-stage0-before-global-config-ai-provider-prune-20260628163829`.
+- Verification: `chatdev` `/trpc/lambda/config.getGlobalConfig` now returns about 10.6KB and only
+  `azure`, `qwen`, `vertexai`, and `volcengine` provider config. `ollama` is no longer present in
+  the SPA global config response.
 
 ### Agent Topic Model Display Hydration
 
