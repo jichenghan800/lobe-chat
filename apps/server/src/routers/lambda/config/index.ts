@@ -2,6 +2,7 @@ import { EdgeConfig } from '@lobechat/edge-config';
 import debug from 'debug';
 
 import { resolveCottiAgentAccessForUser } from '@/_custom/registry/agentAccess.server';
+import { pruneGlobalAiProviderConfig } from '@/_custom/registry/globalAiProviderConfig';
 import { businessConfigEndpoints } from '@/business/server/lambda-routers/config';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
@@ -80,6 +81,7 @@ export const configRouter = router({
         billboard,
         serverConfig: {
           ...serverConfig,
+          aiProvider: pruneGlobalAiProviderConfig(serverConfig.aiProvider),
           enableCottiAgentAccess,
         },
         serverFeatureFlags,

@@ -5,6 +5,14 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 ## 2026-06-28
 
+### Global Config AI Provider Pruning
+
+- Trim `/trpc/lambda/config.getGlobalConfig` for Cotti enterprise deployments by applying
+  `NEXT_PUBLIC_MODEL_VISIBLE_ALLOW` to `serverConfig.aiProvider` before returning it to the SPA.
+- Only providers and `serverModelLists` / `enabledModels` entries referenced by the visible model
+  allow-list are returned. This drops unused provider metadata such as Ollama from the first global
+  config payload while keeping server-side `getServerGlobalConfig()` untouched for runtime internals.
+
 ### Agent Topic Model Display Hydration
 
 - Avoid showing the agent's later model config during the first frames of an `/agent/:agentId/:topicId`
