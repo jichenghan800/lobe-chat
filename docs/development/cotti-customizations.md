@@ -563,3 +563,17 @@ chatdev 验证：
   - 仍失败于既有无关错误：
     `src/features/AgentTasks/AgentTaskDetail/TopicChatDrawer/fallbackRefresh.test.ts(101,13):
 Type 'null' is not assignable to type 'string | undefined'.`
+
+开发环境部署：
+
+- 代码提交：`7afbaa5845 🐛 lock agent runtime model per send`
+- 镜像：`lobehub:v2.2.8-cotti-agent-runtime-model-lock-v43-7afbaa5845`
+- 备份容器：`lobehub-v228-stage0-before-agent-runtime-model-lock-20260628204959`
+- 新容器：`lobehub-v228-stage0`
+- 新容器保留原运行时环境、`lobehub_default` 网络和 `3210:3210` 端口映射。
+- 启动验证：
+  - 数据库 migration pass
+  - Next.js ready
+  - Gateway started
+  - 本机 `http://127.0.0.1:3210/` 返回 `302`
+- 本机当前无法解析 `chatdev.cotticoffee.com`，外域访问需要从浏览器或可解析该域名的机器复测。
