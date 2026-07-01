@@ -9,6 +9,14 @@ import { SkillSorts } from '@/types/discover';
 
 const log = debug('lambda-router:market:skill');
 
+const createEmptySkillList = (input?: { page?: number; pageSize?: number }) => ({
+  currentPage: input?.page ?? 1,
+  items: [],
+  pageSize: input?.pageSize ?? 20,
+  totalCount: 0,
+  totalPages: 0,
+});
+
 // Public procedure with optional user info for trusted client token
 const marketProcedure = publicProcedure
   .use(serverDatabase)
@@ -41,10 +49,7 @@ export const skillRouter = router({
         return await ctx.marketService.getSkillCategories();
       } catch (error) {
         log('Error fetching skill categories: %O', error);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch skill categories',
-        });
+        return [];
       }
     }),
 
@@ -94,10 +99,7 @@ export const skillRouter = router({
         return await ctx.marketService.searchSkill(input ?? {});
       } catch (error) {
         log('Error fetching skill list: %O', error);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch skill list',
-        });
+        return createEmptySkillList(input);
       }
     }),
 });

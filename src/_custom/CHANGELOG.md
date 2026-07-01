@@ -3,6 +3,25 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-06-30
+
+### Market Skill Failure Fallback
+
+- Return empty skill categories and an empty skill list when the upstream LobeHub Market skill API is
+  unavailable or blocked, instead of surfacing a `market.skill.*` 500 to the Cotti web UI.
+- Root cause observed on `chatdev`: requests to `https://market.lobehub.com` are currently blocked
+  by Cloudflare with `403 text/html`, while the SDK expects JSON responses.
+- Build guard: pin `@lobehub/editor` to `4.18.0` because fresh Docker installs can resolve
+  `4.19.2`, whose React entry no longer exports `FloatMenu` and fails the SPA build.
+
+### Blue Feishu Auth Allowlist
+
+- Add `mail.cotticoffee.com` to the dev auth email allowlist so Blue Feishu users whose enterprise
+  email is returned under that domain can create accounts successfully.
+- Root cause: the Better Auth email whitelist runs on user creation; existing users may still log in
+  because no new user record is created, while first-time Blue Feishu users are rejected with
+  `EMAIL_NOT_ALLOWED` if their email domain is missing from `AUTH_ALLOWED_EMAILS`.
+
 ## 2026-06-28
 
 ### Global Config AI Provider Pruning
