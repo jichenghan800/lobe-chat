@@ -5,14 +5,10 @@ entries scoped so future upgrades can decide whether to keep, drop, or replace e
 
 ## 2026-06-30
 
-### Market Skill Failure Fallback
+### Docker Build Dependency Pin
 
-- Return empty skill categories and an empty skill list when the upstream LobeHub Market skill API is
-  unavailable or blocked, instead of surfacing a `market.skill.*` 500 to the Cotti web UI.
-- Root cause observed on `chatdev`: requests to `https://market.lobehub.com` are currently blocked
-  by Cloudflare with `403 text/html`, while the SDK expects JSON responses.
-- Build guard: pin `@lobehub/editor` to `4.18.0` because fresh Docker installs can resolve
-  `4.19.2`, whose React entry no longer exports `FloatMenu` and fails the SPA build.
+- Pin `@lobehub/editor` to `4.18.0` because fresh Docker installs can resolve `4.19.2`, whose React
+  entry no longer exports `FloatMenu` and fails the SPA build.
 
 ### Blue Feishu Auth Allowlist
 
