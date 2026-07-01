@@ -14,6 +14,7 @@ import Appearance from '../appearance';
 import Creds from '../creds';
 import Devices from '../devices';
 import FeedbackAnalytics from '../feedback-analytics';
+import HomeNotification from '../home-notification';
 import Hotkey from '../hotkey';
 import Memory from '../memory';
 import Messenger from '../messenger';
@@ -40,6 +41,7 @@ export const componentMap = {
   [SettingsTabs.Notification]: Notification,
   [SettingsTabs.About]: About,
   [SettingsTabs.Hotkey]: Hotkey,
+  [SettingsTabs.HomeNotification]: HomeNotification,
   [SettingsTabs.Proxy]: Proxy,
   [SettingsTabs.SystemTools]: SystemTools,
   [SettingsTabs.Storage]: Storage,

@@ -90,7 +90,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "workspaces_slug_idx" ON "workspaces" USING bt
 CREATE INDEX IF NOT EXISTS "workspaces_primary_owner_id_idx" ON "workspaces" USING btree ("primary_owner_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "messages_usage_cost_idx" ON "messages" USING btree ((("usage"->>'cost')::numeric));--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "messages_usage_total_tokens_idx" ON "messages" USING btree ((("usage"->>'totalTokens')::numeric));--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "topics_sender_id_idx" ON "topics" USING btree ("sender_id");
+CREATE INDEX IF NOT EXISTS "topics_sender_id_idx" ON "topics" USING btree ("sender_id");--> statement-breakpoint
 ALTER TABLE "agents" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
 ALTER TABLE "agents_files" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
 ALTER TABLE "agents_knowledge_bases" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
@@ -161,7 +161,8 @@ ALTER TABLE "threads" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement
 ALTER TABLE "topic_documents" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
 ALTER TABLE "topic_shares" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
 ALTER TABLE "topics" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
-ALTER TABLE "user_installed_plugins" ADD COLUMN IF NOT EXISTS "workspace_id" text;ALTER TABLE "agents" DROP CONSTRAINT IF EXISTS "agents_workspace_id_workspaces_id_fk";--> statement-breakpoint
+ALTER TABLE "user_installed_plugins" ADD COLUMN IF NOT EXISTS "workspace_id" text;--> statement-breakpoint
+ALTER TABLE "agents" DROP CONSTRAINT IF EXISTS "agents_workspace_id_workspaces_id_fk";--> statement-breakpoint
 ALTER TABLE "agents" ADD CONSTRAINT "agents_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agents_files" DROP CONSTRAINT IF EXISTS "agents_files_workspace_id_workspaces_id_fk";--> statement-breakpoint
 ALTER TABLE "agents_files" ADD CONSTRAINT "agents_files_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -300,7 +301,7 @@ ALTER TABLE "topic_shares" ADD CONSTRAINT "topic_shares_workspace_id_workspaces_
 ALTER TABLE "topics" DROP CONSTRAINT IF EXISTS "topics_workspace_id_workspaces_id_fk";--> statement-breakpoint
 ALTER TABLE "topics" ADD CONSTRAINT "topics_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_installed_plugins" DROP CONSTRAINT IF EXISTS "user_installed_plugins_workspace_id_workspaces_id_fk";--> statement-breakpoint
-ALTER TABLE "user_installed_plugins" ADD CONSTRAINT "user_installed_plugins_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "user_installed_plugins" ADD CONSTRAINT "user_installed_plugins_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "agents_workspace_id_idx" ON "agents" USING btree ("workspace_id");--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "agents_slug_workspace_id_unique" ON "agents" USING btree ("workspace_id","slug") WHERE "agents"."workspace_id" is not null;--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "agents_files_workspace_id_idx" ON "agents_files" USING btree ("workspace_id");--> statement-breakpoint
@@ -377,7 +378,8 @@ CREATE INDEX IF NOT EXISTS "threads_workspace_id_idx" ON "threads" USING btree (
 CREATE INDEX IF NOT EXISTS "topic_documents_workspace_id_idx" ON "topic_documents" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "topic_shares_workspace_id_idx" ON "topic_shares" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "topics_workspace_id_idx" ON "topics" USING btree ("workspace_id");--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "user_installed_plugins_workspace_id_idx" ON "user_installed_plugins" USING btree ("workspace_id");ALTER TABLE "rbac_roles" DROP CONSTRAINT IF EXISTS "rbac_roles_name_unique";--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "user_installed_plugins_workspace_id_idx" ON "user_installed_plugins" USING btree ("workspace_id");--> statement-breakpoint
+ALTER TABLE "rbac_roles" DROP CONSTRAINT IF EXISTS "rbac_roles_name_unique";--> statement-breakpoint
 DROP INDEX IF EXISTS "agents_slug_user_id_unique";--> statement-breakpoint
 DROP INDEX IF EXISTS "agent_eval_benchmarks_identifier_user_id_unique";--> statement-breakpoint
 DROP INDEX IF EXISTS "agent_eval_datasets_identifier_user_id_unique";--> statement-breakpoint

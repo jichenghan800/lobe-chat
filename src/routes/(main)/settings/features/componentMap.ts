@@ -40,6 +40,9 @@ export const componentMap = {
   [SettingsTabs.Hotkey]: dynamic(() => import('../hotkey'), {
     loading: loading('Settings > Hotkey'),
   }),
+  [SettingsTabs.HomeNotification]: dynamic(() => import('../home-notification'), {
+    loading: loading('Settings > HomeNotification'),
+  }),
   [SettingsTabs.Proxy]: dynamic(() => import('../proxy'), {
     loading: loading('Settings > Proxy'),
   }),

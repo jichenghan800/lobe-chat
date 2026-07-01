@@ -55,6 +55,7 @@ export enum SettingsTabs {
   Creds = 'creds',
   Devices = 'devices',
   FeedbackAnalytics = 'feedback-analytics',
+  HomeNotification = 'home-notification',
   Hotkey = 'hotkey',
   /** @deprecated Use ServiceModel instead */
   Image = 'image',

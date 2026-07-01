@@ -735,6 +735,7 @@ export const topicActionKeys = {
 // ---- misc remaining domains ---------------------------------------------
 export const homeKeys = {
   dailyBrief: def('home:dailyBrief', (userId: string) => ['home:dailyBrief', userId]),
+  notification: def('home:notification', () => ['home:notification']),
 };
 
 /**

@@ -7,6 +7,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useHomeDailyBrief } from '@/hooks/useHomeDailyBrief';
 import { useStableNavigate } from '@/hooks/useStableNavigate';
+import { useClientDataSWR } from '@/libs/swr';
+import { homeKeys } from '@/libs/swr/keys';
+import { homeNotificationService } from '@/services/homeNotification';
 
 interface LinkSpan {
   end: number;
@@ -271,10 +274,41 @@ const DailyTypewriter = memo<DailyTypewriterProps>(
   },
 );
 
+interface StaticNotificationTextProps {
+  content: string;
+}
+
+const StaticNotificationText = memo<StaticNotificationTextProps>(({ content }) => {
+  const sentence = useMemo(() => parseSentence(content), [content]);
+
+  return (
+    <Flexbox
+      style={{
+        fontSize: 16,
+        lineHeight: 1.6,
+        minHeight: '3.2em',
+        paddingInlineStart: 5,
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+      }}
+    >
+      <span>{renderWithLinks(sentence.plain, sentence.links)}</span>
+    </Flexbox>
+  );
+});
+
 const WelcomeText = memo(() => {
   const { t } = useTranslation('welcome');
 
+  const { data: notification } = useClientDataSWR(
+    homeKeys.notification(),
+    () => homeNotificationService.getDetail(),
+    {
+      refreshInterval: 10_000,
+    },
+  );
   const { pairs, currentIndex, advance } = useHomeDailyBrief();
+  const notificationContent = notification?.enabled ? notification.content.trim() : '';
 
   const dailySentences = useMemo<ParsedSentence[]>(
     () => pairs.map((p) => parseSentence(p.welcome)),
@@ -309,6 +343,8 @@ const WelcomeText = memo(() => {
   // and WelcomeText stay in sync across remounts. Fallback mode: just start
   // from 0 — there is no shared hint to keep paired with.
   const sentenceIndex = useDaily ? currentIndex % Math.max(sentences.length, 1) : 0;
+
+  if (notificationContent) return <StaticNotificationText content={notificationContent} />;
 
   if (sentences.length === 0) return null;
 

@@ -58,6 +58,9 @@ export const isSettingsTabHidden = (tab: SettingsTabs) => {
     case SettingsTabs.FeedbackAnalytics: {
       return isPlatformAnalyticsHidden();
     }
+    case SettingsTabs.HomeNotification: {
+      return isPlatformAnalyticsHidden();
+    }
     default: {
       return false;
     }

@@ -51,6 +51,7 @@ import { generationRouter } from './generation';
 import { generationBatchRouter } from './generationBatch';
 import { generationTopicRouter } from './generationTopic';
 import { homeRouter } from './home';
+import { homeNotificationRouter } from './homeNotification';
 import { imageRouter } from './image';
 import { importerRouter } from './importer';
 import { knowledgeRouter } from './knowledge';
@@ -119,6 +120,7 @@ export const lambdaRouter = router({
   group: agentGroupRouter,
   healthcheck: publicProcedure.query(() => "i'm live!"),
   home: homeRouter,
+  homeNotification: homeNotificationRouter,
   image: imageRouter,
   importer: importerRouter,
   composio: composioRouter,

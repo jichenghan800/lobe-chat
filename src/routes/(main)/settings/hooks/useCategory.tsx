@@ -20,6 +20,7 @@ import {
   KeyRound,
   LifeBuoy,
   Map,
+  Megaphone,
   MessageCircleIcon,
   MonitorSmartphoneIcon,
   PaletteIcon,
@@ -210,6 +211,11 @@ export const useCategory = () => {
         icon: ShieldCheck,
         key: SettingsTabs.AgentAccess,
         label: 'Agent 权限配置',
+      },
+      !isSettingsTabHidden(SettingsTabs.HomeNotification) && {
+        icon: Megaphone,
+        key: SettingsTabs.HomeNotification,
+        label: '首页通知',
       },
       !isSettingsTabHidden(SettingsTabs.PlatformAudit) && {
         icon: FileSearch,

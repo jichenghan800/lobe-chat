@@ -805,6 +805,13 @@
       "when": 1782207969858,
       "tag": "0114_compat_reapply_skipped_workspace_migrations",
       "breakpoints": true
+    },
+    {
+      "idx": 115,
+      "version": "7",
+      "when": 1782902180683,
+      "tag": "0115_add_cotti_home_notification_settings",
+      "breakpoints": true
     }
   ],
   "version": "6"
