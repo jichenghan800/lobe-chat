@@ -17,6 +17,7 @@ import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerGlobalConfig } from '@/server/globalConfig';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { getCottiModelDisplayVisibleRefs } from '@/server/routers/lambda/_helpers/modelDisplay';
 import { type ProviderConfig } from '@/types/user/settings';
 
 const AI_MODEL_UNIQUE_CONSTRAINT = 'ai_models_id_provider_id_user_id_pk';
@@ -45,10 +46,12 @@ const throwDuplicateAiModelError = (id: string): never => {
 
 const aiModelProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
-  const wsId = ctx.workspaceId ?? undefined;
 
   const gateKeeper = await KeyVaultsGateKeeper.initWithEnvKey();
-  const { aiProvider } = await getServerGlobalConfig();
+  const [{ aiProvider }, visibleModelRefs] = await Promise.all([
+    getServerGlobalConfig(),
+    getCottiModelDisplayVisibleRefs(ctx.serverDB),
+  ]);
 
   return opts.next({
     ctx: {
@@ -56,6 +59,7 @@ const aiModelProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) 
         ctx.serverDB,
         ctx.userId,
         aiProvider as Record<string, ProviderConfig>,
+        visibleModelRefs,
       ),
       aiModelModel: new AiModelModel(ctx.serverDB, ctx.userId),
       gateKeeper,

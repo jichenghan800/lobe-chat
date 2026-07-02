@@ -812,6 +812,13 @@
       "when": 1782902180683,
       "tag": "0115_add_cotti_home_notification_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1782905000000,
+      "tag": "0116_add_cotti_model_display_settings",
+      "breakpoints": true
     }
   ],
   "version": "6"

@@ -43,6 +43,9 @@ export const componentMap = {
   [SettingsTabs.HomeNotification]: dynamic(() => import('../home-notification'), {
     loading: loading('Settings > HomeNotification'),
   }),
+  [SettingsTabs.ModelDisplay]: dynamic(() => import('../model-display'), {
+    loading: loading('Settings > ModelDisplay'),
+  }),
   [SettingsTabs.Proxy]: dynamic(() => import('../proxy'), {
     loading: loading('Settings > Proxy'),
   }),

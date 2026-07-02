@@ -18,6 +18,7 @@ import HomeNotification from '../home-notification';
 import Hotkey from '../hotkey';
 import Memory from '../memory';
 import Messenger from '../messenger';
+import ModelDisplay from '../model-display';
 import PlatformAnalytics from '../platform-analytics';
 import PlatformAudit from '../platform-audit';
 import Profile from '../profile';
@@ -42,6 +43,7 @@ export const componentMap = {
   [SettingsTabs.About]: About,
   [SettingsTabs.Hotkey]: Hotkey,
   [SettingsTabs.HomeNotification]: HomeNotification,
+  [SettingsTabs.ModelDisplay]: ModelDisplay,
   [SettingsTabs.Proxy]: Proxy,
   [SettingsTabs.SystemTools]: SystemTools,
   [SettingsTabs.Storage]: Storage,

@@ -19,7 +19,7 @@ import { DEFAULT_MODEL_PROVIDER_LIST } from 'model-bank/modelProviders';
 import pMap from 'p-map';
 
 import { normalizeModelBuiltinSearch } from '@/_custom/registry/modelBuiltinSearch';
-import { isModelVisible } from '@/_custom/registry/modelVisibility';
+import { createModelVisibilityChecker } from '@/_custom/registry/modelVisibility';
 import { merge, mergeArrayById } from '@/utils/merge';
 
 import { AiModelModel } from '../../models/aiModel';
@@ -34,8 +34,9 @@ const resolveCottiPublicModelEnabled = (
   providerId: string,
   modelId: string,
   enabled: boolean | null | undefined,
+  isVisibleModel: (providerId: string, modelId: string) => boolean,
 ) => {
-  if (isModelVisible(providerId, modelId)) return true;
+  if (isVisibleModel(providerId, modelId)) return true;
 
   return enabled;
 };
@@ -56,8 +57,9 @@ const isServerConfiguredModel = (
 const isRuntimeStateModelIncluded = (
   providerConfigs: Record<string, ProviderConfig>,
   model: EnabledAiModel,
+  isVisibleModel: (providerId: string, modelId: string) => boolean,
 ) => {
-  if (isModelVisible(model.providerId, model.id)) return true;
+  if (isVisibleModel(model.providerId, model.id)) return true;
 
   if (normalizeAiModelType(model.type) === 'chat') return false;
 
@@ -176,6 +178,7 @@ export class AiInfraRepos {
   private db: LobeChatDatabase;
   aiProviderModel: AiProviderModel;
   private readonly providerConfigs: Record<string, ProviderConfig>;
+  private readonly isVisibleModel: (providerId: string, modelId: string) => boolean;
   aiModelModel: AiModelModel;
   private modelBankModelsPromise?: ReturnType<typeof loadModels>;
 
@@ -183,12 +186,14 @@ export class AiInfraRepos {
     db: LobeChatDatabase,
     userId: string,
     providerConfigs: Record<string, ProviderConfig>,
+    visibleModelRefs?: { model: string; provider: string }[],
   ) {
     this.userId = userId;
     this.db = db;
     this.aiProviderModel = new AiProviderModel(db, userId);
     this.aiModelModel = new AiModelModel(db, userId);
     this.providerConfigs = providerConfigs;
+    this.isVisibleModel = createModelVisibilityChecker(visibleModelRefs);
   }
 
   /**
@@ -261,7 +266,12 @@ export class AiInfraRepos {
               return normalizeCustomSearchSettings(provider.id, {
                 ...item,
                 abilities: item.abilities || {},
-                enabled: resolveCottiPublicModelEnabled(provider.id, item.id, item.enabled),
+                enabled: resolveCottiPublicModelEnabled(
+                  provider.id,
+                  item.id,
+                  item.enabled,
+                  this.isVisibleModel,
+                ),
                 providerId: provider.id,
               });
 
@@ -278,6 +288,7 @@ export class AiInfraRepos {
                 provider.id,
                 item.id,
                 typeof user.enabled === 'boolean' ? user.enabled : item.enabled,
+                this.isVisibleModel,
               ),
               id: item.id,
               providerId: provider.id,
@@ -306,13 +317,23 @@ export class AiInfraRepos {
         if (builtinModelKeys.has(`${item.providerId}:${item.id}`)) return false;
         return filterEnabled
           ? enabledProviderIds.has(item.providerId) &&
-              resolveCottiPublicModelEnabled(item.providerId, item.id, item.enabled)
+              resolveCottiPublicModelEnabled(
+                item.providerId,
+                item.id,
+                item.enabled,
+                this.isVisibleModel,
+              )
           : true;
       })
       .map((item) =>
         normalizeCustomSearchSettings(item.providerId, {
           ...item,
-          enabled: resolveCottiPublicModelEnabled(item.providerId, item.id, item.enabled),
+          enabled: resolveCottiPublicModelEnabled(
+            item.providerId,
+            item.id,
+            item.enabled,
+            this.isVisibleModel,
+          ),
           type: normalizeAiModelType(item.type),
         }),
       );
@@ -336,7 +357,9 @@ export class AiInfraRepos {
       runtimeConfig[key] = merge(this.providerConfigs[key] || {}, value);
     });
     const enabledAiModels = allModels.filter(
-      (model) => model.enabled && isRuntimeStateModelIncluded(this.providerConfigs, model),
+      (model) =>
+        model.enabled &&
+        isRuntimeStateModelIncluded(this.providerConfigs, model, this.isVisibleModel),
     );
 
     const enabledChatProviderIds = getEnabledProviderIdsByModelType(enabledAiModels, 'chat');

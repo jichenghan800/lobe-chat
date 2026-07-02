@@ -6,7 +6,33 @@ interface ParsedVisibleModelAllowList {
   providerModelIds: Set<string>;
 }
 
+export interface VisibleModelRef {
+  model: string;
+  provider: string;
+}
+
 const normalize = (value: string) => value.trim().toLowerCase();
+
+export const createVisibleModelAllowList = (refs: VisibleModelRef[]) => {
+  const allowList: ParsedVisibleModelAllowList = {
+    modelIds: new Set(),
+    providerIds: new Set(),
+    providerModelIds: new Set(),
+  };
+
+  for (const ref of refs) {
+    const providerId = normalize(ref.provider);
+    const modelId = normalize(ref.model);
+    if (!providerId || !modelId) continue;
+
+    allowList.providerIds.add(providerId);
+    allowList.providerModelIds.add(`${providerId}/${modelId}`);
+  }
+
+  if (allowList.providerModelIds.size === 0) return;
+
+  return allowList;
+};
 
 const parseVisibleModelAllowList = (raw = process.env.NEXT_PUBLIC_MODEL_VISIBLE_ALLOW) => {
   if (!raw?.trim()) return;
@@ -82,8 +108,11 @@ const pruneProviderConfig = (
 
 export const pruneGlobalAiProviderConfig = (
   aiProvider: ServerLanguageModel,
+  visibleModelRefs?: VisibleModelRef[],
 ): ServerLanguageModel => {
-  const allowList = parseVisibleModelAllowList();
+  const allowList = visibleModelRefs
+    ? createVisibleModelAllowList(visibleModelRefs)
+    : parseVisibleModelAllowList();
   if (!allowList || !aiProvider) return aiProvider;
 
   const nextAiProvider: ServerLanguageModel = {};

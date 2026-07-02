@@ -62,6 +62,7 @@ export enum SettingsTabs {
   LLM = 'llm',
   Memory = 'memory',
   Messenger = 'messenger',
+  ModelDisplay = 'model-display',
   Notification = 'notification',
   // business
   Plans = 'plans',

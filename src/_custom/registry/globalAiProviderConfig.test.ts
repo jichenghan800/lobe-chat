@@ -78,4 +78,26 @@ describe('pruneGlobalAiProviderConfig', () => {
 
     expect(pruneGlobalAiProviderConfig(aiProvider)).toBe(aiProvider);
   });
+
+  it('uses dynamic visible model refs when provided', () => {
+    process.env.NEXT_PUBLIC_MODEL_VISIBLE_ALLOW = 'azure/gpt-5.5';
+
+    const result = pruneGlobalAiProviderConfig(
+      {
+        azure: {
+          enabled: true,
+          serverModelLists: [{ displayName: 'Azure GPT 5.5', enabled: true, id: 'gpt-5.5' }],
+        },
+        openai: {
+          enabled: true,
+          serverModelLists: [{ displayName: 'OpenAI GPT 5.5', enabled: true, id: 'gpt-5.5' }],
+        },
+      },
+      [{ model: 'gpt-5.5', provider: 'openai' }],
+    );
+
+    expect(Object.keys(result || {})).toEqual(['openai']);
+    expect(result?.openai?.serverModelLists?.map((model) => model.id)).toEqual(['gpt-5.5']);
+    expect(result?.azure).toBeUndefined();
+  });
 });

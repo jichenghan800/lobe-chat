@@ -12,6 +12,7 @@ import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerGlobalConfig } from '@/server/globalConfig';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { getCottiModelDisplayVisibleRefs } from '@/server/routers/lambda/_helpers/modelDisplay';
 import { type AiProviderDetailItem, type AiProviderRuntimeState } from '@/types/aiProvider';
 import {
   CreateAiProviderSchema,
@@ -22,9 +23,11 @@ import { type ProviderConfig } from '@/types/user/settings';
 
 const aiProviderProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
-  const wsId = ctx.workspaceId ?? undefined;
 
-  const { aiProvider } = await getServerGlobalConfig();
+  const [{ aiProvider }, visibleModelRefs] = await Promise.all([
+    getServerGlobalConfig(),
+    getCottiModelDisplayVisibleRefs(ctx.serverDB),
+  ]);
 
   const gateKeeper = await KeyVaultsGateKeeper.initWithEnvKey();
   return opts.next({
@@ -33,6 +36,7 @@ const aiProviderProcedure = wsCompatProcedure.use(serverDatabase).use(async (opt
         ctx.serverDB,
         ctx.userId,
         aiProvider as Record<string, ProviderConfig>,
+        visibleModelRefs,
       ),
       aiProviderModel: new AiProviderModel(ctx.serverDB, ctx.userId),
       gateKeeper,
@@ -86,11 +90,11 @@ export const aiProviderRouter = router({
         return { error: errorBody, model, ok: false, status: response.status };
       } catch (error: any) {
         const errorType = error.errorType || error.type;
-        const msg = errorType
-          ? errorType
-          : typeof error === 'string'
+        const msg =
+          errorType ||
+          (typeof error === 'string'
             ? error
-            : error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
+            : error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error)));
         return { error: msg, model, ok: false };
       }
     }),

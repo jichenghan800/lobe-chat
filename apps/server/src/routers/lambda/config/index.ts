@@ -8,6 +8,7 @@ import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerFeatureFlagsStateFromRuntimeConfig } from '@/server/featureFlags';
 import { getServerDefaultAgentConfig, getServerGlobalConfig } from '@/server/globalConfig';
+import { getCottiModelDisplayVisibleRefs } from '@/server/routers/lambda/_helpers/modelDisplay';
 import {
   type GlobalBillboard,
   type GlobalBillboardItem,
@@ -67,13 +68,19 @@ export const configRouter = router({
     .query(async ({ ctx }): Promise<GlobalRuntimeConfig> => {
       log('[GlobalConfig] Starting global config retrieval for user:', ctx.userId || 'anonymous');
 
-      const [serverConfig, serverFeatureFlags, billboard, enableCottiAgentAccess] =
-        await Promise.all([
-          getServerGlobalConfig(),
-          getServerFeatureFlagsStateFromRuntimeConfig(ctx.userId || undefined),
-          getActiveBillboard(),
-          resolveCottiAgentAccessForUser(ctx.serverDB, ctx.userId || undefined),
-        ]);
+      const [
+        serverConfig,
+        serverFeatureFlags,
+        billboard,
+        enableCottiAgentAccess,
+        visibleModelRefs,
+      ] = await Promise.all([
+        getServerGlobalConfig(),
+        getServerFeatureFlagsStateFromRuntimeConfig(ctx.userId || undefined),
+        getActiveBillboard(),
+        resolveCottiAgentAccessForUser(ctx.serverDB, ctx.userId || undefined),
+        getCottiModelDisplayVisibleRefs(ctx.serverDB),
+      ]);
 
       log('[GlobalConfig] Server config retrieved');
 
@@ -81,7 +88,7 @@ export const configRouter = router({
         billboard,
         serverConfig: {
           ...serverConfig,
-          aiProvider: pruneGlobalAiProviderConfig(serverConfig.aiProvider),
+          aiProvider: pruneGlobalAiProviderConfig(serverConfig.aiProvider, visibleModelRefs),
           enableCottiAgentAccess,
         },
         serverFeatureFlags,

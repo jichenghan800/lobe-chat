@@ -7,6 +7,11 @@ interface ProviderModelListLike<T extends ModelLike> {
   id: string;
 }
 
+interface VisibleModelRef {
+  model: string;
+  provider: string;
+}
+
 const DEFAULT_VISIBLE_MODEL_ALLOW =
   'vertexai/gemini-3.1-flash-lite,vertexai/gemini-3.5-flash,volcengine/doubao-seed-2-1-pro-260628,qwen/qwen3.7-plus,azure/gpt-5.5,qwen/glm-5.2';
 
@@ -53,6 +58,26 @@ export const isModelVisible = (providerId: string, modelId: string) => {
   );
 };
 
+export const createModelVisibilityChecker = (refs?: VisibleModelRef[]) => {
+  if (!refs) return isModelVisible;
+
+  const allowList = new Set(
+    refs
+      .map((item) => {
+        const provider = item.provider.trim().toLowerCase();
+        const model = item.model.trim().toLowerCase();
+        if (!provider || !model) return;
+        return `${provider}/${model}`;
+      })
+      .filter(Boolean) as string[],
+  );
+
+  if (allowList.size === 0) return () => false;
+
+  return (providerId: string, modelId: string) =>
+    allowList.has(`${providerId.trim().toLowerCase()}/${modelId.trim().toLowerCase()}`);
+};
+
 const getModelOrder = (providerId: string, modelId: string) => {
   const normalizedProviderId = providerId.trim().toLowerCase();
   const normalizedModelId = modelId.trim().toLowerCase();
@@ -69,7 +94,9 @@ export const filterVisibleProviderModelLists = <
   P extends ProviderModelListLike<T>,
 >(
   providers: P[],
+  refs?: VisibleModelRef[],
 ) => {
+  if (refs) return filterProviderModelListsByRefs(providers, refs);
   if (!hasVisibleModelAllowList) return providers;
 
   return providers
@@ -83,5 +110,46 @@ export const filterVisibleProviderModelLists = <
     .sort(
       (a, b) =>
         getModelOrder(a.id, a.children[0]?.id || '') - getModelOrder(b.id, b.children[0]?.id || ''),
+    );
+};
+
+export const filterProviderModelListsByRefs = <
+  T extends ModelLike,
+  P extends ProviderModelListLike<T>,
+>(
+  providers: P[],
+  refs: VisibleModelRef[],
+) => {
+  const order = new Map<string, number>();
+  const visible = new Set<string>();
+
+  refs.forEach((item, index) => {
+    const provider = item.provider.trim().toLowerCase();
+    const model = item.model.trim().toLowerCase();
+    if (!provider || !model) return;
+
+    const key = `${provider}/${model}`;
+    visible.add(key);
+    order.set(key, index);
+  });
+
+  if (visible.size === 0) return [];
+
+  const getOrder = (providerId: string, modelId: string) =>
+    order.get(`${providerId.trim().toLowerCase()}/${modelId.trim().toLowerCase()}`) ??
+    Number.MAX_SAFE_INTEGER;
+
+  return providers
+    .map((provider) => ({
+      ...provider,
+      children: provider.children
+        .filter((model) =>
+          visible.has(`${provider.id.trim().toLowerCase()}/${model.id.trim().toLowerCase()}`),
+        )
+        .sort((a, b) => getOrder(provider.id, a.id) - getOrder(provider.id, b.id)),
+    }))
+    .filter((provider) => provider.children.length > 0)
+    .sort(
+      (a, b) => getOrder(a.id, a.children[0]?.id || '') - getOrder(b.id, b.children[0]?.id || ''),
     );
 };

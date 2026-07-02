@@ -738,6 +738,11 @@ export const homeKeys = {
   notification: def('home:notification', () => ['home:notification']),
 };
 
+export const modelDisplayKeys = {
+  detail: def('modelDisplay:detail', () => ['modelDisplay:detail']),
+  options: def('modelDisplay:options', () => ['modelDisplay:options']),
+};
+
 /**
  * Daily task-template recommendation cache schema version. Bump this when the
  * persisted recommendation row shape changes incompatibly so desktop clients
@@ -851,6 +856,7 @@ export const swrKeys = {
   localFile: localFileKeys,
   message: messageKeys,
   messenger: messengerKeys,
+  modelDisplay: modelDisplayKeys,
   notebook: notebookSWRKeys,
   ollama: ollamaKeys,
   onboarding: onboardingKeys,

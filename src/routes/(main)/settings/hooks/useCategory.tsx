@@ -22,6 +22,7 @@ import {
   Map,
   Megaphone,
   MessageCircleIcon,
+  MonitorCog,
   MonitorSmartphoneIcon,
   PaletteIcon,
   ShieldCheck,
@@ -216,6 +217,11 @@ export const useCategory = () => {
         icon: Megaphone,
         key: SettingsTabs.HomeNotification,
         label: '首页通知',
+      },
+      !isSettingsTabHidden(SettingsTabs.ModelDisplay) && {
+        icon: MonitorCog,
+        key: SettingsTabs.ModelDisplay,
+        label: '模型展示配置',
       },
       !isSettingsTabHidden(SettingsTabs.PlatformAudit) && {
         icon: FileSearch,
