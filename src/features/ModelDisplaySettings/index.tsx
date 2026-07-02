@@ -46,6 +46,19 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     border-radius: 8px;
     background: ${cssVar.colorBgContainer};
   `,
+  providerTag: css`
+    flex: none;
+
+    padding-block: 2px;
+    padding-inline: 8px;
+    border: 1px solid ${cssVar.colorBorderSecondary};
+    border-radius: 999px;
+
+    font-size: 12px;
+    color: ${cssVar.colorTextSecondary};
+
+    background: ${cssVar.colorFillQuaternary};
+  `,
   row: css`
     min-height: 56px;
     padding-block: 10px;
@@ -66,9 +79,20 @@ const normalizeKey = (provider: string, model: string) =>
 const optionValue = (option: Pick<ModelDisplayOption, 'model' | 'provider'>) =>
   `${option.provider}/${option.model}`;
 
+const providerLabelMap: Record<string, string> = {
+  azure: 'Azure',
+  openai: 'OpenAI 兼容',
+  qwen: 'Qwen',
+  vertexai: 'Vertex AI',
+  volcengine: '火山引擎',
+};
+
+const getProviderLabel = (provider: string) =>
+  providerLabelMap[provider.trim().toLowerCase()] || provider;
+
 const toSelectOptions = (options: ModelDisplayOption[]) =>
   options.map((item) => ({
-    label: item.label,
+    label: `${item.label} · 渠道：${getProviderLabel(item.provider)}`,
     value: optionValue(item),
   }));
 
@@ -160,7 +184,12 @@ const ModelListEditor = memo<ModelListEditorProps>(({ title, items, options, onC
                   onChange={(enabled) => updateItem(index, { enabled })}
                 />
                 <Flexbox flex={1} gap={4}>
-                  <Text weight={600}>{`${item.provider}/${item.model}`}</Text>
+                  <Flexbox horizontal align="center" gap={8}>
+                    <Text weight={600}>{`${item.provider}/${item.model}`}</Text>
+                    <span className={styles.providerTag}>
+                      {`渠道来源：${getProviderLabel(item.provider)}`}
+                    </span>
+                  </Flexbox>
                   <Input
                     placeholder="前台显示名称"
                     value={item.displayName || ''}
