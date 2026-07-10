@@ -1,6 +1,7 @@
 import type { AgentState } from '@lobechat/agent-runtime';
 import * as agentRuntime from '@lobechat/agent-runtime';
 import type * as LobeChatConst from '@lobechat/const';
+import { generateToolsFromManifest, type LobeToolManifest } from '@lobechat/context-engine';
 import { type UIChatMessage } from '@lobechat/types';
 import { act, renderHook } from '@testing-library/react';
 import { type EnabledAiModel, ModelProvider } from 'model-bank';
@@ -1159,6 +1160,72 @@ describe('StreamingExecutor actions', () => {
           provider: 'qwen',
         }),
       );
+    });
+
+    it('should keep the first Home-to-chat run isolated when activeAgentId is cleared by navigation', () => {
+      act(() => {
+        useAgentStore.setState({ activeAgentId: undefined });
+        useChatStore.setState({ executeClientAgent: realExecAgentRuntime });
+      });
+
+      const chatConfig = createMockChatConfig({ enableAgentMode: false, toolMode: 'chat' });
+      const targetAgentConfig = createMockAgentConfig({
+        chatConfig,
+        model: 'gpt-5.6-terra',
+        plugins: ['lobe-agent'],
+        provider: 'azure',
+      });
+      vi.spyOn(agentConfigResolver, 'resolveAgentConfig').mockReturnValue({
+        agentConfig: targetAgentConfig,
+        chatConfig,
+        isBuiltinAgent: false,
+        plugins: ['lobe-agent'],
+      });
+
+      const agentManifest: LobeToolManifest = {
+        api: [
+          {
+            description: 'Call a sub-agent',
+            name: 'callSubAgent',
+            parameters: { properties: {}, type: 'object' },
+          },
+        ],
+        identifier: 'lobe-agent',
+        meta: { avatar: 'A', title: 'Agent' },
+        systemRole: '',
+        type: 'builtin',
+      };
+      const createAgentToolsEngineSpy = vi
+        .spyOn(toolEngineering, 'createAgentToolsEngine')
+        .mockReturnValue({
+          generateToolsDetailed: vi.fn().mockReturnValue({
+            enabledManifests: [agentManifest],
+            enabledToolIds: ['lobe-agent'],
+            filteredTools: [],
+            tools: generateToolsFromManifest(agentManifest),
+          }),
+        } as any);
+
+      const { result } = renderHook(() => useChatStore());
+      const runtime = result.current.internal_createAgentState({
+        agentId: TEST_IDS.SESSION_ID,
+        messages: [createMockMessage({ id: TEST_IDS.USER_MESSAGE_ID })],
+        parentMessageId: TEST_IDS.USER_MESSAGE_ID,
+        topicId: TEST_IDS.TOPIC_ID,
+      });
+
+      expect(createAgentToolsEngineSpy).toHaveBeenCalledWith(
+        { model: 'gpt-5.6-terra', provider: 'azure' },
+        expect.objectContaining({
+          agentConfig: expect.objectContaining({ chatConfig }),
+          agentId: TEST_IDS.SESSION_ID,
+          pluginIds: ['lobe-agent'],
+        }),
+      );
+      expect(runtime.agentConfig.enabledToolIds).toEqual([]);
+      expect(runtime.agentConfig.enabledManifests).toEqual([]);
+      expect(runtime.agentConfig.tools).toBeUndefined();
+      expect(runtime.state.operationToolSet?.enabledToolIds).toEqual([]);
     });
 
     it('should not inject page editor context outside page scope', () => {

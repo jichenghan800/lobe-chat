@@ -154,4 +154,34 @@ describe('composeEnabledTools', () => {
       expect(result.tools).toEqual(toolsDetailed.tools);
     });
   });
+
+  describe('allowedToolIds capability wall', () => {
+    it('drops base and injected manifests that are outside the final allow-list', () => {
+      const webBrowsing = makeManifest('lobe-web-browsing', 'search');
+      const injectedAgent = makeManifest('lobe-agent', 'callSubAgent');
+
+      const result = composeEnabledTools({
+        context: { allowedToolIds: ['lobe-web-browsing'] },
+        injectedManifests: [injectedAgent],
+        toolsDetailed: makeToolsDetailed([webBrowsing, OTHER_MANIFEST]),
+      });
+
+      expect(result.enabledToolIds).toEqual(['lobe-web-browsing']);
+      expect(result.enabledManifests).toEqual([webBrowsing]);
+      expect(result.tools).toHaveLength(1);
+      expect(result.tools?.[0]?.function?.name).toBe('lobe-web-browsing____search');
+    });
+
+    it('returns no outbound tools when every manifest is outside the allow-list', () => {
+      const result = composeEnabledTools({
+        context: { allowedToolIds: ['lobe-web-browsing'] },
+        injectedManifests: [makeManifest('lobe-agent', 'callSubAgent')],
+        toolsDetailed: makeToolsDetailed([OTHER_MANIFEST]),
+      });
+
+      expect(result.enabledToolIds).toEqual([]);
+      expect(result.enabledManifests).toEqual([]);
+      expect(result.tools).toBeUndefined();
+    });
+  });
 });

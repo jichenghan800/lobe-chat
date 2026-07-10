@@ -12,7 +12,11 @@ import { useModelContextWindowTokens } from '@/hooks/useModelContextWindowTokens
 import { useModelSupportToolUse } from '@/hooks/useModelSupportToolUse';
 import { useTokenCount } from '@/hooks/useTokenCount';
 import { useAgentStore } from '@/store/agent';
-import { agentByIdSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
+import {
+  agentByIdSelectors,
+  agentSelectors,
+  chatConfigByIdSelectors,
+} from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/selectors';
 import { useToolStore } from '@/store/tool';
@@ -54,10 +58,16 @@ const Token = memo(() => {
 
   // Tool usage token
   const canUseTool = useModelSupportToolUse(model, provider);
+  const agentConfig = useAgentStore((s) => agentSelectors.getAgentConfigById(agentId)(s));
   const pluginIds = useAgentStore((s) => agentByIdSelectors.getAgentPluginsById(agentId)(s));
 
   const toolsString = useToolStore(() => {
-    const toolsEngine = createAgentToolsEngine({ model, provider });
+    if (!agentConfig) return '';
+
+    const toolsEngine = createAgentToolsEngine(
+      { model, provider },
+      { agentConfig, agentId, pluginIds },
+    );
 
     const { tools, enabledManifests } = toolsEngine.generateToolsDetailed({
       model,

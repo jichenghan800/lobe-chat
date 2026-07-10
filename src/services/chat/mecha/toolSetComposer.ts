@@ -9,6 +9,8 @@ type UniformTool = UniformToolArray[number];
 const log = debug('lobe-mecha:tool-set-composer');
 
 export interface ToolSetComposerContext {
+  /** Final allow-list applied after all runtime/injected manifests have been merged. */
+  allowedToolIds?: readonly string[];
   isPageEditorReady?: boolean;
   scope?: string;
 }
@@ -72,6 +74,35 @@ const dropPageAgentIfEditorNotMounted = (
   };
 };
 
+/**
+ * Final capability wall for modes with a strict tool allow-list. This runs after
+ * injected manifests are merged so an injection cannot bypass the mode gate.
+ */
+const restrictToAllowedTools = (
+  set: ComposedToolSet,
+  allowedToolIds: readonly string[] | undefined,
+): ComposedToolSet => {
+  if (!allowedToolIds) return set;
+
+  const allowedIds = new Set(allowedToolIds);
+  const enabledManifests = set.enabledManifests.filter((manifest) =>
+    allowedIds.has(manifest.identifier),
+  );
+  const allowedFunctionNames = new Set(
+    enabledManifests
+      .flatMap((manifest) => generateToolsFromManifest(manifest))
+      .map((tool) => tool.function?.name)
+      .filter(Boolean),
+  );
+  const tools = set.tools?.filter((tool) => allowedFunctionNames.has(tool.function?.name));
+
+  return {
+    enabledManifests,
+    enabledToolIds: set.enabledToolIds.filter((id) => allowedIds.has(id)),
+    tools: tools && tools.length > 0 ? tools : undefined,
+  };
+};
+
 export const composeEnabledTools = ({
   toolsDetailed,
   injectedManifests,
@@ -83,8 +114,8 @@ export const composeEnabledTools = ({
     tools: toolsDetailed.tools,
   };
 
-  return dropPageAgentIfEditorNotMounted(
-    mergeInjectedManifests(initial, injectedManifests),
-    context,
+  return restrictToAllowedTools(
+    dropPageAgentIfEditorNotMounted(mergeInjectedManifests(initial, injectedManifests), context),
+    context.allowedToolIds,
   );
 };

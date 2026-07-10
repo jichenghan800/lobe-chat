@@ -7,15 +7,20 @@ import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { alwaysOnToolIds, chatModeAllowedToolIds, defaultToolIds } from '@lobechat/builtin-tools';
+import { isDesktop } from '@lobechat/const';
 import { createEnableChecker, type PluginEnableChecker } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';
-import { type ChatCompletionTool, type ToolManifest, type WorkingModel } from '@lobechat/types';
+import {
+  type ChatCompletionTool,
+  type LobeAgentConfig,
+  type ToolManifest,
+  type WorkingModel,
+} from '@lobechat/types';
 
 import type { ConnectorToolPermission } from '@/database/schemas';
+import { resolveRuntimeMode, resolveToolMode } from '@/helpers/executionTarget';
 import { isToolAvailableInCurrentEnv } from '@/helpers/toolAvailability';
 import { patchManifestWithPermissions } from '@/libs/mcp/patchManifestPermissions';
-import { getAgentStoreState } from '@/store/agent';
-import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
 import { getToolStoreState } from '@/store/tool';
 import {
   composioStoreSelectors,
@@ -125,7 +130,9 @@ export const createToolsEngine = (config: ToolsEngineConfig = {}): ToolsEngine =
 
   // Get Composio tool manifests
   const composioTools = composioStoreSelectors.composioAsLobeTools(toolStoreState);
-  const composioManifests = composioTools.map((tool) => tool.manifest as ToolManifest).filter(Boolean);
+  const composioManifests = composioTools
+    .map((tool) => tool.manifest as ToolManifest)
+    .filter(Boolean);
 
   // Get LobeHub Skill tool manifests
   const lobehubSkillTools = lobehubSkillStoreSelectors.lobehubSkillAsLobeTools(toolStoreState);
@@ -154,23 +161,38 @@ export const createToolsEngine = (config: ToolsEngineConfig = {}): ToolsEngine =
 
 export const createAgentToolsEngine = (
   workingModel: WorkingModel,
-  /** Runtime-resolved plugin IDs (from agentConfigResolver), may include tools beyond the active agent */
-  pluginIds?: string[],
+  {
+    agentConfig,
+    agentId,
+    pluginIds,
+  }: {
+    /** The runtime-resolved target agent config. Never infer this from the active route. */
+    agentConfig: LobeAgentConfig;
+    /** Target agent ID, used for agent-specific search configuration. */
+    agentId: string;
+    /** Runtime-resolved plugin IDs, which may include tools beyond the stored agent config. */
+    pluginIds?: string[];
+  },
 ) => {
-  const searchConfig = getSearchConfig(workingModel.model, workingModel.provider);
-  const agentState = getAgentStoreState();
-  const userPlugins = agentSelectors.currentAgentPlugins(agentState);
-  const isChatMode =
-    agentChatConfigSelectors.currentChatConfig(agentState).enableAgentMode === false;
+  const chatConfig = agentConfig.chatConfig ?? {};
+  const searchConfig = getSearchConfig(
+    workingModel.model,
+    workingModel.provider,
+    agentId,
+    chatConfig,
+  );
+  const userPlugins = agentConfig.plugins ?? [];
+  const isChatMode = resolveToolMode(chatConfig) === 'chat';
+  const runtimeMode = resolveRuntimeMode(agentConfig.agencyConfig, isDesktop);
 
   // Each entry below still respects its own runtime gate; in chat mode this
   // is the entire whitelist. `allowExplicitActivation` and user plugins /
   // `alwaysOnToolIds` are deliberately omitted in chat mode so the activator
   // can't smuggle additional tools in.
-  const kbEnabled = agentSelectors.hasEnabledKnowledgeBases(agentState);
+  const kbEnabled =
+    agentConfig.knowledgeBases?.some((knowledgeBase) => knowledgeBase.enabled) ?? false;
   const memoryEnabled =
-    agentChatConfigSelectors.currentChatConfig(agentState).memory?.enabled ??
-    settingsSelectors.memoryEnabled(useUserStore.getState());
+    chatConfig.memory?.enabled ?? settingsSelectors.memoryEnabled(useUserStore.getState());
   const webBrowsingEnabled = searchConfig.useApplicationBuiltinSearchTool;
 
   const chatModeRules = {
@@ -183,14 +205,14 @@ export const createAgentToolsEngine = (
     // Runtime-resolved plugins (from agentConfigResolver for the effective agent,
     // may include sub-agent/group/page scope plugins not on the active agent)
     ...(pluginIds && Object.fromEntries(pluginIds.map((id) => [id, true]))),
-    // User-selected plugins (from the active agent)
+    // User-selected plugins (from the explicit target agent config)
     ...Object.fromEntries(userPlugins.map((id) => [id, true])),
     // Always-on builtin tools
     ...Object.fromEntries(alwaysOnToolIds.map((id) => [id, true])),
     // System-level rules (may override user selection for specific tools)
-    [CloudSandboxManifest.identifier]: agentChatConfigSelectors.isCloudSandboxEnabled(agentState),
+    [CloudSandboxManifest.identifier]: runtimeMode === 'cloud',
     [KnowledgeBaseManifest.identifier]: kbEnabled,
-    [LocalSystemManifest.identifier]: agentChatConfigSelectors.isLocalSystemEnabled(agentState),
+    [LocalSystemManifest.identifier]: runtimeMode === 'local',
     [MemoryManifest.identifier]: memoryEnabled,
     [WebBrowsingManifest.identifier]: webBrowsingEnabled,
   };

@@ -38,6 +38,27 @@ describe('getSearchConfig', () => {
     vi.clearAllMocks();
   });
 
+  it('should prefer the runtime-resolved target chat config over store route state', () => {
+    vi.mocked(chatConfigByIdSelectors.getChatConfigById).mockReturnValue(
+      () => ({ searchMode: 'on', useModelBuiltinSearch: false }) as any,
+    );
+    vi.mocked(aiInfraSelectors.aiProviderSelectors.isProviderHasBuiltinSearch).mockReturnValue(
+      () => false,
+    );
+    vi.mocked(aiInfraSelectors.aiModelSelectors.isModelHasBuiltinSearch).mockReturnValue(
+      () => false,
+    );
+    vi.mocked(aiInfraSelectors.aiModelSelectors.isModelBuiltinSearchInternal).mockReturnValue(
+      () => false,
+    );
+
+    const result = getSearchConfig(model, provider, 'target-agent', { searchMode: 'off' });
+
+    expect(result.enabledSearch).toBe(false);
+    expect(result.useApplicationBuiltinSearchTool).toBe(false);
+    expect(chatConfigByIdSelectors.getChatConfigById).not.toHaveBeenCalled();
+  });
+
   it('should return correct config when search is enabled and no builtin search', () => {
     vi.mocked(chatConfigByIdSelectors.getChatConfigById).mockReturnValue(
       () =>

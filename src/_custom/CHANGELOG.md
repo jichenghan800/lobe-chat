@@ -3,6 +3,36 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-07-10
+
+### Home Agent-to-Chat First Run Tool Isolation
+
+- Incident: after switching from Agent mode to Chat mode on the home page, the UI displayed Chat but
+  the first submitted message could still receive Agent-only tools and execute them. A second message
+  in the same Chat topic behaved correctly.
+- Root cause: home submission starts the asynchronous run and immediately navigates to the topic.
+  During that transition `HomeAgentIdSync` clears the global `activeAgentId`; the client tools engine
+  previously derived mode, plugins, knowledge, and execution target from that route-global state
+  instead of the target Agent config already resolved for the run. The missing current config fell
+  back to Agent semantics.
+- Fix: build the client tools engine from the explicit target Agent ID and runtime-resolved Agent/chat
+  config. Search, plugin, knowledge, memory, and execution-target gates now follow that target even
+  while route state is changing.
+- Defense in depth: after normal and injected manifests are composed, Chat mode applies the shared
+  `chatModeAllowedToolIds` allow-list as a final capability wall. Agent-only injected manifests cannot
+  reach the outbound model request if an earlier layer regresses.
+- Verification: focused tools-engine, tool-composer, and streaming-executor regressions cover an
+  undefined global `activeAgentId`, explicit `toolMode: chat` precedence, injected Agent-tool removal,
+  and the first Home-to-Chat run. All 81 targeted tests pass.
+- Rollback baseline: annotated tag
+  `checkpoint-gpt56-before-chat-mode-alignment-20260710` points to commit `710ff9db5b` before this fix.
+- Chatdev deployment: image `lobehub:v2.2.8-cotti-chat-mode-fix-20260710-31975c8bb4` is running
+  as `lobehub-v228-stage0` on port 3210. The previous GPT-5.6 display image is retained in the stopped
+  rollback container `lobehub-v228-stage0-before-chat-mode-fix-20260710154539`.
+- Deployment verification: the candidate passed `/api/version` on port 3211 before cutover; after
+  cutover, both local port 3210 and `https://chatdev.cotticoffee.com/api/version` returned `2.2.8`,
+  and the external root kept the expected sign-in redirect.
+
 ## 2026-06-30
 
 ### Docker Build Dependency Pin

@@ -1,3 +1,5 @@
+import type { LobeAgentChatConfig } from '@lobechat/types';
+
 import { getAgentStoreState } from '@/store/agent';
 import { chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { getAiInfraStoreState } from '@/store/aiInfra';
@@ -25,15 +27,18 @@ export interface SearchConfig {
  * @param model - The model name
  * @param provider - The provider name
  * @param agentId - Optional agent ID to get agent-specific chat config
+ * @param chatConfigOverride - Runtime-resolved target chat config, when already available
  */
 export const getSearchConfig = (
   model: string,
   provider: string,
   agentId?: string,
+  chatConfigOverride?: LobeAgentChatConfig,
 ): SearchConfig => {
   const agentStoreState = getAgentStoreState();
   const targetAgentId = agentId || agentStoreState.activeAgentId || '';
-  const chatConfig = chatConfigByIdSelectors.getChatConfigById(targetAgentId)(agentStoreState);
+  const chatConfig =
+    chatConfigOverride ?? chatConfigByIdSelectors.getChatConfigById(targetAgentId)(agentStoreState);
   const aiInfraStoreState = getAiInfraStoreState();
 
   const enabledSearch = chatConfig.searchMode !== 'off';

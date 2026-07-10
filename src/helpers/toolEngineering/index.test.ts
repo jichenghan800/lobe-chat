@@ -1,7 +1,11 @@
-import { type ToolManifest } from '@lobechat/types';
+import { type LobeAgentConfig, type ToolManifest, type WorkingModel } from '@lobechat/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createAgentToolsEngine, createToolsEngine, getEnabledTools } from './index';
+import {
+  createAgentToolsEngine as createRuntimeAgentToolsEngine,
+  createToolsEngine,
+  getEnabledTools,
+} from './index';
 
 // Mock the store and helper dependencies
 vi.mock('@/store/tool', () => ({
@@ -156,6 +160,22 @@ vi.mock('@/helpers/getSearchConfig', () => ({
   }),
 }));
 
+const createAgentToolsEngine = (
+  workingModel: WorkingModel,
+  pluginIds?: string[],
+  overrides: Partial<LobeAgentConfig> = {},
+) =>
+  createRuntimeAgentToolsEngine(workingModel, {
+    agentConfig: {
+      model: workingModel.model,
+      plugins: mockCurrentAgentPlugins,
+      provider: workingModel.provider,
+      ...overrides,
+    } as LobeAgentConfig,
+    agentId: 'target-agent',
+    pluginIds,
+  });
+
 describe('toolEngineering', () => {
   afterEach(() => {
     mockGetInstalledPluginById = () => () => undefined;
@@ -220,6 +240,43 @@ describe('toolEngineering', () => {
   });
 
   describe('createChatToolsEngine', () => {
+    it('should use the target agent chat config when global active agent state is unavailable', () => {
+      mockCurrentAgentPlugins = ['search'];
+
+      const toolsEngine = createAgentToolsEngine(
+        { model: 'gpt-4', provider: 'openai' },
+        ['lobe-agent'],
+        { chatConfig: { enableAgentMode: false } },
+      );
+
+      const result = toolsEngine.generateToolsDetailed({
+        context: { isExplicitActivation: true },
+        model: 'gpt-4',
+        provider: 'openai',
+        toolIds: ['search', 'lobe-agent'],
+      });
+
+      expect(result.enabledToolIds).toEqual(['lobe-web-browsing']);
+      expect(result.enabledToolIds).not.toContain('search');
+      expect(result.enabledToolIds).not.toContain('lobe-agent');
+    });
+
+    it('should honor explicit chat toolMode over enableAgentMode', () => {
+      const toolsEngine = createAgentToolsEngine(
+        { model: 'gpt-4', provider: 'openai' },
+        ['lobe-agent'],
+        { chatConfig: { enableAgentMode: true, toolMode: 'chat' } },
+      );
+
+      const result = toolsEngine.generateToolsDetailed({
+        model: 'gpt-4',
+        provider: 'openai',
+        toolIds: ['lobe-agent'],
+      });
+
+      expect(result.enabledToolIds).not.toContain('lobe-agent');
+    });
+
     it('should include web browsing tool as default when no tools are provided', () => {
       const toolsEngine = createAgentToolsEngine({
         model: 'gpt-4',

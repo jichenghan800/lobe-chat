@@ -14,7 +14,7 @@ import {
 import { LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { createPathScopeAudit } from '@lobechat/builtin-tool-local-system';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { manualModeExcludeToolIds } from '@lobechat/builtin-tools';
+import { chatModeAllowedToolIds, manualModeExcludeToolIds } from '@lobechat/builtin-tools';
 import { isDesktop } from '@lobechat/const';
 import { type ToolsEngine } from '@lobechat/context-engine';
 import { buildTaskDetailPrompt, buildTaskListPrompt } from '@lobechat/prompts';
@@ -27,6 +27,7 @@ import {
 } from '@lobechat/types';
 import debug from 'debug';
 
+import { resolveToolMode } from '@/helpers/executionTarget';
 import { createAgentToolsEngine } from '@/helpers/toolEngineering';
 import { aiAgentService } from '@/services/aiAgent';
 import { isCanUseVideo, isCanUseVision } from '@/services/chat/helper';
@@ -237,7 +238,14 @@ export class StreamingExecutorActionImpl {
     // When disableTools is true (broadcast mode), skipDefaultTools prevents default tools from being added
     const toolsEngine = createAgentToolsEngine(
       { model: runtimeAgentConfigData.model, provider: runtimeAgentConfigData.provider! },
-      effectivePluginIds,
+      {
+        agentConfig: {
+          ...runtimeAgentConfigData,
+          chatConfig: agentConfig.chatConfig,
+        },
+        agentId: effectiveAgentId || '',
+        pluginIds: effectivePluginIds,
+      },
     );
     // When skillActivateMode is 'manual':
     // Exclude only discovery tools (activator, skill-store) so runtime-managed defaults
@@ -254,6 +262,8 @@ export class StreamingExecutorActionImpl {
 
     const { enabledToolIds, enabledManifests, tools } = composeEnabledTools({
       context: {
+        allowedToolIds:
+          resolveToolMode(agentConfig.chatConfig) === 'chat' ? chatModeAllowedToolIds : undefined,
         isPageEditorReady: pageAgentRuntime.isReady(),
         scope,
       },
