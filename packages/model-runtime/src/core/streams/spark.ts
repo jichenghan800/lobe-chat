@@ -35,12 +35,15 @@ export function transformSparkResponseToStream(data: OpenAI.ChatCompletion) {
               content: choice.message.content,
               role: choice.message.role,
               tool_calls: toolCallsArray.map(
-                (tool, index): OpenAI.ChatCompletionChunk.Choice.Delta.ToolCall => ({
-                  function: tool.function,
-                  id: tool.id,
-                  index,
-                  type: tool.type,
-                }),
+                (tool, index): OpenAI.ChatCompletionChunk.Choice.Delta.ToolCall => {
+                  const fnTool = tool as OpenAI.ChatCompletionMessageFunctionToolCall;
+                  return {
+                    function: fnTool.function,
+                    id: fnTool.id,
+                    index,
+                    type: fnTool.type,
+                  };
+                },
               ),
             },
             finish_reason: null,

@@ -28,6 +28,15 @@ describe('modelBuiltinSearch', () => {
     expect(isModelBuiltinSearchAllowed('qwen', 'qwen3.7-plus', allowList)).toBe(true);
   });
 
+  it('keeps builtin search for the Azure GPT-5.6 family wildcard', () => {
+    const allowList = 'vertexai/gemini-*,azure/gpt-5.6-*';
+
+    expect(isModelBuiltinSearchAllowed('azure', 'gpt-5.6-sol', allowList)).toBe(true);
+    expect(isModelBuiltinSearchAllowed('azure', 'gpt-5.6-terra', allowList)).toBe(true);
+    expect(isModelBuiltinSearchAllowed('azure', 'gpt-5.6-luna', allowList)).toBe(true);
+    expect(isModelBuiltinSearchAllowed('openai', 'gpt-5.6-sol', allowList)).toBe(false);
+  });
+
   it('strips builtin search from Doubao 2.1 Pro in the Cotti allow list', () => {
     const previousAllow = process.env.NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW;
     process.env.NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW =

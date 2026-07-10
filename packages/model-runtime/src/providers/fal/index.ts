@@ -15,7 +15,7 @@ const log = debug('lobe-image:fal');
 type FluxDevOutput = Awaited<ReturnType<typeof fal.subscribe<'fal-ai/flux/dev'>>>['data'];
 
 export class LobeFalAI implements LobeRuntimeAI {
-  constructor({ apiKey }: ClientOptions = {}) {
+  constructor({ apiKey }: Omit<ClientOptions, 'apiKey'> & { apiKey?: string } = {}) {
     if (!apiKey) throw AgentRuntimeError.createError(AgentRuntimeErrorType.InvalidProviderAPIKey);
 
     fal.config({

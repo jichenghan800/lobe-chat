@@ -435,6 +435,34 @@ describe('resolveModelExtendParams', () => {
       });
     });
 
+    describe('GPT-5.6 Responses reasoning params', () => {
+      beforeEach(() => {
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(
+          () => true,
+        );
+        vi.spyOn(aiModelSelectors.aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'gpt5_6ReasoningEffort',
+          'reasoningMode',
+        ]);
+      });
+
+      it('should forward max effort and Pro mode', () => {
+        const result = resolveModelExtendParams({
+          chatConfig: createChatConfig({
+            gpt5_6ReasoningEffort: 'max',
+            reasoningMode: 'pro',
+          }),
+          model: 'gpt-5.6-sol',
+          provider: 'azure',
+        });
+
+        expect(result).toMatchObject({
+          reasoning: { mode: 'pro' },
+          reasoning_effort: 'max',
+        });
+      });
+    });
+
     describe('gpt5_2ProReasoningEffort param', () => {
       beforeEach(() => {
         vi.spyOn(aiModelSelectors.aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(

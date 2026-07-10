@@ -143,7 +143,7 @@ const transformOpenAIStream = (
       }
 
       case 'response.output_text.annotation.added': {
-        const citations = chunk.annotation;
+        const citations = chunk.annotation as { title?: string; url?: string };
 
         if (streamContext.returnedCitationArray) {
           streamContext.returnedCitationArray.push({

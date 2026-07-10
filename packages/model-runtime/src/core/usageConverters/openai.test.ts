@@ -375,6 +375,7 @@ describe('convertUsage', () => {
     const responseUsage = {
       input_tokens: 100,
       input_tokens_details: {
+        cache_write_tokens: 10,
         cached_tokens: 0,
       },
       output_tokens: 200,
@@ -391,13 +392,33 @@ describe('convertUsage', () => {
     // Assert
     expect(result).toEqual({
       inputTextTokens: 100,
-      inputCacheMissTokens: 100, // 100 - 0
+      inputCacheMissTokens: 90, // 100 - 0 cached reads - 10 cache writes
       totalInputTokens: 100,
+      inputWriteCacheTokens: 10,
       totalOutputTokens: 200,
       outputImageTokens: 60,
       outputReasoningTokens: 30,
       outputTextTokens: 170, // 200 - 30
       totalTokens: 300,
+    });
+  });
+
+  it('should separate Chat Completions cache writes from uncached input tokens', () => {
+    const usage = {
+      completion_tokens: 5,
+      prompt_tokens: 100,
+      prompt_tokens_details: {
+        cache_write_tokens: 20,
+        cached_tokens: 30,
+      },
+      total_tokens: 105,
+    } as OpenAI.Completions.CompletionUsage;
+
+    expect(convertOpenAIUsage(usage)).toMatchObject({
+      inputCacheMissTokens: 50,
+      inputCachedTokens: 30,
+      inputWriteCacheTokens: 20,
+      totalInputTokens: 100,
     });
   });
 

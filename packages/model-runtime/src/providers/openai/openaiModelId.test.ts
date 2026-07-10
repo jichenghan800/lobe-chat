@@ -82,8 +82,11 @@ describe('isGPT5ResponsesModel', () => {
 
   it('should match future GPT-5 minor versions without allowlist entries', () => {
     expect(isGPT5ResponsesModel('gpt-5.6')).toBe(true);
+    expect(isGPT5ResponsesModel('gpt-5.6-luna')).toBe(true);
     expect(isGPT5ResponsesModel('gpt-5.6-mini')).toBe(true);
     expect(isGPT5ResponsesModel('gpt-5.6-pro')).toBe(true);
+    expect(isGPT5ResponsesModel('gpt-5.6-sol')).toBe(true);
+    expect(isGPT5ResponsesModel('gpt-5.6-terra')).toBe(true);
   });
 
   it('should not force OpenRouter GPT slugs into the built-in Responses API rules', () => {

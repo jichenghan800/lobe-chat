@@ -25,6 +25,23 @@ describe('CottiModelDisplayModel', () => {
     await expect(model.getConfig()).resolves.toEqual(DEFAULT_COTTI_MODEL_DISPLAY_CONFIG);
   });
 
+  it('shows all Azure GPT-5.6 models in the default Chat and Agent lists', () => {
+    const expectedModels = ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'];
+
+    for (const scope of ['chat', 'agent'] as const) {
+      const models = DEFAULT_COTTI_MODEL_DISPLAY_CONFIG[scope]
+        .filter((item) => item.provider === 'azure' && item.model.startsWith('gpt-5.6-'))
+        .map((item) => item.model);
+
+      expect(models).toEqual(expectedModels);
+      expect(
+        DEFAULT_COTTI_MODEL_DISPLAY_CONFIG[scope]
+          .filter((item) => expectedModels.includes(item.model))
+          .every((item) => item.enabled),
+      ).toBe(true);
+    }
+  });
+
   it('stores and normalizes the singleton model display config', async () => {
     const settings = await model.updateConfig(
       {

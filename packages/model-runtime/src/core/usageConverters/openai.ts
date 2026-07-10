@@ -32,10 +32,13 @@ export const convertOpenAIUsage = (
 
   const cachedTokens =
     (usage as any).prompt_cache_hit_tokens || usage.prompt_tokens_details?.cached_tokens;
+  const cacheWriteTokens = usage.prompt_tokens_details?.cache_write_tokens;
 
   const inputCacheMissTokens =
     (usage as any).prompt_cache_miss_tokens ??
-    (typeof cachedTokens === 'number' ? totalInputTokens - cachedTokens : undefined);
+    (typeof cachedTokens === 'number' || typeof cacheWriteTokens === 'number'
+      ? totalInputTokens - (cachedTokens ?? 0) - (cacheWriteTokens ?? 0)
+      : undefined);
 
   const totalOutputTokens = usage.completion_tokens;
   const outputReasoning = usage.completion_tokens_details?.reasoning_tokens || 0;
@@ -59,6 +62,7 @@ export const convertOpenAIUsage = (
     inputCachedTokens: cachedTokens,
     inputCitationTokens,
     inputTextTokens,
+    inputWriteCacheTokens: cacheWriteTokens,
     outputAudioTokens,
     outputImageTokens,
     outputReasoningTokens: outputReasoning,
@@ -90,6 +94,7 @@ export const convertOpenAIResponseUsage = (
   // 1. Extract and default primary values
   const totalInputTokens = usage.input_tokens || 0;
   const inputCachedTokens = usage.input_tokens_details?.cached_tokens || 0;
+  const inputWriteCacheTokens = usage.input_tokens_details?.cache_write_tokens || 0;
 
   const totalOutputTokens = usage.output_tokens || 0;
   const outputReasoningTokens = usage.output_tokens_details?.reasoning_tokens || 0;
@@ -97,7 +102,7 @@ export const convertOpenAIResponseUsage = (
   const overallTotalTokens = usage.total_tokens || 0;
 
   // 2. Calculate derived values
-  const inputCacheMissTokens = totalInputTokens - inputCachedTokens;
+  const inputCacheMissTokens = totalInputTokens - inputCachedTokens - inputWriteCacheTokens;
 
   // For ResponseUsage, inputTextTokens is effectively totalInputTokens as no further breakdown is given.
   const inputTextTokens = totalInputTokens;
@@ -116,6 +121,7 @@ export const convertOpenAIResponseUsage = (
     inputCachedTokens,
     inputCitationTokens: undefined, // Not in ResponseUsage
     inputTextTokens,
+    inputWriteCacheTokens,
     outputAudioTokens: undefined, // Not in ResponseUsage
     outputImageTokens,
     outputReasoningTokens,

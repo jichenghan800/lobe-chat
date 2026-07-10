@@ -78,6 +78,9 @@ COPY patches ./patches
 # bring in desktop workspace manifest so pnpm can resolve it
 COPY apps/desktop/src/main/package.json ./apps/desktop/src/main/package.json
 
+# Copy the remaining workspace before installation so package-level node_modules links stay intact.
+COPY . .
+
 RUN set -e && \
     if [ "${USE_CN_MIRROR:-false}" = "true" ]; then \
         export SENTRYCLI_CDNURL="https://npmmirror.com/mirrors/sentry-cli"; \
@@ -93,8 +96,6 @@ RUN set -e && \
     cd /deps && \
     echo '{"name":"deps","private":true}' > package.json && \
     pnpm add pg drizzle-orm
-
-COPY . .
 
 # Prebuild: env checks (checkDeprecatedAuth, checkRequiredEnvVars, printEnvInfo) then remove desktop-only code
 RUN pnpm exec tsx scripts/dockerPrebuild.mts

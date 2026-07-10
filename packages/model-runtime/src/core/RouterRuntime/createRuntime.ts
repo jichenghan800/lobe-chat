@@ -84,12 +84,14 @@ interface RouterInstance {
   runtime?: RuntimeClass;
 }
 
-type ConstructorOptions<T extends Record<string, any> = any> = ClientOptions & T;
+// OpenAI SDK v6 accepts async API key setters, while LobeHub provider configs use strings.
+type LobeClientOptions = Omit<ClientOptions, 'apiKey'> & { apiKey?: string };
+type ConstructorOptions<T extends Record<string, any> = any> = LobeClientOptions & T;
 
 type Routers =
   | RouterInstance[]
   | ((
-      options: ClientOptions & Record<string, any>,
+      options: LobeClientOptions & Record<string, any>,
       runtimeContext: {
         model?: string;
       },
@@ -199,7 +201,7 @@ export const createRouterRuntime = ({
   ...params
 }: CreateRouterRuntimeOptions) => {
   return class UniformRuntime implements LobeRuntimeAI {
-    public _options: ClientOptions & Record<string, any>;
+    public _options: LobeClientOptions & Record<string, any>;
     private _routers: Routers;
     private _params: any;
     private _id: string;
@@ -213,7 +215,7 @@ export const createRouterRuntime = ({
       metadata.routeAttempt = routeAttempt;
     }
 
-    constructor(options: ClientOptions & Record<string, any> = {}) {
+    constructor(options: LobeClientOptions & Record<string, any> = {}) {
       const startedAt = Date.now();
       this._options = {
         ...options,

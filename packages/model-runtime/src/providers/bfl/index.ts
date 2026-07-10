@@ -13,7 +13,7 @@ export class LobeBflAI implements LobeRuntimeAI {
   private apiKey: string;
   baseURL?: string;
 
-  constructor({ apiKey, baseURL }: ClientOptions = {}) {
+  constructor({ apiKey, baseURL }: Omit<ClientOptions, 'apiKey'> & { apiKey?: string } = {}) {
     if (!apiKey) throw AgentRuntimeError.createError(AgentRuntimeErrorType.InvalidProviderAPIKey);
 
     this.apiKey = apiKey;

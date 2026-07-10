@@ -99,3 +99,48 @@ describe('knowledgeCutoff backfill', () => {
     expect(lobehubModels.find((m) => m.id === 'gpt-5-mini')?.knowledgeCutoff).toBe('2024-05');
   });
 });
+
+describe('Azure GPT-5.6 model cards', () => {
+  it.each([
+    ['gpt-5.6-sol', 5, 0.5, 6.25, 30],
+    ['gpt-5.6-terra', 2.5, 0.25, 3.125, 15],
+    ['gpt-5.6-luna', 1, 0.1, 1.25, 6],
+  ])(
+    'registers %s with exact Foundry deployment and direct OpenAI pricing',
+    (id, inputRate, cacheReadRate, cacheWriteRate, outputRate) => {
+      const model = LOBE_DEFAULT_MODEL_LIST.find(
+        (item) => item.providerId === ModelProvider.Azure && item.id === id,
+      );
+
+      expect(model).toMatchObject({
+        abilities: {
+          functionCall: true,
+          reasoning: true,
+          search: true,
+          structuredOutput: true,
+          vision: true,
+        },
+        config: { deploymentName: id },
+        contextWindowTokens: 1_050_000,
+        enabled: true,
+        generation: 'gpt-5.6',
+        knowledgeCutoff: '2026-02',
+        maxOutput: 128_000,
+        settings: {
+          extendParams: ['gpt5_6ReasoningEffort', 'reasoningMode', 'textVerbosity'],
+          searchImpl: 'params',
+        },
+      });
+
+      const getBaseRate = (name: string) => {
+        const unit = model?.pricing?.units.find((item) => item.name === name);
+        return unit?.strategy === 'tiered' ? unit.tiers[0]?.rate : undefined;
+      };
+
+      expect(getBaseRate('textInput')).toBe(inputRate);
+      expect(getBaseRate('textInput_cacheRead')).toBe(cacheReadRate);
+      expect(getBaseRate('textInput_cacheWrite')).toBe(cacheWriteRate);
+      expect(getBaseRate('textOutput')).toBe(outputRate);
+    },
+  );
+});

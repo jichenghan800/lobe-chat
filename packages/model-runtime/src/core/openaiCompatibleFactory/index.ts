@@ -99,7 +99,9 @@ export const CHAT_MODELS_BLOCK_LIST = [
   'dall-e',
 ];
 
-type ConstructorOptions<T extends Record<string, any> = any> = ClientOptions & T;
+// OpenAI SDK v6 accepts async API key setters, while LobeHub provider configs use strings.
+type LobeClientOptions = Omit<ClientOptions, 'apiKey'> & { apiKey?: string };
+type ConstructorOptions<T extends Record<string, any> = any> = LobeClientOptions & T;
 type OpenAIExtraParams = { prompt_cache_key?: string; safety_identifier?: string };
 type ChatCompletionCreateParamsWithPromptCacheKey = Omit<
   OpenAI.ChatCompletionCreateParamsNonStreaming,
@@ -113,7 +115,7 @@ type ResponseCreateParamsWithPromptCacheKey = (
   | OpenAI.Responses.ResponseCreateParams
 ) &
   OpenAIExtraParams;
-export type CreateImageOptions = Omit<ClientOptions, 'apiKey'> & {
+export type CreateImageOptions = Omit<ClientOptions, 'apiKey' | 'provider'> & {
   apiKey: string;
   provider: string;
 };
@@ -146,7 +148,7 @@ const getGenerateObjectResponsesReasoningParams = ({
     : {};
 };
 
-export type CreateVideoOptions = Omit<ClientOptions, 'apiKey'> & {
+export type CreateVideoOptions = Omit<ClientOptions, 'apiKey' | 'provider'> & {
   apiKey: string;
   provider: string;
 };
@@ -316,7 +318,7 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
     baseURL!: string;
     protected _options: ConstructorOptions<T>;
 
-    constructor(options: ClientOptions & Record<string, any> = {}) {
+    constructor(options: LobeClientOptions & Record<string, any> = {}) {
       const _options = {
         ...options,
         apiKey: options.apiKey?.trim() || DEFAULT_API_KEY,
@@ -1541,10 +1543,13 @@ export const createOpenAICompatibleRuntime = <T extends Record<string, any> = an
       log('received %d tool calls from Chat Completions API', toolCalls?.length || 0);
 
       try {
-        const result = toolCalls.map((item) => ({
-          arguments: JSON.parse(item.function.arguments),
-          name: item.function.name,
-        }));
+        const result = toolCalls.map((item) => {
+          const { function: fn } = item as OpenAI.ChatCompletionMessageFunctionToolCall;
+          return {
+            arguments: JSON.parse(fn.arguments),
+            name: fn.name,
+          };
+        });
         log(
           'successfully parsed tool calls: %O',
           result.map((r) => r.name),
