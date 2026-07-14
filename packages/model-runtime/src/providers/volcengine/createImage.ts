@@ -7,6 +7,8 @@ import type { CreateImagePayload, CreateImageResponse } from '../../types/image'
 
 const log = createDebug('lobe-image:volcengine');
 
+const SEEDREAM_5_PRO_MODEL_ID = 'doubao-seedream-5-0-pro-260628';
+
 /**
  * Volcengine image generation implementation
  * Based on Volcengine API docs: https://www.volcengine.com/docs/82379/1541523
@@ -76,7 +78,9 @@ export async function createVolcengineImage(
   const requestOptions = {
     model,
     watermark: params.watermark ?? false, // Default to no watermark
-    ...(params.webSearch && { tools: [{ type: 'web_search' }] }),
+    ...(model !== SEEDREAM_5_PRO_MODEL_ID && params.webSearch
+      ? { tools: [{ type: 'web_search' }] }
+      : {}),
     ...(params.promptExtend &&
       params.promptExtend !== 'off' && {
         optimize_prompt_options: { mode: params.promptExtend },

@@ -3,6 +3,43 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-07-11
+
+### Seedream 5.0 Pro Image Model Replacement
+
+- Replace the exposed Volcengine image model `doubao-seedream-5-0-260128` (Seedream 5.0 Lite)
+  with `doubao-seedream-5-0-pro-260628` (Seedream 5.0 Pro).
+- Align the model card with the official Pro contract: 1K/2K output presets, up to 10 reference
+  images at 30 MB each, standard prompt optimization, and no web-search capability.
+- Record official CNY pricing: reference images are 0.02 yuan each after the first free image;
+  output images are 0.3 yuan at or below 2.36 megapixels and 0.6 yuan above 2.36 megapixels.
+- Update the production runtime checks and Volcengine model allow-list so the next app update exposes
+  Pro and removes Lite from the selectable image-model list.
+- Chatdev deployment: image
+  `lobehub:v2.2.8-cotti-seedream5pro-20260711-337ad86406` is running as
+  `lobehub-v228-stage0` on port 3210. The previous container is retained as
+  `lobehub-v228-stage0-before-seedream5pro-20260711104512` for rollback.
+- Deployment verification: local and external `/api/version` return `2.2.8`; the authenticated image
+  model menu shows `Seedream 5.0 Pro` and no longer shows Lite, while the Pro configuration exposes
+  only Size, Watermark, and Prompt Extend without the unsupported Web Search control.
+
+### Home New Shortcuts
+
+- Replace the home `New` shortcut for `COTTI-专业` with `GPT-5.6 Terra`, targeting
+  `azure/gpt-5.6-terra`.
+- Replace the home `New` shortcut for `GPT Image 2` with `Seedream 5.0 Pro`, targeting
+  `/image?model=doubao-seedream-5-0-pro-260628&provider=volcengine`.
+- Keep the shortcut order and count stable; this changes only home discovery shortcuts and does not
+  remove COTTI - 专业 or GPT Image 2 from their provider/model configurations.
+- Chatdev deployment: image
+  `lobehub:v2.2.8-cotti-home-new-terra-seedream-20260711-337ad86406` is running as
+  `lobehub-v228-stage0` on port 3210. The previous container is retained as
+  `lobehub-v228-stage0-before-home-new-terra-seedream-20260711110059` for rollback.
+- Deployment verification: the candidate and production containers passed database migration and
+  `/api/version` health checks with zero restarts. The authenticated home page now shows
+  `COTTI-快速`, `GPT-5.6 Terra`, and `Seedream 5.0 Pro` under `New`, with `COTTI-专业` and
+  `GPT Image 2` removed from that shortcut group.
+
 ## 2026-07-10
 
 ### Home Agent-to-Chat First Run Tool Isolation

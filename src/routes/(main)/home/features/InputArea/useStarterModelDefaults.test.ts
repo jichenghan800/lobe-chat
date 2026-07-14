@@ -35,15 +35,15 @@ describe('useStarterModelDefaults', () => {
         type: 'chat',
       },
       {
-        model: 'gemini-3.5-flash',
-        provider: 'vertexai',
-        title: 'COTTI-专业',
+        model: 'gpt-5.6-terra',
+        provider: 'azure',
+        title: 'GPT-5.6 Terra',
         type: 'chat',
       },
       {
-        model: 'gpt-image-2',
-        provider: 'azure',
-        title: 'GPT Image 2',
+        model: 'doubao-seedream-5-0-pro-260628',
+        provider: 'volcengine',
+        title: 'Seedream 5.0 Pro',
         type: 'image',
       },
       {
@@ -68,15 +68,15 @@ describe('useStarterModelDefaults', () => {
         type: 'chat',
       },
       {
-        model: 'gemini-3.5-flash',
-        provider: 'lobehub',
-        title: 'COTTI-专业',
+        model: 'gpt-5.6-terra',
+        provider: 'azure',
+        title: 'GPT-5.6 Terra',
         type: 'chat',
       },
       {
-        model: 'gpt-image-2',
-        provider: 'azure',
-        title: 'GPT Image 2',
+        model: 'doubao-seedream-5-0-pro-260628',
+        provider: 'volcengine',
+        title: 'Seedream 5.0 Pro',
         type: 'image',
       },
       {

@@ -144,3 +144,45 @@ describe('Azure GPT-5.6 model cards', () => {
     },
   );
 });
+
+describe('Volcengine Seedream 5.0 Pro model card', () => {
+  it('replaces Seedream 5.0 Lite with the exact Pro contract', () => {
+    const model = LOBE_DEFAULT_MODEL_LIST.find(
+      (item) =>
+        item.providerId === ModelProvider.Volcengine &&
+        item.id === 'doubao-seedream-5-0-pro-260628',
+    );
+
+    expect(model).toMatchObject({
+      displayName: 'Seedream 5.0 Pro',
+      enabled: true,
+      parameters: {
+        imageUrls: { default: [], maxCount: 10, maxFileSize: 30 * 1024 * 1024 },
+        prompt: { default: '' },
+        promptExtend: { default: 'off', enum: ['off', 'standard'] },
+        size: { default: '2K', enum: ['1K', '2K'] },
+        watermark: { default: false },
+      },
+      releasedAt: '2026-06-28',
+      type: 'image',
+    });
+    expect(model?.parameters).not.toHaveProperty('webSearch');
+    expect(model?.pricing?.units).toEqual(
+      expect.arrayContaining([
+        { name: 'imageInput', rate: 0.02, strategy: 'fixed', unit: 'image' },
+        {
+          lookup: { prices: { '1K': 0.3, '2K': 0.6 }, pricingParams: ['size'] },
+          name: 'imageGeneration',
+          strategy: 'lookup',
+          unit: 'image',
+        },
+      ]),
+    );
+
+    const liteModel = LOBE_DEFAULT_MODEL_LIST.find(
+      (item) =>
+        item.providerId === ModelProvider.Volcengine && item.id === 'doubao-seedream-5-0-260128',
+    );
+    expect(liteModel).toBeUndefined();
+  });
+});

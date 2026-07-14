@@ -497,6 +497,22 @@ describe('createVolcengineImage', () => {
       expect(requestOptions.webSearch).toBeUndefined();
     });
 
+    it('should not send the unsupported web search tool to Seedream 5.0 Pro', async () => {
+      const mockResponse = {
+        data: [{ url: 'https://example.com/test.jpg' }],
+      };
+      mockGenerate.mockResolvedValue(mockResponse);
+
+      payload.model = 'doubao-seedream-5-0-pro-260628';
+      payload.params.webSearch = true;
+
+      await createVolcengineImage(payload, options);
+
+      const requestOptions = mockGenerate.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(requestOptions.tools).toBeUndefined();
+      expect(requestOptions.webSearch).toBeUndefined();
+    });
+
     it('should add optimize_prompt_options if promptExtend is provided and not "off"', async () => {
       const mockResponse = {
         data: [{ url: 'https://example.com/test.jpg' }],

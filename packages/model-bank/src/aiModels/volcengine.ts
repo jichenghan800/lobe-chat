@@ -1020,26 +1020,32 @@ const doubaoChatModels: AIChatModelCard[] = [
 const volcengineImageModels: AIImageModelCard[] = [
   {
     description:
-      'Doubao-Seedream-5.0-lite is ByteDance’s latest image-generation model. For the first time, it integrates online retrieval capabilities, allowing it to incorporate real-time web information and enhance the timeliness of generated images. The model’s intelligence has also been upgraded, enabling precise interpretation of complex instructions and visual content. Additionally, it offers improved global knowledge coverage, reference consistency, and generation quality in professional scenarios, better meeting enterprise-level visual creation needs.',
-    displayName: 'Seedream 5.0 Lite',
+      'Seedream 5.0 Pro is ByteDance’s latest image-creation model, advancing image creation into controllable production with more precise editing, production-ready workflows, and more natural results.',
+    displayName: 'Seedream 5.0 Pro',
     enabled: true,
-    id: 'doubao-seedream-5-0-260128',
+    id: 'doubao-seedream-5-0-pro-260628',
     parameters: {
-      height: { default: 2048, max: 16_384, min: 480, step: 1 },
-      imageUrls: { default: [], maxCount: 14, maxFileSize: 10 * 1024 * 1024 },
+      imageUrls: { default: [], maxCount: 10, maxFileSize: 30 * 1024 * 1024 },
       prompt: {
         default: '',
       },
       promptExtend: { default: 'off', enum: ['off', 'standard'] },
+      size: { default: '2K', enum: ['1K', '2K'] },
       watermark: { default: false },
-      webSearch: { default: false },
-      width: { default: 2048, max: 16_384, min: 480, step: 1 },
     },
     pricing: {
       currency: 'CNY',
-      units: [{ name: 'imageGeneration', rate: 0.22, strategy: 'fixed', unit: 'image' }],
+      units: [
+        { name: 'imageInput', rate: 0.02, strategy: 'fixed', unit: 'image' },
+        {
+          lookup: { prices: { '1K': 0.3, '2K': 0.6 }, pricingParams: ['size'] },
+          name: 'imageGeneration',
+          strategy: 'lookup',
+          unit: 'image',
+        },
+      ],
     },
-    releasedAt: '2026-01-28',
+    releasedAt: '2026-06-28',
     type: 'image',
   },
   {
