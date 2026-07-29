@@ -149,7 +149,15 @@ const keys = [
   'COTTI_AUDIT_RISK_MODEL_PROVIDER',
   'COTTI_AUDIT_RISK_MODEL',
 ];
-for (const key of keys) console.log(key + '=' + (process.env[key] ?? ''));
+const secretKeys = new Set([
+  'QSTASH_TOKEN',
+  'QSTASH_CURRENT_SIGNING_KEY',
+  'QSTASH_NEXT_SIGNING_KEY',
+]);
+for (const key of keys) {
+  const value = process.env[key] ?? '';
+  console.log(key + '=' + (secretKeys.has(key) ? (value ? 'set' : 'missing') : value));
+}
 "
 
 echo
@@ -210,11 +218,18 @@ curl -fsSI --max-time 20 "http://127.0.0.1:${PORT}/" | sed -n '1,12p'
 
 echo
 echo "== 9. Migration and startup logs =="
-docker logs --tail 200 "$APP_CONTAINER" | grep -E 'Start to migration|database migration pass|Ready|Gateway|migrate failed|ERROR|Error' || true
-docker logs --tail 200 "$APP_CONTAINER" | grep -q 'database migration pass' \
-  || fail "database migration success log not found in recent app logs"
-docker logs --tail 200 "$APP_CONTAINER" | grep -q 'Ready' \
-  || fail "Next.js Ready log not found in recent app logs"
+APP_STARTED_AT="$(
+  docker inspect "$APP_CONTAINER" --format '{{.State.StartedAt}}'
+)"
+STARTUP_LOG_FILE="/tmp/lobechat-app-startup.log"
+docker logs --since "$APP_STARTED_AT" "$APP_CONTAINER" \
+  >"$STARTUP_LOG_FILE" 2>&1
+grep -E 'Start to migration|database migration pass|Ready|Gateway|migrate failed|ERROR|Error' \
+  "$STARTUP_LOG_FILE" | tail -n 80 || true
+grep -q 'database migration pass' "$STARTUP_LOG_FILE" \
+  || fail "database migration success log not found since the current container started"
+grep -q 'Ready' "$STARTUP_LOG_FILE" \
+  || fail "Next.js Ready log not found since the current container started"
 
 echo
 echo "== 10. Database tables used by this release =="
