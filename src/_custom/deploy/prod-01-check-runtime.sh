@@ -120,6 +120,7 @@ for key in \
   REDIS_URL REDIS_PREFIX REDIS_DATABASE REDIS_TLS \
   OPENAI_API_KEY OPENAI_PROXY_URL AZURE_API_KEY VERTEXAI_CREDENTIALS VOLCENGINE_API_KEY QWEN_API_KEY \
   NEXT_PUBLIC_NAV_HIDE_IMAGE NEXT_PUBLIC_NAV_HIDE_VIDEO \
+  NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS \
   NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS \
   NEXT_PUBLIC_MODEL_VISIBLE_ALLOW NEXT_PUBLIC_MODEL_DISPLAY_NAMES \
   ENABLED_OPENAI OPENAI_MODEL_LIST ENABLED_VERTEXAI VERTEXAI_MODEL_LIST ENABLED_AZURE_OPENAI AZURE_MODEL_LIST \
@@ -127,7 +128,7 @@ for key in \
   COTTI_AUDIT_RISK_MODEL_PROVIDER COTTI_AUDIT_RISK_MODEL; do
   value="$(read_env "$key")"
   case "$key" in
-    POSTGRES_PASSWORD|KEY_VAULTS_SECRET|AUTH_TRUSTED_ORIGINS|QSTASH_TOKEN|QSTASH_CURRENT_SIGNING_KEY|QSTASH_NEXT_SIGNING_KEY|REDIS_URL|OPENAI_API_KEY|AZURE_API_KEY|VERTEXAI_CREDENTIALS|VOLCENGINE_API_KEY|QWEN_API_KEY)
+    POSTGRES_PASSWORD|KEY_VAULTS_SECRET|AUTH_TRUSTED_ORIGINS|QSTASH_TOKEN|QSTASH_CURRENT_SIGNING_KEY|QSTASH_NEXT_SIGNING_KEY|REDIS_URL|OPENAI_API_KEY|AZURE_API_KEY|VERTEXAI_CREDENTIALS|VOLCENGINE_API_KEY|QWEN_API_KEY|COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS)
       printf '%s=%s\n' "$key" "$(mask_value "$value")"
       ;;
     *)
@@ -137,7 +138,18 @@ for key in \
 done
 
 echo
-echo "== 4. Provider credential gate =="
+echo "== 4. Platform management gate =="
+require_env_value NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS "平台管理入口"
+[[ "$(read_env NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS)" == "1" ]] || {
+  echo "NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS must be 1" >&2
+  exit 1
+}
+require_env_value COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS "平台管理员权限"
+echo "NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS=1"
+echo "COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS=set"
+
+echo
+echo "== 5. Provider credential gate =="
 require_env_value OPENAI_API_KEY "全能效率"
 echo "OPENAI_API_KEY=set"
 require_env_value OPENAI_PROXY_URL "全能效率"
@@ -152,11 +164,11 @@ require_env_value QWEN_API_KEY "千问3.7-Plus"
 echo "QWEN_API_KEY=set"
 
 echo
-echo "== 5. Redis configuration gate =="
+echo "== 6. Redis configuration gate =="
 validate_redis_url
 
 echo
-echo "== 6. SearXNG settings gate =="
+echo "== 7. SearXNG settings gate =="
 if ! awk '
   $1 == "formats:" { in_formats = 1; next }
   in_formats && /^[^[:space:]-]/ { in_formats = 0 }
@@ -169,13 +181,13 @@ fi
 echo "SearXNG JSON search format is enabled"
 
 echo
-echo "== 7. Compose render check =="
+echo "== 8. Compose render check =="
 docker compose -f docker-compose.prod.yml --env-file .env config >/tmp/lobechat-compose-prod.rendered.yml
 echo "Rendered compose written to /tmp/lobechat-compose-prod.rendered.yml"
 docker compose -f docker-compose.prod.yml --env-file .env ps || true
 
 echo
-echo "== 8. Required service gate =="
+echo "== 9. Required service gate =="
 REQUIRED_SERVICES=(app postgresql qstash searxng)
 COMPOSE_SERVICES="$(
   docker compose -f docker-compose.prod.yml --env-file .env config --services
@@ -213,12 +225,12 @@ for service in "${REQUIRED_SERVICES[@]}"; do
 done
 
 echo
-echo "== 9. Current containers =="
+echo "== 10. Current containers =="
 docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' \
   | grep -E '^(NAMES|lobechat|qstash)' || true
 
 echo
-echo "== 10. Registry access check =="
+echo "== 11. Registry access check =="
 require_digest "$TARGET_DIGEST"
 echo "Target image: $TARGET_IMAGE"
 echo "Expected pushed digest: $TARGET_DIGEST"
@@ -226,7 +238,7 @@ docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Registry manifest is readable: /tmp/lobechat-target-manifest.json"
 
 echo
-echo "== 11. Database readiness check =="
+echo "== 12. Database readiness check =="
 if docker compose -f docker-compose.prod.yml --env-file .env ps postgresql >/dev/null 2>&1; then
   docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
     pg_isready -U "$(read_env_default POSTGRES_USER paradedb)" -d "$(read_env_default POSTGRES_DB lobehub)"

@@ -269,11 +269,17 @@ http://lobehub-v228-stage0:3210/api/workflows/task/on-topic-complete
 Build and push an immutable image tag before production deployment:
 
 ```bash
-docker tag lobehub:v2.2.8-cotti-chat-agent-model-split-v31 \
-  sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad
+TARGET_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad \
+  src/_custom/deploy/build-production-image.sh
 
 docker push sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad
 ```
+
+The build helper passes the allowlisted public Cotti settings from `.env` as Docker build arguments.
+This is required for Vite/Next.js client code because `NEXT_PUBLIC_*` values are compiled into the
+SPA and cannot be enabled later by changing only the production runtime environment. The helper
+fails unless platform management is enabled and verifies the compiled SPA asset before returning.
+It never passes `COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS` or other server secrets into the image.
 
 Then set the same image in production `.env` as `LOBECHAT_IMAGE`.
 

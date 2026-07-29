@@ -107,6 +107,36 @@ read_qstash_log_value() {
   docker logs "$container" 2>&1 | sed -n "s/^${key}=//p" | tail -n 1
 }
 
+qstash_credentials_are_set() {
+  [[ -n "$(read_env QSTASH_TOKEN)" ]] \
+    && [[ -n "$(read_env QSTASH_CURRENT_SIGNING_KEY)" ]] \
+    && [[ -n "$(read_env QSTASH_NEXT_SIGNING_KEY)" ]]
+}
+
+qstash_token_is_valid() {
+  local token
+  local port
+  local status
+
+  token="$(read_env QSTASH_TOKEN)"
+  port="$(read_env QSTASH_PORT)"
+  port="${port:-18088}"
+
+  [[ -n "$token" ]] || return 1
+
+  status="$(
+    curl -sS -o /dev/null \
+      --connect-timeout 3 \
+      --max-time 10 \
+      -w '%{http_code}' \
+      -H "Authorization: Bearer ${token}" \
+      "http://127.0.0.1:${port}/v2/topics" \
+      2>/dev/null
+  )" || return 1
+
+  [[ "$status" == "200" ]]
+}
+
 wait_for_container_health() {
   local container="$1"
   local status
@@ -162,6 +192,17 @@ docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Compose render OK and target image manifest is readable."
 
 echo
+echo "== Platform management gate =="
+require_env_value NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS "平台管理入口"
+if [[ "$(read_env NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS)" != "1" ]]; then
+  echo "NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS must be 1" >&2
+  exit 1
+fi
+require_env_value COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS "平台管理员权限"
+echo "NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS=1"
+echo "COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS=set"
+
+echo
 echo "== Provider credential gate =="
 require_env_value OPENAI_API_KEY "全能效率"
 echo "OPENAI_API_KEY=set"
@@ -190,11 +231,10 @@ echo "2. Backup PostgreSQL and validate the dump"
 echo "3. Backup .env into backups/"
 echo "4. Sync image/chat model exposure env values"
 echo "5. Set LOBECHAT_IMAGE and LOBECHAT_IMAGE_DIGEST"
-echo "6. Start local QStash and sync QStash credentials into .env"
-echo "7. docker compose pull qstash"
-echo "8. Re-verify the local app image digest"
-echo "9. docker compose up -d --pull never app"
-echo "10. Show app status and recent logs"
+echo "6. Ensure local QStash is running and verify its credentials"
+echo "7. Re-verify the local app image digest"
+echo "8. Recreate only the app service without pulling dependencies"
+echo "9. Show app status and recent logs"
 
 if [[ "${AUTO_APPROVE:-0}" != "1" ]]; then
   echo
@@ -277,33 +317,39 @@ set_env .env AGENT_RUNTIME_MODE "queue"
 echo
 echo "Starting local QStash..."
 docker compose -f docker-compose.prod.yml --env-file .env up -d qstash
-wait_for_qstash_credentials lobechat-qstash
 
-QSTASH_TOKEN_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_TOKEN)"
-QSTASH_CURRENT_SIGNING_KEY_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_CURRENT_SIGNING_KEY)"
-QSTASH_NEXT_SIGNING_KEY_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_NEXT_SIGNING_KEY)"
+if qstash_credentials_are_set && qstash_token_is_valid; then
+  echo "Existing QStash credentials are valid; keeping them unchanged"
+else
+  echo "Existing QStash credentials are missing or invalid; reading credentials from startup logs"
+  wait_for_qstash_credentials lobechat-qstash
 
-if [[ -z "$QSTASH_TOKEN_VALUE" || -z "$QSTASH_CURRENT_SIGNING_KEY_VALUE" || -z "$QSTASH_NEXT_SIGNING_KEY_VALUE" ]]; then
-  echo "Failed to parse QStash credentials from lobechat-qstash logs" >&2
-  exit 1
+  QSTASH_TOKEN_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_TOKEN)"
+  QSTASH_CURRENT_SIGNING_KEY_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_CURRENT_SIGNING_KEY)"
+  QSTASH_NEXT_SIGNING_KEY_VALUE="$(read_qstash_log_value lobechat-qstash QSTASH_NEXT_SIGNING_KEY)"
+
+  if [[ -z "$QSTASH_TOKEN_VALUE" || -z "$QSTASH_CURRENT_SIGNING_KEY_VALUE" || -z "$QSTASH_NEXT_SIGNING_KEY_VALUE" ]]; then
+    echo "Failed to parse QStash credentials from lobechat-qstash logs" >&2
+    exit 1
+  fi
+
+  set_env .env QSTASH_TOKEN "$QSTASH_TOKEN_VALUE"
+  set_env .env QSTASH_CURRENT_SIGNING_KEY "$QSTASH_CURRENT_SIGNING_KEY_VALUE"
+  set_env .env QSTASH_NEXT_SIGNING_KEY "$QSTASH_NEXT_SIGNING_KEY_VALUE"
+  qstash_token_is_valid || {
+    echo "QStash rejected the credentials parsed from its startup logs" >&2
+    exit 1
+  }
+  echo "QStash credentials synced into .env and authenticated successfully"
 fi
-
-set_env .env QSTASH_TOKEN "$QSTASH_TOKEN_VALUE"
-set_env .env QSTASH_CURRENT_SIGNING_KEY "$QSTASH_CURRENT_SIGNING_KEY_VALUE"
-set_env .env QSTASH_NEXT_SIGNING_KEY "$QSTASH_NEXT_SIGNING_KEY_VALUE"
-echo "QStash credentials synced into .env"
-
-echo
-echo "Pulling the QStash image..."
-docker compose -f docker-compose.prod.yml --env-file .env pull qstash
 
 echo
 echo "Re-verifying the app image digest before restart..."
 verify_local_image_digest "$TARGET_IMAGE" "$TARGET_DIGEST"
 
 echo
-echo "Restarting app service without another image pull..."
-docker compose -f docker-compose.prod.yml --env-file .env up -d --pull never app
+echo "Restarting only the app service without another image pull..."
+docker compose -f docker-compose.prod.yml --env-file .env up -d --no-deps --pull never app
 wait_for_container_health "$APP_CONTAINER"
 
 echo

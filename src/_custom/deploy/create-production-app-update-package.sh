@@ -100,7 +100,7 @@ Notes:
 - 00-configure-warp-exclusions.sh bypasses WARP for the ACR host, its resolved IPv4 addresses, and SSH endpoints 8.222.230.244 and 47.236.135.3 without disabling WARP.
 - The target image is pulled and its immutable registry digest is verified before any database or .env changes.
 - 02-confirm-and-update-app.sh creates and validates a PostgreSQL dump, then backs up .env before changing LOBECHAT_IMAGE and model exposure env values.
-- The app image is pulled directly and digest-verified; Compose only pulls QStash before restarting app with --pull never.
+- The app image is pulled directly and digest-verified; Compose reuses authenticated QStash credentials and restarts only app with --no-deps and --pull never.
 - PostgreSQL and SearXNG images are not changed.
 - Precheck and verification require app, PostgreSQL, QStash, and SearXNG to exist and be running; app and PostgreSQL must also be healthy.
 - App startup runs Drizzle migrations automatically when DATABASE_DRIVER is set.
