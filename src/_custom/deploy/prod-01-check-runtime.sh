@@ -175,12 +175,50 @@ echo "Rendered compose written to /tmp/lobechat-compose-prod.rendered.yml"
 docker compose -f docker-compose.prod.yml --env-file .env ps || true
 
 echo
-echo "== 8. Current containers =="
+echo "== 8. Required service gate =="
+REQUIRED_SERVICES=(app postgresql qstash searxng)
+COMPOSE_SERVICES="$(
+  docker compose -f docker-compose.prod.yml --env-file .env config --services
+)"
+
+for service in "${REQUIRED_SERVICES[@]}"; do
+  if ! grep -Fqx "$service" <<<"$COMPOSE_SERVICES"; then
+    echo "Required Compose service is missing: $service" >&2
+    exit 1
+  fi
+
+  container_id="$(
+    docker compose -f docker-compose.prod.yml --env-file .env ps -q --all "$service"
+  )"
+  if [[ -z "$container_id" ]]; then
+    echo "Required container does not exist: $service" >&2
+    exit 1
+  fi
+
+  container_status="$(docker inspect "$container_id" --format '{{.State.Status}}')"
+  container_health="$(docker inspect "$container_id" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}')"
+  echo "$service status=$container_status health=$container_health"
+
+  if [[ "$container_status" != "running" ]]; then
+    echo "Required container is not running: $service" >&2
+    exit 1
+  fi
+
+  if [[ "$service" == "app" || "$service" == "postgresql" ]]; then
+    if [[ "$container_health" != "healthy" ]]; then
+      echo "Required container is not healthy: $service" >&2
+      exit 1
+    fi
+  fi
+done
+
+echo
+echo "== 9. Current containers =="
 docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' \
   | grep -E '^(NAMES|lobechat|qstash)' || true
 
 echo
-echo "== 9. Registry access check =="
+echo "== 10. Registry access check =="
 require_digest "$TARGET_DIGEST"
 echo "Target image: $TARGET_IMAGE"
 echo "Expected pushed digest: $TARGET_DIGEST"
@@ -188,7 +226,7 @@ docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Registry manifest is readable: /tmp/lobechat-target-manifest.json"
 
 echo
-echo "== 10. Database readiness check =="
+echo "== 11. Database readiness check =="
 if docker compose -f docker-compose.prod.yml --env-file .env ps postgresql >/dev/null 2>&1; then
   docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
     pg_isready -U "$(read_env_default POSTGRES_USER paradedb)" -d "$(read_env_default POSTGRES_DB lobehub)"

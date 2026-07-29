@@ -298,7 +298,12 @@ TARGET_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:
 ```
 
 The generated package is written to `src/_custom/deploy/dist/` and includes `release.env`,
-`docker-compose.prod.yml`, and the three production update scripts. It contains no secrets.
+`docker-compose.prod.yml`, a WARP split-tunnel setup script, and the three production update
+scripts. It contains no secrets. The WARP script excludes the ACR host and SSH IP
+endpoints `8.222.230.244` and `47.236.135.3` without disabling WARP. It also resolves and
+excludes the ACR IPv4 addresses so Docker daemon traffic cannot remain inside the WARP route.
+Precheck and verification fail if any of app, PostgreSQL, QStash, or SearXNG is missing or
+stopped; app and PostgreSQL must also report healthy.
 Package generation requires a clean worktree and the immutable digest returned by the registry
 after the image push. After the operator confirms `DEPLOY`, the update script pulls the target
 image and verifies that digest before making any data or configuration changes. It then creates

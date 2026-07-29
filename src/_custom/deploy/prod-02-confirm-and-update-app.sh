@@ -107,6 +107,34 @@ read_qstash_log_value() {
   docker logs "$container" 2>&1 | sed -n "s/^${key}=//p" | tail -n 1
 }
 
+wait_for_container_health() {
+  local container="$1"
+  local status
+  local health
+
+  for _ in $(seq 1 90); do
+    status="$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || true)"
+    health="$(docker inspect "$container" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' 2>/dev/null || true)"
+
+    if [[ "$status" == "running" && "$health" == "healthy" ]]; then
+      echo "$container is running and healthy"
+      return 0
+    fi
+
+    if [[ "$status" == "exited" || "$status" == "dead" ]]; then
+      echo "$container stopped while waiting for health: status=$status" >&2
+      docker logs --tail 120 "$container" >&2 || true
+      exit 1
+    fi
+
+    sleep 2
+  done
+
+  echo "Timed out waiting for $container to become healthy" >&2
+  docker logs --tail 120 "$container" >&2 || true
+  exit 1
+}
+
 require_file .env
 require_file docker-compose.prod.yml
 require_digest "$TARGET_DIGEST"
@@ -276,6 +304,7 @@ verify_local_image_digest "$TARGET_IMAGE" "$TARGET_DIGEST"
 echo
 echo "Restarting app service without another image pull..."
 docker compose -f docker-compose.prod.yml --env-file .env up -d --pull never app
+wait_for_container_health "$APP_CONTAINER"
 
 echo
 echo "Current compose status:"

@@ -47,7 +47,36 @@ echo "== 1. Compose status =="
 docker compose -f docker-compose.prod.yml --env-file .env ps
 
 echo
-echo "== 2. Image check =="
+echo "== 2. Required service gate =="
+REQUIRED_SERVICES=(app postgresql qstash searxng)
+COMPOSE_SERVICES="$(
+  docker compose -f docker-compose.prod.yml --env-file .env config --services
+)"
+
+for service in "${REQUIRED_SERVICES[@]}"; do
+  grep -Fqx "$service" <<<"$COMPOSE_SERVICES" \
+    || fail "required Compose service is missing: $service"
+
+  container_id="$(
+    docker compose -f docker-compose.prod.yml --env-file .env ps -q --all "$service"
+  )"
+  [[ -n "$container_id" ]] || fail "required container does not exist: $service"
+
+  container_status="$(docker inspect "$container_id" --format '{{.State.Status}}')"
+  container_health="$(docker inspect "$container_id" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}')"
+  echo "$service status=$container_status health=$container_health"
+
+  [[ "$container_status" == "running" ]] \
+    || fail "required container is not running: $service"
+
+  if [[ "$service" == "app" || "$service" == "postgresql" ]]; then
+    [[ "$container_health" == "healthy" ]] \
+      || fail "required container is not healthy: $service"
+  fi
+done
+
+echo
+echo "== 3. Image check =="
 ENV_IMAGE="$(read_env LOBECHAT_IMAGE)"
 ENV_DIGEST="$(read_env LOBECHAT_IMAGE_DIGEST)"
 CONTAINER_IMAGE="$(docker inspect "$APP_CONTAINER" --format '{{.Config.Image}}')"
@@ -68,7 +97,7 @@ grep -Fq "@${TARGET_DIGEST}" <<<"$LOCAL_REPO_DIGESTS" \
   || fail "locally pulled app image does not match TARGET_DIGEST"
 
 echo
-echo "== 3. Runtime env check =="
+echo "== 4. Runtime env check =="
 docker exec "$APP_CONTAINER" /bin/node -e "
 const keys = [
   'NEXT_PUBLIC_NAV_HIDE_IMAGE',
@@ -105,7 +134,7 @@ for (const key of keys) console.log(key + '=' + (process.env[key] ?? ''));
 "
 
 echo
-echo "== 4. Provider credential presence =="
+echo "== 5. Provider credential presence =="
 docker exec "$APP_CONTAINER" /bin/node -e "
 const required = ['OPENAI_API_KEY', 'OPENAI_PROXY_URL', 'AZURE_API_KEY', 'VERTEXAI_CREDENTIALS', 'VOLCENGINE_API_KEY', 'QWEN_API_KEY'];
 const missing = [];
@@ -121,7 +150,7 @@ if (missing.length > 0) {
 "
 
 echo
-echo "== 5. QStash health =="
+echo "== 6. QStash health =="
 docker compose -f docker-compose.prod.yml --env-file .env ps qstash
 docker exec "$APP_CONTAINER" /bin/node -e "
 const required = ['QSTASH_URL', 'QSTASH_TOKEN', 'QSTASH_CURRENT_SIGNING_KEY', 'QSTASH_NEXT_SIGNING_KEY'];
@@ -142,13 +171,13 @@ docker exec "$APP_CONTAINER" sh -lc 'wget -qS -O- --timeout=5 "$QSTASH_URL/" 2>&
   || fail "app container cannot reach QStash or QStash did not return expected 401"
 
 echo
-echo "== 6. App health =="
+echo "== 7. App health =="
 PORT="$(read_env LOBECHAT_PORT)"
 PORT="${PORT:-3210}"
 curl -fsSI --max-time 20 "http://127.0.0.1:${PORT}/" | sed -n '1,12p'
 
 echo
-echo "== 7. Migration and startup logs =="
+echo "== 8. Migration and startup logs =="
 docker logs --tail 200 "$APP_CONTAINER" | grep -E 'Start to migration|database migration pass|Ready|Gateway|migrate failed|ERROR|Error' || true
 docker logs --tail 200 "$APP_CONTAINER" | grep -q 'database migration pass' \
   || fail "database migration success log not found in recent app logs"
@@ -156,7 +185,7 @@ docker logs --tail 200 "$APP_CONTAINER" | grep -q 'Ready' \
   || fail "Next.js Ready log not found in recent app logs"
 
 echo
-echo "== 8. Database tables used by this release =="
+echo "== 9. Database tables used by this release =="
 POSTGRES_USER="$(read_env_default POSTGRES_USER paradedb)"
 POSTGRES_DB="$(read_env_default POSTGRES_DB lobehub)"
 docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
@@ -183,7 +212,7 @@ grep -q '^cotti_model_display_settings$' /tmp/lobechat-release-tables.txt \
   || fail "missing table cotti_model_display_settings"
 
 echo
-echo "== 9. COTTI Gemini model migration =="
+echo "== 10. COTTI Gemini model migration =="
 MIGRATION_CREATED_AT="1784687043746"
 MIGRATION_COUNT="$(
   docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
