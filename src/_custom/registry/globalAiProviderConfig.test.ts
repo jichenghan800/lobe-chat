@@ -16,7 +16,7 @@ describe('pruneGlobalAiProviderConfig', () => {
 
   it('keeps only providers and models from NEXT_PUBLIC_MODEL_VISIBLE_ALLOW', () => {
     process.env.NEXT_PUBLIC_MODEL_VISIBLE_ALLOW =
-      'vertexai/gemini-3.1-flash-lite,qwen/glm-5.2,azure/gpt-5.5';
+      'vertexai/gemini-3.5-flash-lite,qwen/glm-5.2,azure/gpt-5.5';
 
     const result = pruneGlobalAiProviderConfig({
       azure: {
@@ -42,14 +42,14 @@ describe('pruneGlobalAiProviderConfig', () => {
       },
       vertexai: {
         enabled: true,
-        enabledModels: ['gemini-3.1-flash-lite', 'gemini-3.5-flash'],
+        enabledModels: ['gemini-3.5-flash-lite', 'gemini-3.6-flash'],
         serverModelLists: [
           {
-            displayName: 'Gemini 3.1 Flash Lite',
+            displayName: 'Gemini 3.5 Flash Lite',
             enabled: true,
-            id: 'gemini-3.1-flash-lite',
+            id: 'gemini-3.5-flash-lite',
           },
-          { displayName: 'Gemini 3.5 Flash', enabled: true, id: 'gemini-3.5-flash' },
+          { displayName: 'Gemini 3.6 Flash', enabled: true, id: 'gemini-3.6-flash' },
         ],
       },
     });
@@ -59,9 +59,9 @@ describe('pruneGlobalAiProviderConfig', () => {
     expect(result?.azure?.serverModelLists?.map((model) => model.id)).toEqual(['gpt-5.5']);
     expect(result?.qwen?.enabledModels).toEqual(['glm-5.2']);
     expect(result?.qwen?.serverModelLists?.map((model) => model.id)).toEqual(['glm-5.2']);
-    expect(result?.vertexai?.enabledModels).toEqual(['gemini-3.1-flash-lite']);
+    expect(result?.vertexai?.enabledModels).toEqual(['gemini-3.5-flash-lite']);
     expect(result?.vertexai?.serverModelLists?.map((model) => model.id)).toEqual([
-      'gemini-3.1-flash-lite',
+      'gemini-3.5-flash-lite',
     ]);
     expect(result?.ollama).toBeUndefined();
   });

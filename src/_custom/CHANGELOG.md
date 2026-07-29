@@ -3,6 +3,31 @@
 This file records Cotti-specific changes on top of the clean LobeHub upstream baseline. Keep
 entries scoped so future upgrades can decide whether to keep, drop, or replace each customization.
 
+## 2026-07-22
+
+### COTTI Gemini Model Upgrade
+
+- Replace `COTTI-快速` from `vertexai/gemini-3.1-flash-lite` with
+  `vertexai/gemini-3.5-flash-lite`.
+- Replace `COTTI-专业` from `vertexai/gemini-3.5-flash` with
+  `vertexai/gemini-3.6-flash`.
+- Align Chat and Agent defaults, system-agent tasks, risk auditing, public visibility, display names,
+  and the production deployment template with the new model IDs.
+- Add Vertex AI model metadata and model-specific default thinking levels for both replacements.
+- Add an idempotent database migration that upgrades persisted COTTI display mappings while
+  preserving model order, enabled states, display names, and unrelated administrator settings; the
+  migration also moves existing users' active Agent configurations to the replacement model IDs
+  while leaving historical messages, topics, traces, and audit records unchanged.
+- Chatdev deployment: image `lobehub:v2.2.8-cotti-gemini36-20260722-worktree-83e83ce984` is running
+  as `lobehub-v228-stage0` on port 3210. The previous container is retained as
+  `lobehub-v228-stage0-before-gemini36-20260722104507` for rollback.
+- Deployment backup: `backups/lobehub-dev-before-gemini36-20260722104000.dump` contains the complete
+  pre-migration database snapshot.
+- Deployment verification: the migration updated the persisted Chat/Agent display mappings and 39
+  existing Vertex Agent configurations; both replacement models returned `OK` in direct Vertex AI
+  smoke tests; local and external `/api/version` return `2.2.8`; the external Market callback route
+  returns 200; the new container has zero restarts and was not OOM-killed.
+
 ## 2026-07-11
 
 ### Seedream 5.0 Pro Image Model Replacement

@@ -25,6 +25,29 @@ describe('CottiModelDisplayModel', () => {
     await expect(model.getConfig()).resolves.toEqual(DEFAULT_COTTI_MODEL_DISPLAY_CONFIG);
   });
 
+  it('uses the upgraded Gemini models in the default Cotti display config', () => {
+    expect(DEFAULT_COTTI_MODEL_DISPLAY_CONFIG.chat.slice(0, 2)).toEqual([
+      {
+        displayName: 'COTTI-快速',
+        enabled: true,
+        model: 'gemini-3.5-flash-lite',
+        provider: 'vertexai',
+      },
+      {
+        displayName: 'COTTI-专业',
+        enabled: true,
+        model: 'gemini-3.6-flash',
+        provider: 'vertexai',
+      },
+    ]);
+    expect(DEFAULT_COTTI_MODEL_DISPLAY_CONFIG.agent[0]).toEqual({
+      displayName: 'COTTI-专业',
+      enabled: true,
+      model: 'gemini-3.6-flash',
+      provider: 'vertexai',
+    });
+  });
+
   it('shows all Azure GPT-5.6 models in the default Chat and Agent lists', () => {
     const expectedModels = ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'];
 
@@ -58,7 +81,7 @@ describe('CottiModelDisplayModel', () => {
           {
             displayName: 'COTTI-快速',
             enabled: false,
-            model: 'gemini-3.1-flash-lite',
+            model: 'gemini-3.5-flash-lite',
             provider: 'vertexai',
           },
         ],
@@ -73,7 +96,7 @@ describe('CottiModelDisplayModel', () => {
         {
           displayName: 'COTTI-快速',
           enabled: false,
-          model: 'gemini-3.1-flash-lite',
+          model: 'gemini-3.5-flash-lite',
           provider: 'vertexai',
         },
       ],
@@ -88,7 +111,7 @@ describe('CottiModelDisplayModel', () => {
           { enabled: true, model: 'gpt-5.5', provider: 'openai' },
         ],
         chat: [
-          { enabled: false, model: 'gemini-3.1-flash-lite', provider: 'vertexai' },
+          { enabled: false, model: 'gemini-3.5-flash-lite', provider: 'vertexai' },
           { enabled: true, model: 'gpt-5.5', provider: 'openai' },
         ],
       }),

@@ -25,6 +25,18 @@ describe('MarketAuth handoff storage helpers', () => {
     expect(consoleErrorSpy).toHaveBeenCalledOnce();
   });
 
+  it('should preserve the provider error code for authorization recovery', () => {
+    const payload = {
+      error: 'User denied the authorization request',
+      errorCode: 'access_denied',
+      state: 'state_value',
+      type: 'MARKET_AUTH_ERROR' as const,
+    };
+
+    expect(persistMarketAuthResult(payload)).toBe(true);
+    expect(readMarketAuthResult('state_value')).toEqual(payload);
+  });
+
   it('should swallow storage read failures and return null', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {

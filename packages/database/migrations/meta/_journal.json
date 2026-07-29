@@ -826,6 +826,13 @@
       "when": 1783664829777,
       "tag": "0117_backfill_azure_gpt56_model_display",
       "breakpoints": true
+    },
+    {
+      "idx": 118,
+      "version": "7",
+      "when": 1784687043746,
+      "tag": "0118_cotti_gemini_model_upgrade",
+      "breakpoints": true
     }
   ],
   "version": "6"

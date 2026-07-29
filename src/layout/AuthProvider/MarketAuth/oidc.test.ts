@@ -134,4 +134,43 @@ describe('MarketOIDC.startAuthorization', () => {
     });
     expect(localStorage.getItem(storageKey)).toBeNull();
   });
+
+  it('should expose access_denied as a recoverable authorization denial', async () => {
+    const client = new MarketOIDC({
+      baseUrl: 'https://market.lobehub.com',
+      clientId: 'lobechat-com',
+      redirectUri: 'http://localhost:3010/market-auth-callback',
+      scope: 'openid profile email',
+    });
+    const state = 'state_value';
+
+    sessionStorage.setItem('market_state', state);
+    vi.spyOn(client, 'buildAuthUrl').mockResolvedValue(
+      'https://market.lobehub.com/lobehub-oidc/auth',
+    );
+    vi.spyOn(window, 'open').mockReturnValue({
+      close: vi.fn(),
+      closed: false,
+    } as unknown as Window);
+
+    const authPromise = client.startAuthorization();
+    await vi.advanceTimersByTimeAsync(0);
+
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          error: 'User denied the authorization request',
+          errorCode: 'access_denied',
+          state,
+          type: 'MARKET_AUTH_ERROR',
+        },
+        origin: window.location.origin,
+      }),
+    );
+
+    await expect(authPromise).rejects.toMatchObject({
+      code: 'authorizationDenied',
+      name: 'MarketAuthError',
+    });
+  });
 });

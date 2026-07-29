@@ -1,4 +1,4 @@
-export const COTTI_MARKETPLACE_AGENT_MODEL = 'gemini-3.1-flash-lite';
+export const COTTI_MARKETPLACE_AGENT_MODEL = 'gemini-3.5-flash-lite';
 export const COTTI_MARKETPLACE_AGENT_PROVIDER = 'vertexai';
 
 export const applyCottiMarketplaceModel = <T extends object>(

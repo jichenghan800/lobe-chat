@@ -1,7 +1,7 @@
 import { isDesktop } from '@/const/version';
 import { MARKET_OIDC_ENDPOINTS } from '@/services/_url';
 
-import { MarketAuthError } from './errors';
+import { MarketAuthError, resolveMarketAuthError } from './errors';
 import {
   clearMarketAuthResult,
   getMarketAuthResultStorageKey,
@@ -287,10 +287,15 @@ export class MarketOIDC {
           // Ignore close failures from cross-origin popup contexts.
         }
 
+        const errorCode =
+          payload.errorCode === 'access_denied'
+            ? 'authorizationDenied'
+            : resolveMarketAuthError(new Error(payload.error)).code;
+
         reject(
-          new MarketAuthError('authorizationFailed', {
+          new MarketAuthError(errorCode, {
             message: payload.error || 'Authorization failed',
-            meta: { error: payload.error },
+            meta: { error: payload.error, errorCode: payload.errorCode },
           }),
         );
       };

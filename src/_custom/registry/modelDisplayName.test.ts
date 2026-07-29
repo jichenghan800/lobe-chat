@@ -4,10 +4,10 @@ import { getModelDisplayName, normalizeProviderModelDisplayNames } from './model
 
 describe('modelDisplayName', () => {
   it('returns product display names for visible default models', () => {
-    expect(getModelDisplayName('vertexai', 'gemini-3.1-flash-lite', 'Gemini 3.1 Flash Lite')).toBe(
+    expect(getModelDisplayName('vertexai', 'gemini-3.5-flash-lite', 'Gemini 3.5 Flash Lite')).toBe(
       'COTTI-快速',
     );
-    expect(getModelDisplayName('vertexai', 'gemini-3.5-flash', 'Gemini 3.5 Flash')).toBe(
+    expect(getModelDisplayName('vertexai', 'gemini-3.6-flash', 'Gemini 3.6 Flash')).toBe(
       'COTTI-专业',
     );
     expect(
@@ -22,8 +22,8 @@ describe('modelDisplayName', () => {
     const providers = normalizeProviderModelDisplayNames([
       {
         children: [
-          { displayName: 'Gemini 3.1 Flash Lite', id: 'gemini-3.1-flash-lite' },
-          { displayName: 'Gemini 3.5 Flash', id: 'gemini-3.5-flash' },
+          { displayName: 'Gemini 3.5 Flash Lite', id: 'gemini-3.5-flash-lite' },
+          { displayName: 'Gemini 3.6 Flash', id: 'gemini-3.6-flash' },
         ],
         id: 'vertexai',
         name: 'Vertex AI',
@@ -51,8 +51,8 @@ describe('modelDisplayName', () => {
     expect(providers).toEqual([
       {
         children: [
-          { displayName: 'COTTI-快速', id: 'gemini-3.1-flash-lite' },
-          { displayName: 'COTTI-专业', id: 'gemini-3.5-flash' },
+          { displayName: 'COTTI-快速', id: 'gemini-3.5-flash-lite' },
+          { displayName: 'COTTI-专业', id: 'gemini-3.6-flash' },
         ],
         id: 'vertexai',
         name: 'Vertex AI',

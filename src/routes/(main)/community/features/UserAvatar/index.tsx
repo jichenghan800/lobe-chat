@@ -1,11 +1,14 @@
 'use client';
 
-import { Avatar, Button, Skeleton } from '@lobehub/ui';
-import { UserCircleIcon } from 'lucide-react';
-import { memo, useCallback, useState } from 'react';
+import { Avatar, Button, Flexbox, Skeleton } from '@lobehub/ui';
+import type { DropdownItem } from '@lobehub/ui/base-ui';
+import { DropdownMenu, toast } from '@lobehub/ui/base-ui';
+import { LogOutIcon, UserCircleIcon, UserIcon } from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCommunityWorkspaceProfile } from '@/business/client/hooks/useCommunityWorkspaceProfile';
+import { openMarketAccountRecoveryModal } from '@/features/MarketAccountRecoveryModal';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 import { useMarketAuth, useMarketUserProfile } from '@/layout/AuthProvider/MarketAuth';
 import { useServerConfigStore } from '@/store/serverConfig';
@@ -50,7 +53,8 @@ const UserAvatar = memo<UserAvatarProps>(({ avatarOverride }) => {
     isWorkspaceScope,
     username: workspaceUsername,
   } = useCommunityWorkspaceProfile();
-  const { isAuthenticated, isLoading, getCurrentUserInfo, signIn } = useMarketAuth();
+  const { isAuthenticated, isLoading, getCurrentUserInfo, lastAuthError, signIn, signOut } =
+    useMarketAuth();
 
   const enableMarketTrustedClient = useServerConfigStore(
     serverConfigSelectors.enableMarketTrustedClient,
@@ -90,6 +94,49 @@ const UserAvatar = memo<UserAvatarProps>(({ avatarOverride }) => {
     }
   }, [isWorkspaceScope, navigate, userProfile?.userName, userProfile?.namespace]);
 
+  const handleSwitchAccount = useCallback(() => {
+    openMarketAccountRecoveryModal(handleSignIn);
+  }, [handleSignIn]);
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await toast.promise(signOut(), {
+        error: t('user.logout.error'),
+        loading: t('user.logout.loading'),
+        success: t('user.logout.success'),
+      });
+    } catch (error) {
+      console.error('[Community] Failed to sign out:', error);
+    }
+  }, [signOut, t]);
+
+  const menuItems = useMemo<DropdownItem[]>(
+    () => [
+      {
+        disabled: !isWorkspaceScope && !userProfile?.userName && !userProfile?.namespace,
+        icon: <UserIcon size={16} />,
+        key: 'profile',
+        label: t('user.myProfile'),
+        onClick: handleAvatarClick,
+      },
+      {
+        danger: true,
+        icon: <LogOutIcon size={16} />,
+        key: 'logout',
+        label: t('user.logout'),
+        onClick: handleSignOut,
+      },
+    ],
+    [
+      handleAvatarClick,
+      handleSignOut,
+      isWorkspaceScope,
+      t,
+      userProfile?.namespace,
+      userProfile?.userName,
+    ],
+  );
+
   if (isLoading) {
     return <Skeleton.Avatar active shape={'square'} size={28} style={{ borderRadius: 6 }} />;
   }
@@ -98,17 +145,24 @@ const UserAvatar = memo<UserAvatarProps>(({ avatarOverride }) => {
   // Otherwise, show the login button when unauthenticated or profile setup is needed
   if (!enableMarketTrustedClient && (!isAuthenticated || needsProfileSetup)) {
     return (
-      <Button
-        icon={UserCircleIcon}
-        loading={loading}
-        type="text"
-        style={{
-          height: 30,
-        }}
-        onClick={handleSignIn}
-      >
-        {t('user.login')}
-      </Button>
+      <Flexbox horizontal align={'center'} gap={4}>
+        <Button
+          icon={UserCircleIcon}
+          loading={loading}
+          type="text"
+          style={{
+            height: 30,
+          }}
+          onClick={handleSignIn}
+        >
+          {t('user.login')}
+        </Button>
+        {lastAuthError === 'authorizationDenied' && (
+          <Button size={'small'} type={'text'} onClick={handleSwitchAccount}>
+            {t('user.switchAccount')}
+          </Button>
+        )}
+      </Flexbox>
     );
   }
 
@@ -119,7 +173,15 @@ const UserAvatar = memo<UserAvatarProps>(({ avatarOverride }) => {
       ? workspaceAvatarUrl || workspaceUsername
       : userProfile?.avatarUrl || userProfile?.userName || username);
 
-  return <Avatar avatar={avatarUrl} shape={'square'} size={28} onClick={handleAvatarClick} />;
+  if (enableMarketTrustedClient) {
+    return <Avatar avatar={avatarUrl} shape={'square'} size={28} onClick={handleAvatarClick} />;
+  }
+
+  return (
+    <DropdownMenu items={menuItems} placement={'bottomRight'}>
+      <Avatar avatar={avatarUrl} shape={'square'} size={28} />
+    </DropdownMenu>
+  );
 });
 
 export default UserAvatar;

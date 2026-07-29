@@ -14,7 +14,8 @@ import { useUserStore } from '@/store/user';
 import { settingsSelectors } from '@/store/user/slices/settings/selectors/settings';
 
 import ClaimResourcesModal from './ClaimResourcesModal';
-import { MarketAuthError } from './errors';
+import type { MarketAuthErrorCode } from './errors';
+import { MarketAuthError, resolveMarketAuthError } from './errors';
 import { marketAuthEvents } from './events';
 import MarketAuthConfirmModal from './MarketAuthConfirmModal';
 import { MarketOIDC } from './oidc';
@@ -86,19 +87,21 @@ const saveMarketTokensToDB = async (
 /**
  * Clear market tokens from DB
  */
-const clearMarketTokensFromDB = async () => {
+const clearMarketTokensFromDB = async (): Promise<boolean> => {
   // If there are no tokens, no need to call setSettings
   const currentTokens = getMarketTokensFromDB();
   if (!currentTokens?.accessToken && !currentTokens?.refreshToken && !currentTokens?.expiresAt) {
-    return;
+    return true;
   }
 
   try {
     await useUserStore.getState().setSettings({
       market: undefined,
     });
+    return true;
   } catch (error) {
     console.error('[MarketAuth] Failed to clear tokens from DB:', error);
+    return false;
   }
 };
 
@@ -138,6 +141,7 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
 
   const [session, setSession] = useState<MarketAuthSession | null>(null);
   const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
+  const [lastAuthError, setLastAuthError] = useState<MarketAuthErrorCode | null>(null);
   const [oidcClient, setOidcClient] = useState<MarketOIDC | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [authScene, setAuthScene] = useState<MarketAuthScene>('default');
@@ -331,6 +335,7 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
 
     try {
       setStatus('loading');
+      setLastAuthError(null);
 
       // Start OIDC authorization flow and get authorization code
       const authResult = await oidcClient.startAuthorization();
@@ -361,6 +366,7 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
 
       setSession(newSession);
       setStatus('authenticated');
+      setLastAuthError(null);
 
       // Check if user needs to set up profile (first-time login)
       if (userInfo?.sub) {
@@ -377,16 +383,13 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
 
       return userInfo?.accountId ?? null;
     } catch (error) {
+      const authError = resolveMarketAuthError(error);
+
       setStatus('unauthenticated');
+      setLastAuthError(authError.code);
+      message.error(t(`errors.${authError.code}`) || t('errors.general'));
 
-      // Display different error messages based on error type
-      if (error instanceof MarketAuthError) {
-        message.error(t(`errors.${error.code}`) || t('errors.general'));
-      } else {
-        message.error(t('errors.general'));
-      }
-
-      throw error;
+      throw authError;
     }
   };
 
@@ -456,9 +459,14 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
    * Sign-out method
    */
   const signOut = async () => {
+    const tokensCleared = await clearMarketTokensFromDB();
+    if (!tokensCleared) {
+      throw new Error('Failed to clear Market authentication tokens');
+    }
+
     setSession(null);
     setStatus('unauthenticated');
-    await clearMarketTokensFromDB();
+    setLastAuthError(null);
   };
 
   /**
@@ -738,6 +746,7 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
     // When Trusted Client authentication is enabled, automatically treat as authenticated (backend uses trustedClientToken)
     isAuthenticated: enableMarketTrustedClient || status === 'authenticated',
     isLoading: status === 'loading',
+    lastAuthError,
     openProfileSetup,
     refreshToken,
     session,

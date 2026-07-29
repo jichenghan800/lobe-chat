@@ -124,7 +124,7 @@ describe('installMarketplaceAgents', () => {
     expect(createAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         config: expect.objectContaining({
-          model: 'gemini-3.1-flash-lite',
+          model: 'gemini-3.5-flash-lite',
           provider: 'vertexai',
         }),
       }),

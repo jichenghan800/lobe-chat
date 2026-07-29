@@ -6,6 +6,7 @@ interface MarketAuthSuccessHandoffPayload {
 
 interface MarketAuthErrorHandoffPayload {
   error: string;
+  errorCode?: string;
   state?: string;
   type: 'MARKET_AUTH_ERROR';
 }
@@ -43,6 +44,7 @@ export const resolveMarketAuthHandoffPayload = (
 
     return {
       error: payload.error,
+      errorCode: typeof payload.errorCode === 'string' ? payload.errorCode : undefined,
       state: typeof payload.state === 'string' ? payload.state : undefined,
       type: payload.type,
     };

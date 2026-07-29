@@ -14,22 +14,33 @@ import {
 } from './modelAvailability';
 
 describe('modelAvailability', () => {
+  it('uses the upgraded Gemini models as Cotti defaults', () => {
+    expect(COTTI_CHAT_DEFAULT_MODEL).toEqual({
+      model: 'gemini-3.5-flash-lite',
+      provider: 'vertexai',
+    });
+    expect(COTTI_AGENT_DEFAULT_MODEL).toEqual({
+      model: 'gemini-3.6-flash',
+      provider: 'vertexai',
+    });
+  });
+
   it('marks Cotti agent-only models', () => {
     expect(isAgentOnlyChatModel('doubao-seed-2-1-pro-260628')).toBe(true);
     expect(isAgentOnlyChatModel('gpt-5.5')).toBe(true);
     expect(isAgentOnlyChatModel('GLM-5.2')).toBe(true);
-    expect(isAgentOnlyChatModel('gemini-3.5-flash')).toBe(false);
+    expect(isAgentOnlyChatModel('gemini-3.6-flash')).toBe(false);
   });
 
   it('marks Cotti Flash as chat-only', () => {
-    expect(isChatOnlyModel('gemini-3.1-flash-lite')).toBe(true);
-    expect(isChatOnlyModel('gemini-3.5-flash')).toBe(false);
+    expect(isChatOnlyModel('gemini-3.5-flash-lite')).toBe(true);
+    expect(isChatOnlyModel('gemini-3.6-flash')).toBe(false);
   });
 
   it('removes agent-only models from chat provider lists while keeping chat models', () => {
     const result = filterChatModeModelLists([
       {
-        children: [{ id: 'gemini-3.1-flash-lite' }, { id: 'gemini-3.5-flash' }, { id: 'gpt-5.5' }],
+        children: [{ id: 'gemini-3.5-flash-lite' }, { id: 'gemini-3.6-flash' }, { id: 'gpt-5.5' }],
         id: 'vertexai',
       },
       {
@@ -44,7 +55,7 @@ describe('modelAvailability', () => {
 
     expect(result).toEqual([
       {
-        children: [{ id: 'gemini-3.1-flash-lite' }, { id: 'gemini-3.5-flash' }],
+        children: [{ id: 'gemini-3.5-flash-lite' }, { id: 'gemini-3.6-flash' }],
         id: 'vertexai',
       },
     ]);
@@ -53,7 +64,7 @@ describe('modelAvailability', () => {
   it('keeps the legacy chat-mode filter export as an alias', () => {
     const providers = [
       {
-        children: [{ id: 'gpt-5.5' }, { id: 'gemini-3.5-flash' }],
+        children: [{ id: 'gpt-5.5' }, { id: 'gemini-3.6-flash' }],
         id: 'azure',
       },
     ];
@@ -64,7 +75,7 @@ describe('modelAvailability', () => {
   it('removes chat-only models from agent provider lists while keeping agent models', () => {
     const result = filterAgentModeModelLists([
       {
-        children: [{ id: 'gemini-3.1-flash-lite' }, { id: 'gemini-3.5-flash' }, { id: 'gpt-5.5' }],
+        children: [{ id: 'gemini-3.5-flash-lite' }, { id: 'gemini-3.6-flash' }, { id: 'gpt-5.5' }],
         id: 'vertexai',
       },
       {
@@ -79,7 +90,7 @@ describe('modelAvailability', () => {
 
     expect(result).toEqual([
       {
-        children: [{ id: 'gemini-3.5-flash' }, { id: 'gpt-5.5' }],
+        children: [{ id: 'gemini-3.6-flash' }, { id: 'gpt-5.5' }],
         id: 'vertexai',
       },
       {
@@ -97,7 +108,7 @@ describe('modelAvailability', () => {
     expect(
       getCottiModeFallbackConfig({
         enableAgentMode: true,
-        modelId: 'gemini-3.1-flash-lite',
+        modelId: 'gemini-3.5-flash-lite',
       }),
     ).toEqual(COTTI_AGENT_DEFAULT_MODEL);
 

@@ -1139,7 +1139,31 @@ export default {
 
   'user.login': 'Become a Creator',
 
-  'user.logout': 'Sign out',
+  'user.logout': 'Sign out of Community',
+
+  'user.logout.error': 'Could not sign out of Community. Try again.',
+
+  'user.logout.loading': 'Signing out of Community…',
+
+  'user.logout.success': 'Signed out of Community',
+
+  'user.switchAccount': 'Use Another Account',
+
+  'user.switchAccount.modal.description':
+    'LobeHub Market remembers the last account in its own site data. Clear that site data before retrying with another account.',
+
+  'user.switchAccount.modal.openMarket': 'Open Market Site',
+
+  'user.switchAccount.modal.retry': 'I’ve Cleared It — Retry',
+
+  'user.switchAccount.modal.step1': 'Open the LobeHub Market site.',
+
+  'user.switchAccount.modal.step2':
+    'Use the browser control beside the address bar to open site settings, then delete cookies and site data for {{host}}.',
+
+  'user.switchAccount.modal.step3': 'Return here and restart Community authorization.',
+
+  'user.switchAccount.modal.title': 'Use Another Community Account',
 
   'user.openWorkspacePublicProfile': 'Open Public Link',
 

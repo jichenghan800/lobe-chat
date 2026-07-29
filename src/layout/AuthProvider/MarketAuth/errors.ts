@@ -1,4 +1,5 @@
 export type MarketAuthErrorCode =
+  | 'authorizationDenied'
   | 'authorizationFailed'
   | 'browserOnly'
   | 'codeConsumed'
@@ -38,6 +39,7 @@ export class MarketAuthError extends Error {
 }
 
 const PATTERN_CODE_MAP: Array<[RegExp, MarketAuthErrorCode]> = [
+  [/access_denied|denied (?:the )?authorization|user denied/i, 'authorizationDenied'],
   [/authorization can only be initiated in a browser environment/i, 'browserOnly'],
   [/authorization code already consumed/i, 'codeConsumed'],
   [/authorization popup was closed/i, 'popupClosed'],

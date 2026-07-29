@@ -1,7 +1,7 @@
 import type { HomeNewModelItem } from '@/business/client/hooks/useHomeNewModels';
 
 // Chat
-export const COTTI_FAST_MODEL = 'gemini-3.1-flash-lite';
+export const COTTI_FAST_MODEL = 'gemini-3.5-flash-lite';
 export const COTTI_FAST_MODEL_NAME = 'COTTI-快速';
 
 export const BUSINESS_CHAT_PROVIDER = 'lobehub';

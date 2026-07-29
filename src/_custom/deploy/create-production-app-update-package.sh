@@ -21,6 +21,16 @@ require_file() {
   fi
 }
 
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Refusing to package a dirty worktree. Commit or remove all local changes first." >&2
+  exit 1
+fi
+
+if [[ ! "$TARGET_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+  echo "TARGET_DIGEST must be the pushed image's immutable sha256 digest." >&2
+  exit 1
+fi
+
 if [[ -z "$COMPOSE_SOURCE" ]]; then
   if [[ -f docker-compose.prod.yml ]]; then
     COMPOSE_SOURCE="docker-compose.prod.yml"
@@ -82,8 +92,9 @@ Run on the production server:
 Notes:
 - The scripts automatically read release.env when it exists in the deployment directory.
 - The existing /opt/lobechat-main/.env stays on the production server.
-- 02-confirm-and-update-app.sh backs up .env before changing LOBECHAT_IMAGE and model exposure env values.
-- Only the compose app service image is pulled and restarted.
+- The target image is pulled and its immutable registry digest is verified before any database or .env changes.
+- 02-confirm-and-update-app.sh creates and validates a PostgreSQL dump, then backs up .env before changing LOBECHAT_IMAGE and model exposure env values.
+- The app image is pulled directly and digest-verified; Compose only pulls QStash before restarting app with --pull never.
 - PostgreSQL and SearXNG images are not changed.
 - App startup runs Drizzle migrations automatically when DATABASE_DRIVER is set.
 - No manual DML script is required for this release.

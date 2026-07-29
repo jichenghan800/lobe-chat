@@ -299,6 +299,12 @@ TARGET_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:
 
 The generated package is written to `src/_custom/deploy/dist/` and includes `release.env`,
 `docker-compose.prod.yml`, and the three production update scripts. It contains no secrets.
+Package generation requires a clean worktree and the immutable digest returned by the registry
+after the image push. After the operator confirms `DEPLOY`, the update script pulls the target
+image and verifies that digest before making any data or configuration changes. It then creates
+and validates a compressed PostgreSQL dump under `/opt/lobechat-main/backups/` before it changes
+`.env` or restarts the app. Immediately before restart, it verifies the digest again and runs
+Compose with `--pull never` so the verified local image cannot be replaced by a mutable tag.
 
 ## Stage Files
 

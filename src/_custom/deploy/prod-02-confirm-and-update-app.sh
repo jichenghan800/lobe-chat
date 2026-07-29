@@ -51,6 +51,31 @@ require_file() {
   fi
 }
 
+require_digest() {
+  local digest="$1"
+  if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    echo "TARGET_DIGEST must be an immutable sha256 digest, got: ${digest:-'(empty)'}" >&2
+    exit 1
+  fi
+}
+
+verify_local_image_digest() {
+  local image="$1"
+  local digest="$2"
+  local repo_digests
+
+  repo_digests="$(docker image inspect "$image" --format '{{range .RepoDigests}}{{println .}}{{end}}')"
+  if ! grep -Fq "@${digest}" <<<"$repo_digests"; then
+    echo "Pulled image digest does not match TARGET_DIGEST." >&2
+    echo "Expected: $digest" >&2
+    echo "Pulled RepoDigests:" >&2
+    printf '%s\n' "${repo_digests:-'(none)'}" >&2
+    exit 1
+  fi
+
+  echo "Verified pulled image digest: $digest"
+}
+
 require_env_value() {
   local key="$1"
   local label="$2"
@@ -84,6 +109,7 @@ read_qstash_log_value() {
 
 require_file .env
 require_file docker-compose.prod.yml
+require_digest "$TARGET_DIGEST"
 
 CURRENT_ENV_IMAGE="$(read_env LOBECHAT_IMAGE)"
 CURRENT_CONTAINER_IMAGE="$(
@@ -98,7 +124,7 @@ echo "Container: $APP_CONTAINER"
 echo "Current .env LOBECHAT_IMAGE: ${CURRENT_ENV_IMAGE:-'(empty)'}"
 echo "Current running container image: ${CURRENT_CONTAINER_IMAGE:-'(container not found)'}"
 echo "Target image: $TARGET_IMAGE"
-echo "Expected pushed digest: ${TARGET_DIGEST:-'(not provided)'}"
+echo "Expected pushed digest: $TARGET_DIGEST"
 
 echo
 echo "== Actual runtime checks =="
@@ -131,13 +157,16 @@ echo "No manual DML script is required for this release."
 
 echo
 echo "== Planned actions =="
-echo "1. Backup .env into backups/"
-echo "2. Sync image/chat model exposure env values"
-echo "3. Set LOBECHAT_IMAGE to the target image"
-echo "4. Start local QStash and sync QStash credentials into .env"
-echo "5. docker compose pull app qstash"
-echo "6. docker compose up -d app"
-echo "7. Show app status and recent logs"
+echo "1. Pull the target app image and verify its immutable digest"
+echo "2. Backup PostgreSQL and validate the dump"
+echo "3. Backup .env into backups/"
+echo "4. Sync image/chat model exposure env values"
+echo "5. Set LOBECHAT_IMAGE and LOBECHAT_IMAGE_DIGEST"
+echo "6. Start local QStash and sync QStash credentials into .env"
+echo "7. docker compose pull qstash"
+echo "8. Re-verify the local app image digest"
+echo "9. docker compose up -d --pull never app"
+echo "10. Show app status and recent logs"
 
 if [[ "${AUTO_APPROVE:-0}" != "1" ]]; then
   echo
@@ -148,9 +177,38 @@ if [[ "${AUTO_APPROVE:-0}" != "1" ]]; then
   fi
 fi
 
+echo
+echo "Pulling target app image and verifying its digest..."
+docker pull "$TARGET_IMAGE"
+verify_local_image_digest "$TARGET_IMAGE" "$TARGET_DIGEST"
+
 mkdir -p backups
-BACKUP_FILE="backups/.env.$(date +%Y%m%d%H%M%S)"
+BACKUP_TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+DB_BACKUP_FILE="backups/lobechat-pre-app-update-${BACKUP_TIMESTAMP}.dump"
+BACKUP_FILE="backups/.env.${BACKUP_TIMESTAMP}"
+
+echo
+echo "Backing up PostgreSQL before the app migration..."
+if ! docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
+  sh -lc 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc --no-owner --no-acl' \
+  > "$DB_BACKUP_FILE"; then
+  rm -f "$DB_BACKUP_FILE"
+  echo "PostgreSQL backup failed. No environment or app changes were made." >&2
+  exit 1
+fi
+
+chmod 600 "$DB_BACKUP_FILE"
+if [[ ! -s "$DB_BACKUP_FILE" ]]; then
+  echo "PostgreSQL backup is empty: $DB_BACKUP_FILE" >&2
+  exit 1
+fi
+
+docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
+  sh -lc 'pg_restore -l >/dev/null' < "$DB_BACKUP_FILE"
+echo "PostgreSQL backup validated: $DB_BACKUP_FILE"
+
 cp .env "$BACKUP_FILE"
+chmod 600 "$BACKUP_FILE"
 echo "Backed up .env to $BACKUP_FILE"
 
 set_env .env AI_IMAGE_DEFAULT_IMAGE_NUM "1"
@@ -162,12 +220,12 @@ set_env .env NEXT_PUBLIC_COTTI_HOME_HIDDEN_STARTER_MODELS "deepseek-v4-pro,image
 set_env .env NEXT_PUBLIC_COTTI_HOME_HIDDEN_BLOCKS "messengerBanner,botIntegrationBanner"
 set_env .env COTTI_AGENT_ACCESS_MODE "open"
 
-set_env .env NEXT_PUBLIC_MODEL_VISIBLE_ALLOW "vertexai/gemini-3.1-flash-lite,vertexai/gemini-3.5-flash,volcengine/doubao-seed-2-1-pro-260628,qwen/qwen3.7-plus,azure/gpt-5.5,qwen/glm-5.2"
-set_env .env NEXT_PUBLIC_MODEL_DISPLAY_NAMES "vertexai/gemini-3.1-flash-lite=COTTI-快速,vertexai/gemini-3.5-flash=COTTI-专业,volcengine/doubao-seed-2-1-pro-260628=豆包2.1-Pro,qwen/qwen3.7-plus=千问3.7-Plus,azure/gpt-5.5=全能效率,qwen/glm-5.2=智谱-GLM5.2"
+set_env .env NEXT_PUBLIC_MODEL_VISIBLE_ALLOW "vertexai/gemini-3.5-flash-lite,vertexai/gemini-3.6-flash,volcengine/doubao-seed-2-1-pro-260628,qwen/qwen3.7-plus,azure/gpt-5.5,qwen/glm-5.2"
+set_env .env NEXT_PUBLIC_MODEL_DISPLAY_NAMES "vertexai/gemini-3.5-flash-lite=COTTI-快速,vertexai/gemini-3.6-flash=COTTI-专业,volcengine/doubao-seed-2-1-pro-260628=豆包2.1-Pro,qwen/qwen3.7-plus=千问3.7-Plus,azure/gpt-5.5=全能效率,qwen/glm-5.2=智谱-GLM5.2"
 set_env .env NEXT_PUBLIC_COTTI_MODEL_BUILTIN_SEARCH_ALLOW "vertexai/gemini-*,google/gemini-*,qwen/qwen3.7-plus,azure/gpt-5.6-*"
 
 set_env .env ENABLED_VERTEXAI "1"
-set_env .env VERTEXAI_MODEL_LIST "-all,gemini-3.1-flash-lite=COTTI-快速<1114112:reasoning:vision:fc:video:search>,gemini-3.5-flash=COTTI-专业<1114112:reasoning:vision:fc:video:search>,gemini-3.1-flash-image-preview:image=Nano Banana 2"
+set_env .env VERTEXAI_MODEL_LIST "-all,gemini-3.5-flash-lite=COTTI-快速<1114112:reasoning:vision:fc:video:search>,gemini-3.6-flash=COTTI-专业<1114112:reasoning:vision:fc:video:search>,gemini-3.1-flash-image-preview:image=Nano Banana 2"
 set_env .env ENABLED_AZURE_OPENAI "1"
 set_env .env AZURE_MODEL_LIST "-all,+gpt-5.6-sol=GPT-5.6 Sol<1050000:reasoning:vision:fc>,+gpt-5.6-terra=GPT-5.6 Terra<1050000:reasoning:vision:fc>,+gpt-5.6-luna=GPT-5.6 Luna<1050000:reasoning:vision:fc>,+gpt-5.5=全能效率<1050000:reasoning:vision:fc>,+gpt-image-2=GPT Image 2"
 set_env .env ENABLED_OPENAI "1"
@@ -179,8 +237,11 @@ set_env .env VOLCENGINE_MODEL_LIST "-all,+doubao-seed-2-1-pro-260628=豆包2.1-P
 set_env .env ENABLED_QWEN "1"
 set_env .env QWEN_MODEL_LIST "-all,+qwen3.7-plus=千问3.7-Plus<262144:reasoning:vision:fc:search>,+glm-5.2=智谱-GLM5.2<1000000:reasoning:fc>"
 set_env .env COTTI_AUDIT_RISK_MODEL_PROVIDER "vertexai"
-set_env .env COTTI_AUDIT_RISK_MODEL "gemini-3.1-flash-lite"
+set_env .env COTTI_AUDIT_RISK_MODEL "gemini-3.5-flash-lite"
+set_env .env DEFAULT_AGENT_CONFIG "model=gemini-3.5-flash-lite;provider=vertexai;chatConfig.searchMode=auto;chatConfig.useModelBuiltinSearch=true;chatConfig.urlContext=false;chatConfig.thinkingLevel=low;chatConfig.reasoningEffort=low;chatConfig.memory.enabled=false;chatConfig.enableAgentMode=false"
+set_env .env SYSTEM_AGENT "topic=vertexai/gemini-3.6-flash,generationTopic=vertexai/gemini-3.6-flash,translation=vertexai/gemini-3.6-flash,historyCompress=vertexai/gemini-3.6-flash,thread=vertexai/gemini-3.6-flash,agentMeta=vertexai/gemini-3.6-flash,inputCompletion=vertexai/gemini-3-flash-preview,promptRewrite=vertexai/gemini-3-flash-preview,followUpAction=openai/gpt-5.4-mini,memoryAnalysisAgentConfig=openai/gpt-5.4-mini,userMemoryPersonaWriter=openai/gpt-5.4-mini,userMemoryEmbedding=azure/text-embedding-3-small"
 set_env .env LOBECHAT_IMAGE "$TARGET_IMAGE"
+set_env .env LOBECHAT_IMAGE_DIGEST "$TARGET_DIGEST"
 set_env .env INTERNAL_APP_URL "http://lobechat-app:3210"
 set_env .env QSTASH_URL "http://qstash:8080"
 set_env .env AGENT_RUNTIME_MODE "queue"
@@ -205,12 +266,16 @@ set_env .env QSTASH_NEXT_SIGNING_KEY "$QSTASH_NEXT_SIGNING_KEY_VALUE"
 echo "QStash credentials synced into .env"
 
 echo
-echo "Pulling app and QStash images..."
-docker compose -f docker-compose.prod.yml --env-file .env pull app qstash
+echo "Pulling the QStash image..."
+docker compose -f docker-compose.prod.yml --env-file .env pull qstash
 
 echo
-echo "Restarting app service..."
-docker compose -f docker-compose.prod.yml --env-file .env up -d app
+echo "Re-verifying the app image digest before restart..."
+verify_local_image_digest "$TARGET_IMAGE" "$TARGET_DIGEST"
+
+echo
+echo "Restarting app service without another image pull..."
+docker compose -f docker-compose.prod.yml --env-file .env up -d --pull never app
 
 echo
 echo "Current compose status:"

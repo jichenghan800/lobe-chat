@@ -53,6 +53,14 @@ require_command() {
   fi
 }
 
+require_digest() {
+  local digest="$1"
+  if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    echo "TARGET_DIGEST must be an immutable sha256 digest, got: ${digest:-'(empty)'}" >&2
+    exit 1
+  fi
+}
+
 require_env_value() {
   local key="$1"
   local label="$2"
@@ -173,8 +181,9 @@ docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' \
 
 echo
 echo "== 9. Registry access check =="
+require_digest "$TARGET_DIGEST"
 echo "Target image: $TARGET_IMAGE"
-echo "Expected pushed digest: ${TARGET_DIGEST:-'(not provided)'}"
+echo "Expected pushed digest: $TARGET_DIGEST"
 docker manifest inspect "$TARGET_IMAGE" >/tmp/lobechat-target-manifest.json
 echo "Registry manifest is readable: /tmp/lobechat-target-manifest.json"
 

@@ -1,3 +1,4 @@
+import type { MarketAuthErrorCode } from './errors';
 import type { MarketAuthScene } from './scenes';
 
 export interface MarketUserInfo {
@@ -53,6 +54,7 @@ export interface MarketAuthSession {
 export interface MarketAuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
+  lastAuthError: MarketAuthErrorCode | null;
   session: MarketAuthSession | null;
   status: 'loading' | 'authenticated' | 'unauthenticated';
 }

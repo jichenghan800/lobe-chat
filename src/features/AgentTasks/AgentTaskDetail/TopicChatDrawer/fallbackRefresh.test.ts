@@ -98,7 +98,6 @@ describe('hasAssistantResultForUserMessage', () => {
             content: 'supervisor answer',
             createdAt: 1200,
             id: 'supervisor-1',
-            parentId: null,
             role: 'supervisor',
             updatedAt: 1200,
           }),

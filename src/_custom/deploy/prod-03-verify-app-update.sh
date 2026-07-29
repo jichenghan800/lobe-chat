@@ -14,6 +14,7 @@ if [[ -f release.env ]]; then
 fi
 
 TARGET_IMAGE="${TARGET_IMAGE:-${LOBECHAT_IMAGE:-sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.8-cotti-20260626-b2976351ad}}"
+TARGET_DIGEST="${TARGET_DIGEST:-${LOBECHAT_IMAGE_DIGEST:-}}"
 
 read_env() {
   local key="$1"
@@ -33,18 +34,38 @@ fail() {
   exit 1
 }
 
+require_digest() {
+  local digest="$1"
+  if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    fail "TARGET_DIGEST must be an immutable sha256 digest, got: ${digest:-'(empty)'}"
+  fi
+}
+
+require_digest "$TARGET_DIGEST"
+
 echo "== 1. Compose status =="
 docker compose -f docker-compose.prod.yml --env-file .env ps
 
 echo
 echo "== 2. Image check =="
 ENV_IMAGE="$(read_env LOBECHAT_IMAGE)"
+ENV_DIGEST="$(read_env LOBECHAT_IMAGE_DIGEST)"
 CONTAINER_IMAGE="$(docker inspect "$APP_CONTAINER" --format '{{.Config.Image}}')"
+LOCAL_REPO_DIGESTS="$(
+  docker image inspect "$TARGET_IMAGE" --format '{{range .RepoDigests}}{{println .}}{{end}}'
+)"
 echo "Expected image: $TARGET_IMAGE"
+echo "Expected digest: $TARGET_DIGEST"
 echo ".env image: $ENV_IMAGE"
+echo ".env digest: $ENV_DIGEST"
 echo "Container image: $CONTAINER_IMAGE"
+echo "Local RepoDigests:"
+printf '%s\n' "${LOCAL_REPO_DIGESTS:-'(none)'}"
 [[ "$ENV_IMAGE" == "$TARGET_IMAGE" ]] || fail ".env LOBECHAT_IMAGE does not match target"
+[[ "$ENV_DIGEST" == "$TARGET_DIGEST" ]] || fail ".env LOBECHAT_IMAGE_DIGEST does not match target"
 [[ "$CONTAINER_IMAGE" == "$TARGET_IMAGE" ]] || fail "running app container image does not match target"
+grep -Fq "@${TARGET_DIGEST}" <<<"$LOCAL_REPO_DIGESTS" \
+  || fail "locally pulled app image does not match TARGET_DIGEST"
 
 echo
 echo "== 3. Runtime env check =="
@@ -143,14 +164,97 @@ docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
 select table_name
 from information_schema.tables
 where table_schema = 'public'
-  and table_name in ('cotti_audit_view_logs', 'cotti_audit_risk_analyses')
+  and table_name in (
+    'cotti_audit_view_logs',
+    'cotti_audit_risk_analyses',
+    'cotti_home_notification_settings',
+    'cotti_model_display_settings'
+  )
 order by table_name;
-" | tee /tmp/lobechat-audit-tables.txt
+" | tee /tmp/lobechat-release-tables.txt
 
-grep -q '^cotti_audit_risk_analyses$' /tmp/lobechat-audit-tables.txt \
+grep -q '^cotti_audit_risk_analyses$' /tmp/lobechat-release-tables.txt \
   || fail "missing table cotti_audit_risk_analyses"
-grep -q '^cotti_audit_view_logs$' /tmp/lobechat-audit-tables.txt \
+grep -q '^cotti_audit_view_logs$' /tmp/lobechat-release-tables.txt \
   || fail "missing table cotti_audit_view_logs"
+grep -q '^cotti_home_notification_settings$' /tmp/lobechat-release-tables.txt \
+  || fail "missing table cotti_home_notification_settings"
+grep -q '^cotti_model_display_settings$' /tmp/lobechat-release-tables.txt \
+  || fail "missing table cotti_model_display_settings"
+
+echo
+echo "== 9. COTTI Gemini model migration =="
+MIGRATION_CREATED_AT="1784687043746"
+MIGRATION_COUNT="$(
+  docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
+    psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "
+select count(*)
+from drizzle.__drizzle_migrations
+where created_at = ${MIGRATION_CREATED_AT};
+"
+)"
+[[ "$MIGRATION_COUNT" == "1" ]] \
+  || fail "migration 0118_cotti_gemini_model_upgrade is not recorded"
+
+OLD_AGENT_MODEL_COUNT="$(
+  docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
+    psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "
+select count(*)
+from agents
+where lower(provider) = 'vertexai'
+  and lower(model) in ('gemini-3.1-flash-lite', 'gemini-3.5-flash');
+"
+)"
+[[ "$OLD_AGENT_MODEL_COUNT" == "0" ]] \
+  || fail "old COTTI Gemini model ids remain on agents rows"
+
+MODEL_DISPLAY_ROW_COUNT="$(
+  docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
+    psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "
+select count(*)
+from cotti_model_display_settings
+where id = 'default';
+"
+)"
+
+if [[ "$MODEL_DISPLAY_ROW_COUNT" == "0" ]]; then
+  echo "No persisted COTTI model display row; application defaults are in effect."
+else
+  [[ "$MODEL_DISPLAY_ROW_COUNT" == "1" ]] \
+    || fail "unexpected number of default COTTI model display rows"
+
+  docker compose -f docker-compose.prod.yml --env-file .env exec -T postgresql \
+    psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "
+select section || '|' || display_name || '|' || provider || '|' || model
+from (
+  select
+    section,
+    entry->>'displayName' as display_name,
+    lower(entry->>'provider') as provider,
+    lower(entry->>'model') as model
+  from cotti_model_display_settings
+  cross join lateral (
+    values
+      ('chat', config->'chat'),
+      ('agent', config->'agent')
+  ) sections(section, entries)
+  cross join lateral jsonb_array_elements(coalesce(entries, '[]'::jsonb)) entry
+  where id = 'default'
+    and entry->>'displayName' in ('COTTI-快速', 'COTTI-专业')
+) mappings
+order by section, display_name;
+" | tee /tmp/lobechat-cotti-gemini-mappings.txt
+
+  grep -Fqx 'chat|COTTI-快速|vertexai|gemini-3.5-flash-lite' \
+    /tmp/lobechat-cotti-gemini-mappings.txt \
+    || fail "incorrect COTTI-快速 mapping in chat"
+  grep -Fqx 'chat|COTTI-专业|vertexai|gemini-3.6-flash' \
+    /tmp/lobechat-cotti-gemini-mappings.txt \
+    || fail "incorrect COTTI-专业 mapping in chat"
+  grep -Fqx 'agent|COTTI-专业|vertexai|gemini-3.6-flash' \
+    /tmp/lobechat-cotti-gemini-mappings.txt \
+    || fail "incorrect COTTI-专业 mapping in agent"
+fi
 
 echo
 echo "Acceptance checks passed."

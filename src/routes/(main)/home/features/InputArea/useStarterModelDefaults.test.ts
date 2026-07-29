@@ -25,11 +25,11 @@ describe('useStarterModelDefaults', () => {
   it('uses the OSS fallback home new model entries in the current product order', () => {
     const { result } = renderHook(() => useStarterModelDefaults());
 
-    expect(COTTI_FAST_MODEL).toBe('gemini-3.1-flash-lite');
+    expect(COTTI_FAST_MODEL).toBe('gemini-3.5-flash-lite');
     expect(result.current.fallbackChatProvider).toBe('vertexai');
     expect(result.current.defaultHomeNewModels).toEqual([
       {
-        model: 'gemini-3.1-flash-lite',
+        model: 'gemini-3.5-flash-lite',
         provider: 'vertexai',
         title: 'COTTI-快速',
         type: 'chat',
@@ -62,7 +62,7 @@ describe('useStarterModelDefaults', () => {
     expect(result.current.fallbackChatProvider).toBe('lobehub');
     expect(result.current.defaultHomeNewModels).toEqual([
       {
-        model: 'gemini-3.1-flash-lite',
+        model: 'gemini-3.5-flash-lite',
         provider: 'lobehub',
         title: 'COTTI-快速',
         type: 'chat',

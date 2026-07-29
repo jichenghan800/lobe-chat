@@ -10,7 +10,7 @@ const SETTINGS_ID = 'default';
 
 export const DEFAULT_COTTI_MODEL_DISPLAY_CONFIG: ModelDisplayConfig = {
   agent: [
-    { displayName: 'COTTI-专业', enabled: true, model: 'gemini-3.5-flash', provider: 'vertexai' },
+    { displayName: 'COTTI-专业', enabled: true, model: 'gemini-3.6-flash', provider: 'vertexai' },
     {
       displayName: '豆包2.1-Pro',
       enabled: true,
@@ -28,10 +28,10 @@ export const DEFAULT_COTTI_MODEL_DISPLAY_CONFIG: ModelDisplayConfig = {
     {
       displayName: 'COTTI-快速',
       enabled: true,
-      model: 'gemini-3.1-flash-lite',
+      model: 'gemini-3.5-flash-lite',
       provider: 'vertexai',
     },
-    { displayName: 'COTTI-专业', enabled: true, model: 'gemini-3.5-flash', provider: 'vertexai' },
+    { displayName: 'COTTI-专业', enabled: true, model: 'gemini-3.6-flash', provider: 'vertexai' },
     { displayName: '千问3.7-Plus', enabled: true, model: 'qwen3.7-plus', provider: 'qwen' },
     { displayName: 'GPT-5.6 Sol', enabled: true, model: 'gpt-5.6-sol', provider: 'azure' },
     { displayName: 'GPT-5.6 Terra', enabled: true, model: 'gpt-5.6-terra', provider: 'azure' },

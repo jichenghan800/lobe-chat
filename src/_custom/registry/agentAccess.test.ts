@@ -54,7 +54,7 @@ describe('agentAccess', () => {
       chatConfig: {
         enableAgentMode: true,
       },
-      model: 'gemini-3.5-flash',
+      model: 'gemini-3.6-flash',
     });
 
     expect(config.chatConfig?.enableAgentMode).toBe(false);

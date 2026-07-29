@@ -10,12 +10,12 @@ describe('modelBuiltinSearch', () => {
   it('keeps builtin search for allow-listed Gemini models', () => {
     const model = normalizeModelBuiltinSearch('vertexai', {
       abilities: { search: true },
-      id: 'gemini-3.5-flash',
+      id: 'gemini-3.6-flash',
       providerId: 'vertexai',
       settings: { searchImpl: 'params', searchProvider: 'google' },
     });
 
-    expect(isModelBuiltinSearchAllowed('vertexai', 'gemini-3.5-flash', 'vertexai/gemini-*')).toBe(
+    expect(isModelBuiltinSearchAllowed('vertexai', 'gemini-3.6-flash', 'vertexai/gemini-*')).toBe(
       true,
     );
     expect(model.abilities.search).toBe(true);

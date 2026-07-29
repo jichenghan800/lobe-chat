@@ -8,18 +8,18 @@ interface ProviderModelListLike<T extends ModelLike> {
 }
 
 export const COTTI_CHAT_DEFAULT_MODEL = {
-  model: 'gemini-3.1-flash-lite',
+  model: 'gemini-3.5-flash-lite',
   provider: 'vertexai',
 } as const;
 
 export const COTTI_AGENT_DEFAULT_MODEL = {
-  model: 'gemini-3.5-flash',
+  model: 'gemini-3.6-flash',
   provider: 'vertexai',
 } as const;
 
 const AGENT_ONLY_CHAT_MODEL_IDS = new Set(['doubao-seed-2-1-pro-260628', 'glm-5.2', 'gpt-5.5']);
 
-const CHAT_ONLY_MODEL_IDS = new Set(['gemini-3.1-flash-lite']);
+const CHAT_ONLY_MODEL_IDS = new Set(['gemini-3.5-flash-lite']);
 
 export const isAgentOnlyChatModel = (modelId: string) =>
   AGENT_ONLY_CHAT_MODEL_IDS.has(modelId.trim().toLowerCase());

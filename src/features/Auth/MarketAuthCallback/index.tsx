@@ -14,6 +14,7 @@ const MarketAuthCallbackPage = () => {
   const [status, setStatus] = useState<CallbackStatus>('loading');
   const [message, setMessage] = useState('');
   const [countdown, setCountdown] = useState(3);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   useEffect(() => {
     console.info('[MarketAuthCallback] Processing authorization callback');
@@ -27,10 +28,16 @@ const MarketAuthCallbackPage = () => {
     if (error) {
       console.error('[MarketAuthCallback] Authorization error:', error, errorDescription);
       setStatus('error');
-      setMessage(t('callback.messages.authFailed', { error: errorDescription || error }));
+      setErrorCode(error);
+      setMessage(
+        error === 'access_denied'
+          ? t('callback.messages.authorizationDenied')
+          : t('callback.messages.authFailed', { error: errorDescription || error }),
+      );
 
       persistMarketAuthResult({
         error: errorDescription || error,
+        errorCode: error,
         state: state || undefined,
         type: 'MARKET_AUTH_ERROR',
       });
@@ -40,6 +47,7 @@ const MarketAuthCallbackPage = () => {
         window.opener.postMessage(
           {
             error: errorDescription || error,
+            errorCode: error,
             state,
             type: 'MARKET_AUTH_ERROR',
           },
@@ -146,7 +154,9 @@ const MarketAuthCallbackPage = () => {
         return t('callback.titles.success');
       }
       case 'error': {
-        return t('callback.titles.error');
+        return errorCode === 'access_denied'
+          ? t('callback.titles.authorizationDenied')
+          : t('callback.titles.error');
       }
     }
   };

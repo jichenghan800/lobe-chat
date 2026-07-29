@@ -31,14 +31,19 @@ export default {
   'claimResources.success': 'Successfully claimed {{count}} resource(s)',
   'claimResources.title': 'Claim Your Resources',
   'callback.messages.authFailed': 'Authorization failed: {{error}}',
+  'callback.messages.authorizationDenied':
+    'Community authorization wasn’t approved. Close this window, then choose “Use Another Account” in Community.',
   'callback.messages.missingParams': 'Missing authorization parameters',
   'callback.messages.processing': 'Processing authorization...',
   'callback.messages.successWithCountdown':
     '{{message}} The window will close automatically in {{countdown}} seconds',
   'callback.messages.successWithRedirect': 'Authorization successful! Redirecting...',
+  'callback.titles.authorizationDenied': 'Community Authorization Not Completed',
   'callback.titles.error': 'Authorization Failed',
   'callback.titles.loading': 'LobeHub Market Authorization',
   'callback.titles.success': 'Authorization Successful',
+  'errors.authorizationDenied':
+    'Community authorization wasn’t approved. Retry, or use another account.',
   'errors.authorizationFailed': 'Authorization failed, please try again.',
   'errors.browserOnly': 'The authorization process can only be initiated in a browser.',
   'errors.codeConsumed': 'The authorization code has already been used. Please try again.',

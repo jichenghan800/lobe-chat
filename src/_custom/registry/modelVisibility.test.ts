@@ -19,8 +19,8 @@ describe('modelVisibility', () => {
       },
       {
         children: [
-          { id: 'gemini-3.5-flash' },
-          { id: 'gemini-3.1-flash-lite' },
+          { id: 'gemini-3.6-flash' },
+          { id: 'gemini-3.5-flash-lite' },
           { id: 'hidden-gemini' },
         ],
         id: 'vertexai',
@@ -42,8 +42,8 @@ describe('modelVisibility', () => {
       'azure',
     ]);
     expect(providers[0].children.map((model) => model.id)).toEqual([
-      'gemini-3.1-flash-lite',
-      'gemini-3.5-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.6-flash',
     ]);
     expect(providers[1].children.map((model) => model.id)).toEqual(['doubao-seed-2-1-pro-260628']);
     expect(providers[2].children.map((model) => model.id)).toEqual(['qwen3.7-plus', 'glm-5.2']);
