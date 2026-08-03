@@ -6,6 +6,12 @@ import { useClientDataSWR } from '@/libs/swr';
 import { cottiPlatformAnalyticsService } from '@/services/cottiPlatformAnalytics';
 import type { CottiPlatformAnalyticsPresetDays } from '@/types/cotti/platformAnalytics';
 
+import type {
+  CottiPlatformAnalyticsDetailListState,
+  CottiPlatformAnalyticsDetailsState,
+  CottiPlatformAnalyticsDetailView,
+} from './detail';
+import { parseCottiPlatformAnalyticsDetails, writeCottiPlatformAnalyticsDetails } from './detail';
 import type { CottiPlatformAnalyticsRangeSelection } from './range';
 import {
   getCottiPlatformAnalyticsRangeMode,
@@ -22,6 +28,11 @@ const dashboardKey = (query: ReturnType<typeof toCottiPlatformAnalyticsQuery>) =
   query.type === 'custom'
     ? (['cotti', 'platform-analytics', 'custom', query.startDate, query.endDate] as const)
     : (['cotti', 'platform-analytics', 'preset', query.days] as const);
+
+const rangeKey = (query: ReturnType<typeof toCottiPlatformAnalyticsQuery>) =>
+  query.type === 'custom'
+    ? (['custom', query.startDate, query.endDate] as const)
+    : (['preset', query.days] as const);
 
 export const useCottiPlatformAdminAccess = () => {
   const enabled = isCottiPlatformAnalyticsEnabled();
@@ -62,6 +73,43 @@ export const useCottiPlatformAnalyticsRange = () => {
   };
 };
 
+export const useCottiPlatformAnalyticsDetails = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const state = useMemo(() => parseCottiPlatformAnalyticsDetails(searchParams), [searchParams]);
+
+  const setState = (nextState: CottiPlatformAnalyticsDetailsState, replace = false) => {
+    setSearchParams(writeCottiPlatformAnalyticsDetails(searchParams, nextState), { replace });
+  };
+
+  const updateModels = (
+    nextModels: CottiPlatformAnalyticsDetailListState<
+      CottiPlatformAnalyticsDetailsState['models']['sortBy']
+    >,
+    replace = false,
+  ) => setState({ ...state, models: nextModels }, replace);
+  const updateUsers = (
+    nextUsers: CottiPlatformAnalyticsDetailListState<
+      CottiPlatformAnalyticsDetailsState['users']['sortBy']
+    >,
+    replace = false,
+  ) => setState({ ...state, users: nextUsers }, replace);
+
+  return {
+    ...state,
+    setModelPage: (page: number, pageSize: 20 | 50) =>
+      updateModels({ ...state.models, page, pageSize }),
+    setModelQuery: (q: string) => updateModels({ ...state.models, page: 1, q }, true),
+    setModelSort: (sortBy: CottiPlatformAnalyticsDetailsState['models']['sortBy']) =>
+      updateModels({ ...state.models, page: 1, sortBy }),
+    setUserPage: (page: number, pageSize: 20 | 50) =>
+      updateUsers({ ...state.users, page, pageSize }),
+    setUserQuery: (q: string) => updateUsers({ ...state.users, page: 1, q }, true),
+    setUserSort: (sortBy: CottiPlatformAnalyticsDetailsState['users']['sortBy']) =>
+      updateUsers({ ...state.users, page: 1, sortBy }),
+    setView: (view: CottiPlatformAnalyticsDetailView) => setState({ ...state, view }),
+  };
+};
+
 export const useCottiPlatformAnalyticsDashboard = (
   range: CottiPlatformAnalyticsRangeSelection,
   enabled: boolean,
@@ -71,6 +119,58 @@ export const useCottiPlatformAnalyticsDashboard = (
   return useClientDataSWR(
     enabled ? dashboardKey(query) : null,
     () => cottiPlatformAnalyticsService.getDashboard(query),
+    { revalidateOnFocus: false },
+  );
+};
+
+export const useCottiPlatformAnalyticsChatModels = (
+  range: CottiPlatformAnalyticsRangeSelection,
+  details: CottiPlatformAnalyticsDetailsState['models'],
+  enabled: boolean,
+) => {
+  const rangeQuery = toCottiPlatformAnalyticsQuery(range);
+  const query = { ...details, range: rangeQuery };
+
+  return useClientDataSWR(
+    enabled
+      ? [
+          'cotti',
+          'platform-analytics',
+          'chat-models',
+          ...rangeKey(rangeQuery),
+          details.q,
+          details.sortBy,
+          details.page,
+          details.pageSize,
+        ]
+      : null,
+    () => cottiPlatformAnalyticsService.getChatModels(query),
+    { revalidateOnFocus: false },
+  );
+};
+
+export const useCottiPlatformAnalyticsChatUsers = (
+  range: CottiPlatformAnalyticsRangeSelection,
+  details: CottiPlatformAnalyticsDetailsState['users'],
+  enabled: boolean,
+) => {
+  const rangeQuery = toCottiPlatformAnalyticsQuery(range);
+  const query = { ...details, range: rangeQuery };
+
+  return useClientDataSWR(
+    enabled
+      ? [
+          'cotti',
+          'platform-analytics',
+          'chat-users',
+          ...rangeKey(rangeQuery),
+          details.q,
+          details.sortBy,
+          details.page,
+          details.pageSize,
+        ]
+      : null,
+    () => cottiPlatformAnalyticsService.getChatUsers(query),
     { revalidateOnFocus: false },
   );
 };

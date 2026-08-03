@@ -20,6 +20,7 @@ import RangeControl from './RangeControl';
 import { styles } from './style';
 import type { CottiPlatformAnalyticsTrendMetric } from './trend';
 import TrendSection from './TrendSection';
+import { UsageDetails } from './UsageDetails';
 
 const CottiPlatformAnalytics = memo(() => {
   const { i18n, t } = useTranslation('setting');
@@ -118,6 +119,9 @@ const CottiPlatformAnalytics = memo(() => {
                   setMetric={setTrendMetric}
                 />
               </>
+            )}
+            {canLoadDashboard && (
+              <UsageDetails enabled={canLoadDashboard} range={rangeState.range} />
             )}
           </Flexbox>
         )}

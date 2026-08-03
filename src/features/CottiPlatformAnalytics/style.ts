@@ -26,6 +26,65 @@ export const styles = createStaticStyles(({ css }) => ({
   content: css`
     overflow: hidden auto;
   `,
+  detailEmpty: css`
+    padding-block: 56px;
+    padding-inline: 24px;
+  `,
+  detailHeader: css`
+    padding-block: 20px 0;
+    padding-inline: 20px;
+    border-block-end: 1px solid ${cssVar.colorBorderSecondary};
+  `,
+  detailIdentity: css`
+    min-width: 0;
+  `,
+  detailIdentityCopy: css`
+    min-width: 0;
+    max-width: 196px;
+  `,
+  detailInlineError: css`
+    padding-block: 12px 0;
+    padding-inline: 20px;
+  `,
+  detailModelFallback: css`
+    display: grid;
+    flex: none;
+    place-items: center;
+
+    width: 28px;
+    height: 28px;
+    border-radius: ${cssVar.borderRadius};
+
+    color: ${cssVar.colorTextSecondary};
+
+    background: ${cssVar.colorFillTertiary};
+  `,
+  detailSearch: css`
+    flex: 1;
+    min-width: 220px;
+    max-width: 360px;
+
+    ${responsive.sm} {
+      width: 100%;
+      max-width: none;
+    }
+  `,
+  detailSection: css`
+    overflow: hidden;
+    background: ${cssVar.colorBgContainer};
+  `,
+  detailSort: css`
+    min-width: 180px;
+  `,
+  detailToolbar: css`
+    padding-block: 16px;
+    padding-inline: 20px;
+    border-block-end: 1px solid ${cssVar.colorBorderSecondary};
+
+    ${responsive.sm} {
+      align-items: stretch;
+    }
+  `,
   generatedAt: css`
     color: ${cssVar.colorTextTertiary};
   `,
