@@ -197,7 +197,7 @@ export const ChatUsersTable = memo<ChatUsersTableProps>(
       <>
         <DetailToolbar
           isRefreshing={swr.isValidating}
-          kind={'users'}
+          placeholder={t('platformAnalytics.details.users.search')}
           query={state.q}
           sortBy={state.sortBy}
           sortOptions={sortOptions}
@@ -217,8 +217,9 @@ export const ChatUsersTable = memo<ChatUsersTableProps>(
           isLoading={swr.isLoading}
           empty={
             <DetailEmpty
+              emptyDescription={t('platformAnalytics.details.users.empty.desc')}
+              emptyTitle={t('platformAnalytics.details.users.empty.title')}
               hasQuery={hasQuery}
-              kind={'users'}
               onClearQuery={() => onQueryChange('')}
               onRefresh={() => void swr.mutate()}
             />

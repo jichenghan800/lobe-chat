@@ -1,6 +1,8 @@
 import { lambdaClient } from '@/libs/trpc/client';
 import type {
+  CottiPlatformAnalyticsAgentErrorsQuery,
   CottiPlatformAnalyticsAgentsQuery,
+  CottiPlatformAnalyticsChatErrorsQuery,
   CottiPlatformAnalyticsChatModelsQuery,
   CottiPlatformAnalyticsChatUsersQuery,
   CottiPlatformAnalyticsQuery,
@@ -15,8 +17,24 @@ class CottiPlatformAnalyticsClientService {
     return response.data;
   };
 
+  getAgentErrors = async (query: CottiPlatformAnalyticsAgentErrorsQuery) => {
+    const response = await lambdaClient.cotti.platformAnalytics.agentErrors.query(query, {
+      context: { showNotification: false },
+    });
+
+    return response.data;
+  };
+
   getAgents = async (query: CottiPlatformAnalyticsAgentsQuery) => {
     const response = await lambdaClient.cotti.platformAnalytics.agents.query(query, {
+      context: { showNotification: false },
+    });
+
+    return response.data;
+  };
+
+  getChatErrors = async (query: CottiPlatformAnalyticsChatErrorsQuery) => {
+    const response = await lambdaClient.cotti.platformAnalytics.chatErrors.query(query, {
       context: { showNotification: false },
     });
 

@@ -640,6 +640,33 @@ export default {
   'platformAnalytics.disabled.title': 'Platform analytics is not enabled',
   'platformAnalytics.empty.desc': 'The selected period has no conversation activity yet.',
   'platformAnalytics.empty.title': 'No activity in this period',
+  'platformAnalytics.errors.agent.empty.desc':
+    'Try another time range or refresh when failed Agent executions are available.',
+  'platformAnalytics.errors.agent.empty.title': 'No Agent execution errors in this period',
+  'platformAnalytics.errors.agent.identityMissing': 'Agent record is no longer available',
+  'platformAnalytics.errors.agent.search': 'Search Agent name or error category',
+  'platformAnalytics.errors.agent.unattributed': 'Unattributed Agent',
+  'platformAnalytics.errors.chat.empty.desc':
+    'Try another time range or refresh when failed Chat replies are available.',
+  'platformAnalytics.errors.chat.empty.title': 'No Chat reply errors in this period',
+  'platformAnalytics.errors.chat.modelMissing': 'Model not recorded',
+  'platformAnalytics.errors.chat.providerMissing': 'Provider not recorded',
+  'platformAnalytics.errors.chat.search': 'Search category, provider, or model',
+  'platformAnalytics.errors.columns.affectedUsers': 'Affected users',
+  'platformAnalytics.errors.columns.agent': 'Agent',
+  'platformAnalytics.errors.columns.category': 'Error category',
+  'platformAnalytics.errors.columns.executionErrors': 'Failed executions',
+  'platformAnalytics.errors.columns.model': 'Provider / model',
+  'platformAnalytics.errors.columns.replyErrors': 'Failed replies',
+  'platformAnalytics.errors.desc':
+    'See where failed Chat replies and Agent executions are concentrated. Raw error details are not shown.',
+  'platformAnalytics.errors.sort.affectedUsers': 'Affected users',
+  'platformAnalytics.errors.sort.executionErrors': 'Failed executions',
+  'platformAnalytics.errors.sort.replyErrors': 'Failed replies',
+  'platformAnalytics.errors.tabs.agent': 'Agent executions',
+  'platformAnalytics.errors.tabs.chat': 'Chat replies',
+  'platformAnalytics.errors.title': 'Error distribution',
+  'platformAnalytics.errors.unclassified': 'Unclassified',
   'platformAnalytics.features.desc':
     'See how people used each capability in the selected period. Capabilities can overlap, so these cards should not be added into a platform total.',
   'platformAnalytics.features.empty.desc':

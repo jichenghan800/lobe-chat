@@ -85,6 +85,16 @@ export const styles = createStaticStyles(({ css }) => ({
       align-items: stretch;
     }
   `,
+  errorCategory: css`
+    overflow: hidden;
+
+    max-width: 228px;
+    margin: 0;
+
+    font-family: ${cssVar.fontFamilyCode};
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
   featureCard: css`
     min-width: 0;
     min-height: 228px;

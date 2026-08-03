@@ -1,8 +1,8 @@
 'use client';
 
-import { formatNumber, formatUsageValue } from '@lobechat/utils';
+import { formatUsageValue } from '@lobechat/utils';
 import { ModelIcon } from '@lobehub/icons';
-import { Flexbox, Icon, Text, Tooltip } from '@lobehub/ui';
+import { Flexbox, Icon, Tag, Text, Tooltip } from '@lobehub/ui';
 import type { TableColumnsType } from 'antd';
 import { CircleHelpIcon } from 'lucide-react';
 import { memo, useMemo } from 'react';
@@ -12,48 +12,60 @@ import AsyncBoundary from '@/components/AsyncBoundary';
 import AsyncError from '@/components/AsyncError';
 import InlineTable from '@/components/InlineTable';
 import TablePagination from '@/components/TablePagination';
-import TotalToken from '@/components/TotalToken';
 import type {
-  CottiPlatformAnalyticsChatModelItem,
-  CottiPlatformAnalyticsChatModelSort,
+  CottiPlatformAnalyticsChatErrorItem,
+  CottiPlatformAnalyticsChatErrorSort,
 } from '@/types/cotti/platformAnalytics';
 
 import type { CottiPlatformAnalyticsDetailListState } from './detail';
 import { DetailEmpty } from './DetailEmpty';
 import { DetailTableSkeleton } from './DetailTableSkeleton';
 import { DetailToolbar } from './DetailToolbar';
-import { useCottiPlatformAnalyticsChatModels } from './hooks';
+import { useCottiPlatformAnalyticsChatErrors } from './hooks';
 import type { CottiPlatformAnalyticsRangeSelection } from './range';
 import { styles } from './style';
 
-interface ChatModelsTableProps {
+interface ChatErrorsTableProps {
   enabled: boolean;
   onPageChange: (page: number, pageSize: 20 | 50) => void;
   onQueryChange: (value: string) => void;
-  onSortChange: (value: CottiPlatformAnalyticsChatModelSort) => void;
+  onSortChange: (value: CottiPlatformAnalyticsChatErrorSort) => void;
   range: CottiPlatformAnalyticsRangeSelection;
-  state: CottiPlatformAnalyticsDetailListState<CottiPlatformAnalyticsChatModelSort>;
+  state: CottiPlatformAnalyticsDetailListState<CottiPlatformAnalyticsChatErrorSort>;
 }
 
-const formatCost = (value: number) => `$${formatNumber(value, value > 0 && value < 0.01 ? 4 : 2)}`;
-const formatPercent = (value: number) => `${formatNumber(value * 100, 2)}%`;
-
-export const ChatModelsTable = memo<ChatModelsTableProps>(
+export const ChatErrorsTable = memo<ChatErrorsTableProps>(
   ({ enabled, onPageChange, onQueryChange, onSortChange, range, state }) => {
     const { t } = useTranslation('setting');
-    const swr = useCottiPlatformAnalyticsChatModels(range, state, enabled);
+    const swr = useCottiPlatformAnalyticsChatErrors(range, state, enabled);
     const data = swr.data;
     const hasQuery = Boolean(state.q.trim());
-    const columns = useMemo<TableColumnsType<CottiPlatformAnalyticsChatModelItem>>(
+    const columns = useMemo<TableColumnsType<CottiPlatformAnalyticsChatErrorItem>>(
       () => [
         {
-          dataIndex: 'model',
+          dataIndex: 'category',
           fixed: 'left',
+          key: 'category',
+          render: (value) => {
+            const category = value || t('platformAnalytics.errors.unclassified');
+
+            return (
+              <Tooltip title={category}>
+                <Tag className={styles.errorCategory} size={'small'}>
+                  {category}
+                </Tag>
+              </Tooltip>
+            );
+          },
+          title: t('platformAnalytics.errors.columns.category'),
+          width: 260,
+        },
+        {
+          dataIndex: 'model',
           key: 'model',
           render: (_value, record) => {
-            const model = record.model || t('platformAnalytics.details.models.unattributed');
-            const provider =
-              record.provider || t('platformAnalytics.details.models.providerMissing');
+            const model = record.model || t('platformAnalytics.errors.chat.modelMissing');
+            const provider = record.provider || t('platformAnalytics.errors.chat.providerMissing');
 
             return (
               <Flexbox horizontal align={'center'} className={styles.detailIdentity} gap={10}>
@@ -79,57 +91,24 @@ export const ChatModelsTable = memo<ChatModelsTableProps>(
               </Flexbox>
             );
           },
-          title: t('platformAnalytics.details.columns.model'),
-          width: 260,
-        },
-        {
-          align: 'right',
-          dataIndex: 'activeUsers',
-          key: 'activeUsers',
-          render: (value) => formatUsageValue(value),
-          title: t('platformAnalytics.details.columns.activeUsers'),
-          width: 112,
-        },
-        {
-          align: 'right',
-          dataIndex: 'assistantMessages',
-          key: 'assistantMessages',
-          render: (value) => formatUsageValue(value),
-          title: t('platformAnalytics.details.columns.assistantMessages'),
-          width: 120,
-        },
-        {
-          dataIndex: 'totalTokens',
-          key: 'totalTokens',
-          render: (value, record) => (
-            <TotalToken
-              totalInputTokens={record.totalInputTokens}
-              totalOutputTokens={record.totalOutputTokens}
-              totalTokens={value}
-            />
-          ),
-          title: t('platformAnalytics.details.columns.tokens'),
-          width: 220,
-        },
-        {
-          align: 'right',
-          dataIndex: 'recordedCost',
-          key: 'recordedCost',
-          render: (value) => formatCost(value),
-          title: t('platformAnalytics.details.columns.cost'),
-          width: 112,
+          title: t('platformAnalytics.errors.columns.model'),
+          width: 280,
         },
         {
           align: 'right',
           dataIndex: 'errorMessages',
           key: 'errorMessages',
-          render: (value, record) =>
-            t('platformAnalytics.details.errors.value', {
-              count: formatNumber(value),
-              rate: formatPercent(record.errorRate),
-            }),
-          title: t('platformAnalytics.details.columns.errors'),
-          width: 136,
+          render: (value) => formatUsageValue(value),
+          title: t('platformAnalytics.errors.columns.replyErrors'),
+          width: 140,
+        },
+        {
+          align: 'right',
+          dataIndex: 'affectedUsers',
+          key: 'affectedUsers',
+          render: (value) => formatUsageValue(value),
+          title: t('platformAnalytics.errors.columns.affectedUsers'),
+          width: 140,
         },
       ],
       [t],
@@ -138,26 +117,14 @@ export const ChatModelsTable = memo<ChatModelsTableProps>(
       () =>
         [
           {
-            label: t('platformAnalytics.details.sort.totalTokens'),
-            value: 'totalTokens',
-          },
-          {
-            label: t('platformAnalytics.details.sort.activeUsers'),
-            value: 'activeUsers',
-          },
-          {
-            label: t('platformAnalytics.details.sort.assistantMessages'),
-            value: 'assistantMessages',
-          },
-          {
-            label: t('platformAnalytics.details.sort.recordedCost'),
-            value: 'recordedCost',
-          },
-          {
-            label: t('platformAnalytics.details.sort.errorMessages'),
+            label: t('platformAnalytics.errors.sort.replyErrors'),
             value: 'errorMessages',
           },
-        ] satisfies Array<{ label: string; value: CottiPlatformAnalyticsChatModelSort }>,
+          {
+            label: t('platformAnalytics.errors.sort.affectedUsers'),
+            value: 'affectedUsers',
+          },
+        ] satisfies Array<{ label: string; value: CottiPlatformAnalyticsChatErrorSort }>,
       [t],
     );
 
@@ -165,7 +132,7 @@ export const ChatModelsTable = memo<ChatModelsTableProps>(
       <>
         <DetailToolbar
           isRefreshing={swr.isValidating}
-          placeholder={t('platformAnalytics.details.models.search')}
+          placeholder={t('platformAnalytics.errors.chat.search')}
           query={state.q}
           sortBy={state.sortBy}
           sortOptions={sortOptions}
@@ -185,8 +152,8 @@ export const ChatModelsTable = memo<ChatModelsTableProps>(
           isLoading={swr.isLoading}
           empty={
             <DetailEmpty
-              emptyDescription={t('platformAnalytics.details.models.empty.desc')}
-              emptyTitle={t('platformAnalytics.details.models.empty.title')}
+              emptyDescription={t('platformAnalytics.errors.chat.empty.desc')}
+              emptyTitle={t('platformAnalytics.errors.chat.empty.title')}
               hasQuery={hasQuery}
               onClearQuery={() => onQueryChange('')}
               onRefresh={() => void swr.mutate()}
@@ -202,10 +169,10 @@ export const ChatModelsTable = memo<ChatModelsTableProps>(
           }
           onRetry={() => void swr.mutate()}
         >
-          <InlineTable<CottiPlatformAnalyticsChatModelItem>
+          <InlineTable<CottiPlatformAnalyticsChatErrorItem>
             columns={columns}
             dataSource={data?.items}
-            rowKey={(record) => JSON.stringify([record.provider, record.model])}
+            rowKey={(record) => JSON.stringify([record.provider, record.model, record.category])}
             size={'small'}
           />
           {data && data.total > 0 && (
@@ -223,4 +190,4 @@ export const ChatModelsTable = memo<ChatModelsTableProps>(
   },
 );
 
-ChatModelsTable.displayName = 'ChatModelsTable';
+ChatErrorsTable.displayName = 'ChatErrorsTable';

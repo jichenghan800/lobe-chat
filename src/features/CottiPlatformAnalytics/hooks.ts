@@ -12,6 +12,14 @@ import type {
   CottiPlatformAnalyticsDetailView,
 } from './detail';
 import { parseCottiPlatformAnalyticsDetails, writeCottiPlatformAnalyticsDetails } from './detail';
+import type {
+  CottiPlatformAnalyticsErrorDetailsState,
+  CottiPlatformAnalyticsErrorView,
+} from './errorDetail';
+import {
+  parseCottiPlatformAnalyticsErrorDetails,
+  writeCottiPlatformAnalyticsErrorDetails,
+} from './errorDetail';
 import type { CottiPlatformAnalyticsRangeSelection } from './range';
 import {
   getCottiPlatformAnalyticsRangeMode,
@@ -133,6 +141,34 @@ export const useCottiPlatformAnalyticsDetails = () => {
   };
 };
 
+export const useCottiPlatformAnalyticsErrorDetails = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const state = useMemo(
+    () => parseCottiPlatformAnalyticsErrorDetails(searchParams),
+    [searchParams],
+  );
+
+  const setState = (nextState: CottiPlatformAnalyticsErrorDetailsState, replace = false) => {
+    setSearchParams(writeCottiPlatformAnalyticsErrorDetails(searchParams, nextState), { replace });
+  };
+
+  return {
+    ...state,
+    setAgentPage: (page: number, pageSize: 20 | 50) =>
+      setState({ ...state, agent: { ...state.agent, page, pageSize } }),
+    setAgentQuery: (q: string) =>
+      setState({ ...state, agent: { ...state.agent, page: 1, q } }, true),
+    setAgentSort: (sortBy: CottiPlatformAnalyticsErrorDetailsState['agent']['sortBy']) =>
+      setState({ ...state, agent: { ...state.agent, page: 1, sortBy } }),
+    setChatPage: (page: number, pageSize: 20 | 50) =>
+      setState({ ...state, chat: { ...state.chat, page, pageSize } }),
+    setChatQuery: (q: string) => setState({ ...state, chat: { ...state.chat, page: 1, q } }, true),
+    setChatSort: (sortBy: CottiPlatformAnalyticsErrorDetailsState['chat']['sortBy']) =>
+      setState({ ...state, chat: { ...state.chat, page: 1, sortBy } }),
+    setView: (view: CottiPlatformAnalyticsErrorView) => setState({ ...state, view }),
+  };
+};
+
 export const useCottiPlatformAnalyticsDashboard = (
   range: CottiPlatformAnalyticsRangeSelection,
   enabled: boolean,
@@ -181,6 +217,58 @@ export const useCottiPlatformAnalyticsAgents = (
         ]
       : null,
     () => cottiPlatformAnalyticsService.getAgents(query),
+    { revalidateOnFocus: false },
+  );
+};
+
+export const useCottiPlatformAnalyticsAgentErrors = (
+  range: CottiPlatformAnalyticsRangeSelection,
+  details: CottiPlatformAnalyticsErrorDetailsState['agent'],
+  enabled: boolean,
+) => {
+  const rangeQuery = toCottiPlatformAnalyticsQuery(range);
+  const query = { ...details, range: rangeQuery };
+
+  return useClientDataSWR(
+    enabled
+      ? [
+          'cotti',
+          'platform-analytics',
+          'agent-errors',
+          ...rangeKey(rangeQuery),
+          details.q,
+          details.sortBy,
+          details.page,
+          details.pageSize,
+        ]
+      : null,
+    () => cottiPlatformAnalyticsService.getAgentErrors(query),
+    { revalidateOnFocus: false },
+  );
+};
+
+export const useCottiPlatformAnalyticsChatErrors = (
+  range: CottiPlatformAnalyticsRangeSelection,
+  details: CottiPlatformAnalyticsErrorDetailsState['chat'],
+  enabled: boolean,
+) => {
+  const rangeQuery = toCottiPlatformAnalyticsQuery(range);
+  const query = { ...details, range: rangeQuery };
+
+  return useClientDataSWR(
+    enabled
+      ? [
+          'cotti',
+          'platform-analytics',
+          'chat-errors',
+          ...rangeKey(rangeQuery),
+          details.q,
+          details.sortBy,
+          details.page,
+          details.pageSize,
+        ]
+      : null,
+    () => cottiPlatformAnalyticsService.getChatErrors(query),
     { revalidateOnFocus: false },
   );
 };

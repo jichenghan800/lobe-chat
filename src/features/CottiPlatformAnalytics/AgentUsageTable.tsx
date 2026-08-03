@@ -231,7 +231,7 @@ export const AgentUsageTable = memo<AgentUsageTableProps>(
       <>
         <DetailToolbar
           isRefreshing={swr.isValidating}
-          kind={'agents'}
+          placeholder={t('platformAnalytics.details.agents.search')}
           query={state.q}
           sortBy={state.sortBy}
           sortOptions={sortOptions}
@@ -251,8 +251,9 @@ export const AgentUsageTable = memo<AgentUsageTableProps>(
           isLoading={swr.isLoading}
           empty={
             <DetailEmpty
+              emptyDescription={t('platformAnalytics.details.agents.empty.desc')}
+              emptyTitle={t('platformAnalytics.details.agents.empty.title')}
               hasQuery={hasQuery}
-              kind={'agents'}
               onClearQuery={() => onQueryChange('')}
               onRefresh={() => void swr.mutate()}
             />

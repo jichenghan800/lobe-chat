@@ -10,6 +10,7 @@ import AsyncError from '@/components/AsyncError';
 import NavHeader from '@/features/NavHeader';
 import SettingContainer from '@/features/Setting/SettingContainer';
 
+import { ErrorDistribution } from './ErrorDistribution';
 import { FeatureAdoption } from './FeatureAdoption';
 import {
   useCottiPlatformAdminAccess,
@@ -133,6 +134,9 @@ const CottiPlatformAnalytics = memo(() => {
                 retrying={featuresSWR.isValidating}
                 onRetry={() => void featuresSWR.mutate()}
               />
+            )}
+            {canLoadDashboard && (
+              <ErrorDistribution enabled={canLoadDashboard} range={rangeState.range} />
             )}
             {canLoadDashboard && (
               <UsageDetails enabled={canLoadDashboard} range={rangeState.range} />

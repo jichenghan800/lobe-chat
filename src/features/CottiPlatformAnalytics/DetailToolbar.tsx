@@ -10,10 +10,10 @@ import { styles } from './style';
 
 interface DetailToolbarProps<TSort extends string> {
   isRefreshing: boolean;
-  kind: 'agents' | 'models' | 'users';
   onQueryChange: (value: string) => void;
   onRefresh: () => void;
   onSortChange: (value: TSort) => void;
+  placeholder: string;
   query: string;
   sortBy: TSort;
   sortOptions: Array<{ label: string; value: TSort }>;
@@ -21,10 +21,10 @@ interface DetailToolbarProps<TSort extends string> {
 
 const DetailToolbarInner = <TSort extends string>({
   isRefreshing,
-  kind,
   onQueryChange,
   onRefresh,
   onSortChange,
+  placeholder,
   query,
   sortBy,
   sortOptions,
@@ -44,7 +44,7 @@ const DetailToolbarInner = <TSort extends string>({
         allowClear
         className={styles.detailSearch}
         maxLength={100}
-        placeholder={t(`platformAnalytics.details.${kind}.search` as const)}
+        placeholder={placeholder}
         value={query}
         variant={'filled'}
         onInputChange={onQueryChange}
