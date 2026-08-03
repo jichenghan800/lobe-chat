@@ -18,6 +18,7 @@ import Labs from '../labs';
 import Memory from '../memory';
 import Messenger from '../messenger';
 import OAuthApps from '../oauth-apps';
+import PlatformAnalytics from '../platform-analytics';
 import Profile from '../profile';
 import Provider from '../provider';
 import Proxy from '../proxy';
@@ -47,6 +48,7 @@ export const componentMap = {
   [SettingsTabs.Profile]: Profile,
   [SettingsTabs.Stats]: Stats,
   [SettingsTabs.Usage]: Usage,
+  [SettingsTabs.PlatformAnalytics]: PlatformAnalytics,
   [SettingsTabs.APIKey]: APIKey,
   [SettingsTabs.OAuthApps]: OAuthApps,
   [SettingsTabs.Creds]: Creds,

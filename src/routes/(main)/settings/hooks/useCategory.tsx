@@ -8,6 +8,7 @@ import {
   Brain,
   BrainCircuit,
   ChartColumnBigIcon,
+  ChartNoAxesCombinedIcon,
   Coins,
   CreditCard,
   Database,
@@ -29,6 +30,8 @@ import {
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isCottiPlatformAnalyticsEnabled } from '@/_custom/registry/platformManagement';
+import { useCottiPlatformAdminAccess } from '@/features/CottiPlatformAnalytics/hooks';
 import { useElectronStore } from '@/store/electron';
 import { electronSyncSelectors } from '@/store/electron/selectors';
 import { SettingsTabs } from '@/store/global/initialState';
@@ -46,6 +49,7 @@ export enum SettingsGroupKey {
   Agent = 'agent',
   Developer = 'developer',
   General = 'general',
+  PlatformManagement = 'platformManagement',
   Subscription = 'subscription',
   System = 'system',
 }
@@ -78,6 +82,8 @@ export const useCategory = () => {
   const remoteServerUrl = useElectronStore(electronSyncSelectors.remoteServerUrl);
   const isDevMode = useUserStore((s) => userGeneralSettingsSelectors.config(s).isDevMode);
   const enableOAuthApps = useUserStore(labPreferSelectors.enableOAuthApps);
+  const platformAnalyticsEnabled = isCottiPlatformAnalyticsEnabled();
+  const { swr: platformAdminAccessSWR } = useCottiPlatformAdminAccess();
 
   const avatarUrl = useMemo(() => {
     if (!avatar) return undefined;
@@ -201,6 +207,20 @@ export const useCategory = () => {
       title: t('group.aiConfig'),
     });
 
+    if (platformAnalyticsEnabled && platformAdminAccessSWR.data?.isAdmin) {
+      groups.push({
+        items: [
+          {
+            icon: ChartNoAxesCombinedIcon,
+            key: SettingsTabs.PlatformAnalytics,
+            label: t('tab.platformAnalytics'),
+          },
+        ],
+        key: SettingsGroupKey.PlatformManagement,
+        title: t('group.platformManagement'),
+      });
+    }
+
     // System group
     const systemItems: CategoryItem[] = [
       isDesktop && {
@@ -271,6 +291,8 @@ export const useCategory = () => {
     enableBusinessFeatures,
     hideDocs,
     mobile,
+    platformAdminAccessSWR.data?.isAdmin,
+    platformAnalyticsEnabled,
     showApiKeyManage,
     showProvider,
     isDevMode,

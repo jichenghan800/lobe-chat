@@ -62,6 +62,9 @@ export const componentMap = {
   [SettingsTabs.Usage]: dynamic(() => import('@/business/client/BusinessSettingPages/Usage'), {
     loading: loading('Settings > Usage'),
   }),
+  [SettingsTabs.PlatformAnalytics]: dynamic(() => import('../platform-analytics'), {
+    loading: loading('Settings > PlatformAnalytics'),
+  }),
   [SettingsTabs.APIKey]: dynamic(() => import('../apikey'), {
     loading: loading('Settings > APIKey'),
   }),

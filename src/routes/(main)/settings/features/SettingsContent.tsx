@@ -127,6 +127,7 @@ const SettingsContent = ({ mobile, activeTab }: SettingsContentProps) => {
           tabKey === SettingsTabs.Skill ||
           tabKey === SettingsTabs.Connector ||
           tabKey === SettingsTabs.Creds ||
+          tabKey === SettingsTabs.PlatformAnalytics ||
           tabKey === SettingsTabs.Usage;
         if (activeTab !== tabKey) return null;
         const content = renderComponent(tabKey);

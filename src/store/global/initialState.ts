@@ -84,6 +84,7 @@ export enum SettingsTabs {
   OAuthApps = 'oauth-apps',
   // business
   Plans = 'plans',
+  PlatformAnalytics = 'platform-analytics',
   Profile = 'profile',
   Provider = 'provider',
   Proxy = 'proxy',

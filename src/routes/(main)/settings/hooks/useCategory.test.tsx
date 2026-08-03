@@ -9,6 +9,11 @@ import { useUserStore } from '@/store/user';
 
 import { SettingsGroupKey, useCategory } from './useCategory';
 
+const platformManagementMocks = vi.hoisted(() => ({
+  enabled: false,
+  isAdmin: false,
+}));
+
 vi.hoisted(() => {
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
@@ -19,6 +24,17 @@ vi.hoisted(() => {
     },
   });
 });
+
+vi.mock('@/_custom/registry/platformManagement', () => ({
+  isCottiPlatformAnalyticsEnabled: () => platformManagementMocks.enabled,
+}));
+
+vi.mock('@/features/CottiPlatformAnalytics/hooks', () => ({
+  useCottiPlatformAdminAccess: () => ({
+    enabled: platformManagementMocks.enabled,
+    swr: { data: { isAdmin: platformManagementMocks.isAdmin } },
+  }),
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -59,6 +75,8 @@ const initialUserStoreState = useUserStore.getState();
 
 afterEach(() => {
   cleanup();
+  platformManagementMocks.enabled = false;
+  platformManagementMocks.isAdmin = false;
   useUserStore.setState(initialUserStoreState, true);
 });
 
@@ -97,5 +115,25 @@ describe('settings useCategory', () => {
 
     expect(developerGroup?.items.map((item) => item.key)).toContain(SettingsTabs.OAuthApps);
     expect(systemGroup?.items.map((item) => item.key)).not.toContain(SettingsTabs.OAuthApps);
+  });
+
+  it('shows platform analytics only to configured platform administrators', () => {
+    platformManagementMocks.enabled = true;
+    platformManagementMocks.isAdmin = true;
+
+    const { result } = renderHook(() => useCategory(), {
+      wrapper: createWrapper(true),
+    });
+    const platformGroup = result.current.find(
+      (group) => group.key === SettingsGroupKey.PlatformManagement,
+    );
+
+    expect(platformGroup?.items.map((item) => item.key)).toEqual([SettingsTabs.PlatformAnalytics]);
+  });
+
+  it('hides platform analytics when the user is not a platform administrator', () => {
+    platformManagementMocks.enabled = true;
+
+    expect(getItemKeys()).not.toContain(SettingsTabs.PlatformAnalytics);
   });
 });
