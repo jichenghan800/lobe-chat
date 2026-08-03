@@ -10,7 +10,7 @@ import { styles } from './style';
 
 interface DetailEmptyProps {
   hasQuery: boolean;
-  kind: 'models' | 'users';
+  kind: 'agents' | 'models' | 'users';
   onClearQuery: () => void;
   onRefresh: () => void;
 }

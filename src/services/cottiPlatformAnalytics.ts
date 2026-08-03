@@ -1,5 +1,6 @@
 import { lambdaClient } from '@/libs/trpc/client';
 import type {
+  CottiPlatformAnalyticsAgentsQuery,
   CottiPlatformAnalyticsChatModelsQuery,
   CottiPlatformAnalyticsChatUsersQuery,
   CottiPlatformAnalyticsQuery,
@@ -8,6 +9,14 @@ import type {
 class CottiPlatformAnalyticsClientService {
   getAccess = async () => {
     const response = await lambdaClient.cotti.admin.getAccess.query(undefined, {
+      context: { showNotification: false },
+    });
+
+    return response.data;
+  };
+
+  getAgents = async (query: CottiPlatformAnalyticsAgentsQuery) => {
+    const response = await lambdaClient.cotti.platformAnalytics.agents.query(query, {
       context: { showNotification: false },
     });
 

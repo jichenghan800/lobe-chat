@@ -14,6 +14,15 @@ export type CottiPlatformAnalyticsQuery =
 export type CottiPlatformAnalyticsChatUserSort =
   'assistantMessages' | 'errorMessages' | 'lastActiveAt' | 'recordedCost' | 'totalTokens';
 
+export type CottiPlatformAnalyticsAgentSort =
+  | 'activeUsers'
+  | 'averageProcessingTimeMs'
+  | 'errorExecutions'
+  | 'executions'
+  | 'lastExecutedAt'
+  | 'recordedCost'
+  | 'totalTokens';
+
 export type CottiPlatformAnalyticsChatModelSort =
   'activeUsers' | 'assistantMessages' | 'errorMessages' | 'recordedCost' | 'totalTokens';
 
@@ -26,6 +35,10 @@ export interface CottiPlatformAnalyticsDetailQuery {
 
 export interface CottiPlatformAnalyticsChatModelsQuery extends CottiPlatformAnalyticsDetailQuery {
   sortBy?: CottiPlatformAnalyticsChatModelSort;
+}
+
+export interface CottiPlatformAnalyticsAgentsQuery extends CottiPlatformAnalyticsDetailQuery {
+  sortBy?: CottiPlatformAnalyticsAgentSort;
 }
 
 export interface CottiPlatformAnalyticsChatUsersQuery extends CottiPlatformAnalyticsDetailQuery {
@@ -75,6 +88,37 @@ export interface CottiPlatformAnalyticsDashboard {
   overview: CottiPlatformAnalyticsOverview;
   period: CottiPlatformAnalyticsPeriod;
   trends: CottiPlatformAnalyticsTrendItem[];
+}
+
+export interface CottiPlatformAnalyticsAgentItem {
+  activeUsers: number;
+  agentId: string | null;
+  avatar: string | null;
+  averageProcessingTimeMs: number;
+  costRecordedExecutions: number;
+  errorExecutions: number;
+  errorRate: number;
+  executions: number;
+  interruptedExecutions: number;
+  interruptionRate: number;
+  lastExecutedAt: string | null;
+  llmCalls: number;
+  recordedCost: number;
+  title: string | null;
+  tokenRecordedExecutions: number;
+  toolCalls: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalTokens: number;
+}
+
+export interface CottiPlatformAnalyticsAgents {
+  generatedAt: string;
+  items: CottiPlatformAnalyticsAgentItem[];
+  page: number;
+  pageSize: number;
+  period: CottiPlatformAnalyticsPeriod;
+  total: number;
 }
 
 export interface CottiPlatformAnalyticsChatModelItem {

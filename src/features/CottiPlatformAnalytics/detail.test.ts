@@ -6,6 +6,9 @@ import { parseCottiPlatformAnalyticsDetails, writeCottiPlatformAnalyticsDetails 
 describe('COTTI platform analytics detail URL state', () => {
   it('uses stable defaults for missing or invalid list parameters', () => {
     const params = new URLSearchParams({
+      usageAgentPage: '0',
+      usageAgentPageSize: '5',
+      usageAgentSort: 'toolCalls',
       usageModelPage: '-2',
       usageModelPageSize: '100',
       usageModelSort: 'llmCalls',
@@ -16,15 +19,20 @@ describe('COTTI platform analytics detail URL state', () => {
     });
 
     expect(parseCottiPlatformAnalyticsDetails(params)).toEqual({
+      agents: { page: 1, pageSize: 20, q: '', sortBy: 'totalTokens' },
       models: { page: 1, pageSize: 20, q: '', sortBy: 'totalTokens' },
       users: { page: 1, pageSize: 20, q: '', sortBy: 'totalTokens' },
-      view: 'users',
+      view: 'agents',
     });
   });
 
-  it('parses independent user and model search, sort, and pagination state', () => {
+  it('parses independent Agent, user, and model search, sort, and pagination state', () => {
     const query = 'm'.repeat(120);
     const params = new URLSearchParams({
+      usageAgentPage: '4',
+      usageAgentPageSize: '50',
+      usageAgentQ: '运营',
+      usageAgentSort: 'lastExecutedAt',
       usageModelPage: '3',
       usageModelPageSize: '50',
       usageModelQ: query,
@@ -37,6 +45,12 @@ describe('COTTI platform analytics detail URL state', () => {
     });
 
     expect(parseCottiPlatformAnalyticsDetails(params)).toEqual({
+      agents: {
+        page: 4,
+        pageSize: 50,
+        q: '运营',
+        sortBy: 'lastExecutedAt',
+      },
       models: {
         page: 3,
         pageSize: 50,
@@ -55,9 +69,10 @@ describe('COTTI platform analytics detail URL state', () => {
 
   it('writes compact detail state while preserving unrelated range parameters', () => {
     const current = new URLSearchParams(
-      'range=30&usageView=models&usageModelQ=stale&usageUserSort=errorMessages',
+      'range=30&usageView=models&usageAgentQ=stale&usageModelQ=stale&usageUserSort=errorMessages',
     );
     const state = {
+      agents: { page: 2, pageSize: 50, q: '财务', sortBy: 'executions' },
       models: { page: 4, pageSize: 50, q: 'vertex', sortBy: 'recordedCost' },
       users: { page: 1, pageSize: 20, q: '', sortBy: 'totalTokens' },
       view: 'users',
@@ -67,6 +82,10 @@ describe('COTTI platform analytics detail URL state', () => {
 
     expect(result.get('range')).toBe('30');
     expect(result.get('usageView')).toBeNull();
+    expect(result.get('usageAgentPage')).toBe('2');
+    expect(result.get('usageAgentPageSize')).toBe('50');
+    expect(result.get('usageAgentQ')).toBe('财务');
+    expect(result.get('usageAgentSort')).toBe('executions');
     expect(result.get('usageModelPage')).toBe('4');
     expect(result.get('usageModelPageSize')).toBe('50');
     expect(result.get('usageModelQ')).toBe('vertex');

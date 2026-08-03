@@ -1,6 +1,6 @@
 // @vitest-environment node
 import type { LobeChatDatabase } from '@lobechat/database';
-import { messages, topics, users } from '@lobechat/database/schemas';
+import { agentOperations, agents, messages, topics, users } from '@lobechat/database/schemas';
 import { getTestDB } from '@lobechat/database/test-utils';
 import { inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -11,6 +11,16 @@ const userIds = [
   'cotti-analytics-user-a',
   'cotti-analytics-user-b',
   'cotti-analytics-user-after-range',
+];
+const agentIds = ['cotti-analytics-agent-a', 'cotti-analytics-agent-b'];
+const operationIds = [
+  'cotti-analytics-operation-before',
+  'cotti-analytics-operation-a-done',
+  'cotti-analytics-operation-a-error',
+  'cotti-analytics-operation-a-child',
+  'cotti-analytics-operation-b-interrupted',
+  'cotti-analytics-operation-b-running',
+  'cotti-analytics-operation-at-end',
 ];
 
 describe('CottiPlatformAnalyticsService', () => {
@@ -35,6 +45,15 @@ describe('CottiPlatformAnalyticsService', () => {
         username: 'bravo-cotti',
       },
       { createdAt: new Date('2032-08-03T16:00:00.000Z'), id: userIds[2] },
+    ]);
+    await db.insert(agents).values([
+      {
+        avatar: 'https://example.com/agent-a.png',
+        id: agentIds[0],
+        title: '门店运营 Agent',
+        userId: userIds[0],
+      },
+      { id: agentIds[1], title: '财务分析 Agent', userId: userIds[1] },
     ]);
     await db.insert(topics).values([
       { id: 'cotti-analytics-topic-a', userId: userIds[0] },
@@ -116,10 +135,188 @@ describe('CottiPlatformAnalyticsService', () => {
         userId: userIds[1],
       },
     ]);
+    await db.insert(agentOperations).values([
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-07-31T15:59:59.999Z'),
+        id: operationIds[0],
+        status: 'done',
+        totalTokens: 999,
+        userId: userIds[0],
+      },
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-07-31T16:00:00.000Z'),
+        id: operationIds[1],
+        llmCalls: 2,
+        processingTimeMs: 1000,
+        status: 'done',
+        toolCalls: 1,
+        totalCost: 0.1,
+        totalInputTokens: 100,
+        totalOutputTokens: 50,
+        totalTokens: 150,
+        userId: userIds[0],
+      },
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-08-01T02:00:00.000Z'),
+        id: operationIds[2],
+        llmCalls: 1,
+        processingTimeMs: 3000,
+        status: 'error',
+        toolCalls: 2,
+        totalInputTokens: 20,
+        totalOutputTokens: 10,
+        totalTokens: 30,
+        userId: userIds[1],
+      },
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-08-01T02:01:00.000Z'),
+        id: operationIds[3],
+        llmCalls: 99,
+        parentOperationId: operationIds[2],
+        processingTimeMs: 99_000,
+        status: 'done',
+        toolCalls: 99,
+        totalCost: 99,
+        totalInputTokens: 9900,
+        totalOutputTokens: 9900,
+        totalTokens: 19_800,
+        userId: userIds[1],
+      },
+      {
+        agentId: agentIds[1],
+        createdAt: new Date('2032-08-02T12:00:00.000Z'),
+        id: operationIds[4],
+        processingTimeMs: 5000,
+        status: 'interrupted',
+        userId: userIds[1],
+      },
+      {
+        agentId: agentIds[1],
+        createdAt: new Date('2032-08-02T13:00:00.000Z'),
+        id: operationIds[5],
+        status: 'running',
+        totalCost: 50,
+        totalTokens: 5000,
+        userId: userIds[0],
+      },
+      {
+        agentId: agentIds[1],
+        createdAt: new Date('2032-08-03T16:00:00.000Z'),
+        id: operationIds[6],
+        status: 'done',
+        totalTokens: 7000,
+        userId: userIds[0],
+      },
+    ]);
   });
 
   afterAll(async () => {
-    if (db) await db.delete(users).where(inArray(users.id, userIds));
+    if (db) {
+      await db.delete(agentOperations).where(inArray(agentOperations.id, operationIds));
+      await db.delete(users).where(inArray(users.id, userIds));
+    }
+  });
+
+  it('returns Agent usage from terminal root executions without re-summing children', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+
+    const result = await service.getAgents(
+      {
+        range: { endDate: '2032-08-03', startDate: '2032-08-01', type: 'custom' },
+      },
+      new Date('2032-08-04T01:00:00.000Z'),
+    );
+
+    expect(result).toEqual({
+      generatedAt: '2032-08-04T01:00:00.000Z',
+      items: [
+        {
+          activeUsers: 2,
+          agentId: agentIds[0],
+          avatar: 'https://example.com/agent-a.png',
+          averageProcessingTimeMs: 2000,
+          costRecordedExecutions: 1,
+          errorExecutions: 1,
+          errorRate: 0.5,
+          executions: 2,
+          interruptedExecutions: 0,
+          interruptionRate: 0,
+          lastExecutedAt: '2032-08-01T02:00:00.000Z',
+          llmCalls: 3,
+          recordedCost: 0.1,
+          title: '门店运营 Agent',
+          tokenRecordedExecutions: 2,
+          toolCalls: 3,
+          totalInputTokens: 120,
+          totalOutputTokens: 60,
+          totalTokens: 180,
+        },
+        {
+          activeUsers: 1,
+          agentId: agentIds[1],
+          avatar: null,
+          averageProcessingTimeMs: 5000,
+          costRecordedExecutions: 0,
+          errorExecutions: 0,
+          errorRate: 0,
+          executions: 1,
+          interruptedExecutions: 1,
+          interruptionRate: 1,
+          lastExecutedAt: '2032-08-02T12:00:00.000Z',
+          llmCalls: 0,
+          recordedCost: 0,
+          title: '财务分析 Agent',
+          tokenRecordedExecutions: 0,
+          toolCalls: 0,
+          totalInputTokens: 0,
+          totalOutputTokens: 0,
+          totalTokens: 0,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      period: {
+        endAt: '2032-08-03T16:00:00.000Z',
+        endDate: '2032-08-03',
+        startAt: '2032-07-31T16:00:00.000Z',
+        startDate: '2032-08-01',
+        timezone: 'Asia/Shanghai',
+        type: 'custom',
+      },
+      total: 2,
+    });
+  });
+
+  it('applies Agent search, sorting, pagination, and out-of-range totals server-side', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+    const range = { endDate: '2032-08-03', startDate: '2032-08-01', type: 'custom' as const };
+
+    const searched = await service.getAgents({ q: '门店运营', range });
+    const firstPage = await service.getAgents({
+      pageSize: 1,
+      range,
+      sortBy: 'averageProcessingTimeMs',
+    });
+    const secondPage = await service.getAgents({
+      page: 2,
+      pageSize: 1,
+      range,
+      sortBy: 'averageProcessingTimeMs',
+    });
+    const outOfRange = await service.getAgents({ page: 3, pageSize: 1, range });
+
+    expect(searched.items.map((item) => item.agentId)).toEqual([agentIds[0]]);
+    expect(searched.total).toBe(1);
+    expect(firstPage.items.map((item) => item.agentId)).toEqual([agentIds[1]]);
+    expect(firstPage.total).toBe(2);
+    expect(secondPage.items.map((item) => item.agentId)).toEqual([agentIds[0]]);
+    expect(secondPage.total).toBe(2);
+    expect(outOfRange.items).toEqual([]);
+    expect(outOfRange.total).toBe(2);
   });
 
   it('returns exact overview and Shanghai trends with legacy usage fallbacks', async () => {

@@ -81,6 +81,12 @@ export const useCottiPlatformAnalyticsDetails = () => {
     setSearchParams(writeCottiPlatformAnalyticsDetails(searchParams, nextState), { replace });
   };
 
+  const updateAgents = (
+    nextAgents: CottiPlatformAnalyticsDetailListState<
+      CottiPlatformAnalyticsDetailsState['agents']['sortBy']
+    >,
+    replace = false,
+  ) => setState({ ...state, agents: nextAgents }, replace);
   const updateModels = (
     nextModels: CottiPlatformAnalyticsDetailListState<
       CottiPlatformAnalyticsDetailsState['models']['sortBy']
@@ -96,6 +102,11 @@ export const useCottiPlatformAnalyticsDetails = () => {
 
   return {
     ...state,
+    setAgentPage: (page: number, pageSize: 20 | 50) =>
+      updateAgents({ ...state.agents, page, pageSize }),
+    setAgentQuery: (q: string) => updateAgents({ ...state.agents, page: 1, q }, true),
+    setAgentSort: (sortBy: CottiPlatformAnalyticsDetailsState['agents']['sortBy']) =>
+      updateAgents({ ...state.agents, page: 1, sortBy }),
     setModelPage: (page: number, pageSize: 20 | 50) =>
       updateModels({ ...state.models, page, pageSize }),
     setModelQuery: (q: string) => updateModels({ ...state.models, page: 1, q }, true),
@@ -119,6 +130,32 @@ export const useCottiPlatformAnalyticsDashboard = (
   return useClientDataSWR(
     enabled ? dashboardKey(query) : null,
     () => cottiPlatformAnalyticsService.getDashboard(query),
+    { revalidateOnFocus: false },
+  );
+};
+
+export const useCottiPlatformAnalyticsAgents = (
+  range: CottiPlatformAnalyticsRangeSelection,
+  details: CottiPlatformAnalyticsDetailsState['agents'],
+  enabled: boolean,
+) => {
+  const rangeQuery = toCottiPlatformAnalyticsQuery(range);
+  const query = { ...details, range: rangeQuery };
+
+  return useClientDataSWR(
+    enabled
+      ? [
+          'cotti',
+          'platform-analytics',
+          'agents',
+          ...rangeKey(rangeQuery),
+          details.q,
+          details.sortBy,
+          details.page,
+          details.pageSize,
+        ]
+      : null,
+    () => cottiPlatformAnalyticsService.getAgents(query),
     { revalidateOnFocus: false },
   );
 };

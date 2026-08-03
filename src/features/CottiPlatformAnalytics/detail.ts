@@ -1,9 +1,10 @@
 import type {
+  CottiPlatformAnalyticsAgentSort,
   CottiPlatformAnalyticsChatModelSort,
   CottiPlatformAnalyticsChatUserSort,
 } from '@/types/cotti/platformAnalytics';
 
-export type CottiPlatformAnalyticsDetailView = 'models' | 'users';
+export type CottiPlatformAnalyticsDetailView = 'agents' | 'models' | 'users';
 
 export interface CottiPlatformAnalyticsDetailListState<TSort extends string> {
   page: number;
@@ -13,11 +14,21 @@ export interface CottiPlatformAnalyticsDetailListState<TSort extends string> {
 }
 
 export interface CottiPlatformAnalyticsDetailsState {
+  agents: CottiPlatformAnalyticsDetailListState<CottiPlatformAnalyticsAgentSort>;
   models: CottiPlatformAnalyticsDetailListState<CottiPlatformAnalyticsChatModelSort>;
   users: CottiPlatformAnalyticsDetailListState<CottiPlatformAnalyticsChatUserSort>;
   view: CottiPlatformAnalyticsDetailView;
 }
 
+const AGENT_SORTS = new Set<CottiPlatformAnalyticsAgentSort>([
+  'activeUsers',
+  'averageProcessingTimeMs',
+  'errorExecutions',
+  'executions',
+  'lastExecutedAt',
+  'recordedCost',
+  'totalTokens',
+]);
 const MODEL_SORTS = new Set<CottiPlatformAnalyticsChatModelSort>([
   'activeUsers',
   'assistantMessages',
@@ -32,6 +43,7 @@ const USER_SORTS = new Set<CottiPlatformAnalyticsChatUserSort>([
   'recordedCost',
   'totalTokens',
 ]);
+const DEFAULT_AGENT_SORT: CottiPlatformAnalyticsAgentSort = 'totalTokens';
 const DEFAULT_MODEL_SORT: CottiPlatformAnalyticsChatModelSort = 'totalTokens';
 const DEFAULT_USER_SORT: CottiPlatformAnalyticsChatUserSort = 'totalTokens';
 const DEFAULT_PAGE_SIZE = 20;
@@ -55,6 +67,12 @@ const parseSort = <TSort extends string>(
 export const parseCottiPlatformAnalyticsDetails = (
   searchParams: URLSearchParams,
 ): CottiPlatformAnalyticsDetailsState => ({
+  agents: {
+    page: parsePage(searchParams.get('usageAgentPage')),
+    pageSize: parsePageSize(searchParams.get('usageAgentPageSize')),
+    q: parseQuery(searchParams.get('usageAgentQ')),
+    sortBy: parseSort(searchParams.get('usageAgentSort'), AGENT_SORTS, DEFAULT_AGENT_SORT),
+  },
   models: {
     page: parsePage(searchParams.get('usageModelPage')),
     pageSize: parsePageSize(searchParams.get('usageModelPageSize')),
@@ -67,12 +85,17 @@ export const parseCottiPlatformAnalyticsDetails = (
     q: parseQuery(searchParams.get('usageUserQ')),
     sortBy: parseSort(searchParams.get('usageUserSort'), USER_SORTS, DEFAULT_USER_SORT),
   },
-  view: searchParams.get('usageView') === 'models' ? 'models' : 'users',
+  view:
+    searchParams.get('usageView') === 'agents'
+      ? 'agents'
+      : searchParams.get('usageView') === 'models'
+        ? 'models'
+        : 'users',
 });
 
 const writeListState = <TSort extends string>(
   params: URLSearchParams,
-  prefix: 'usageModel' | 'usageUser',
+  prefix: 'usageAgent' | 'usageModel' | 'usageUser',
   state: CottiPlatformAnalyticsDetailListState<TSort>,
   defaultSort: TSort,
 ) => {
@@ -96,8 +119,9 @@ export const writeCottiPlatformAnalyticsDetails = (
 ) => {
   const next = new URLSearchParams(current);
 
-  if (state.view === 'models') next.set('usageView', state.view);
+  if (state.view !== 'users') next.set('usageView', state.view);
   else next.delete('usageView');
+  writeListState(next, 'usageAgent', state.agents, DEFAULT_AGENT_SORT);
   writeListState(next, 'usageModel', state.models, DEFAULT_MODEL_SORT);
   writeListState(next, 'usageUser', state.users, DEFAULT_USER_SORT);
 

@@ -2,10 +2,11 @@
 
 import { Block, Flexbox, Text } from '@lobehub/ui';
 import { Tabs } from '@lobehub/ui/base-ui';
-import { BotIcon, UsersIcon } from 'lucide-react';
+import { BotIcon, UsersIcon, WorkflowIcon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AgentUsageTable } from './AgentUsageTable';
 import { ChatModelsTable } from './ChatModelsTable';
 import { ChatUsersTable } from './ChatUsersTable';
 import { useCottiPlatformAnalyticsDetails } from './hooks';
@@ -45,11 +46,25 @@ export const UsageDetails = memo<UsageDetailsProps>(({ enabled, range }) => {
               key: 'models',
               label: t('platformAnalytics.details.tabs.models'),
             },
+            {
+              icon: <WorkflowIcon size={16} />,
+              key: 'agents',
+              label: t('platformAnalytics.details.tabs.agents'),
+            },
           ]}
-          onChange={(key) => details.setView(key as 'models' | 'users')}
+          onChange={(key) => details.setView(key as 'agents' | 'models' | 'users')}
         />
       </Flexbox>
-      {details.view === 'users' ? (
+      {details.view === 'agents' ? (
+        <AgentUsageTable
+          enabled={enabled}
+          range={range}
+          state={details.agents}
+          onPageChange={details.setAgentPage}
+          onQueryChange={details.setAgentQuery}
+          onSortChange={details.setAgentSort}
+        />
+      ) : details.view === 'users' ? (
         <ChatUsersTable
           enabled={enabled}
           range={range}

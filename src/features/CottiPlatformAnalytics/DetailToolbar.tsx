@@ -10,7 +10,7 @@ import { styles } from './style';
 
 interface DetailToolbarProps<TSort extends string> {
   isRefreshing: boolean;
-  kind: 'models' | 'users';
+  kind: 'agents' | 'models' | 'users';
   onQueryChange: (value: string) => void;
   onRefresh: () => void;
   onSortChange: (value: TSort) => void;
