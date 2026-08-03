@@ -34,6 +34,20 @@ const operationIds = [
   'cotti-analytics-operation-b-interrupted',
   'cotti-analytics-operation-b-running',
   'cotti-analytics-operation-at-end',
+  'cotti-analytics-error-operation-network-a',
+  'cotti-analytics-error-operation-network-b',
+  'cotti-analytics-error-operation-legacy',
+  'cotti-analytics-error-operation-unclassified',
+  'cotti-analytics-error-operation-child',
+  'cotti-analytics-error-operation-done',
+  'cotti-analytics-error-operation-at-end',
+];
+const errorMessageIds = [
+  'cotti-analytics-error-message-quota-a',
+  'cotti-analytics-error-message-quota-b',
+  'cotti-analytics-error-message-legacy',
+  'cotti-analytics-error-message-unclassified',
+  'cotti-analytics-error-message-at-end',
 ];
 const featureMessageIds = [
   'cotti-analytics-feature-user-a',
@@ -248,6 +262,63 @@ describe('CottiPlatformAnalyticsService', () => {
         totalTokens: 7000,
         userId: userIds[0],
       },
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-09-02T01:00:00.000Z'),
+        error: { category: 'network', message: 'private network detail' },
+        id: operationIds[7],
+        status: 'error',
+        userId: userIds[0],
+      },
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-09-02T01:01:00.000Z'),
+        error: { category: 'network', message: 'another private detail' },
+        id: operationIds[8],
+        status: 'error',
+        userId: userIds[1],
+      },
+      {
+        agentId: agentIds[1],
+        createdAt: new Date('2032-09-02T01:02:00.000Z'),
+        error: { message: 'legacy private detail', type: 'LegacyAgentError' },
+        id: operationIds[9],
+        status: 'error',
+        userId: userIds[1],
+      },
+      {
+        agentId: agentIds[1],
+        createdAt: new Date('2032-09-02T01:03:00.000Z'),
+        error: { message: 'unclassified private detail' },
+        id: operationIds[10],
+        status: 'error',
+        userId: userIds[1],
+      },
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-09-02T01:04:00.000Z'),
+        error: { category: 'child-only' },
+        id: operationIds[11],
+        parentOperationId: operationIds[7],
+        status: 'error',
+        userId: userIds[0],
+      },
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-09-02T01:05:00.000Z'),
+        error: { category: 'non-error-status' },
+        id: operationIds[12],
+        status: 'done',
+        userId: userIds[0],
+      },
+      {
+        agentId: agentIds[0],
+        createdAt: new Date('2032-09-02T16:00:00.000Z'),
+        error: { category: 'end-boundary' },
+        id: operationIds[13],
+        status: 'error',
+        userId: userIds[0],
+      },
     ]);
     await db.insert(messages).values([
       {
@@ -296,6 +367,54 @@ describe('CottiPlatformAnalyticsService', () => {
         id: featureMessageIds[5],
         role: 'tool',
         userId: userIds[1],
+      },
+      {
+        content: 'private chat content a',
+        createdAt: new Date('2032-09-02T02:00:00.000Z'),
+        error: { body: { secret: true }, category: 'quota', message: 'private quota detail' },
+        id: errorMessageIds[0],
+        model: 'gemini-3.6-flash',
+        provider: 'vertexai',
+        role: 'assistant',
+        userId: userIds[0],
+      },
+      {
+        content: 'private chat content b',
+        createdAt: new Date('2032-09-02T02:01:00.000Z'),
+        error: { category: 'quota', message: 'another private quota detail' },
+        id: errorMessageIds[1],
+        model: 'gemini-3.6-flash',
+        provider: 'vertexai',
+        role: 'assistant',
+        userId: userIds[1],
+      },
+      {
+        content: 'private legacy content',
+        createdAt: new Date('2032-09-02T02:02:00.000Z'),
+        error: { message: 'legacy private detail', type: 'LegacyProviderError' },
+        id: errorMessageIds[2],
+        model: 'qwen3.7-plus',
+        provider: 'qwen',
+        role: 'assistant',
+        userId: userIds[0],
+      },
+      {
+        content: 'private unclassified content',
+        createdAt: new Date('2032-09-02T02:03:00.000Z'),
+        error: { message: 'unclassified private detail' },
+        id: errorMessageIds[3],
+        role: 'assistant',
+        userId: userIds[1],
+      },
+      {
+        content: 'excluded error at end boundary',
+        createdAt: new Date('2032-09-02T16:00:00.000Z'),
+        error: { category: 'end-boundary' },
+        id: errorMessageIds[4],
+        model: 'excluded-model',
+        provider: 'excluded-provider',
+        role: 'assistant',
+        userId: userIds[0],
       },
     ]);
     await db.insert(messagePlugins).values([
@@ -599,6 +718,165 @@ describe('CottiPlatformAnalyticsService', () => {
       rejectedOrAbortedResults: 0,
       results: 0,
     });
+  });
+
+  it('returns Chat error distribution without raw error or message payloads', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+
+    const result = await service.getChatErrors(
+      {
+        range: { endDate: '2032-09-02', startDate: '2032-09-01', type: 'custom' },
+      },
+      new Date('2032-09-03T01:00:00.000Z'),
+    );
+
+    expect(result).toEqual({
+      generatedAt: '2032-09-03T01:00:00.000Z',
+      items: [
+        {
+          affectedUsers: 2,
+          category: 'quota',
+          errorMessages: 2,
+          model: 'gemini-3.6-flash',
+          provider: 'vertexai',
+        },
+        {
+          affectedUsers: 1,
+          category: 'LegacyProviderError',
+          errorMessages: 1,
+          model: 'qwen3.7-plus',
+          provider: 'qwen',
+        },
+        {
+          affectedUsers: 1,
+          category: null,
+          errorMessages: 1,
+          model: null,
+          provider: null,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      period: {
+        endAt: '2032-09-02T16:00:00.000Z',
+        endDate: '2032-09-02',
+        startAt: '2032-08-31T16:00:00.000Z',
+        startDate: '2032-09-01',
+        timezone: 'Asia/Shanghai',
+        type: 'custom',
+      },
+      total: 3,
+    });
+    expect(JSON.stringify(result)).not.toContain('private');
+    expect(JSON.stringify(result)).not.toContain('secret');
+    expect(JSON.stringify(result)).not.toContain('end-boundary');
+  });
+
+  it('applies Chat error search, sorting, pagination, and out-of-range totals server-side', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+    const range = { endDate: '2032-09-02', startDate: '2032-09-01', type: 'custom' as const };
+
+    const searched = await service.getChatErrors({ q: 'legacy', range });
+    const firstPage = await service.getChatErrors({ pageSize: 1, range, sortBy: 'affectedUsers' });
+    const secondPage = await service.getChatErrors({
+      page: 2,
+      pageSize: 1,
+      range,
+      sortBy: 'affectedUsers',
+    });
+    const outOfRange = await service.getChatErrors({ page: 4, pageSize: 1, range });
+
+    expect(searched.items.map((item) => item.category)).toEqual(['LegacyProviderError']);
+    expect(searched.total).toBe(1);
+    expect(firstPage.items.map((item) => item.category)).toEqual(['quota']);
+    expect(firstPage.total).toBe(3);
+    expect(secondPage.items.map((item) => item.category)).toEqual(['LegacyProviderError']);
+    expect(secondPage.total).toBe(3);
+    expect(outOfRange.items).toEqual([]);
+    expect(outOfRange.total).toBe(3);
+  });
+
+  it('returns root Agent error distribution without child executions or raw error payloads', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+
+    const result = await service.getAgentErrors(
+      {
+        range: { endDate: '2032-09-02', startDate: '2032-09-01', type: 'custom' },
+      },
+      new Date('2032-09-03T01:00:00.000Z'),
+    );
+
+    expect(result).toEqual({
+      generatedAt: '2032-09-03T01:00:00.000Z',
+      items: [
+        {
+          affectedUsers: 2,
+          agentId: agentIds[0],
+          avatar: 'https://example.com/agent-a.png',
+          category: 'network',
+          errorExecutions: 2,
+          title: '门店运营 Agent',
+        },
+        {
+          affectedUsers: 1,
+          agentId: agentIds[1],
+          avatar: null,
+          category: 'LegacyAgentError',
+          errorExecutions: 1,
+          title: '财务分析 Agent',
+        },
+        {
+          affectedUsers: 1,
+          agentId: agentIds[1],
+          avatar: null,
+          category: null,
+          errorExecutions: 1,
+          title: '财务分析 Agent',
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      period: {
+        endAt: '2032-09-02T16:00:00.000Z',
+        endDate: '2032-09-02',
+        startAt: '2032-08-31T16:00:00.000Z',
+        startDate: '2032-09-01',
+        timezone: 'Asia/Shanghai',
+        type: 'custom',
+      },
+      total: 3,
+    });
+    expect(JSON.stringify(result)).not.toContain('private');
+    expect(JSON.stringify(result)).not.toContain('child-only');
+    expect(JSON.stringify(result)).not.toContain('end-boundary');
+    expect(JSON.stringify(result)).not.toContain('non-error-status');
+  });
+
+  it('applies Agent error search, sorting, pagination, and out-of-range totals server-side', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+    const range = { endDate: '2032-09-02', startDate: '2032-09-01', type: 'custom' as const };
+
+    const searchedByAgent = await service.getAgentErrors({ q: '门店运营', range });
+    const searchedByCategory = await service.getAgentErrors({ q: 'legacy', range });
+    const firstPage = await service.getAgentErrors({ pageSize: 1, range, sortBy: 'affectedUsers' });
+    const secondPage = await service.getAgentErrors({
+      page: 2,
+      pageSize: 1,
+      range,
+      sortBy: 'affectedUsers',
+    });
+    const outOfRange = await service.getAgentErrors({ page: 4, pageSize: 1, range });
+
+    expect(searchedByAgent.items.map((item) => item.category)).toEqual(['network']);
+    expect(searchedByAgent.total).toBe(1);
+    expect(searchedByCategory.items.map((item) => item.category)).toEqual(['LegacyAgentError']);
+    expect(searchedByCategory.total).toBe(1);
+    expect(firstPage.items.map((item) => item.category)).toEqual(['network']);
+    expect(firstPage.total).toBe(3);
+    expect(secondPage.items.map((item) => item.category)).toEqual(['LegacyAgentError']);
+    expect(secondPage.total).toBe(3);
+    expect(outOfRange.items).toEqual([]);
+    expect(outOfRange.total).toBe(3);
   });
 
   it('applies Agent search, sorting, pagination, and out-of-range totals server-side', async () => {

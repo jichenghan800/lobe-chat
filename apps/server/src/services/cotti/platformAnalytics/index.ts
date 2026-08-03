@@ -1,7 +1,11 @@
 import type { LobeChatDatabase } from '@/database/type';
 import type {
+  CottiPlatformAnalyticsAgentErrors,
+  CottiPlatformAnalyticsAgentErrorsQuery,
   CottiPlatformAnalyticsAgents,
   CottiPlatformAnalyticsAgentsQuery,
+  CottiPlatformAnalyticsChatErrors,
+  CottiPlatformAnalyticsChatErrorsQuery,
   CottiPlatformAnalyticsChatModels,
   CottiPlatformAnalyticsChatModelsQuery,
   CottiPlatformAnalyticsChatUsers,
@@ -14,6 +18,10 @@ import type {
 import { getCottiPlatformAnalyticsAgents } from './agents';
 import { getCottiPlatformAnalyticsChatModels } from './chatModels';
 import { getCottiPlatformAnalyticsChatUsers } from './chatUsers';
+import {
+  getCottiPlatformAnalyticsAgentErrors,
+  getCottiPlatformAnalyticsChatErrors,
+} from './errors';
 import { getCottiPlatformAnalyticsFeatures } from './features';
 import { getCottiPlatformAnalyticsOverview } from './overview';
 import { resolveCottiPlatformAnalyticsPeriod } from './range';
@@ -26,12 +34,42 @@ export class CottiPlatformAnalyticsService {
     this.db = db;
   }
 
+  async getAgentErrors(
+    query?: CottiPlatformAnalyticsAgentErrorsQuery,
+    now = new Date(),
+  ): Promise<CottiPlatformAnalyticsAgentErrors> {
+    const period = resolveCottiPlatformAnalyticsPeriod(query?.range, now);
+    const result = await getCottiPlatformAnalyticsAgentErrors(this.db, period, query);
+    const { endAtDate: _endAtDate, startAtDate: _startAtDate, ...publicPeriod } = period;
+
+    return {
+      generatedAt: now.toISOString(),
+      period: publicPeriod,
+      ...result,
+    };
+  }
+
   async getAgents(
     query?: CottiPlatformAnalyticsAgentsQuery,
     now = new Date(),
   ): Promise<CottiPlatformAnalyticsAgents> {
     const period = resolveCottiPlatformAnalyticsPeriod(query?.range, now);
     const result = await getCottiPlatformAnalyticsAgents(this.db, period, query);
+    const { endAtDate: _endAtDate, startAtDate: _startAtDate, ...publicPeriod } = period;
+
+    return {
+      generatedAt: now.toISOString(),
+      period: publicPeriod,
+      ...result,
+    };
+  }
+
+  async getChatErrors(
+    query?: CottiPlatformAnalyticsChatErrorsQuery,
+    now = new Date(),
+  ): Promise<CottiPlatformAnalyticsChatErrors> {
+    const period = resolveCottiPlatformAnalyticsPeriod(query?.range, now);
+    const result = await getCottiPlatformAnalyticsChatErrors(this.db, period, query);
     const { endAtDate: _endAtDate, startAtDate: _startAtDate, ...publicPeriod } = period;
 
     return {

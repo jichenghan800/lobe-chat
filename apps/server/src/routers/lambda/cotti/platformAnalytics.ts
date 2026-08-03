@@ -5,6 +5,10 @@ import { CottiPlatformAnalyticsService } from '@/server/services/cotti/platformA
 import { cottiPlatformAnalyticsAgentsQuerySchema } from '@/server/services/cotti/platformAnalytics/agents';
 import { cottiPlatformAnalyticsChatModelsQuerySchema } from '@/server/services/cotti/platformAnalytics/chatModels';
 import { cottiPlatformAnalyticsChatUsersQuerySchema } from '@/server/services/cotti/platformAnalytics/chatUsers';
+import {
+  cottiPlatformAnalyticsAgentErrorsQuerySchema,
+  cottiPlatformAnalyticsChatErrorsQuerySchema,
+} from '@/server/services/cotti/platformAnalytics/errors';
 import { cottiPlatformAnalyticsQuerySchema } from '@/server/services/cotti/platformAnalytics/range';
 
 import { cottiAdminProcedure } from './procedure';
@@ -20,6 +24,23 @@ const cottiPlatformAnalyticsProcedure = cottiAdminProcedure.use(async (opts) => 
 });
 
 export const cottiPlatformAnalyticsRouter = router({
+  agentErrors: cottiPlatformAnalyticsProcedure
+    .input(cottiPlatformAnalyticsAgentErrorsQuerySchema.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const data = await ctx.platformAnalyticsService.getAgentErrors(input);
+
+        return { data, success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error('[cottiPlatformAnalytics:agentErrors]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to load COTTI platform Agent error analytics',
+        });
+      }
+    }),
   agents: cottiPlatformAnalyticsProcedure
     .input(cottiPlatformAnalyticsAgentsQuerySchema.optional())
     .query(async ({ ctx, input }) => {
@@ -34,6 +55,23 @@ export const cottiPlatformAnalyticsRouter = router({
           cause: error,
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to load COTTI platform Agent analytics',
+        });
+      }
+    }),
+  chatErrors: cottiPlatformAnalyticsProcedure
+    .input(cottiPlatformAnalyticsChatErrorsQuerySchema.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const data = await ctx.platformAnalyticsService.getChatErrors(input);
+
+        return { data, success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error('[cottiPlatformAnalytics:chatErrors]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to load COTTI platform Chat error analytics',
         });
       }
     }),

@@ -28,6 +28,10 @@ export type CottiPlatformAnalyticsAgentSort =
 export type CottiPlatformAnalyticsChatModelSort =
   'activeUsers' | 'assistantMessages' | 'errorMessages' | 'recordedCost' | 'totalTokens';
 
+export type CottiPlatformAnalyticsChatErrorSort = 'affectedUsers' | 'errorMessages';
+
+export type CottiPlatformAnalyticsAgentErrorSort = 'affectedUsers' | 'errorExecutions';
+
 export interface CottiPlatformAnalyticsDetailQuery {
   page?: number;
   pageSize?: number;
@@ -45,6 +49,14 @@ export interface CottiPlatformAnalyticsAgentsQuery extends CottiPlatformAnalytic
 
 export interface CottiPlatformAnalyticsChatUsersQuery extends CottiPlatformAnalyticsDetailQuery {
   sortBy?: CottiPlatformAnalyticsChatUserSort;
+}
+
+export interface CottiPlatformAnalyticsChatErrorsQuery extends CottiPlatformAnalyticsDetailQuery {
+  sortBy?: CottiPlatformAnalyticsChatErrorSort;
+}
+
+export interface CottiPlatformAnalyticsAgentErrorsQuery extends CottiPlatformAnalyticsDetailQuery {
+  sortBy?: CottiPlatformAnalyticsAgentErrorSort;
 }
 
 export interface CottiPlatformAnalyticsPeriod {
@@ -130,6 +142,41 @@ export interface CottiPlatformAnalyticsFeatures {
   period: CottiPlatformAnalyticsPeriod;
   search: CottiPlatformAnalyticsSearchFeature;
   tools: CottiPlatformAnalyticsToolFeature;
+}
+
+export interface CottiPlatformAnalyticsChatErrorItem {
+  affectedUsers: number;
+  category: string | null;
+  errorMessages: number;
+  model: string | null;
+  provider: string | null;
+}
+
+export interface CottiPlatformAnalyticsChatErrors {
+  generatedAt: string;
+  items: CottiPlatformAnalyticsChatErrorItem[];
+  page: number;
+  pageSize: number;
+  period: CottiPlatformAnalyticsPeriod;
+  total: number;
+}
+
+export interface CottiPlatformAnalyticsAgentErrorItem {
+  affectedUsers: number;
+  agentId: string | null;
+  avatar: string | null;
+  category: string | null;
+  errorExecutions: number;
+  title: string | null;
+}
+
+export interface CottiPlatformAnalyticsAgentErrors {
+  generatedAt: string;
+  items: CottiPlatformAnalyticsAgentErrorItem[];
+  page: number;
+  pageSize: number;
+  period: CottiPlatformAnalyticsPeriod;
+  total: number;
 }
 
 export interface CottiPlatformAnalyticsAgentItem {
