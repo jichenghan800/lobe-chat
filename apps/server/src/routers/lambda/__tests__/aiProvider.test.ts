@@ -5,6 +5,7 @@ import { RequestTrigger } from '@lobechat/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AiProviderModel } from '@/database/models/aiProvider';
+import type * as CottiModelDisplayModule from '@/database/models/cottiModelDisplay';
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
 import { getServerGlobalConfig } from '@/server/globalConfig';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
@@ -14,6 +15,7 @@ import { type AiProviderDetailItem, type AiProviderRuntimeState } from '@/types/
 import { aiProviderRouter } from '../aiProvider';
 
 const mockGetHiddenBuiltinModelsForUser = vi.hoisted(() => vi.fn());
+const mockGetCottiModelDisplayConfig = vi.hoisted(() => vi.fn());
 
 vi.mock('@/business/server/aiProvider', () => ({
   getHiddenBuiltinModelsForUser: mockGetHiddenBuiltinModelsForUser,
@@ -23,6 +25,16 @@ vi.mock('@/server/globalConfig');
 vi.mock('@/server/modules/KeyVaultsEncrypt');
 vi.mock('@/database/repositories/aiInfra');
 vi.mock('@/database/models/aiProvider');
+vi.mock('@/database/models/cottiModelDisplay', async (importOriginal) => {
+  const actual = await importOriginal<typeof CottiModelDisplayModule>();
+
+  return {
+    ...actual,
+    CottiModelDisplayModel: vi.fn().mockImplementation(() => ({
+      getConfig: mockGetCottiModelDisplayConfig,
+    })),
+  };
+});
 vi.mock('@/database/models/user');
 vi.mock('@/server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
@@ -70,6 +82,10 @@ describe('aiProviderRouter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetHiddenBuiltinModelsForUser.mockResolvedValue([]);
+    mockGetCottiModelDisplayConfig.mockResolvedValue({
+      agent: [],
+      chat: [{ enabled: true, model: 'visible-chat', provider: 'lobehub' }],
+    });
 
     vi.mocked(getServerGlobalConfig).mockReturnValue({
       aiProvider: {},

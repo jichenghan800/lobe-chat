@@ -9,6 +9,7 @@ import {
   wsCompatProcedure,
 } from '@/business/server/trpc-middlewares/workspaceAuth';
 import { AiProviderModel } from '@/database/models/aiProvider';
+import { CottiModelDisplayModel } from '@/database/models/cottiModelDisplay';
 import { UserModel } from '@/database/models/user';
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
 import { router } from '@/libs/trpc/lambda';
@@ -16,14 +17,14 @@ import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerGlobalConfig } from '@/server/globalConfig';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { getUserScopedAiProviderRuntimeState } from '@/server/services/aiProviderAccess';
-import { type AiProviderDetailItem, type AiProviderRuntimeState } from '@/types/aiProvider';
+import { getCottiScopedAiProviderRuntimeState } from '@/server/services/cotti/modelDisplayAccess';
+import type { AiProviderDetailItem, AiProviderRuntimeState } from '@/types/aiProvider';
 import {
   CreateAiProviderSchema,
   UpdateAiProviderConfigSchema,
   UpdateAiProviderSchema,
 } from '@/types/aiProvider';
-import { type ProviderConfig } from '@/types/user/settings';
+import type { ProviderConfig } from '@/types/user/settings';
 
 const aiProviderProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
@@ -40,6 +41,7 @@ const aiProviderProcedure = wsCompatProcedure.use(serverDatabase).use(async (opt
         ctx.workspaceId ?? undefined,
       ),
       aiProviderModel: new AiProviderModel(ctx.serverDB, ctx.userId, ctx.workspaceId ?? undefined),
+      cottiModelDisplayModel: new CottiModelDisplayModel(ctx.serverDB),
       gateKeeper,
       userModel: new UserModel(ctx.serverDB, ctx.userId),
     },
@@ -138,8 +140,10 @@ export const aiProviderRouter = router({
   getAiProviderRuntimeState: aiProviderProcedure
     .input(z.object({ isLogin: z.boolean().optional() }))
     .query(async ({ ctx }): Promise<AiProviderRuntimeState> => {
-      return getUserScopedAiProviderRuntimeState(ctx.userId, () =>
-        ctx.aiInfraRepos.getAiProviderRuntimeState(KeyVaultsGateKeeper.getUserKeyVaults),
+      return getCottiScopedAiProviderRuntimeState(
+        ctx.userId,
+        () => ctx.aiInfraRepos.getAiProviderRuntimeState(KeyVaultsGateKeeper.getUserKeyVaults),
+        () => ctx.cottiModelDisplayModel.getConfig(),
       );
     }),
 

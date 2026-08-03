@@ -1,17 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AiModelModel } from '@/database/models/aiModel';
+import type * as CottiModelDisplayModule from '@/database/models/cottiModelDisplay';
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
 
 import { aiModelRouter } from '../aiModel';
 
 const mockGetHiddenBuiltinModelsForUser = vi.hoisted(() => vi.fn());
+const mockGetCottiModelDisplayConfig = vi.hoisted(() => vi.fn());
 
 vi.mock('@/business/server/aiProvider', () => ({
   getHiddenBuiltinModelsForUser: mockGetHiddenBuiltinModelsForUser,
   getModelRedirects: vi.fn(async () => ({})),
 }));
 vi.mock('@/database/models/aiModel');
+vi.mock('@/database/models/cottiModelDisplay', async (importOriginal) => {
+  const actual = await importOriginal<typeof CottiModelDisplayModule>();
+
+  return {
+    ...actual,
+    CottiModelDisplayModel: vi.fn().mockImplementation(() => ({
+      getConfig: mockGetCottiModelDisplayConfig,
+    })),
+  };
+});
 vi.mock('@/database/models/user');
 vi.mock('@/database/repositories/aiInfra');
 vi.mock('@/server/globalConfig', () => ({
@@ -36,6 +48,7 @@ describe('aiModelRouter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetHiddenBuiltinModelsForUser.mockResolvedValue([]);
+    mockGetCottiModelDisplayConfig.mockResolvedValue({ agent: [], chat: [] });
   });
 
   it('should create ai model', async () => {
