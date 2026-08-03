@@ -1,6 +1,19 @@
 // @vitest-environment node
 import type { LobeChatDatabase } from '@lobechat/database';
-import { agentOperations, agents, messages, topics, users } from '@lobechat/database/schemas';
+import {
+  agentOperations,
+  agents,
+  asyncTasks,
+  files,
+  generationBatches,
+  generations,
+  generationTopics,
+  messagePlugins,
+  messages,
+  messagesFiles,
+  topics,
+  users,
+} from '@lobechat/database/schemas';
 import { getTestDB } from '@lobechat/database/test-utils';
 import { inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -21,6 +34,30 @@ const operationIds = [
   'cotti-analytics-operation-b-interrupted',
   'cotti-analytics-operation-b-running',
   'cotti-analytics-operation-at-end',
+];
+const featureMessageIds = [
+  'cotti-analytics-feature-user-a',
+  'cotti-analytics-feature-user-b',
+  'cotti-analytics-feature-search',
+  'cotti-analytics-feature-empty-search',
+  'cotti-analytics-feature-web-tool',
+  'cotti-analytics-feature-error-tool',
+];
+const featureFileIds = ['cotti-analytics-feature-file-a', 'cotti-analytics-feature-file-b'];
+const featureTaskIds = [
+  '00000000-0000-4000-8000-000000000101',
+  '00000000-0000-4000-8000-000000000102',
+  '00000000-0000-4000-8000-000000000103',
+];
+const featureTopicIds = [
+  'cotti-analytics-feature-generation-image',
+  'cotti-analytics-feature-generation-video',
+];
+const featureBatchIds = [
+  'cotti-analytics-feature-image-success',
+  'cotti-analytics-feature-image-error',
+  'cotti-analytics-feature-image-no-result',
+  'cotti-analytics-feature-video-success',
 ];
 
 describe('CottiPlatformAnalyticsService', () => {
@@ -212,6 +249,171 @@ describe('CottiPlatformAnalyticsService', () => {
         userId: userIds[0],
       },
     ]);
+    await db.insert(messages).values([
+      {
+        content: 'feature file message a',
+        createdAt: new Date('2032-09-01T01:00:00.000Z'),
+        id: featureMessageIds[0],
+        role: 'user',
+        userId: userIds[0],
+      },
+      {
+        content: 'feature file message b',
+        createdAt: new Date('2032-09-01T01:01:00.000Z'),
+        id: featureMessageIds[1],
+        role: 'user',
+        userId: userIds[1],
+      },
+      {
+        content: 'feature built-in search',
+        createdAt: new Date('2032-09-01T02:00:00.000Z'),
+        id: featureMessageIds[2],
+        role: 'assistant',
+        search: {
+          citations: [{ title: 'Result', url: 'https://example.com/result' }],
+          searchQueries: ['cotti'],
+        },
+        userId: userIds[0],
+      },
+      {
+        content: 'feature empty search',
+        createdAt: new Date('2032-09-01T02:01:00.000Z'),
+        id: featureMessageIds[3],
+        role: 'assistant',
+        search: {},
+        userId: userIds[1],
+      },
+      {
+        content: 'feature web search tool result',
+        createdAt: new Date('2032-09-01T03:00:00.000Z'),
+        id: featureMessageIds[4],
+        role: 'tool',
+        userId: userIds[0],
+      },
+      {
+        content: 'feature failed tool result',
+        createdAt: new Date('2032-09-01T03:01:00.000Z'),
+        id: featureMessageIds[5],
+        role: 'tool',
+        userId: userIds[1],
+      },
+    ]);
+    await db.insert(messagePlugins).values([
+      {
+        apiName: 'search',
+        id: featureMessageIds[4],
+        identifier: 'lobe-web-browsing',
+        toolCallId: 'cotti-analytics-feature-tool-call-search',
+        userId: userIds[0],
+      },
+      {
+        apiName: 'executeCode',
+        error: { message: 'tool failed', type: 'ToolError' },
+        id: featureMessageIds[5],
+        identifier: 'lobe-cloud-sandbox',
+        intervention: { status: 'rejected' },
+        toolCallId: 'cotti-analytics-feature-tool-call-error',
+        userId: userIds[1],
+      },
+    ]);
+    await db.insert(files).values([
+      {
+        fileType: 'image/png',
+        id: featureFileIds[0],
+        name: 'feature-a.png',
+        size: 100,
+        url: 'https://example.com/feature-a.png',
+        userId: userIds[0],
+      },
+      {
+        fileType: 'video/mp4',
+        id: featureFileIds[1],
+        name: 'feature-b.mp4',
+        size: 200,
+        url: 'https://example.com/feature-b.mp4',
+        userId: userIds[1],
+      },
+    ]);
+    await db.insert(messagesFiles).values([
+      { fileId: featureFileIds[0], messageId: featureMessageIds[0], userId: userIds[0] },
+      { fileId: featureFileIds[1], messageId: featureMessageIds[0], userId: userIds[0] },
+      { fileId: featureFileIds[0], messageId: featureMessageIds[1], userId: userIds[1] },
+    ]);
+    await db.insert(generationTopics).values([
+      { id: featureTopicIds[0], type: 'image', userId: userIds[0] },
+      { id: featureTopicIds[1], type: 'video', userId: userIds[1] },
+    ]);
+    await db.insert(generationBatches).values([
+      {
+        createdAt: new Date('2032-09-01T04:00:00.000Z'),
+        generationTopicId: featureTopicIds[0],
+        id: featureBatchIds[0],
+        model: 'image-model',
+        prompt: 'image success',
+        provider: 'test',
+        userId: userIds[0],
+      },
+      {
+        createdAt: new Date('2032-09-01T04:01:00.000Z'),
+        generationTopicId: featureTopicIds[0],
+        id: featureBatchIds[1],
+        model: 'image-model',
+        prompt: 'image error',
+        provider: 'test',
+        userId: userIds[0],
+      },
+      {
+        createdAt: new Date('2032-09-01T04:02:00.000Z'),
+        generationTopicId: featureTopicIds[0],
+        id: featureBatchIds[2],
+        model: 'image-model',
+        prompt: 'image no result',
+        provider: 'test',
+        userId: userIds[1],
+      },
+      {
+        createdAt: new Date('2032-09-01T04:03:00.000Z'),
+        generationTopicId: featureTopicIds[1],
+        id: featureBatchIds[3],
+        model: 'video-model',
+        prompt: 'video success',
+        provider: 'test',
+        userId: userIds[1],
+      },
+    ]);
+    await db.insert(asyncTasks).values([
+      { id: featureTaskIds[0], status: 'success', type: 'image_generation', userId: userIds[0] },
+      {
+        error: { message: 'generation failed', type: 'GenerationError' },
+        id: featureTaskIds[1],
+        status: 'error',
+        type: 'image_generation',
+        userId: userIds[0],
+      },
+      { id: featureTaskIds[2], status: 'success', type: 'video_generation', userId: userIds[1] },
+    ]);
+    await db.insert(generations).values([
+      {
+        asyncTaskId: featureTaskIds[0],
+        fileId: featureFileIds[0],
+        generationBatchId: featureBatchIds[0],
+        id: 'cotti-analytics-feature-generation-image-success',
+        userId: userIds[0],
+      },
+      {
+        asyncTaskId: featureTaskIds[1],
+        generationBatchId: featureBatchIds[1],
+        id: 'cotti-analytics-feature-generation-image-error',
+        userId: userIds[0],
+      },
+      {
+        asyncTaskId: featureTaskIds[2],
+        fileId: featureFileIds[1],
+        generationBatchId: featureBatchIds[3],
+        id: 'cotti-analytics-feature-generation-video-success',
+        userId: userIds[1],
+      },
+    ]);
   });
 
   afterAll(async () => {
@@ -288,6 +490,114 @@ describe('CottiPlatformAnalyticsService', () => {
         type: 'custom',
       },
       total: 2,
+    });
+  });
+
+  it('returns capability-specific feature adoption facts without flattening their semantics', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+
+    const result = await service.getFeatures(
+      { endDate: '2032-09-02', startDate: '2032-09-01', type: 'custom' },
+      new Date('2032-09-03T01:00:00.000Z'),
+    );
+
+    expect(result).toEqual({
+      files: {
+        activeUsers: 2,
+        distinctFiles: 2,
+        fileRelations: 3,
+        messagesWithFiles: 2,
+      },
+      generatedAt: '2032-09-03T01:00:00.000Z',
+      generations: [
+        {
+          activeUsers: 2,
+          errorResults: 1,
+          requests: 3,
+          requestsWithoutResults: 1,
+          resultRows: 2,
+          successfulAssets: 1,
+          type: 'image',
+        },
+        {
+          activeUsers: 1,
+          errorResults: 0,
+          requests: 1,
+          requestsWithoutResults: 0,
+          resultRows: 1,
+          successfulAssets: 1,
+          type: 'video',
+        },
+      ],
+      period: {
+        endAt: '2032-09-02T16:00:00.000Z',
+        endDate: '2032-09-02',
+        startAt: '2032-08-31T16:00:00.000Z',
+        startDate: '2032-09-01',
+        timezone: 'Asia/Shanghai',
+        type: 'custom',
+      },
+      search: {
+        activeUsers: 1,
+        builtinSearchMessages: 1,
+        totalSearchEvents: 2,
+        webSearchToolResults: 1,
+      },
+      tools: {
+        activeUsers: 2,
+        errorResults: 1,
+        rejectedOrAbortedResults: 1,
+        results: 2,
+      },
+    });
+  });
+
+  it('returns stable zero-valued feature facts when the selected range has no activity', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+
+    const result = await service.getFeatures({
+      endDate: '2032-10-02',
+      startDate: '2032-10-01',
+      type: 'custom',
+    });
+
+    expect(result.files).toEqual({
+      activeUsers: 0,
+      distinctFiles: 0,
+      fileRelations: 0,
+      messagesWithFiles: 0,
+    });
+    expect(result.generations).toEqual([
+      {
+        activeUsers: 0,
+        errorResults: 0,
+        requests: 0,
+        requestsWithoutResults: 0,
+        resultRows: 0,
+        successfulAssets: 0,
+        type: 'image',
+      },
+      {
+        activeUsers: 0,
+        errorResults: 0,
+        requests: 0,
+        requestsWithoutResults: 0,
+        resultRows: 0,
+        successfulAssets: 0,
+        type: 'video',
+      },
+    ]);
+    expect(result.search).toEqual({
+      activeUsers: 0,
+      builtinSearchMessages: 0,
+      totalSearchEvents: 0,
+      webSearchToolResults: 0,
+    });
+    expect(result.tools).toEqual({
+      activeUsers: 0,
+      errorResults: 0,
+      rejectedOrAbortedResults: 0,
+      results: 0,
     });
   });
 

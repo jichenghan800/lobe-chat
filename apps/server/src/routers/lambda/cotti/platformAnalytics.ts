@@ -88,4 +88,21 @@ export const cottiPlatformAnalyticsRouter = router({
         });
       }
     }),
+  features: cottiPlatformAnalyticsProcedure
+    .input(cottiPlatformAnalyticsQuerySchema.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const data = await ctx.platformAnalyticsService.getFeatures(input);
+
+        return { data, success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error('[cottiPlatformAnalytics:features]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to load COTTI platform feature analytics',
+        });
+      }
+    }),
 });

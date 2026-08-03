@@ -67,6 +67,49 @@ const chatModels = {
   total: 0,
 };
 
+const features = {
+  files: {
+    activeUsers: 1,
+    distinctFiles: 2,
+    fileRelations: 2,
+    messagesWithFiles: 1,
+  },
+  generatedAt: '2026-08-03T04:30:00.000Z',
+  generations: [
+    {
+      activeUsers: 1,
+      errorResults: 0,
+      requests: 1,
+      requestsWithoutResults: 0,
+      resultRows: 1,
+      successfulAssets: 1,
+      type: 'image' as const,
+    },
+    {
+      activeUsers: 0,
+      errorResults: 0,
+      requests: 0,
+      requestsWithoutResults: 0,
+      resultRows: 0,
+      successfulAssets: 0,
+      type: 'video' as const,
+    },
+  ],
+  period: dashboard.period,
+  search: {
+    activeUsers: 1,
+    builtinSearchMessages: 1,
+    totalSearchEvents: 1,
+    webSearchToolResults: 0,
+  },
+  tools: {
+    activeUsers: 1,
+    errorResults: 0,
+    rejectedOrAbortedResults: 0,
+    results: 1,
+  },
+};
+
 const mockAdminAccess = () =>
   vi.spyOn(CottiPlatformAdminAccessService.prototype, 'requireAccess').mockResolvedValue({
     email: 'admin@example.com',
@@ -328,6 +371,60 @@ describe('cotti.platformAnalytics router', () => {
     await expect(caller.platformAnalytics.dashboard()).rejects.toMatchObject({
       code: 'INTERNAL_SERVER_ERROR',
       message: 'Failed to load COTTI platform analytics',
+    });
+  });
+
+  it('rejects an unauthenticated feature analytics caller before querying', async () => {
+    const getFeatures = vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getFeatures');
+    const caller = cottiRouter.createCaller({ userId: null });
+
+    await expect(caller.platformAnalytics.features()).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect(getFeatures).not.toHaveBeenCalled();
+  });
+
+  it('returns feature analytics to an administrator', async () => {
+    mockAdminAccess();
+    const getFeatures = vi
+      .spyOn(CottiPlatformAnalyticsService.prototype, 'getFeatures')
+      .mockResolvedValue(features);
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+    const query = { days: 30 as const, type: 'preset' as const };
+
+    await expect(caller.platformAnalytics.features(query)).resolves.toEqual({
+      data: features,
+      success: true,
+    });
+    expect(getFeatures).toHaveBeenCalledWith(query);
+  });
+
+  it('rejects an overlong feature analytics range before querying', async () => {
+    mockAdminAccess();
+    const getFeatures = vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getFeatures');
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+
+    await expect(
+      caller.platformAnalytics.features({
+        endDate: '2026-04-01',
+        startDate: '2026-01-01',
+        type: 'custom',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(getFeatures).not.toHaveBeenCalled();
+  });
+
+  it('wraps unexpected feature analytics errors without exposing internals', async () => {
+    mockAdminAccess();
+    vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getFeatures').mockRejectedValue(
+      new Error('database details'),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+
+    await expect(caller.platformAnalytics.features()).rejects.toMatchObject({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to load COTTI platform feature analytics',
     });
   });
 });

@@ -7,12 +7,14 @@ import type {
   CottiPlatformAnalyticsChatUsers,
   CottiPlatformAnalyticsChatUsersQuery,
   CottiPlatformAnalyticsDashboard,
+  CottiPlatformAnalyticsFeatures,
   CottiPlatformAnalyticsQuery,
 } from '@/types/cotti/platformAnalytics';
 
 import { getCottiPlatformAnalyticsAgents } from './agents';
 import { getCottiPlatformAnalyticsChatModels } from './chatModels';
 import { getCottiPlatformAnalyticsChatUsers } from './chatUsers';
+import { getCottiPlatformAnalyticsFeatures } from './features';
 import { getCottiPlatformAnalyticsOverview } from './overview';
 import { resolveCottiPlatformAnalyticsPeriod } from './range';
 import { getCottiPlatformAnalyticsTrends } from './trends';
@@ -85,6 +87,21 @@ export class CottiPlatformAnalyticsService {
       overview,
       period: publicPeriod,
       trends,
+    };
+  }
+
+  async getFeatures(
+    query?: CottiPlatformAnalyticsQuery,
+    now = new Date(),
+  ): Promise<CottiPlatformAnalyticsFeatures> {
+    const period = resolveCottiPlatformAnalyticsPeriod(query, now);
+    const result = await getCottiPlatformAnalyticsFeatures(this.db, period);
+    const { endAtDate: _endAtDate, startAtDate: _startAtDate, ...publicPeriod } = period;
+
+    return {
+      generatedAt: now.toISOString(),
+      period: publicPeriod,
+      ...result,
     };
   }
 }

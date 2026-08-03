@@ -1,5 +1,7 @@
 export type CottiPlatformAnalyticsPresetDays = 1 | 7 | 30 | 90;
 
+export type CottiPlatformAnalyticsGenerationType = 'image' | 'video';
+
 export type CottiPlatformAnalyticsQuery =
   | {
       days: CottiPlatformAnalyticsPresetDays;
@@ -88,6 +90,46 @@ export interface CottiPlatformAnalyticsDashboard {
   overview: CottiPlatformAnalyticsOverview;
   period: CottiPlatformAnalyticsPeriod;
   trends: CottiPlatformAnalyticsTrendItem[];
+}
+
+export interface CottiPlatformAnalyticsSearchFeature {
+  activeUsers: number;
+  builtinSearchMessages: number;
+  totalSearchEvents: number;
+  webSearchToolResults: number;
+}
+
+export interface CottiPlatformAnalyticsToolFeature {
+  activeUsers: number;
+  errorResults: number;
+  rejectedOrAbortedResults: number;
+  results: number;
+}
+
+export interface CottiPlatformAnalyticsFileFeature {
+  activeUsers: number;
+  distinctFiles: number;
+  fileRelations: number;
+  messagesWithFiles: number;
+}
+
+export interface CottiPlatformAnalyticsGenerationFeature {
+  activeUsers: number;
+  errorResults: number;
+  requests: number;
+  requestsWithoutResults: number;
+  resultRows: number;
+  successfulAssets: number;
+  type: CottiPlatformAnalyticsGenerationType;
+}
+
+export interface CottiPlatformAnalyticsFeatures {
+  files: CottiPlatformAnalyticsFileFeature;
+  generatedAt: string;
+  generations: CottiPlatformAnalyticsGenerationFeature[];
+  period: CottiPlatformAnalyticsPeriod;
+  search: CottiPlatformAnalyticsSearchFeature;
+  tools: CottiPlatformAnalyticsToolFeature;
 }
 
 export interface CottiPlatformAnalyticsAgentItem {
