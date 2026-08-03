@@ -2,6 +2,7 @@ import { TRPCError } from '@trpc/server';
 
 import { router } from '@/libs/trpc/lambda';
 import { CottiPlatformAnalyticsService } from '@/server/services/cotti/platformAnalytics';
+import { cottiPlatformAnalyticsChatModelsQuerySchema } from '@/server/services/cotti/platformAnalytics/chatModels';
 import { cottiPlatformAnalyticsChatUsersQuerySchema } from '@/server/services/cotti/platformAnalytics/chatUsers';
 import { cottiPlatformAnalyticsQuerySchema } from '@/server/services/cotti/platformAnalytics/range';
 
@@ -18,6 +19,23 @@ const cottiPlatformAnalyticsProcedure = cottiAdminProcedure.use(async (opts) => 
 });
 
 export const cottiPlatformAnalyticsRouter = router({
+  chatModels: cottiPlatformAnalyticsProcedure
+    .input(cottiPlatformAnalyticsChatModelsQuerySchema.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const data = await ctx.platformAnalyticsService.getChatModels(input);
+
+        return { data, success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error('[cottiPlatformAnalytics:chatModels]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to load COTTI platform Chat model analytics',
+        });
+      }
+    }),
   chatUsers: cottiPlatformAnalyticsProcedure
     .input(cottiPlatformAnalyticsChatUsersQuerySchema.optional())
     .query(async ({ ctx, input }) => {

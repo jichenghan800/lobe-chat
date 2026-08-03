@@ -1,11 +1,14 @@
 import type { LobeChatDatabase } from '@/database/type';
 import type {
+  CottiPlatformAnalyticsChatModels,
+  CottiPlatformAnalyticsChatModelsQuery,
   CottiPlatformAnalyticsChatUsers,
   CottiPlatformAnalyticsChatUsersQuery,
   CottiPlatformAnalyticsDashboard,
   CottiPlatformAnalyticsQuery,
 } from '@/types/cotti/platformAnalytics';
 
+import { getCottiPlatformAnalyticsChatModels } from './chatModels';
 import { getCottiPlatformAnalyticsChatUsers } from './chatUsers';
 import { getCottiPlatformAnalyticsOverview } from './overview';
 import { resolveCottiPlatformAnalyticsPeriod } from './range';
@@ -16,6 +19,21 @@ export class CottiPlatformAnalyticsService {
 
   constructor(db: LobeChatDatabase) {
     this.db = db;
+  }
+
+  async getChatModels(
+    query?: CottiPlatformAnalyticsChatModelsQuery,
+    now = new Date(),
+  ): Promise<CottiPlatformAnalyticsChatModels> {
+    const period = resolveCottiPlatformAnalyticsPeriod(query?.range, now);
+    const result = await getCottiPlatformAnalyticsChatModels(this.db, period, query);
+    const { endAtDate: _endAtDate, startAtDate: _startAtDate, ...publicPeriod } = period;
+
+    return {
+      generatedAt: now.toISOString(),
+      period: publicPeriod,
+      ...result,
+    };
   }
 
   async getChatUsers(

@@ -49,6 +49,15 @@ const chatUsers = {
   total: 0,
 };
 
+const chatModels = {
+  generatedAt: '2026-08-03T04:30:00.000Z',
+  items: [],
+  page: 1,
+  pageSize: 20,
+  period: dashboard.period,
+  total: 0,
+};
+
 const mockAdminAccess = () =>
   vi.spyOn(CottiPlatformAdminAccessService.prototype, 'requireAccess').mockResolvedValue({
     email: 'admin@example.com',
@@ -62,6 +71,65 @@ afterEach(() => {
 });
 
 describe('cotti.platformAnalytics router', () => {
+  it('rejects an unauthenticated Chat model analytics caller before querying', async () => {
+    const getChatModels = vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getChatModels');
+    const caller = cottiRouter.createCaller({ userId: null });
+
+    await expect(caller.platformAnalytics.chatModels()).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect(getChatModels).not.toHaveBeenCalled();
+  });
+
+  it('returns paginated Chat model analytics to an administrator', async () => {
+    mockAdminAccess();
+    const getChatModels = vi
+      .spyOn(CottiPlatformAnalyticsService.prototype, 'getChatModels')
+      .mockResolvedValue(chatModels);
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+    const query = {
+      page: 2,
+      pageSize: 20,
+      q: 'vertex',
+      range: { days: 30 as const, type: 'preset' as const },
+      sortBy: 'activeUsers' as const,
+    };
+
+    await expect(caller.platformAnalytics.chatModels(query)).resolves.toEqual({
+      data: chatModels,
+      success: true,
+    });
+    expect(getChatModels).toHaveBeenCalledWith(query);
+  });
+
+  it('rejects an invalid Chat model sort before querying analytics', async () => {
+    mockAdminAccess();
+    const getChatModels = vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getChatModels');
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+
+    await expect(
+      caller.platformAnalytics.chatModels({
+        // @ts-expect-error Testing runtime validation for an unsupported sort field.
+        sortBy: 'llmCalls',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(getChatModels).not.toHaveBeenCalled();
+  });
+
+  it('wraps unexpected Chat model analytics errors without exposing internals', async () => {
+    mockAdminAccess();
+    vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getChatModels').mockRejectedValue(
+      new Error('database details'),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+
+    await expect(caller.platformAnalytics.chatModels()).rejects.toMatchObject({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to load COTTI platform Chat model analytics',
+    });
+  });
+
   it('rejects an unauthenticated Chat user analytics caller before querying', async () => {
     const getChatUsers = vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getChatUsers');
     const caller = cottiRouter.createCaller({ userId: null });

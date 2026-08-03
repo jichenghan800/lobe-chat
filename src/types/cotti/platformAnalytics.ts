@@ -14,11 +14,21 @@ export type CottiPlatformAnalyticsQuery =
 export type CottiPlatformAnalyticsChatUserSort =
   'assistantMessages' | 'errorMessages' | 'lastActiveAt' | 'recordedCost' | 'totalTokens';
 
-export interface CottiPlatformAnalyticsChatUsersQuery {
+export type CottiPlatformAnalyticsChatModelSort =
+  'activeUsers' | 'assistantMessages' | 'errorMessages' | 'recordedCost' | 'totalTokens';
+
+export interface CottiPlatformAnalyticsDetailQuery {
   page?: number;
   pageSize?: number;
   q?: string;
   range?: CottiPlatformAnalyticsQuery;
+}
+
+export interface CottiPlatformAnalyticsChatModelsQuery extends CottiPlatformAnalyticsDetailQuery {
+  sortBy?: CottiPlatformAnalyticsChatModelSort;
+}
+
+export interface CottiPlatformAnalyticsChatUsersQuery extends CottiPlatformAnalyticsDetailQuery {
   sortBy?: CottiPlatformAnalyticsChatUserSort;
 }
 
@@ -65,6 +75,28 @@ export interface CottiPlatformAnalyticsDashboard {
   overview: CottiPlatformAnalyticsOverview;
   period: CottiPlatformAnalyticsPeriod;
   trends: CottiPlatformAnalyticsTrendItem[];
+}
+
+export interface CottiPlatformAnalyticsChatModelItem {
+  activeUsers: number;
+  assistantMessages: number;
+  errorMessages: number;
+  errorRate: number;
+  model: string | null;
+  provider: string | null;
+  recordedCost: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalTokens: number;
+}
+
+export interface CottiPlatformAnalyticsChatModels {
+  generatedAt: string;
+  items: CottiPlatformAnalyticsChatModelItem[];
+  page: number;
+  pageSize: number;
+  period: CottiPlatformAnalyticsPeriod;
+  total: number;
 }
 
 export interface CottiPlatformAnalyticsChatUserItem {

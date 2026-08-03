@@ -9,14 +9,15 @@ import type {
   CottiPlatformAnalyticsChatUsersQuery,
 } from '@/types/cotti/platformAnalytics';
 
+import {
+  buildCottiPlatformAnalyticsContainsCondition,
+  cottiPlatformAnalyticsDetailQuerySchema,
+  normalizeCottiPlatformAnalyticsDetailQuery,
+} from './detailQuery';
 import type { ResolvedCottiPlatformAnalyticsPeriod } from './range';
-import { cottiPlatformAnalyticsQuerySchema } from './range';
 import { cottiMessageUsageNumber } from './usageSql';
 
-const DEFAULT_PAGE = 1;
-const DEFAULT_PAGE_SIZE = 20;
 const DEFAULT_SORT: CottiPlatformAnalyticsChatUserSort = 'totalTokens';
-const MAX_PAGE_SIZE = 50;
 
 const chatUserSortSchema = z.enum([
   'assistantMessages',
@@ -26,43 +27,17 @@ const chatUserSortSchema = z.enum([
   'totalTokens',
 ]);
 
-export const cottiPlatformAnalyticsChatUsersQuerySchema = z.object({
-  page: z.number().int().min(1).optional(),
-  pageSize: z.number().int().min(1).max(MAX_PAGE_SIZE).optional(),
-  q: z.string().trim().max(100).optional(),
-  range: cottiPlatformAnalyticsQuerySchema.optional(),
-  sortBy: chatUserSortSchema.optional(),
-});
-
-interface NormalizedChatUsersQuery {
-  page: number;
-  pageSize: number;
-  q?: string;
-  sortBy: CottiPlatformAnalyticsChatUserSort;
-}
-
-const escapeLikePattern = (value: string) =>
-  value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
+export const cottiPlatformAnalyticsChatUsersQuerySchema =
+  cottiPlatformAnalyticsDetailQuerySchema.extend({
+    sortBy: chatUserSortSchema.optional(),
+  });
 
 const buildUserSearchCondition = (q?: string) => {
-  const normalized = q?.trim();
-  if (!normalized) return;
-
-  const pattern = `%${escapeLikePattern(normalized)}%`;
-  const contains = (column: unknown) => sql<boolean>`${column} ILIKE ${pattern} ESCAPE '\\'`;
-
-  return or(contains(users.email), contains(users.fullName), contains(users.username));
-};
-
-const normalizeQuery = (query?: CottiPlatformAnalyticsChatUsersQuery): NormalizedChatUsersQuery => {
-  const q = query?.q?.trim();
-
-  return {
-    page: query?.page ?? DEFAULT_PAGE,
-    pageSize: query?.pageSize ?? DEFAULT_PAGE_SIZE,
-    q: q || undefined,
-    sortBy: query?.sortBy ?? DEFAULT_SORT,
-  };
+  return or(
+    buildCottiPlatformAnalyticsContainsCondition(users.email, q),
+    buildCottiPlatformAnalyticsContainsCondition(users.fullName, q),
+    buildCottiPlatformAnalyticsContainsCondition(users.username, q),
+  );
 };
 
 const toFiniteNumber = (value: number | null | undefined) => {
@@ -80,7 +55,10 @@ export const getCottiPlatformAnalyticsChatUsers = async (
   pageSize: number;
   total: number;
 }> => {
-  const { page, pageSize, q, sortBy } = normalizeQuery(query);
+  const { page, pageSize, q, sortBy } = normalizeCottiPlatformAnalyticsDetailQuery(
+    query,
+    DEFAULT_SORT,
+  );
   const inputTokens = cottiMessageUsageNumber('totalInputTokens');
   const outputTokens = cottiMessageUsageNumber('totalOutputTokens');
   const cost = cottiMessageUsageNumber('cost');
