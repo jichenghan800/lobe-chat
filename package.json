@@ -56,6 +56,8 @@
     "clean:node_modules": "bash -lc 'set -e; echo \"Removing all node_modules...\"; rm -rf node_modules; pnpm -r exec rm -rf node_modules; rm -rf apps/desktop/node_modules; echo \"All node_modules removed.\"'",
     "db:generate": "drizzle-kit generate && npm run workflow:dbml",
     "db:migrate": "cross-env MIGRATION_DB=1 tsx ./scripts/migrateServerDB/index.ts",
+    "db:migrate:v2213-cotti:post": "tsx ./scripts/database/v2213CottiPostMigration.ts",
+    "db:migrate:v2213-cotti:pre": "tsx ./scripts/database/v2213CottiPreMigration.ts",
     "db:studio": "drizzle-kit studio",
     "db:visualize": "dbdocs build docs/development/database-schema.dbml --project lobe-chat",
     "desktop:build:all": "npm run desktop:build:main",
