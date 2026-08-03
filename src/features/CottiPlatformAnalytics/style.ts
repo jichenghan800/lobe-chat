@@ -85,6 +85,33 @@ export const styles = createStaticStyles(({ css }) => ({
       align-items: stretch;
     }
   `,
+  featureCard: css`
+    min-width: 0;
+    min-height: 228px;
+    background: ${cssVar.colorBgContainer};
+  `,
+  featureGrid: css`
+    display: grid;
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+    gap: 12px;
+
+    ${responsive.lg} {
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+
+    ${responsive.sm} {
+      grid-template-columns: 1fr;
+    }
+  `,
+  featureMetricGrid: css`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  `,
+  featurePrimary: css`
+    padding-block-end: 12px;
+    border-block-end: 1px solid ${cssVar.colorBorderSecondary};
+  `,
   generatedAt: css`
     color: ${cssVar.colorTextTertiary};
   `,

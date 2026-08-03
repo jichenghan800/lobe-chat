@@ -10,9 +10,11 @@ import AsyncError from '@/components/AsyncError';
 import NavHeader from '@/features/NavHeader';
 import SettingContainer from '@/features/Setting/SettingContainer';
 
+import { FeatureAdoption } from './FeatureAdoption';
 import {
   useCottiPlatformAdminAccess,
   useCottiPlatformAnalyticsDashboard,
+  useCottiPlatformAnalyticsFeatures,
   useCottiPlatformAnalyticsRange,
 } from './hooks';
 import Overview from './Overview';
@@ -28,6 +30,7 @@ const CottiPlatformAnalytics = memo(() => {
   const rangeState = useCottiPlatformAnalyticsRange();
   const canLoadDashboard = enabled && accessSWR.data?.isAdmin === true;
   const dashboardSWR = useCottiPlatformAnalyticsDashboard(rangeState.range, canLoadDashboard);
+  const featuresSWR = useCottiPlatformAnalyticsFeatures(rangeState.range, canLoadDashboard);
   const [trendMetric, setTrendMetric] = useState<CottiPlatformAnalyticsTrendMetric>('activeUsers');
 
   const dashboard = dashboardSWR.data;
@@ -91,9 +94,11 @@ const CottiPlatformAnalytics = memo(() => {
               <Button
                 disabled={!canLoadDashboard}
                 icon={<Icon icon={RefreshCwIcon} />}
-                loading={dashboardSWR.isValidating}
+                loading={dashboardSWR.isValidating || featuresSWR.isValidating}
                 size={'small'}
-                onClick={() => void dashboardSWR.mutate()}
+                onClick={() => {
+                  void Promise.all([dashboardSWR.mutate(), featuresSWR.mutate()]);
+                }}
               >
                 {t('platformAnalytics.refresh')}
               </Button>
@@ -119,6 +124,15 @@ const CottiPlatformAnalytics = memo(() => {
                   setMetric={setTrendMetric}
                 />
               </>
+            )}
+            {canLoadDashboard && (
+              <FeatureAdoption
+                data={featuresSWR.data}
+                error={featuresSWR.error}
+                loading={!featuresSWR.data && !featuresSWR.error}
+                retrying={featuresSWR.isValidating}
+                onRetry={() => void featuresSWR.mutate()}
+              />
             )}
             {canLoadDashboard && (
               <UsageDetails enabled={canLoadDashboard} range={rangeState.range} />

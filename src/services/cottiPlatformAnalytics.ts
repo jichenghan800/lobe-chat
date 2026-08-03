@@ -46,6 +46,14 @@ class CottiPlatformAnalyticsClientService {
 
     return response.data;
   };
+
+  getFeatures = async (query: CottiPlatformAnalyticsQuery) => {
+    const response = await lambdaClient.cotti.platformAnalytics.features.query(query, {
+      context: { showNotification: false },
+    });
+
+    return response.data;
+  };
 }
 
 export const cottiPlatformAnalyticsService = new CottiPlatformAnalyticsClientService();

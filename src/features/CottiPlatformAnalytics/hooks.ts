@@ -29,6 +29,18 @@ const dashboardKey = (query: ReturnType<typeof toCottiPlatformAnalyticsQuery>) =
     ? (['cotti', 'platform-analytics', 'custom', query.startDate, query.endDate] as const)
     : (['cotti', 'platform-analytics', 'preset', query.days] as const);
 
+const featuresKey = (query: ReturnType<typeof toCottiPlatformAnalyticsQuery>) =>
+  query.type === 'custom'
+    ? ([
+        'cotti',
+        'platform-analytics',
+        'features',
+        'custom',
+        query.startDate,
+        query.endDate,
+      ] as const)
+    : (['cotti', 'platform-analytics', 'features', 'preset', query.days] as const);
+
 const rangeKey = (query: ReturnType<typeof toCottiPlatformAnalyticsQuery>) =>
   query.type === 'custom'
     ? (['custom', query.startDate, query.endDate] as const)
@@ -130,6 +142,19 @@ export const useCottiPlatformAnalyticsDashboard = (
   return useClientDataSWR(
     enabled ? dashboardKey(query) : null,
     () => cottiPlatformAnalyticsService.getDashboard(query),
+    { revalidateOnFocus: false },
+  );
+};
+
+export const useCottiPlatformAnalyticsFeatures = (
+  range: CottiPlatformAnalyticsRangeSelection,
+  enabled: boolean,
+) => {
+  const query = toCottiPlatformAnalyticsQuery(range);
+
+  return useClientDataSWR(
+    enabled ? featuresKey(query) : null,
+    () => cottiPlatformAnalyticsService.getFeatures(query),
     { revalidateOnFocus: false },
   );
 };
