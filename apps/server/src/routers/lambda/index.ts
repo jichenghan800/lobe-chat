@@ -43,6 +43,7 @@ import { comfyuiRouter } from './comfyui';
 import { composioRouter } from './composio';
 import { configRouter } from './config';
 import { connectorRouter } from './connector';
+import { cottiRouter } from './cotti';
 import { deviceRouter } from './device';
 import { documentRouter } from './document';
 import { exporterRouter } from './exporter';
@@ -114,6 +115,7 @@ export const lambdaRouter = router({
   comfyui: comfyuiRouter,
   config: configRouter,
   connector: connectorRouter,
+  cotti: cottiRouter,
   device: deviceRouter,
   document: documentRouter,
   exporter: exporterRouter,
