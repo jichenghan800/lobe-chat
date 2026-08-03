@@ -2,6 +2,7 @@ import { TRPCError } from '@trpc/server';
 
 import { router } from '@/libs/trpc/lambda';
 import { CottiPlatformAnalyticsService } from '@/server/services/cotti/platformAnalytics';
+import { cottiPlatformAnalyticsChatUsersQuerySchema } from '@/server/services/cotti/platformAnalytics/chatUsers';
 import { cottiPlatformAnalyticsQuerySchema } from '@/server/services/cotti/platformAnalytics/range';
 
 import { cottiAdminProcedure } from './procedure';
@@ -17,6 +18,23 @@ const cottiPlatformAnalyticsProcedure = cottiAdminProcedure.use(async (opts) => 
 });
 
 export const cottiPlatformAnalyticsRouter = router({
+  chatUsers: cottiPlatformAnalyticsProcedure
+    .input(cottiPlatformAnalyticsChatUsersQuerySchema.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const data = await ctx.platformAnalyticsService.getChatUsers(input);
+
+        return { data, success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error('[cottiPlatformAnalytics:chatUsers]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to load COTTI platform Chat user analytics',
+        });
+      }
+    }),
   dashboard: cottiPlatformAnalyticsProcedure
     .input(cottiPlatformAnalyticsQuerySchema.optional())
     .query(async ({ ctx, input }) => {
@@ -25,6 +43,7 @@ export const cottiPlatformAnalyticsRouter = router({
 
         return { data, success: true };
       } catch (error) {
+        if (error instanceof TRPCError) throw error;
         console.error('[cottiPlatformAnalytics:dashboard]', error);
         throw new TRPCError({
           cause: error,

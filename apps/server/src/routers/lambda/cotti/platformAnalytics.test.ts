@@ -40,6 +40,15 @@ const dashboard = {
   trends: [],
 };
 
+const chatUsers = {
+  generatedAt: '2026-08-03T04:30:00.000Z',
+  items: [],
+  page: 1,
+  pageSize: 20,
+  period: dashboard.period,
+  total: 0,
+};
+
 const mockAdminAccess = () =>
   vi.spyOn(CottiPlatformAdminAccessService.prototype, 'requireAccess').mockResolvedValue({
     email: 'admin@example.com',
@@ -53,6 +62,62 @@ afterEach(() => {
 });
 
 describe('cotti.platformAnalytics router', () => {
+  it('rejects an unauthenticated Chat user analytics caller before querying', async () => {
+    const getChatUsers = vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getChatUsers');
+    const caller = cottiRouter.createCaller({ userId: null });
+
+    await expect(caller.platformAnalytics.chatUsers()).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect(getChatUsers).not.toHaveBeenCalled();
+  });
+
+  it('returns paginated Chat user analytics to an administrator', async () => {
+    mockAdminAccess();
+    const getChatUsers = vi
+      .spyOn(CottiPlatformAnalyticsService.prototype, 'getChatUsers')
+      .mockResolvedValue(chatUsers);
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+    const query = {
+      page: 2,
+      pageSize: 20,
+      q: 'admin',
+      range: { days: 30 as const, type: 'preset' as const },
+      sortBy: 'recordedCost' as const,
+    };
+
+    await expect(caller.platformAnalytics.chatUsers(query)).resolves.toEqual({
+      data: chatUsers,
+      success: true,
+    });
+    expect(getChatUsers).toHaveBeenCalledWith(query);
+  });
+
+  it('rejects an oversized Chat user page before querying analytics', async () => {
+    mockAdminAccess();
+    const getChatUsers = vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getChatUsers');
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+
+    await expect(caller.platformAnalytics.chatUsers({ pageSize: 51 })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
+    expect(getChatUsers).not.toHaveBeenCalled();
+  });
+
+  it('wraps unexpected Chat user analytics errors without exposing internals', async () => {
+    mockAdminAccess();
+    vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getChatUsers').mockRejectedValue(
+      new Error('database details'),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+
+    await expect(caller.platformAnalytics.chatUsers()).rejects.toMatchObject({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to load COTTI platform Chat user analytics',
+    });
+  });
+
   it('rejects an unauthenticated caller before querying analytics', async () => {
     const getDashboard = vi.spyOn(CottiPlatformAnalyticsService.prototype, 'getDashboard');
     const caller = cottiRouter.createCaller({ userId: null });

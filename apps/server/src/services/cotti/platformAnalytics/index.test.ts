@@ -20,8 +20,20 @@ describe('CottiPlatformAnalyticsService', () => {
     db = await getTestDB();
 
     await db.insert(users).values([
-      { createdAt: new Date('2032-07-01T00:00:00.000Z'), id: userIds[0] },
-      { createdAt: new Date('2032-07-31T16:00:00.000Z'), id: userIds[1] },
+      {
+        createdAt: new Date('2032-07-01T00:00:00.000Z'),
+        email: 'alpha.cotti@example.com',
+        fullName: 'Alpha 同事',
+        id: userIds[0],
+        username: 'alpha-cotti',
+      },
+      {
+        createdAt: new Date('2032-07-31T16:00:00.000Z'),
+        email: 'bravo.cotti@example.com',
+        fullName: 'Bravo 同事',
+        id: userIds[1],
+        username: 'bravo-cotti',
+      },
       { createdAt: new Date('2032-08-03T16:00:00.000Z'), id: userIds[2] },
     ]);
     await db.insert(topics).values([
@@ -175,5 +187,93 @@ describe('CottiPlatformAnalyticsService', () => {
         },
       ],
     });
+  });
+
+  it('returns Chat users aggregated by user with identity and activity semantics', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+
+    const result = await service.getChatUsers(
+      {
+        range: { endDate: '2032-08-03', startDate: '2032-08-01', type: 'custom' },
+      },
+      new Date('2032-08-04T01:00:00.000Z'),
+    );
+
+    expect(result).toEqual({
+      generatedAt: '2032-08-04T01:00:00.000Z',
+      items: [
+        {
+          activeDays: 1,
+          activeTopics: 1,
+          assistantMessages: 2,
+          avatar: null,
+          email: 'alpha.cotti@example.com',
+          errorMessages: 0,
+          errorRate: 0,
+          fullName: 'Alpha 同事',
+          lastActiveAt: '2032-07-31T16:00:00.000Z',
+          recordedCost: 0.06,
+          totalInputTokens: 30,
+          totalOutputTokens: 15,
+          totalTokens: 45,
+          userId: userIds[0],
+          userMessages: 1,
+          username: 'alpha-cotti',
+        },
+        {
+          activeDays: 1,
+          activeTopics: 1,
+          assistantMessages: 1,
+          avatar: null,
+          email: 'bravo.cotti@example.com',
+          errorMessages: 1,
+          errorRate: 1,
+          fullName: 'Bravo 同事',
+          lastActiveAt: '2032-08-02T16:10:00.000Z',
+          recordedCost: 0.06,
+          totalInputTokens: 30,
+          totalOutputTokens: 15,
+          totalTokens: 45,
+          userId: userIds[1],
+          userMessages: 1,
+          username: 'bravo-cotti',
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      period: {
+        endAt: '2032-08-03T16:00:00.000Z',
+        endDate: '2032-08-03',
+        startAt: '2032-07-31T16:00:00.000Z',
+        startDate: '2032-08-01',
+        timezone: 'Asia/Shanghai',
+        type: 'custom',
+      },
+      total: 2,
+    });
+  });
+
+  it('applies Chat user search, sorting, pagination, and out-of-range totals server-side', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+    const range = { endDate: '2032-08-03', startDate: '2032-08-01', type: 'custom' as const };
+
+    const searched = await service.getChatUsers({ q: 'ALPHA.COTTI', range });
+    const firstPage = await service.getChatUsers({ pageSize: 1, range, sortBy: 'errorMessages' });
+    const secondPage = await service.getChatUsers({
+      page: 2,
+      pageSize: 1,
+      range,
+      sortBy: 'errorMessages',
+    });
+    const outOfRange = await service.getChatUsers({ page: 3, pageSize: 1, range });
+
+    expect(searched.items.map((item) => item.userId)).toEqual([userIds[0]]);
+    expect(searched.total).toBe(1);
+    expect(firstPage.items.map((item) => item.userId)).toEqual([userIds[1]]);
+    expect(firstPage.total).toBe(2);
+    expect(secondPage.items.map((item) => item.userId)).toEqual([userIds[0]]);
+    expect(secondPage.total).toBe(2);
+    expect(outOfRange.items).toEqual([]);
+    expect(outOfRange.total).toBe(2);
   });
 });
