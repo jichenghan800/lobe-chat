@@ -8,6 +8,13 @@ const testState = vi.hoisted(() => ({
     canManageAgent: false,
     isAccessLoading: false,
   },
+  business: {
+    error: undefined as Error | undefined,
+    isLoading: false,
+    isResolved: true,
+    mutate: vi.fn(),
+    visible: true,
+  },
   agent: {
     agent: undefined as { visibility?: 'private' | 'public'; workspaceId?: string } | undefined,
     enableAgentMode: true,
@@ -28,6 +35,10 @@ const testState = vi.hoisted(() => ({
     }),
     workspaceUserPreference: {} as { agentModeOverrides?: Record<string, boolean> },
   },
+}));
+
+vi.mock('@/business/client/hooks/useBusinessAgentMode', () => ({
+  useBusinessAgentModeVisibility: () => testState.business,
 }));
 
 vi.mock('@/features/ResourcePermission/useAgentManagementAccess', () => ({
@@ -66,6 +77,11 @@ vi.mock('@/store/user', () => ({
 beforeEach(() => {
   testState.access.canManageAgent = false;
   testState.access.isAccessLoading = false;
+  testState.business.error = undefined;
+  testState.business.isLoading = false;
+  testState.business.isResolved = true;
+  testState.business.mutate = vi.fn();
+  testState.business.visible = true;
   testState.agent.agent = undefined;
   testState.agent.enableAgentMode = true;
   testState.agent.model = 'model-1';
@@ -101,6 +117,22 @@ describe('resolveEffectiveAgentMode', () => {
   it('keeps explicit chat mode even when the model supports tool use', () => {
     expect(resolveEffectiveAgentMode({ enableAgentMode: false, supportToolUse: true })).toEqual({
       canSelectAgentMode: true,
+      currentMode: 'chat',
+      isAgentModeUnavailable: false,
+      isAgentRuntimeMode: false,
+      supportToolUse: true,
+    });
+  });
+
+  it('renders chat mode without changing stored intent when Agent mode is not opened', () => {
+    expect(
+      resolveEffectiveAgentMode({
+        canEnableAgentMode: false,
+        enableAgentMode: true,
+        supportToolUse: true,
+      }),
+    ).toEqual({
+      canSelectAgentMode: false,
       currentMode: 'chat',
       isAgentModeUnavailable: false,
       isAgentRuntimeMode: false,
@@ -162,6 +194,35 @@ describe('resolveEffectiveAgentMode', () => {
 });
 
 describe('useEffectiveAgentMode', () => {
+  it('keeps the Agent-only UI closed while entry access is not opened', () => {
+    testState.business.visible = false;
+
+    const { result } = renderHook(() => useEffectiveAgentMode('agent-1'));
+
+    expect(result.current).toMatchObject({
+      canEnableAgentMode: false,
+      canSelectAgentMode: false,
+      currentMode: 'chat',
+      isAgentModeAccessLoading: false,
+      isAgentRuntimeMode: false,
+    });
+  });
+
+  it('exposes the loading state without treating it as model incompatibility', () => {
+    testState.business.isLoading = true;
+    testState.business.isResolved = false;
+    testState.business.visible = false;
+
+    const { result } = renderHook(() => useEffectiveAgentMode('agent-1'));
+
+    expect(result.current).toMatchObject({
+      currentMode: 'chat',
+      isAgentModeAccessLoading: true,
+      isAgentModeAccessResolved: false,
+      isAgentModeUnavailable: false,
+    });
+  });
+
   it('uses an ordinary member personal mode for a public Workspace Agent', () => {
     testState.agent.agent = { visibility: 'public', workspaceId: 'workspace-1' };
     testState.user.workspaceUserPreference = {

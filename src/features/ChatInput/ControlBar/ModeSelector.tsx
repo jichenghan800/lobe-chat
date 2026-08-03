@@ -4,6 +4,7 @@ import {
   ChevronDownIcon,
   FolderIcon,
   InfinityIcon,
+  LockKeyholeIcon,
   MessageCircleIcon,
   SearchIcon,
   TerminalIcon,
@@ -88,6 +89,11 @@ const styles = createStaticStyles(({ css }) => ({
     &:hover {
       background: ${cssVar.colorFillSecondary};
     }
+
+    &:focus-visible {
+      outline: 2px solid ${cssVar.colorPrimary};
+      outline-offset: 1px;
+    }
   `,
   optionDisabled: css`
     cursor: not-allowed;
@@ -113,6 +119,10 @@ const styles = createStaticStyles(({ css }) => ({
     font-weight: 500;
     line-height: 1.4;
     color: ${cssVar.colorText};
+  `,
+  statusIcon: css`
+    flex: none;
+    color: ${cssVar.colorTextQuaternary};
   `,
   popoverPopup: css`
     /* The popup pads its option rows by 4px, so its corner must be one step larger
@@ -147,8 +157,18 @@ const ModeSelector = memo(() => {
     ? reason
     : t(isGroupContext ? 'input.viewOnlyGroup' : 'input.viewOnlyAgent');
 
-  const { canSelectAgentMode, currentMode, isAgentModeUnavailable, isPreferenceLoading } =
-    useEffectiveAgentMode(agentId);
+  const {
+    agentModeAccessError,
+    canEnableAgentMode,
+    canSelectAgentMode,
+    currentMode,
+    isAgentModeAccessLoading,
+    isAgentModeAccessResolved,
+    isAgentModeUnavailable,
+    isPreferenceLoading,
+    refreshAgentModeAccess,
+    supportToolUse,
+  } = useEffectiveAgentMode(agentId);
   const CurrentIcon = currentMode === 'agent' ? InfinityIcon : MessageCircleIcon;
 
   const handleSelect = useCallback(
@@ -189,42 +209,92 @@ const ModeSelector = memo(() => {
     : currentMode === 'agent'
       ? agentTooltip
       : chatTooltip;
-  const agentDesc = canSelectAgentMode ? t('chatMode.agentDesc') : t('chatMode.agentUnsupported');
+  const isAgentAccessError = !isAgentModeAccessResolved && Boolean(agentModeAccessError);
+  const isAgentAccessDenied = isAgentModeAccessResolved && !canEnableAgentMode;
+  const agentDisabledHint = isAgentModeAccessLoading
+    ? t('chatMode.agentStatusLoading')
+    : isAgentAccessError
+      ? t('chatMode.agentStatusError')
+      : isAgentAccessDenied
+        ? t('chatMode.agentAdminRequired')
+        : !supportToolUse
+          ? t('chatMode.agentUnsupported')
+          : undefined;
+  const agentDesc = agentDisabledHint ?? t('chatMode.agentDesc');
+  const handleAgentOptionActivate = () => {
+    if (isAgentAccessError) {
+      void refreshAgentModeAccess();
+      return;
+    }
+
+    void handleSelect('agent');
+  };
+
+  const agentOption = (
+    <Flexbox
+      horizontal
+      align="center"
+      aria-disabled={!canSelectAgentMode}
+      aria-selected={currentMode === 'agent'}
+      gap={12}
+      role="option"
+      tabIndex={0}
+      className={cx(
+        styles.option,
+        currentMode === 'agent' && styles.activeOption,
+        !canSelectAgentMode && styles.optionDisabled,
+      )}
+      onClick={handleAgentOptionActivate}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+
+        event.preventDefault();
+        handleAgentOptionActivate();
+      }}
+    >
+      <Flexbox align="center" className={styles.optionIcon} height={32} justify="center" width={32}>
+        <Icon icon={InfinityIcon} size={16} />
+      </Flexbox>
+      <Flexbox flex={1}>
+        <div className={styles.optionTitle}>{t('chatMode.agent')}</div>
+        <div className={styles.optionDesc}>{agentDesc}</div>
+      </Flexbox>
+      {isAgentAccessDenied && (
+        <Icon className={styles.statusIcon} icon={LockKeyholeIcon} size={14} />
+      )}
+    </Flexbox>
+  );
 
   const popoverContent = (
-    <Flexbox gap={4} style={{ maxWidth: 320, minWidth: 280 }}>
-      <Flexbox
-        horizontal
-        align="center"
-        gap={12}
-        className={cx(
-          styles.option,
-          currentMode === 'agent' && styles.activeOption,
-          !canSelectAgentMode && styles.optionDisabled,
-        )}
-        onClick={() => handleSelect('agent')}
-      >
-        <Flexbox
-          align="center"
-          className={styles.optionIcon}
-          height={32}
-          justify="center"
-          width={32}
-        >
-          <Icon icon={InfinityIcon} size={16} />
-        </Flexbox>
-        <Flexbox flex={1}>
-          <div className={styles.optionTitle}>{t('chatMode.agent')}</div>
-          <div className={styles.optionDesc}>{agentDesc}</div>
-        </Flexbox>
-      </Flexbox>
+    <Flexbox
+      aria-label={t('chatMode.select')}
+      gap={4}
+      role="listbox"
+      style={{ maxWidth: 320, minWidth: 280 }}
+    >
+      {agentDisabledHint ? (
+        <Tooltip standalone placement="right" title={agentDisabledHint}>
+          {agentOption}
+        </Tooltip>
+      ) : (
+        agentOption
+      )}
 
       <Flexbox
         horizontal
         align="center"
+        aria-selected={currentMode === 'chat'}
         className={cx(styles.option, currentMode === 'chat' && styles.activeOption)}
         gap={12}
+        role="option"
+        tabIndex={0}
         onClick={() => handleSelect('chat')}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+
+          event.preventDefault();
+          void handleSelect('chat');
+        }}
       >
         <Flexbox
           align="center"

@@ -1,3 +1,4 @@
+import { useBusinessAgentModeVisibility } from '@/business/client/hooks/useBusinessAgentMode';
 import { useAgentManagementAccess } from '@/features/ResourcePermission/useAgentManagementAccess';
 import { useModelSupportToolUse } from '@/hooks/useModelSupportToolUse';
 import { useAgentStore } from '@/store/agent';
@@ -8,6 +9,7 @@ import { useUserStore } from '@/store/user';
 export type ChatInputMode = 'agent' | 'chat';
 
 interface ResolveEffectiveAgentModeParams {
+  canEnableAgentMode?: boolean;
   enableAgentMode: boolean;
   /**
    * Whether the aiProvider runtime-state (the enabled-model list + abilities)
@@ -19,6 +21,7 @@ interface ResolveEffectiveAgentModeParams {
 }
 
 export const resolveEffectiveAgentMode = ({
+  canEnableAgentMode = true,
   enableAgentMode,
   isModelListReady = true,
   supportToolUse,
@@ -31,12 +34,13 @@ export const resolveEffectiveAgentMode = ({
   // capability re-evaluates once the list loads.
   const effectiveSupportToolUse = isModelListReady ? supportToolUse : true;
 
-  const currentMode: ChatInputMode = enableAgentMode && effectiveSupportToolUse ? 'agent' : 'chat';
+  const canSelectAgentMode = canEnableAgentMode && effectiveSupportToolUse;
+  const currentMode: ChatInputMode = enableAgentMode && canSelectAgentMode ? 'agent' : 'chat';
   // Example: stored Agent mode + a model without tool calling should render chat-only runtime UI.
   const isAgentRuntimeMode = currentMode === 'agent';
 
   return {
-    canSelectAgentMode: effectiveSupportToolUse,
+    canSelectAgentMode,
     currentMode,
     isAgentModeUnavailable: enableAgentMode && !effectiveSupportToolUse,
     isAgentRuntimeMode,
@@ -45,6 +49,13 @@ export const resolveEffectiveAgentMode = ({
 };
 
 export const useEffectiveAgentMode = (agentId: string) => {
+  const {
+    error: agentModeAccessError,
+    isLoading: isAgentModeAccessLoading,
+    isResolved: isAgentModeAccessResolved,
+    mutate: refreshAgentModeAccess,
+    visible: canEnableAgentMode,
+  } = useBusinessAgentModeVisibility();
   const [sharedEnableAgentMode, model, provider, agent] = useAgentStore((s) => [
     agentByIdSelectors.getAgentEnableModeById(agentId)(s),
     agentByIdSelectors.getAgentModelById(agentId)(s),
@@ -67,8 +78,18 @@ export const useEffectiveAgentMode = (agentId: string) => {
   const isModelListReady = useAiInfraStore(aiProviderSelectors.isInitAiProviderRuntimeState);
 
   return {
-    ...resolveEffectiveAgentMode({ enableAgentMode, isModelListReady, supportToolUse }),
+    ...resolveEffectiveAgentMode({
+      canEnableAgentMode,
+      enableAgentMode,
+      isModelListReady,
+      supportToolUse,
+    }),
+    agentModeAccessError,
+    canEnableAgentMode,
+    isAgentModeAccessLoading,
+    isAgentModeAccessResolved,
     isPreferenceLoading: isAccessLoading || (usesWorkspaceMemberMode && isLoading),
+    refreshAgentModeAccess,
     usesWorkspaceMemberMode,
   };
 };

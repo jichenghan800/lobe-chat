@@ -977,7 +977,11 @@ export default {
   'chatMode.agentCap.memory': 'Memory',
   'chatMode.agentCap.tools': 'Tool calls',
   'chatMode.agentCap.web': 'Web search',
+  'chatMode.agentAdminRequired':
+    'Agent mode requires basic training before activation. Contact your platform administrator to request access.',
   'chatMode.agentDesc': 'Agent can use tools and environment to complete tasks automatically',
+  'chatMode.agentStatusError': 'Unable to verify Agent mode access. Retry the status check.',
+  'chatMode.agentStatusLoading': 'Checking Agent mode availability…',
   'chatMode.agentUnsupported': 'The current model does not support tool calling',
   'chatMode.chat': 'Chat',
   'chatMode.chatDesc': 'No runtime environment or autonomy; uses fewer tokens',
