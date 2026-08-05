@@ -3,6 +3,11 @@
 --   scripts/database/v2213CottiPreMigration.ts --apply
 -- The pre-migration step preserves the historical visibility of enrolled
 -- workspace devices and builds hot activity indexes online.
+-- ParadeDB creates a schema named after the database user. PostgreSQL's default
+-- "$user", public search path would otherwise place unqualified tables there,
+-- while the generated foreign keys below explicitly reference public.*.
+SET LOCAL search_path = public;
+--> statement-breakpoint
 CREATE TABLE "agent_account_bindings" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"agent_id" text NOT NULL,

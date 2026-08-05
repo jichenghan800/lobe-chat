@@ -4,9 +4,11 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { notification } from '@/components/AntdStaticMethods';
 import { fileService } from '@/services/file';
+import { ragService } from '@/services/rag';
 import { agentByIdSelectors } from '@/store/agent/selectors';
 
 import { useFileStore as useStore } from '../../store';
+import { LARGE_EXCEL_UPLOAD_LIMIT_BYTES } from './uploadGuard';
 
 const AGENT_ID = 'agent-1';
 
@@ -144,6 +146,65 @@ describe('useFileStore:chat', () => {
 
     expect(toast.error).not.toHaveBeenCalled();
     expect(uploadWithProgress).toHaveBeenCalledTimes(1);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
+  });
+
+  it('uploadChatFiles should reject large Excel files before upload in chat mode', async () => {
+    mockAgentMode({ enableAgentMode: false, heterogeneous: false });
+
+    const { result } = renderHook(() => useStore());
+    const uploadWithProgress = vi.fn();
+    const largeExcel = new File(
+      [new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)],
+      'large.xlsx',
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    );
+
+    act(() => {
+      useStore.setState({
+        chatUploadFileList: [],
+        uploadWithProgress: uploadWithProgress as any,
+      });
+    });
+
+    await act(async () => {
+      await result.current.uploadChatFiles([largeExcel], AGENT_ID);
+    });
+
+    expect(uploadWithProgress).not.toHaveBeenCalled();
+    expect(result.current.chatUploadFileList).toEqual([]);
+    expect(toast.error).toHaveBeenCalledWith('upload.validation.largeExcelFileInChat');
+  });
+
+  it('uploadChatFiles should allow large Excel files in agent mode without parsing them', async () => {
+    mockAgentMode({ enableAgentMode: true, heterogeneous: false });
+
+    const { result } = renderHook(() => useStore());
+    const uploadWithProgress = vi.fn().mockResolvedValue({ id: 'file-excel', url: 'http://x/3' });
+    const largeExcel = new File(
+      [new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)],
+      'large.xlsx',
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    );
+
+    act(() => {
+      useStore.setState({
+        chatUploadFileList: [],
+        uploadWithProgress: uploadWithProgress as any,
+      });
+    });
+
+    await act(async () => {
+      await result.current.uploadChatFiles([largeExcel], AGENT_ID);
+    });
+
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(uploadWithProgress).toHaveBeenCalledTimes(1);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
   });
 
   it('uploadChatFiles should allow any file type for heterogeneous agents', async () => {
@@ -168,6 +229,7 @@ describe('useFileStore:chat', () => {
 
     expect(toast.error).not.toHaveBeenCalled();
     expect(uploadWithProgress).toHaveBeenCalledTimes(1);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
   });
 
   it('shows a permission denied description when upload is rejected by RBAC', async () => {

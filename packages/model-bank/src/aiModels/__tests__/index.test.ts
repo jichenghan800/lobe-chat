@@ -150,3 +150,26 @@ describe('Google rolling model aliases', () => {
     expect(flashLiteLatest?.settings?.disabledParams).toEqual(['temperature', 'top_p']);
   });
 });
+
+describe('Gemini native image models', () => {
+  it.each([ModelProvider.Google, ModelProvider.VertexAI])(
+    'exposes the generally available Nano Banana 2 model for %s',
+    (providerId) => {
+      const providerModels = LOBE_DEFAULT_MODEL_LIST.filter(
+        (model) => model.providerId === providerId,
+      );
+
+      expect(providerModels).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'gemini-3.1-flash-image',
+            releasedAt: '2026-05-28',
+          }),
+        ]),
+      );
+      expect(providerModels.some((model) => model.id === 'gemini-3.1-flash-image-preview')).toBe(
+        false,
+      );
+    },
+  );
+});

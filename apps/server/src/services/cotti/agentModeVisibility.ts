@@ -1,16 +1,13 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 
+import type { CottiAgentAccessRuleWithUser } from '@/database/models/cottiAgentAccess';
 import {
   CottiAgentAccessModel,
   normalizeCottiAgentAccessEmailPrefix,
   normalizeCottiAgentAccessValue,
 } from '@/database/models/cottiAgentAccess';
-import type {
-  CottiAgentAccessMode,
-  CottiAgentAccessRuleItem,
-  CottiAgentAccessRuleType,
-} from '@/database/schemas';
+import type { CottiAgentAccessMode, CottiAgentAccessRuleType } from '@/database/schemas';
 import { users } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
 
@@ -30,7 +27,7 @@ export interface CottiAgentModeVisibilitySubject {
 
 export interface CottiAgentModeVisibilityDetail {
   mode: CottiAgentAccessMode;
-  rules: CottiAgentAccessRuleItem[];
+  rules: CottiAgentAccessRuleWithUser[];
   source: CottiAgentModeVisibilitySource;
 }
 

@@ -5,9 +5,22 @@ export interface ModelDisplayItem {
   provider: string;
 }
 
+export interface ModelDisplayModelRef {
+  model: string;
+  provider: string;
+}
+
+export type ModelDisplayScope = 'agent' | 'chat';
+
+export interface ModelDisplayDefaults {
+  agent?: ModelDisplayModelRef;
+  chat?: ModelDisplayModelRef;
+}
+
 export interface ModelDisplayConfig {
   agent: ModelDisplayItem[];
   chat: ModelDisplayItem[];
+  defaults?: ModelDisplayDefaults;
 }
 
 export interface ModelDisplayOption {

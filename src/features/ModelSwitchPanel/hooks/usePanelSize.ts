@@ -1,26 +1,11 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors/systemStatus';
 
-import {
-  FOOTER_HEIGHT,
-  ITEM_HEIGHT,
-  MAX_PANEL_HEIGHT,
-  TOOLBAR_HEIGHT,
-} from '../const';
-
-export const usePanelSize = (enabledListLength: number) => {
+export const usePanelSize = () => {
   const panelWidth = useGlobalStore(systemStatusSelectors.modelSwitchPanelWidth);
   const updateSystemStatus = useGlobalStore((s) => s.updateSystemStatus);
-
-  const panelHeight = useMemo(
-    () =>
-      enabledListLength === 0
-        ? TOOLBAR_HEIGHT + ITEM_HEIGHT['no-provider'] + FOOTER_HEIGHT
-        : MAX_PANEL_HEIGHT,
-    [enabledListLength],
-  );
 
   const handlePanelWidthChange = useCallback(
     (width: number) => {
@@ -29,5 +14,5 @@ export const usePanelSize = (enabledListLength: number) => {
     [updateSystemStatus],
   );
 
-  return { handlePanelWidthChange, panelHeight, panelWidth };
+  return { handlePanelWidthChange, panelWidth };
 };

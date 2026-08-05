@@ -30,6 +30,10 @@ vi.mock('@/server/globalConfig', () => ({
 const config = {
   agent: [{ displayName: '专业模型', enabled: true, model: 'pro-model', provider: 'vertexai' }],
   chat: [{ displayName: '快速模型', enabled: true, model: 'fast-model', provider: 'vertexai' }],
+  defaults: {
+    agent: { model: 'pro-model', provider: 'vertexai' },
+    chat: { model: 'fast-model', provider: 'vertexai' },
+  },
 };
 
 beforeEach(() => {
@@ -127,6 +131,37 @@ describe('cotti.modelDisplay router', () => {
       success: true,
     });
     expect(mocks.updateConfig).toHaveBeenCalledWith(config, 'admin-user');
+  });
+
+  it('accepts a historical payload without defaults when both COTTI defaults are enabled', async () => {
+    mockAdminAccess();
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+    const historicalConfig = {
+      agent: [{ enabled: true, model: 'gemini-3.6-flash', provider: 'vertexai' }],
+      chat: [{ enabled: true, model: 'gemini-3.5-flash-lite', provider: 'vertexai' }],
+    };
+    mocks.updateConfig.mockResolvedValueOnce({ config: historicalConfig });
+
+    await expect(caller.modelDisplay.update(historicalConfig)).resolves.toMatchObject({
+      data: { config: historicalConfig },
+      success: true,
+    });
+  });
+
+  it('rejects a default model that is not enabled in its target list', async () => {
+    mockAdminAccess();
+    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+
+    await expect(
+      caller.modelDisplay.update({
+        ...config,
+        defaults: {
+          ...config.defaults,
+          agent: { model: 'disabled-model', provider: 'vertexai' },
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(mocks.updateConfig).not.toHaveBeenCalled();
   });
 
   it('rejects more than 50 models in either list', async () => {

@@ -1601,6 +1601,8 @@ export default {
   'upload.preview.prepareTasks': 'Preparing chunks...',
   'upload.preview.status.pending': 'Preparing to upload...',
   'upload.preview.status.processing': 'Processing file...',
+  'upload.validation.largeExcelFileInChat':
+    'Large Excel files are not suitable for regular chat: {{files}}. Turn on Agent mode and let the agent analyze the file with tools.',
   'upload.validation.unsupportedFileType':
     'Unsupported file type: {{files}}. Supported images: JPG, PNG, GIF, WebP. Supported documents include PDF, Word, Excel, PowerPoint, Markdown, text, CSV, JSON, and code files.',
   'upload.validation.videoSizeExceeded':

@@ -3,6 +3,7 @@ import { type AiModelForSelect } from 'model-bank';
 import { type ComponentType } from 'react';
 
 import { type EnabledProviderWithModels } from '@/types/aiProvider';
+import type { ModelDisplayScope } from '@/types/modelDisplay';
 
 export type GroupMode = 'byModel' | 'byProvider';
 
@@ -57,6 +58,10 @@ export interface ModelSwitchPanelProps {
    * Current model ID. If not provided, uses currentAgentModel from store.
    */
   model?: string;
+  /**
+   * Optional COTTI model-display scope. Omit it to preserve the complete upstream model list.
+   */
+  modelDisplayScope?: ModelDisplayScope;
   /**
    * Optional row component for generation UIs (e.g. ImageModelItem). Requires `enabledList` + `pricingMode`.
    */

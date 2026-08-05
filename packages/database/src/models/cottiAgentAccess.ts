@@ -34,6 +34,10 @@ export interface CottiAgentAccessUserSuggestion {
   username: null | string;
 }
 
+export interface CottiAgentAccessRuleWithUser extends CottiAgentAccessRuleItem {
+  user: CottiAgentAccessUserSuggestion | null;
+}
+
 export const normalizeCottiAgentAccessValue = (
   type: CottiAgentAccessRuleType,
   value: string | null | undefined,
@@ -124,11 +128,55 @@ export class CottiAgentAccessModel {
     return emailAllowed || userRules.length > 0;
   };
 
-  listRules = async (): Promise<CottiAgentAccessRuleItem[]> => {
-    return this.db
+  listRules = async (): Promise<CottiAgentAccessRuleWithUser[]> => {
+    const rules = await this.db
       .select()
       .from(cottiAgentAccessRules)
       .orderBy(desc(cottiAgentAccessRules.createdAt));
+
+    if (rules.length === 0) return [];
+
+    const emailValues = rules
+      .filter((rule) => rule.type === 'email')
+      .map((rule) => normalizeCottiAgentAccessValue('email', rule.value));
+    const userIdValues = rules.filter((rule) => rule.type === 'userId').map((rule) => rule.value);
+    const userConditions = [
+      emailValues.length > 0 ? inArray(users.email, emailValues) : undefined,
+      emailValues.length > 0 ? inArray(users.normalizedEmail, emailValues) : undefined,
+      userIdValues.length > 0 ? inArray(users.id, userIdValues) : undefined,
+    ].filter((condition) => condition !== undefined);
+
+    const matchedUsers =
+      userConditions.length > 0
+        ? await this.db
+            .select({
+              email: users.email,
+              fullName: users.fullName,
+              id: users.id,
+              normalizedEmail: users.normalizedEmail,
+              role: users.role,
+              username: users.username,
+            })
+            .from(users)
+            .where(or(...userConditions))
+        : [];
+    const usersById = new Map(matchedUsers.map((user) => [user.id, user]));
+    const usersByEmail = new Map<string, CottiAgentAccessUserSuggestion>();
+
+    for (const user of matchedUsers) {
+      for (const email of [user.email, user.normalizedEmail]) {
+        const normalizedEmail = normalizeCottiAgentAccessValue('email', email);
+        if (normalizedEmail) usersByEmail.set(normalizedEmail, user);
+      }
+    }
+
+    return rules.map((rule) => ({
+      ...rule,
+      user:
+        rule.type === 'userId'
+          ? usersById.get(rule.value) || null
+          : usersByEmail.get(normalizeCottiAgentAccessValue('email', rule.value)) || null,
+    }));
   };
 
   setMode = async (

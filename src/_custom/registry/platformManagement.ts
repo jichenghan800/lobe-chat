@@ -9,3 +9,10 @@ export const resolveCottiPlatformAnalyticsEnabled = (raw: string | undefined) =>
 
 export const isCottiPlatformAnalyticsEnabled = () =>
   resolveCottiPlatformAnalyticsEnabled(process.env.NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS);
+
+/**
+ * The historical public flag is kept for deployment compatibility, but it now
+ * gates the complete COTTI platform-management workspace rather than only its
+ * analytics section.
+ */
+export const isCottiPlatformManagementEnabled = isCottiPlatformAnalyticsEnabled;

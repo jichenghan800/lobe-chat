@@ -151,7 +151,7 @@ const vertexaiChatModels: AIChatModelCard[] = [
     enabled: true,
     family: 'gemini',
     generation: 'gemini-3.1',
-    id: 'gemini-3.1-flash-image-preview',
+    id: 'gemini-3.1-flash-image',
     knowledgeCutoff: '2025-01',
     maxOutput: 32_768,
     pricing: {
@@ -163,7 +163,7 @@ const vertexaiChatModels: AIChatModelCard[] = [
         { name: 'textOutput', rate: 3, strategy: 'fixed', unit: 'millionTokens' },
       ],
     },
-    releasedAt: '2026-02-26',
+    releasedAt: '2026-05-28',
     settings: {
       extendParams: ['imageAspectRatio2', 'imageResolution2', 'thinkingLevel4'],
       searchImpl: 'params',

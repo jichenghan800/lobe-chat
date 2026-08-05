@@ -1,5 +1,5 @@
 import { filesPrompts } from '@lobechat/prompts';
-import type { MessageContentPart } from '@lobechat/types';
+import type { ChatFileItem, MessageContentPart } from '@lobechat/types';
 import { imageUrlToBase64 } from '@lobechat/utils/imageToBase64';
 import { parseDataUri } from '@lobechat/utils/uriParser';
 import { isDesktopLocalStaticServerUrl } from '@lobechat/utils/url';
@@ -29,6 +29,18 @@ const log = debug('context-engine:processor:MessageContentProcessor');
 export const VISION_DOWNGRADE_PLACEHOLDER =
   '[image omitted: native vision is not supported. Do not infer or describe the image. If the request depends on it, use an available visual-analysis tool before answering; otherwise state that the image cannot be inspected.]';
 
+const EXCEL_MIME_TYPES = new Set([
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]);
+
+const isExcelFile = (file: { fileType?: string; name?: string }) => {
+  const fileType = file.fileType?.toLowerCase() || '';
+  const extension = file.name?.split('.').pop()?.toLowerCase() || '';
+
+  return extension === 'xls' || extension === 'xlsx' || EXCEL_MIME_TYPES.has(fileType);
+};
+
 /**
  * Deserialize content string to message content parts
  * Returns null if content is not valid JSON array of parts
@@ -51,6 +63,8 @@ export interface FileContextConfig {
   enabled?: boolean;
   /** Whether to include file URLs in file context prompts */
   includeFileUrl?: boolean;
+  /** Whether to omit Excel body content while retaining its downloadable file reference */
+  omitExcelContent?: boolean;
 }
 
 export interface MessageContentConfig {
@@ -228,12 +242,18 @@ export class MessageContentProcessor extends BaseProcessor {
 
     // Add file context (if file context is enabled and has files, images, videos or audios)
     if ((hasFiles || hasImages || hasVideos || hasAudios) && this.config.fileContext?.enabled) {
+      const fileList = this.config.fileContext.omitExcelContent
+        ? message.fileList?.map((file: ChatFileItem) =>
+            isExcelFile(file) ? { ...file, content: undefined } : file,
+          )
+        : message.fileList;
+
       const filesContext = filesPrompts({
         // File access URLs are needed by sandbox/code tools that fetch attachments from text.
         // Call sites can still disable them for environments such as desktop local files.
         addUrl: this.config.fileContext.includeFileUrl ?? true,
         audioList: message.audioList || [],
-        fileList: message.fileList,
+        fileList,
         imageList: message.imageList || [],
         messageId: message.id,
         videoList: message.videoList || [],

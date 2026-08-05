@@ -642,6 +642,72 @@ describe('MessagesEngine', () => {
 
       expect(content[0].text).toContain('url="https://files.example.com/test.txt"');
     });
+
+    it('should omit Excel body content by default in Agent mode', async () => {
+      const params = createBasicParams({
+        enableAgentMode: true,
+        messages: [
+          {
+            content: 'Analyze this workbook',
+            createdAt: Date.now(),
+            fileList: [
+              {
+                content: 'expanded excel markdown that should not be sent',
+                fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                id: 'excel1',
+                name: 'report.xlsx',
+                size: 512_000,
+                url: 'https://files.example.com/report.xlsx',
+              },
+            ],
+            id: 'msg-1',
+            role: 'user',
+            updatedAt: Date.now(),
+          } as UIChatMessage,
+        ],
+      });
+      const engine = new MessagesEngine(params);
+
+      const result = await engine.process();
+      const userMessage = result.messages.find((message) => message.role === 'user');
+      const content = userMessage?.content as any[];
+
+      expect(content[0].text).toContain('name="report.xlsx"');
+      expect(content[0].text).toContain('url="https://files.example.com/report.xlsx"');
+      expect(content[0].text).not.toContain('expanded excel markdown');
+    });
+
+    it('should keep Excel body content in regular Chat mode', async () => {
+      const params = createBasicParams({
+        enableAgentMode: false,
+        messages: [
+          {
+            content: 'Read this workbook directly',
+            createdAt: Date.now(),
+            fileList: [
+              {
+                content: 'small excel markdown for direct chat',
+                fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                id: 'excel1',
+                name: 'report.xlsx',
+                size: 1024,
+                url: 'https://files.example.com/report.xlsx',
+              },
+            ],
+            id: 'msg-1',
+            role: 'user',
+            updatedAt: Date.now(),
+          } as UIChatMessage,
+        ],
+      });
+      const engine = new MessagesEngine(params);
+
+      const result = await engine.process();
+      const userMessage = result.messages.find((message) => message.role === 'user');
+      const content = userMessage?.content as any[];
+
+      expect(content[0].text).toContain('small excel markdown for direct chat');
+    });
   });
 
   describe('tools config', () => {

@@ -213,7 +213,7 @@ export const useCategory = () => {
           {
             icon: ChartNoAxesCombinedIcon,
             key: SettingsTabs.PlatformAnalytics,
-            label: t('tab.platformAnalytics'),
+            label: t('tab.platformManagement'),
           },
         ],
         key: SettingsGroupKey.PlatformManagement,

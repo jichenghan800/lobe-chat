@@ -27,6 +27,14 @@ const rule = {
   note: '完成基础培训',
   type: 'email' as const,
   updatedAt: new Date('2026-08-03T00:00:00.000Z'),
+  user: {
+    email: 'member@example.com',
+    fullName: 'Member',
+    id: 'member-user',
+    normalizedEmail: 'member@example.com',
+    role: null,
+    username: 'member',
+  },
   value: 'member@example.com',
 };
 

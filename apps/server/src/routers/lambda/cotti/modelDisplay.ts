@@ -1,6 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
+import { getModelDisplayDefault } from '@/_custom/registry/modelDisplayConfig';
 import {
   CottiModelDisplayModel,
   getEnabledModelDisplayItems,
@@ -8,7 +9,7 @@ import {
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerGlobalConfig } from '@/server/globalConfig';
-import type { ModelDisplayOption } from '@/types/modelDisplay';
+import type { ModelDisplayOption, ModelDisplayScope } from '@/types/modelDisplay';
 
 import { cottiAdminProcedure } from './procedure';
 
@@ -24,10 +25,33 @@ const modelDisplayItemSchema = z.object({
   provider: z.string().min(1).max(PROVIDER_ID_MAX_LENGTH),
 });
 
-const modelDisplayConfigSchema = z.object({
-  agent: z.array(modelDisplayItemSchema).max(MODEL_ITEMS_MAX_LENGTH),
-  chat: z.array(modelDisplayItemSchema).max(MODEL_ITEMS_MAX_LENGTH),
+const modelDisplayModelRefSchema = z.object({
+  model: z.string().trim().min(1).max(MODEL_ID_MAX_LENGTH),
+  provider: z.string().trim().min(1).max(PROVIDER_ID_MAX_LENGTH),
 });
+
+const modelDisplayConfigSchema = z
+  .object({
+    agent: z.array(modelDisplayItemSchema).max(MODEL_ITEMS_MAX_LENGTH),
+    chat: z.array(modelDisplayItemSchema).max(MODEL_ITEMS_MAX_LENGTH),
+    defaults: z
+      .object({
+        agent: modelDisplayModelRefSchema.optional(),
+        chat: modelDisplayModelRefSchema.optional(),
+      })
+      .optional(),
+  })
+  .superRefine((config, ctx) => {
+    for (const scope of ['agent', 'chat'] as const satisfies ModelDisplayScope[]) {
+      if (getModelDisplayDefault(config, scope)) continue;
+
+      ctx.addIssue({
+        code: 'custom',
+        message: `The ${scope} default model must be enabled in the ${scope} model list`,
+        path: ['defaults', scope],
+      });
+    }
+  });
 
 const toOptionLabel = (provider: string, model: string, displayName?: string) => {
   if (displayName && displayName !== model) return `${displayName} (${provider}/${model})`;

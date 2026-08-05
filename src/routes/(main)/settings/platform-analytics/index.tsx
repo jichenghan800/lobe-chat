@@ -1,1 +1,1 @@
-export { default } from '@/features/CottiPlatformAnalytics';
+export { default } from '@/features/CottiPlatformManagement';

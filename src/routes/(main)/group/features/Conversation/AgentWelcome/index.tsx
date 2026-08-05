@@ -55,7 +55,7 @@ const InboxWelcome = memo(() => {
   const message = useMemo(() => {
     if (openingMessage) return openingMessage;
     return agentSystemRoleMsg;
-  }, [openingMessage, agentSystemRoleMsg, meta.description]);
+  }, [openingMessage, agentSystemRoleMsg]);
 
   const displayTitle = groupMeta.title;
 
@@ -75,7 +75,7 @@ const InboxWelcome = memo(() => {
         </Text>
         <Flexbox width={'min(100%, 640px)'}>
           <Markdown fontSize={fontSize} variant={'chat'}>
-            {isInbox ? t('guide.defaultMessageWithoutCreate', { appName: 'Lobe AI' }) : message}
+            {isInbox ? t('guide.defaultMessageWithoutCreate', { appName: '灵枢AI' }) : message}
           </Markdown>
         </Flexbox>
         {openingQuestions.length > 0 && (

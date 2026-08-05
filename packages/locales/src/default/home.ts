@@ -69,7 +69,7 @@ export default {
   'dashboard.greeting.morning': 'Good morning, {{name}}.',
   'dashboard.greeting.morningGuest': 'Good morning.',
   'dashboard.greeting.subtitle': 'What would you like to work on?',
-  'dashboard.mode.chat': 'Agent',
+  'dashboard.mode.chat': 'Chat',
   'dashboard.mode.task': 'Task',
   'dashboard.modeDesc.task': 'Create a task, start it now, and track its progress',
   'dashboard.placeholder.chat': 'Ask, create, or start a task',
@@ -80,7 +80,7 @@ export default {
   'dashboard.task.empty': 'No tasks yet',
   'dashboard.task.title': 'Tasks',
   'dashboard.task.unsupportedContext':
-    'Task mode does not support attachments or selected context yet. Remove them or switch to Agent mode; your draft has been kept.',
+    'Task mode does not support attachments or selected context yet. Remove them or switch to Chat mode; your draft has been kept.',
   'inbox.author.scheduled': 'Scheduled',
   'inbox.error.title': 'Run failed',
   'inbox.needsYou.title': 'Needs you',

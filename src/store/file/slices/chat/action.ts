@@ -21,7 +21,7 @@ import { sleep } from '@/utils/sleep';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type FileStore } from '../../store';
-import { filterSupportedChatUploadFiles } from './uploadGuard';
+import { filterExcelChatUploadFiles, filterSupportedChatUploadFiles } from './uploadGuard';
 
 const n = setNamespace('chat');
 
@@ -161,18 +161,31 @@ export class FileActionImpl {
     // than the global current agent, because the chat input can be scoped to a different
     // agent than activeAgentId (e.g. another desktop tab). See lobehub/lobehub#15770.
     const agentState = getAgentStoreState();
-    const enforceFileTypeWhitelist =
-      !agentByIdSelectors.getAgentEnableModeById(agentId)(agentState) &&
-      !agentByIdSelectors.isAgentHeterogeneousById(agentId)(agentState);
+    const enableAgentMode = agentByIdSelectors.getAgentEnableModeById(agentId)(agentState);
+    const isHeterogeneousAgent = agentByIdSelectors.isAgentHeterogeneousById(agentId)(agentState);
+    const enforceFileTypeWhitelist = !enableAgentMode && !isHeterogeneousAgent;
 
-    const { supportedFiles, unsupportedFiles } = enforceFileTypeWhitelist
+    const { supportedFiles: typeSupportedFiles, unsupportedFiles } = enforceFileTypeWhitelist
       ? filterSupportedChatUploadFiles(filteredFiles)
       : { supportedFiles: filteredFiles, unsupportedFiles: [] as File[] };
+
+    const { allowedFiles: supportedFiles, excelFilesRequiringAgentMode } = enforceFileTypeWhitelist
+      ? await filterExcelChatUploadFiles(typeSupportedFiles)
+      : { allowedFiles: typeSupportedFiles, excelFilesRequiringAgentMode: [] as File[] };
 
     if (unsupportedFiles.length > 0) {
       toast.error(
         t('upload.validation.unsupportedFileType', {
           files: unsupportedFiles.map((file) => file.name).join(', '),
+          ns: 'chat',
+        }),
+      );
+    }
+
+    if (excelFilesRequiringAgentMode.length > 0) {
+      toast.error(
+        t('upload.validation.largeExcelFileInChat', {
+          files: excelFilesRequiringAgentMode.map((file) => file.name).join(', '),
           ns: 'chat',
         }),
       );
@@ -232,6 +245,10 @@ export class FileActionImpl {
 
       // image don't need to be chunked and embedding
       if (isChunkingUnsupported(file.type)) return;
+
+      // Agent runtimes receive uploaded files as files and should inspect them with tools.
+      // Parsing here would push large document content through the chat/context pipeline.
+      if (enableAgentMode || isHeterogeneousAgent) return;
 
       await ragService.parseFileContent(fileResult.id);
     });

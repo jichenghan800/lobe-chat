@@ -10,6 +10,7 @@ import { topicSelectors } from '@/store/chat/slices/topic/selectors';
 
 import { useAgentId } from '../../hooks/useAgentId';
 import { useAgentModelSelection } from '../../hooks/useAgentModelSelection';
+import { useEffectiveAgentMode } from '../../hooks/useEffectiveAgentMode';
 import { useModelLockTooltip } from '../../hooks/useModelLockTooltip';
 import { useActionBarContext } from '../context';
 
@@ -51,6 +52,7 @@ const ModelSwitch = memo(() => {
   const blockSize = actionSize?.blockSize ?? 32;
   const iconSize = actionSize?.size ?? 20;
   const agentId = useAgentId();
+  const { currentMode } = useEffectiveAgentMode(agentId);
   const {
     canDisplayModel,
     canSelectModel,
@@ -106,6 +108,7 @@ const ModelSwitch = memo(() => {
   return (
     <ModelSwitchPanel
       model={model}
+      modelDisplayScope={currentMode}
       placement={dropdownPlacement}
       provider={provider}
       onModelChange={handleModelChange}

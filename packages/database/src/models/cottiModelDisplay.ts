@@ -1,6 +1,16 @@
 import { eq } from 'drizzle-orm';
 
-import type { ModelDisplayConfig, ModelDisplayItem } from '@/types/modelDisplay';
+import {
+  COTTI_MODEL_DISPLAY_DEFAULTS,
+  getModelDisplayDefault,
+  normalizeModelDisplayRef,
+} from '@/_custom/registry/modelDisplayConfig';
+import type {
+  ModelDisplayConfig,
+  ModelDisplayDefaults,
+  ModelDisplayItem,
+  ModelDisplayScope,
+} from '@/types/modelDisplay';
 
 import type { CottiModelDisplaySettingsItem, NewCottiModelDisplaySettings } from '../schemas';
 import { cottiModelDisplaySettings } from '../schemas';
@@ -37,6 +47,7 @@ export const DEFAULT_COTTI_MODEL_DISPLAY_CONFIG: ModelDisplayConfig = {
     { displayName: 'GPT-5.6 Terra', enabled: true, model: 'gpt-5.6-terra', provider: 'azure' },
     { displayName: 'GPT-5.6 Luna', enabled: true, model: 'gpt-5.6-luna', provider: 'azure' },
   ],
+  defaults: COTTI_MODEL_DISPLAY_DEFAULTS,
 };
 
 const normalizeText = (value: string) => value.trim();
@@ -56,10 +67,24 @@ const normalizeItem = (item: ModelDisplayItem): ModelDisplayItem | undefined => 
   };
 };
 
-export const normalizeModelDisplayConfig = (config: ModelDisplayConfig): ModelDisplayConfig => ({
-  agent: config.agent.map(normalizeItem).filter(Boolean) as ModelDisplayItem[],
-  chat: config.chat.map(normalizeItem).filter(Boolean) as ModelDisplayItem[],
-});
+export const normalizeModelDisplayConfig = (config: ModelDisplayConfig): ModelDisplayConfig => {
+  const normalizedConfig: ModelDisplayConfig = {
+    agent: config.agent.map(normalizeItem).filter(Boolean) as ModelDisplayItem[],
+    chat: config.chat.map(normalizeItem).filter(Boolean) as ModelDisplayItem[],
+    defaults: {
+      agent: normalizeModelDisplayRef(config.defaults?.agent),
+      chat: normalizeModelDisplayRef(config.defaults?.chat),
+    },
+  };
+  const defaults: ModelDisplayDefaults = {};
+
+  for (const scope of ['agent', 'chat'] as const satisfies ModelDisplayScope[]) {
+    const defaultModel = getModelDisplayDefault(normalizedConfig, scope);
+    if (defaultModel) defaults[scope] = defaultModel;
+  }
+
+  return { ...normalizedConfig, defaults };
+};
 
 export const getEnabledModelDisplayItems = (config: ModelDisplayConfig): ModelDisplayItem[] => {
   const seen = new Set<string>();
@@ -86,7 +111,7 @@ export class CottiModelDisplayModel {
   getConfig = async (): Promise<ModelDisplayConfig> => {
     const settings = await this.getSettings();
 
-    return settings?.config || DEFAULT_COTTI_MODEL_DISPLAY_CONFIG;
+    return normalizeModelDisplayConfig(settings?.config || DEFAULT_COTTI_MODEL_DISPLAY_CONFIG);
   };
 
   getSettings = async (): Promise<CottiModelDisplaySettingsItem | undefined> => {

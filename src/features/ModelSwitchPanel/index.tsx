@@ -19,6 +19,7 @@ const ModelSwitchPanel = memo<ModelSwitchPanelProps>(
     children,
     enabledList,
     model: modelProp,
+    modelDisplayScope,
     onModelChange,
     onOpenChange,
     open,
@@ -51,6 +52,7 @@ const ModelSwitchPanel = memo<ModelSwitchPanelProps>(
                   ModelItemComponent={ModelItemComponent}
                   enabledList={enabledList}
                   model={modelProp}
+                  modelDisplayScope={modelDisplayScope}
                   pricingMode={pricingMode}
                   provider={providerProp}
                   onModelChange={onModelChange}

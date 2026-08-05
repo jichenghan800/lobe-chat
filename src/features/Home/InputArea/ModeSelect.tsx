@@ -9,6 +9,7 @@ import { usePermission } from '@/hooks/usePermission';
 
 import type { HomeMode } from '../types';
 import { isHomeModeDisabled, resolvePermittedHomeMode } from './modePermission';
+import { homeModePresentation } from './modePresentation';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   activeOption: css`
@@ -130,6 +131,7 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
     <Flexbox gap={4} role={'menu'} style={{ maxWidth: 320, minWidth: 280 }}>
       {MODES.map(({ icon, key }) => {
         const disabled = isHomeModeDisabled(key, canCreateContent);
+        const presentation = homeModePresentation[key];
 
         return (
           <Button
@@ -153,9 +155,11 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
                 <Icon icon={icon} size={16} />
               </Flexbox>
               <Flexbox className={styles.optionText} flex={1}>
-                <div className={styles.optionTitle}>{t(`dashboard.mode.${key}`)}</div>
+                <div className={styles.optionTitle}>{t(presentation.labelKey)}</div>
                 <div className={styles.optionDesc}>
-                  {key === 'chat' ? tChat('chatMode.agentDesc') : t('dashboard.modeDesc.task')}
+                  {presentation.descriptionNamespace === 'chat'
+                    ? tChat(presentation.descriptionKey)
+                    : t(presentation.descriptionKey)}
                 </div>
               </Flexbox>
             </Flexbox>
@@ -183,7 +187,7 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
     >
       <Button aria-expanded={open} aria-haspopup={'menu'} className={styles.button} type={'text'}>
         <Icon icon={current.icon} size={14} />
-        <span>{t(`dashboard.mode.${value}`)}</span>
+        <span>{t(homeModePresentation[value].labelKey)}</span>
         <Icon icon={ChevronDownIcon} size={12} />
       </Button>
     </Popover>

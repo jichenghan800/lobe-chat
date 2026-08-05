@@ -105,6 +105,42 @@ describe('CottiAgentAccessModel', () => {
     await expect(model.searchUsers('j')).resolves.toEqual([]);
   });
 
+  it('resolves user names for email and user id rules', async () => {
+    await serverDB.insert(users).values([
+      {
+        email: 'jicheng.han.agentaccess.test@cotticoffee.com',
+        fullName: '韩继承',
+        id: testUserIds[0],
+        normalizedEmail: 'jicheng.han.agentaccess.test@cotticoffee.com',
+        username: 'jicheng',
+      },
+      {
+        email: 'other@cotticoffee.com',
+        fullName: '其他用户',
+        id: testUserIds[1],
+        normalizedEmail: 'other@cotticoffee.com',
+      },
+    ]);
+    await model.upsertRule({
+      type: 'email',
+      value: 'jicheng.han.agentaccess.test@cotticoffee.com',
+    });
+    await model.upsertRule({ type: 'userId', value: testUserIds[1] });
+
+    await expect(model.listRules()).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'email',
+          user: expect.objectContaining({ fullName: '韩继承', username: 'jicheng' }),
+        }),
+        expect.objectContaining({
+          type: 'userId',
+          user: expect.objectContaining({ fullName: '其他用户', id: testUserIds[1] }),
+        }),
+      ]),
+    );
+  });
+
   it('updates duplicate rules and ignores disabled rules', async () => {
     const first = await model.upsertRule({
       note: 'old',
