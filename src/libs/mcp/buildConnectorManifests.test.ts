@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import {
+  FEISHU_DOCUMENTS_ALLOWED_TOOLS_HEADER,
+  FEISHU_DOCUMENTS_CONNECTOR_PRESET,
+} from '@/const/connectorPresets';
 import type { DecryptedConnector } from '@/database/models/connector';
 import type { ConnectorCredentials, UserConnectorToolItem } from '@/database/schemas';
 
@@ -71,5 +75,38 @@ describe('buildConnectorManifests mcpParams headers', () => {
 
     expect(params.auth).toEqual({ token: 'tok', type: 'bearer' });
     expect(params.headers).toBeUndefined();
+  });
+
+  it('uses the per-user Feishu token only as the official UAT header', () => {
+    const params = mcpParamsOf({
+      ...httpConnector({ accessToken: 'user-a-uat', type: 'oauth2' }),
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      mcpServerUrl: FEISHU_DOCUMENTS_CONNECTOR_PRESET.mcpServerUrl,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    });
+
+    expect(params.auth).toBeUndefined();
+    expect(params.headers).toEqual({
+      'X-Lark-MCP-Allowed-Tools': FEISHU_DOCUMENTS_ALLOWED_TOOLS_HEADER,
+      'X-Lark-MCP-UAT': 'user-a-uat',
+    });
+  });
+
+  it('normalizes a legacy English Feishu row to the Chinese runtime title', () => {
+    const [manifest] = buildConnectorManifests(
+      [
+        {
+          ...httpConnector({ accessToken: 'user-a-uat', type: 'oauth2' }),
+          identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+          mcpServerUrl: FEISHU_DOCUMENTS_CONNECTOR_PRESET.mcpServerUrl,
+          metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+          name: 'Feishu Documents',
+        },
+      ],
+      [tool()],
+    );
+
+    expect(manifest.identifier).toBe('feishu-documents');
+    expect(manifest.meta?.title).toBe('飞书资料');
   });
 });

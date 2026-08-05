@@ -2,9 +2,12 @@ import { discoverAuthorizationServerMetadata } from '@modelcontextprotocol/sdk/c
 import type { OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js';
 import debug from 'debug';
 
+import { isFeishuDocumentsConnector } from '@/const/connectorPresets';
 import type { ConnectorModel, DecryptedConnector } from '@/database/models/connector';
 import type { ConnectorCredentials } from '@/database/schemas';
+import { authEnv } from '@/envs/auth';
 
+import { refreshFeishuUserAccessToken } from './feishuOAuth';
 import { refreshConnectorToken } from './oauth';
 
 const log = debug('lobe-server:connector:tokens');
@@ -47,6 +50,31 @@ export const ensureFreshConnectorToken = async (
 
   if (!creds || creds.type !== 'oauth2' || !creds.refreshToken) return connector;
   if (creds.expiresAt && creds.expiresAt - EXPIRY_SKEW_MS > Date.now()) return connector;
+  if (isFeishuDocumentsConnector(connector)) {
+    const clientId = authEnv.AUTH_FEISHU_APP_ID;
+    const clientSecret = authEnv.AUTH_FEISHU_APP_SECRET;
+    if (!clientId || !clientSecret) return connector;
+
+    try {
+      const tokens = await refreshFeishuUserAccessToken({
+        clientId,
+        clientSecret,
+        refreshToken: creds.refreshToken,
+      });
+      const { credentials, tokenExpiresAt } = tokensToCredentials(tokens, {
+        fallbackRefreshToken: creds.refreshToken,
+      });
+      await connectorModel.update(connector.id, {
+        credentials: JSON.stringify(credentials),
+        tokenExpiresAt,
+      });
+      return { ...connector, credentials };
+    } catch {
+      log('Feishu UAT refresh failed for connector=%s', connector.id);
+      return connector;
+    }
+  }
+
   if (!oidc?.issuer || !oidc.clientId) return connector;
 
   try {

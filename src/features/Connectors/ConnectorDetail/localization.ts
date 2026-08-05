@@ -1,5 +1,7 @@
 import { type TFunction } from 'i18next';
 
+import { isFeishuDocumentsConnector } from '@/const/connectorPresets';
+
 interface LocalizableConnector {
   identifier: string;
   metadata?: Record<string, unknown> | null;
@@ -29,6 +31,15 @@ export const getLocalizedConnectorDetail = ({
     typeof connector.metadata?.description === 'string'
       ? connector.metadata.description
       : undefined;
+
+  if (isFeishuDocumentsConnector(connector)) {
+    return {
+      description: t('connectorPreset.feishuDocuments.description', {
+        defaultValue: rawDescription || '',
+      }),
+      name: t('connectorPreset.feishuDocuments.title', { defaultValue: connector.name }),
+    };
+  }
 
   if (connector.sourceType === 'builtin') {
     return {

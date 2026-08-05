@@ -554,6 +554,20 @@ export default {
   'inputQueue.sendNow': 'Send now (interrupts current run)',
   'intentUnderstanding.title': 'Understanding your intent...',
   'inviteMembers': 'Invite members',
+  'attachment.addAsKnowledge': 'Add as knowledge',
+  'attachment.addFiles': 'Add files',
+  'attachment.agentModeRequired':
+    'This spreadsheet is ready, but it must be sent in Agent mode so tools can analyze the original file. Switch to Agent mode; if the option is disabled, ask an administrator for access.',
+  'attachment.agentModeRequiredHome':
+    'This spreadsheet is ready but cannot be sent from Home Chat. Open a conversation, switch to Agent mode, then attach or reuse the file.',
+  'attachment.empty': 'No files available',
+  'attachment.fromLibrary': 'Choose from Resources',
+  'attachment.pickerTitle': 'Choose files from Resources',
+  'attachment.resourceUnavailable': 'This file is unavailable. Refresh and try again.',
+  'attachment.searchEmpty': 'No matching files',
+  'attachment.searchPlaceholder': 'Search files',
+  'attachment.selected': 'Added',
+  'attachment.sendWithMessage': 'Send with message',
   'knowledgeBase.all': 'All Content',
   'knowledgeBase.allFiles': 'All Files',
   'knowledgeBase.allLibraries': 'All Libraries',
@@ -1602,7 +1616,7 @@ export default {
   'upload.preview.status.pending': 'Preparing to upload...',
   'upload.preview.status.processing': 'Processing file...',
   'upload.validation.largeExcelFileInChat':
-    'Large Excel files are not suitable for regular chat: {{files}}. Turn on Agent mode and let the agent analyze the file with tools.',
+    'Spreadsheet kept: {{files}}. It is not suitable for expansion in regular Chat; switch to Agent mode before sending.',
   'upload.validation.unsupportedFileType':
     'Unsupported file type: {{files}}. Supported images: JPG, PNG, GIF, WebP. Supported documents include PDF, Word, Excel, PowerPoint, Markdown, text, CSV, JSON, and code files.',
   'upload.validation.videoSizeExceeded':

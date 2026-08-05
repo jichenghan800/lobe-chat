@@ -127,20 +127,19 @@ export const useControls = ({
     ...fileItems,
   ];
 
-  const footer =
-    relatedGroups.length > 0 ? (
-      <button
-        className={cx(styles.viewMore)}
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          openAttachKnowledgeModal();
-        }}
-      >
-        <Icon color={cssVar.colorTextSecondary} icon={LibraryBig} size={14} />
-        <span className={cx(styles.viewMoreLabel)}>{t('knowledgeBase.viewMore')}</span>
-      </button>
-    ) : null;
+  const footer = (
+    <button
+      className={cx(styles.viewMore)}
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        openAttachKnowledgeModal();
+      }}
+    >
+      <Icon color={cssVar.colorTextSecondary} icon={LibraryBig} size={14} />
+      <span className={cx(styles.viewMoreLabel)}>{t('knowledgeBase.viewMore')}</span>
+    </button>
+  );
 
   return { enabledCount, footer, items: relatedGroups } satisfies KnowledgeControls;
 };

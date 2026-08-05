@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { agentService } from '@/services/agent';
+import { ragService } from '@/services/rag';
 import { KnowledgeType } from '@/types/knowledgeBase';
 import { withSWR } from '~test-utils';
 
@@ -21,6 +22,12 @@ vi.mock('@/services/agent', () => ({
     getFilesAndKnowledgeBases: vi.fn(),
     toggleFile: vi.fn(),
     toggleKnowledgeBase: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/rag', () => ({
+  ragService: {
+    createParseFileTask: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -92,6 +99,9 @@ describe('KnowledgeSlice Actions', () => {
         ['file-1', 'file-2'],
         true,
       );
+      expect(ragService.createParseFileTask).toHaveBeenCalledTimes(2);
+      expect(ragService.createParseFileTask).toHaveBeenCalledWith('file-1', true);
+      expect(ragService.createParseFileTask).toHaveBeenCalledWith('file-2', true);
     });
   });
 
@@ -204,6 +214,7 @@ describe('KnowledgeSlice Actions', () => {
       });
 
       expect(agentService.toggleFile).toHaveBeenCalledWith('agent-1', 'file-1', true);
+      expect(ragService.createParseFileTask).toHaveBeenCalledWith('file-1', true);
     });
 
     it('should call toggleFile with open=false', async () => {
@@ -220,6 +231,7 @@ describe('KnowledgeSlice Actions', () => {
       });
 
       expect(agentService.toggleFile).toHaveBeenCalledWith('agent-1', 'file-1', false);
+      expect(ragService.createParseFileTask).not.toHaveBeenCalled();
     });
   });
 

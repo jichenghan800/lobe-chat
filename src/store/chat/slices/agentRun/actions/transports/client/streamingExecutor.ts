@@ -40,6 +40,7 @@ import { aiModelSelectors } from '@/store/aiInfra/selectors';
 import { getAiInfraStoreState } from '@/store/aiInfra/store';
 import { createClientRuntimeExecutors } from '@/store/chat/agents/transports/createClientRuntimeExecutors';
 import { topicSelectors } from '@/store/chat/selectors';
+import { parseSelectedToolsFromEditorData } from '@/store/chat/slices/agentRun/actions/entries/commandBus/parseCommands';
 import { emitClientAgentSignalSourceEvent } from '@/store/chat/slices/agentRun/actions/lifecycle/agentSignalBridge';
 import {
   selectActivatedSkillsFromMessages,
@@ -193,9 +194,13 @@ export class StreamingExecutorActionImpl {
         : resolvedAgentConfig;
 
     const { agentConfig: agentConfigData, plugins: pluginIds } = agentConfig;
-    const selectedToolIds = initialContext?.initialContext?.selectedTools?.map(
-      (tool) => tool.identifier,
-    );
+    const lastUserMessage = messages.findLast((message) => message.role === 'user');
+    const selectedToolIds = [
+      ...(initialContext?.initialContext?.selectedTools?.map((tool) => tool.identifier) ?? []),
+      ...parseSelectedToolsFromEditorData(lastUserMessage?.editorData ?? undefined).map(
+        (tool) => tool.identifier,
+      ),
+    ].filter((identifier, index, identifiers) => identifiers.indexOf(identifier) === index);
 
     if (!agentConfigData || !agentConfigData.model) {
       throw new Error(

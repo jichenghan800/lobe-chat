@@ -56,6 +56,7 @@ interface PendingTaskRun {
 
 export const useSend = (mode: HomeMode = 'chat') => {
   const { t } = useTranslation('home');
+  const { t: tChat } = useTranslation('chat');
   const router = useQueryRoute();
   const activeWorkspaceId = useActiveWorkspaceId();
   const activeWorkspaceSlug = useActiveWorkspaceSlug();
@@ -122,6 +123,11 @@ export const useSend = (mode: HomeMode = 'chat') => {
       if (!canCreateContent) return;
 
       if ((mode === 'task' || !inputActiveMode) && !canUseResource) return;
+
+      if (fileList.some((item) => item.requiresAgentMode)) {
+        antdMessage.error(tChat('attachment.agentModeRequiredHome'));
+        return;
+      }
 
       // Task persistence does not support attachments or context yet. Check
       // this before the empty-message guard so an attachment-only submission
@@ -279,6 +285,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
       canUseResource,
       canCreateContent,
       t,
+      tChat,
     ],
   );
 

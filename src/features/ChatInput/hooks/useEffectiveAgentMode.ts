@@ -89,6 +89,7 @@ export const useEffectiveAgentMode = (agentId: string) => {
     isAgentModeAccessLoading,
     isAgentModeAccessResolved,
     isPreferenceLoading: isAccessLoading || (usesWorkspaceMemberMode && isLoading),
+    requestedAgentModeEnabled: enableAgentMode,
     refreshAgentModeAccess,
     usesWorkspaceMemberMode,
   };

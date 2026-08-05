@@ -1,5 +1,6 @@
 import type { LobeChatDatabase } from '@lobechat/database';
 import type { ChatAudioItem, ChatFileItem, ChatImageItem, ChatVideoItem } from '@lobechat/types';
+import { isSpreadsheetFileNameOrType } from '@lobechat/utils/spreadsheet';
 import debug from 'debug';
 
 import { FileModel } from '@/database/models/file';
@@ -25,6 +26,11 @@ export interface ResolvedAttachments {
 interface ResolveArgs {
   db: LobeChatDatabase;
   fileIds: string[];
+  /**
+   * Keep spreadsheet bodies out of the prompt and expose only file metadata.
+   * Defaults to false so ordinary Chat keeps the upstream direct-read behavior.
+   */
+  metadataOnlySpreadsheets?: boolean;
   userId: string;
   workspaceId?: string;
 }
@@ -34,14 +40,19 @@ const dedupe = (ids: string[]) => Array.from(new Set(ids));
 /**
  * Resolve fileIds into image/video/file lists for the LLM prompt layer.
  *
- * Images and videos return as-is with a signed URL. Non-media files are
+ * Images and videos return as-is with a signed URL. Most non-media files are
  * parsed via `DocumentService.parseFile` (idempotent) so their text content
- * can be injected by `filesPrompts()`. Missing or unparseable files are
- * skipped and reported in `warnings`.
+ * can be injected by `filesPrompts()`. When `metadataOnlySpreadsheets` is set,
+ * spreadsheet attachments stay metadata-only so Agent runtimes can inspect
+ * the original workbook with tools instead of expanding the whole table into
+ * the model context. Ordinary Chat leaves this option off and retains the
+ * upstream direct-read behavior.
+ * Missing or unparseable files are skipped and reported in `warnings`.
  */
 export const resolveAttachmentsByFileIds = async ({
   db,
   fileIds,
+  metadataOnlySpreadsheets = false,
   userId,
   workspaceId,
 }: ResolveArgs): Promise<ResolvedAttachments> => {
@@ -85,6 +96,11 @@ export const resolveAttachmentsByFileIds = async ({
       ) {
         return { file, fileType, id, resolvedUrl };
       }
+
+      if (metadataOnlySpreadsheets && isSpreadsheetFileNameOrType(file.name, fileType)) {
+        return { content: undefined, file, fileType, id, resolvedUrl };
+      }
+
       let content: string | undefined;
       let parseError: unknown;
       try {

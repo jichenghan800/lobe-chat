@@ -96,6 +96,25 @@ describe('getLocalizedConnectorDetail', () => {
     expect(t).not.toHaveBeenCalled();
   });
 
+  it('localizes the managed Feishu Documents preset', () => {
+    const t = createTranslator({
+      'connectorPreset.feishuDocuments.description': '读取飞书资料并新建文档',
+      'connectorPreset.feishuDocuments.title': '飞书资料',
+    });
+
+    const result = getLocalizedConnectorDetail({
+      connector: {
+        identifier: 'feishu-documents',
+        metadata: { presetId: 'feishu_documents' },
+        name: 'Feishu Documents',
+        sourceType: 'custom',
+      },
+      t,
+    });
+
+    expect(result).toEqual({ description: '读取飞书资料并新建文档', name: '飞书资料' });
+  });
+
   it('ignores non-string descriptions', () => {
     const t = createTranslator();
 

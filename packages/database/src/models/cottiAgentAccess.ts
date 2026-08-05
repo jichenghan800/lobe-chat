@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, or } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 
 import type {
   CottiAgentAccessMode,
@@ -207,13 +207,33 @@ export class CottiAgentAccessModel {
     id: string,
     enabled: boolean,
   ): Promise<CottiAgentAccessRuleItem | undefined> => {
-    const [rule] = await this.db
+    const [targetRule] = await this.db
+      .select({
+        id: cottiAgentAccessRules.id,
+        type: cottiAgentAccessRules.type,
+        value: cottiAgentAccessRules.value,
+      })
+      .from(cottiAgentAccessRules)
+      .where(eq(cottiAgentAccessRules.id, id))
+      .limit(1);
+
+    if (!targetRule) return undefined;
+
+    const targetPrefix = normalizeCottiAgentAccessEmailPrefix(targetRule.value);
+    const targetCondition =
+      targetRule.type === 'email' && targetPrefix
+        ? and(
+            eq(cottiAgentAccessRules.type, 'email'),
+            sql`split_part(lower(trim(${cottiAgentAccessRules.value})), '@', 1) = ${targetPrefix}`,
+          )
+        : eq(cottiAgentAccessRules.id, id);
+    const rules = await this.db
       .update(cottiAgentAccessRules)
       .set({ enabled, updatedAt: new Date() })
-      .where(eq(cottiAgentAccessRules.id, id))
+      .where(targetCondition)
       .returning();
 
-    return rule;
+    return rules.find((rule) => rule.id === id);
   };
 
   removeRule = async (id: string): Promise<void> => {

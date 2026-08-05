@@ -8,6 +8,8 @@ import { useChatStore } from '@/store/chat';
 // controls, and the barrel drags in unrelated slice selectors.
 import { topicSelectors } from '@/store/chat/slices/topic/selectors';
 
+import { useChatInputStore } from '../store';
+
 interface ModelAndProvider {
   model: string;
   provider: string;
@@ -24,12 +26,14 @@ interface ModelAndProvider {
  * against the same topic model (see `useAgentModelSelection` composition there).
  */
 export const useEffectiveModel = (agentId: string): ModelAndProvider => {
+  const topicModelScope = useChatInputStore((s) => s.topicModelScope);
   const [agentModel, agentProvider] = useAgentStore((s) => [
     agentByIdSelectors.getAgentModelById(agentId)(s),
     agentByIdSelectors.getAgentModelProviderById(agentId)(s),
   ]);
 
-  const topicModel = useChatStore(topicSelectors.activeTopicModel);
+  const activeTopicModel = useChatStore(topicSelectors.activeTopicModel);
+  const topicModel = topicModelScope ? activeTopicModel : undefined;
 
   return {
     model: topicModel?.model || agentModel,

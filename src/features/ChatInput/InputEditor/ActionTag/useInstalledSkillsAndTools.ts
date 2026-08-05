@@ -1,6 +1,8 @@
 import isEqual from 'fast-deep-equal';
 import { useMemo } from 'react';
 
+import { useServerConfigStore } from '@/store/serverConfig';
+import { serverConfigSelectors } from '@/store/serverConfig/selectors';
 import { useToolStore } from '@/store/tool';
 import {
   agentSkillsSelectors,
@@ -19,6 +21,7 @@ import type { ActionTagData } from './types';
  * Tools:  installedPlugins (excluding skill-type entries), composioServers
  */
 export const useInstalledSkillsAndTools = (): ActionTagData[] => {
+  const isComposioEnabled = useServerConfigStore(serverConfigSelectors.enableComposio);
   const builtinSkills = useToolStore(builtinToolSelectors.installedBuiltinSkills, isEqual);
   const customConnectors = useToolStore(connectorSelectors.customConnectors, isEqual);
   const installedPlugins = useToolStore(pluginSelectors.installedPluginMetaList, isEqual);
@@ -26,6 +29,14 @@ export const useInstalledSkillsAndTools = (): ActionTagData[] => {
   const lobehubSkillServers = useToolStore(lobehubSkillStoreSelectors.getServers, isEqual);
   const marketAgentSkills = useToolStore(agentSkillsSelectors.getMarketAgentSkills, isEqual);
   const userAgentSkills = useToolStore(agentSkillsSelectors.getUserAgentSkills, isEqual);
+  const useFetchUserComposioConnections = useToolStore(
+    (state) => state.useFetchUserComposioConnections,
+  );
+
+  // The @ picker is a standalone entry point and cannot rely on the Tools
+  // popover having mounted first. Load the user's connected Composio services
+  // here so every authorized integration is available as a mention target.
+  useFetchUserComposioConnections(isComposioEnabled);
 
   return useMemo(() => {
     const items: ActionTagData[] = [];

@@ -13,8 +13,8 @@ import {
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useBusinessAgentModeSync } from '@/business/client/hooks/useBusinessAgentMode';
 import { useAgentId } from '@/features/ChatInput/hooks/useAgentId';
+import { useAgentModeAccessSync } from '@/features/ChatInput/hooks/useAgentModeAccessSync';
 import { useChatInputResourceAccess } from '@/features/ChatInput/hooks/useChatInputResourceAccess';
 import { useEffectiveAgentMode } from '@/features/ChatInput/hooks/useEffectiveAgentMode';
 import { useToggleAgentMode } from '@/features/ChatInput/hooks/useToggleAgentMode';
@@ -146,7 +146,6 @@ const AgentMode = memo(() => {
   const { t } = useTranslation('chat');
   const agentId = useAgentId();
   const toggleAgentMode = useToggleAgentMode();
-  useBusinessAgentModeSync(agentId);
   const [open, setOpen] = useState(false);
   const { allowed: canCreateContent, reason } = usePermission('create_content');
   const { canUseResource, isAccessLoading, isGroupContext } = useChatInputResourceAccess();
@@ -161,8 +160,17 @@ const AgentMode = memo(() => {
     isAgentModeUnavailable,
     isPreferenceLoading,
     refreshAgentModeAccess,
+    requestedAgentModeEnabled,
     supportToolUse,
   } = useEffectiveAgentMode(agentId);
+  useAgentModeAccessSync({
+    canEnableAgentMode,
+    isAccessLoading: isAgentModeAccessLoading,
+    isAccessResolved: isAgentModeAccessResolved,
+    isPreferenceLoading,
+    requestedAgentModeEnabled,
+    toggleAgentMode,
+  });
   const disabled = !canCreateContent || !canUseResource;
   const disabledReason = !canCreateContent
     ? reason

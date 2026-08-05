@@ -15,12 +15,7 @@ export interface FileUploadState {
 }
 
 export type FileUploadStatus =
-  | 'pending'
-  | 'uploading'
-  | 'processing'
-  | 'success'
-  | 'error'
-  | 'cancelled';
+  'pending' | 'uploading' | 'processing' | 'success' | 'error' | 'cancelled';
 
 export type FileProcessStatus = 'pending' | 'chunking' | 'embedding' | 'success' | 'error';
 
@@ -48,6 +43,13 @@ export interface UploadFileItem {
    * it will use in the file preview before send the message
    */
   previewUrl?: string;
+  /**
+   * This draft file is intentionally kept visible and uploaded, but must not
+   * be sent through ordinary Chat because expanding it into the prompt can
+   * exceed the context window. Switching the conversation to Agent mode lets
+   * the runtime inspect the original file with tools.
+   */
+  requiresAgentMode?: boolean;
   /**
    * marks a draft entry that references an already-persisted file still backing
    * an existing message (e.g. restored via "restore to input"). Removing such

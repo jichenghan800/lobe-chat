@@ -26,7 +26,7 @@ import { memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useTranslation } from 'react-i18next';
 
 import { message } from '@/components/AntdStaticMethods';
-import { openAttachKnowledgeModal } from '@/features/LibraryModal';
+import { openAttachKnowledgeModal, openSendFilesModal } from '@/features/LibraryModal';
 import { useIsDark } from '@/hooks/useIsDark';
 import { useModelSupportToolUse } from '@/hooks/useModelSupportToolUse';
 import { useVisualMediaUploadAbility } from '@/hooks/useVisualMediaUploadAbility';
@@ -342,6 +342,10 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
     close();
     openAttachKnowledgeModal();
   }, [close]);
+  const handleOpenSendFiles = useCallback(() => {
+    close();
+    openSendFilesModal();
+  }, [close]);
   const {
     enabledCount: knowledgeEnabledCount,
     footer: knowledgeFooter,
@@ -496,9 +500,11 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
                 );
                 return false;
               }
-              close();
               editor?.focus();
-              await upload([file], agentId);
+              // This menu is lazily mounted inside the popup. Closing it before
+              // uploadChatFiles has prepared the draft unmounts the picker and
+              // can drop the selected file without ever showing an attachment.
+              await upload([file], agentId, { onPrepared: close });
               return false;
             }}
           >
@@ -671,38 +677,53 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
         : []),
     ];
 
-    // "Add Attachments..." merges file upload with the knowledge base (libraries / files).
-    // When the knowledge base is disabled there is no submenu, so Upload stays a top-level entry.
-    const attachmentsItems: ActionDropdownMenuItems = enableKnowledgeBase
+    // Message attachments and persistent Agent knowledge are deliberately separate intents.
+    // Files selected here enter the same visible draft list as local uploads; they do not
+    // modify the Agent's long-lived knowledge configuration.
+    const attachmentItems: ActionDropdownMenuItems = enableKnowledgeBase
       ? [
           {
             children: [
               ...uploadItems,
-              ...(canConfigureResource && knowledgeItems.length > 0
-                ? [{ type: 'divider' as const }, ...knowledgeItems]
-                : canConfigureResource
-                  ? [
+              {
+                icon: <Icon icon={LibraryBig} size={20} />,
+                key: 'send-file-from-library',
+                label: t('attachment.fromLibrary'),
+                onClick: handleOpenSendFiles,
+              },
+            ],
+            // Trailing chevron (replaces base-ui's default triangle submenu arrow,
+            // which is hidden via the .lobe-submenu-chevron rule in ActionDropdown).
+            extra: <Icon className="lobe-submenu-chevron" icon={ChevronRight} size={16} />,
+            icon: FileUp,
+            key: 'attachments',
+            label: t('attachment.addFiles'),
+          } as ActionDropdownMenuItems[number],
+        ]
+      : uploadItems;
+
+    const persistentKnowledgeItems: ActionDropdownMenuItems =
+      enableKnowledgeBase && canConfigureResource
+        ? [
+            {
+              children:
+                knowledgeItems.length > 0
+                  ? knowledgeItems
+                  : [
                       {
                         disabled: true,
                         key: 'knowledge-empty',
                         label: t('knowledgeBase.related.empty'),
                       },
-                    ]
-                  : []),
-            ],
-            // Trailing chevron (replaces base-ui's default triangle submenu arrow,
-            // which is hidden via the .lobe-submenu-chevron rule in ActionDropdown).
-            extra: <Icon className="lobe-submenu-chevron" icon={ChevronRight} size={16} />,
-            footer: canConfigureResource ? knowledgeFooter : undefined,
-            icon: LibraryBig,
-            key: 'attachments',
-            label: renderLabelWithCount(
-              t('plus.addAttachments'),
-              canConfigureResource ? knowledgeEnabledCount : 0,
-            ),
-          } as ActionDropdownMenuItems[number],
-        ]
-      : uploadItems;
+                    ],
+              extra: <Icon className="lobe-submenu-chevron" icon={ChevronRight} size={16} />,
+              footer: knowledgeFooter,
+              icon: LibraryBig,
+              key: 'persistent-knowledge',
+              label: renderLabelWithCount(t('attachment.addAsKnowledge'), knowledgeEnabledCount),
+            } as ActionDropdownMenuItems[number],
+          ]
+        : [];
 
     // Before a topic exists there is nothing to persist a goal onto, so the
     // entry *arms* the goal (the next message becomes it); once a topic exists
@@ -727,9 +748,10 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
       : [];
 
     // Grouped with a single divider only between non-empty groups:
-    // [attachments] | [memory · search · skills] | [set goal] | [formatting · gateway · params]
+    // [files · persistent knowledge] | [memory · search · skills] | [set goal] |
+    // [formatting · gateway · params]
     const menuGroups: ActionDropdownMenuItems[] = [
-      attachmentsItems,
+      [...attachmentItems, ...persistentKnowledgeItems],
       coreItems,
       acceptanceItems,
       formatItems,
@@ -752,6 +774,7 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
     enableGatewayMode,
     enableKnowledgeBase,
     handleSelectSearch,
+    handleOpenSendFiles,
     handleToggleGatewayMode,
     handleToggleMemory,
     handleToggleParams,

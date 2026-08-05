@@ -2,11 +2,14 @@ import { discoverAuthorizationServerMetadata } from '@modelcontextprotocol/sdk/c
 import debug from 'debug';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { isFeishuDocumentsConnector } from '@/const/connectorPresets';
 import { ConnectorModel } from '@/database/models/connector';
 import { ConnectorToolModel } from '@/database/models/connectorTool';
 import { serverDB } from '@/database/server';
 import { appEnv } from '@/envs/app';
+import { authEnv } from '@/envs/auth';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { exchangeFeishuAuthorizationCode } from '@/server/services/connector/feishuOAuth';
 import { exchangeConnectorCode } from '@/server/services/connector/oauth';
 import { consumeConnectorOAuthState } from '@/server/services/connector/stateStore';
 import { syncConnectorToolsById } from '@/server/services/connector/sync';
@@ -101,23 +104,39 @@ export const GET = async (req: NextRequest) => {
       return renderResultPage({ error: 'connector_missing_client', success: false });
     }
 
-    const metadata = await discoverAuthorizationServerMetadata(payload.authorizationServerUrl);
-    if (!metadata) {
-      return renderResultPage({ error: 'metadata_discovery_failed', success: false });
+    let tokens;
+    if (isFeishuDocumentsConnector(connector)) {
+      const clientId = authEnv.AUTH_FEISHU_APP_ID;
+      const clientSecret = authEnv.AUTH_FEISHU_APP_SECRET;
+      if (!clientId || !clientSecret || oidc.clientId !== clientId || !oidc.redirectUri) {
+        return renderResultPage({ error: 'feishu_connector_not_configured', success: false });
+      }
+      tokens = await exchangeFeishuAuthorizationCode({
+        authorizationCode: code,
+        clientId,
+        clientSecret,
+        codeVerifier: payload.codeVerifier,
+        redirectUri: oidc.redirectUri,
+      });
+    } else {
+      const metadata = await discoverAuthorizationServerMetadata(payload.authorizationServerUrl);
+      if (!metadata) {
+        return renderResultPage({ error: 'metadata_discovery_failed', success: false });
+      }
+
+      tokens = await exchangeConnectorCode({
+        authorizationCode: code,
+        authorizationServerUrl: payload.authorizationServerUrl,
+        clientInformation: { client_id: oidc.clientId, client_secret: oidc.clientSecret },
+        codeVerifier: payload.codeVerifier,
+        metadata,
+        redirectUri: oidc.redirectUri!,
+        resource: connector.mcpServerUrl ?? undefined,
+      });
     }
 
-    const tokens = await exchangeConnectorCode({
-      authorizationCode: code,
-      authorizationServerUrl: payload.authorizationServerUrl,
-      clientInformation: { client_id: oidc.clientId, client_secret: oidc.clientSecret },
-      codeVerifier: payload.codeVerifier,
-      metadata,
-      redirectUri: oidc.redirectUri!,
-      resource: connector.mcpServerUrl ?? undefined,
-    });
-
     const { credentials, tokenExpiresAt } = tokensToCredentials(tokens, {
-      clientSecret: oidc.clientSecret,
+      clientSecret: isFeishuDocumentsConnector(connector) ? undefined : oidc.clientSecret,
     });
 
     await connectorModel.update(payload.connectorId, {

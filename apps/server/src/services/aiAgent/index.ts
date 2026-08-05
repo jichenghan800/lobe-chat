@@ -75,6 +75,7 @@ import {
   ThreadType,
 } from '@lobechat/types';
 import { nanoid } from '@lobechat/utils';
+import { isSpreadsheetFileNameOrType } from '@lobechat/utils/spreadsheet';
 import { TRPCError } from '@trpc/server';
 import debug from 'debug';
 import type { ModelAbilities } from 'model-bank';
@@ -851,10 +852,12 @@ export class AiAgentService {
   private async resolveRunAttachments({
     attachedFileIds,
     files,
+    metadataOnlySpreadsheets,
     throwIfAborted,
   }: {
     attachedFileIds?: string[];
     files?: InternalExecAgentParams['files'];
+    metadataOnlySpreadsheets: boolean;
     throwIfAborted: (stage: string) => Promise<void>;
   }): Promise<{
     audioList?: ChatAudioItem[];
@@ -919,21 +922,28 @@ export class AiAgentService {
           // the MessageContentProcessor can inject it via filesPrompts(). Mirrors
           // what the web upload path does, ensuring bot-uploaded PDFs / text /
           // JSON / .skill files are actually visible to the LLM (instead of
-          // being silently uploaded but never read).
+          // being silently uploaded but never read). In Agent mode spreadsheets
+          // remain metadata-only so tools inspect the original workbook without
+          // expanding the complete table into the model context.
           let content: string | undefined;
-          try {
-            const document = await documentService.parseFile(result.fileId);
-            content = document.content ?? undefined;
-          } catch (parseError) {
-            log(
-              'execAgent: parseFile failed for %s (fileId=%s): %O',
-              file.name,
-              result.fileId,
-              parseError,
-            );
-            warnings.push(
-              `File "${file.name || 'unknown'}" was uploaded but its contents could not be extracted.`,
-            );
+          const shouldParseContent =
+            !metadataOnlySpreadsheets ||
+            !isSpreadsheetFileNameOrType(file.name ?? '', file.mimeType ?? '');
+          if (shouldParseContent) {
+            try {
+              const document = await documentService.parseFile(result.fileId);
+              content = document.content ?? undefined;
+            } catch (parseError) {
+              log(
+                'execAgent: parseFile failed for %s (fileId=%s): %O',
+                file.name,
+                result.fileId,
+                parseError,
+              );
+              warnings.push(
+                `File "${file.name || 'unknown'}" was uploaded but its contents could not be extracted.`,
+              );
+            }
           }
 
           fileList.push({
@@ -977,6 +987,7 @@ export class AiAgentService {
         const resolved = await resolveAttachmentsByFileIds({
           db: this.db,
           fileIds: attachedFileIds,
+          metadataOnlySpreadsheets,
           userId: this.userId,
           workspaceId: this.workspaceId,
         });
@@ -1780,6 +1791,7 @@ export class AiAgentService {
     const runAttachments = await this.resolveRunAttachments({
       attachedFileIds,
       files,
+      metadataOnlySpreadsheets: isHeteroAgent || agentConfig.chatConfig?.enableAgentMode === true,
       throwIfAborted: throwIfExecutionAborted,
     });
 

@@ -1,4 +1,4 @@
-import { Flexbox } from '@lobehub/ui';
+import { Alert, Flexbox } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { useHomeDailyBrief } from '@/hooks/useHomeDailyBrief';
 import { useInitAgentConfig } from '@/hooks/useInitAgentConfig';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
+import { fileChatSelectors, useFileStore } from '@/store/file';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 
@@ -35,6 +36,7 @@ interface InputAreaProps {
 
 const InputArea = ({ inputValue, mode, onInputValueChange, onModeChange }: InputAreaProps) => {
   const { t } = useTranslation('home');
+  const { t: tChat } = useTranslation('chat');
   const { loading, send, agentId } = useSend(mode);
   // Subscribe to the SWR key so `internal_refreshAgentConfig`'s `mutate(...)`
   // has a listener after toggleFile / toggleKnowledgeBase — otherwise the
@@ -54,6 +56,7 @@ const InputArea = ({ inputValue, mode, onInputValueChange, onModeChange }: Input
   // the banner never see it flash on mount.
   const isStatusInit = useGlobalStore(systemStatusSelectors.isStatusInit);
   const chatInputRef = useRef<HTMLDivElement>(null);
+  const hasAgentModeRequiredFiles = useFileStore(fileChatSelectors.hasAgentModeRequiredFiles);
 
   const showMessengerBanner = mode === 'chat' && isStatusInit && !isMessengerBannerDismissed;
 
@@ -93,6 +96,11 @@ const InputArea = ({ inputValue, mode, onInputValueChange, onModeChange }: Input
 
   return (
     <Flexbox>
+      {mode === 'chat' && hasAgentModeRequiredFiles && (
+        <Flexbox paddingInline={12} style={{ paddingBlockEnd: 8 }}>
+          <Alert title={tChat('attachment.agentModeRequiredHome')} type={'warning'} />
+        </Flexbox>
+      )}
       <Flexbox
         ref={chatInputRef}
         style={{ paddingBottom: showMessengerBanner ? 32 : 0, position: 'relative' }}

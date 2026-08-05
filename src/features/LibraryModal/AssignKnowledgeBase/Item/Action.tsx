@@ -34,22 +34,28 @@ const Actions = memo<ActionsProps>(({ id, type, enabled }) => {
 
   const assignKnowledge = async () => {
     setLoading(true);
-    if (type === KnowledgeType.KnowledgeBase) {
-      await addKnowledgeBasesToAgent(id);
-    } else {
-      await addFilesToAgent([id], true);
+    try {
+      if (type === KnowledgeType.KnowledgeBase) {
+        await addKnowledgeBasesToAgent(id);
+      } else {
+        await addFilesToAgent([id], true);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const removeKnowledge = async () => {
     setLoading(true);
-    if (type === KnowledgeType.KnowledgeBase) {
-      await removeKnowledgeBasesFromAgent(id);
-    } else {
-      await removeFilesFromAgent(id);
+    try {
+      if (type === KnowledgeType.KnowledgeBase) {
+        await removeKnowledgeBasesFromAgent(id);
+      } else {
+        await removeFilesFromAgent(id);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

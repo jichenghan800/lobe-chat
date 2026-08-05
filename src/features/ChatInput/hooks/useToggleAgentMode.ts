@@ -17,6 +17,7 @@ import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/slices/topic/selectors';
 import { useUserStore } from '@/store/user';
 
+import { useChatInputStore } from '../store';
 import { useAgentId } from './useAgentId';
 import { useAgentModelSelection } from './useAgentModelSelection';
 import { useUpdateAgentConfig } from './useUpdateAgentConfig';
@@ -43,10 +44,12 @@ export const useToggleAgentMode = () => {
   } = useAgentModelSelection(agentId);
   const activeTopicId = useChatStore((s) => s.activeTopicId);
   const activeTopicModel = useChatStore(topicSelectors.activeTopicModel);
+  const topicModelScope = useChatInputStore((s) => s.topicModelScope);
   const updateTopicModel = useChatStore((s) => s.updateTopicModel);
-  const currentModel = activeTopicModel?.model
-    ? activeTopicModel
-    : { model: selectedModel, provider: selectedProvider };
+  const currentModel =
+    topicModelScope && activeTopicModel?.model
+      ? activeTopicModel
+      : { model: selectedModel, provider: selectedProvider };
   const agent = useAgentStore(agentByIdSelectors.getAgentById(agentId));
   const { canManageAgent, isAccessLoading } = useAgentManagementAccess(agentId);
   const usesWorkspaceMemberMode =
@@ -88,7 +91,7 @@ export const useToggleAgentMode = () => {
       if (!isSameModelDisplayRef(currentModel, targetModel)) {
         if (!canSelectModel) return;
 
-        if (activeTopicId) await updateTopicModel(activeTopicId, targetModel);
+        if (topicModelScope && activeTopicId) await updateTopicModel(activeTopicId, targetModel);
         else await selectModel(targetModel);
       }
 
@@ -116,6 +119,7 @@ export const useToggleAgentMode = () => {
       updateTopicModel,
       updateWorkspaceUserPreference,
       usesWorkspaceMemberMode,
+      topicModelScope,
     ],
   );
 };

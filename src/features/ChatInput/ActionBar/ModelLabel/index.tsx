@@ -12,6 +12,7 @@ import { useAgentId } from '../../hooks/useAgentId';
 import { useAgentModelSelection } from '../../hooks/useAgentModelSelection';
 import { useEffectiveAgentMode } from '../../hooks/useEffectiveAgentMode';
 import { useModelLockTooltip } from '../../hooks/useModelLockTooltip';
+import { useChatInputStore } from '../../store';
 import { useActionBarContext } from '../context';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
@@ -49,6 +50,10 @@ const ModelLabel = memo(() => {
   const { dropdownPlacement } = useActionBarContext();
   const agentId = useAgentId();
   const { currentMode } = useEffectiveAgentMode(agentId);
+  const [modelDisplayScope, topicModelScope] = useChatInputStore((s) => [
+    s.modelDisplayScope,
+    s.topicModelScope,
+  ]);
   const {
     canDisplayModel,
     canSelectModel,
@@ -64,8 +69,9 @@ const ModelLabel = memo(() => {
   const activeTopicId = useChatStore((s) => s.activeTopicId);
   const topicModel = useChatStore(topicSelectors.activeTopicModel);
   const updateTopicModel = useChatStore((s) => s.updateTopicModel);
-  const model = topicModel?.model ?? agentModel;
-  const provider = topicModel?.model ? topicModel.provider : agentProvider;
+  const scopedTopicModel = topicModelScope ? topicModel : undefined;
+  const model = scopedTopicModel?.model ?? agentModel;
+  const provider = scopedTopicModel?.model ? scopedTopicModel.provider : agentProvider;
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
   const displayName = enabledModel?.displayName || model;
@@ -75,10 +81,10 @@ const ModelLabel = memo(() => {
     async (params: { model: string; provider: string }) => {
       if (!canSelectModel) return;
 
-      if (activeTopicId) await updateTopicModel(activeTopicId, params);
+      if (topicModelScope && activeTopicId) await updateTopicModel(activeTopicId, params);
       else await selectModel(params);
     },
-    [activeTopicId, canSelectModel, selectModel, updateTopicModel],
+    [activeTopicId, canSelectModel, selectModel, topicModelScope, updateTopicModel],
   );
 
   const trigger = (
@@ -105,7 +111,7 @@ const ModelLabel = memo(() => {
   return (
     <ModelSwitchPanel
       model={model}
-      modelDisplayScope={currentMode}
+      modelDisplayScope={modelDisplayScope ?? currentMode}
       openOnHover={false}
       placement={dropdownPlacement}
       provider={provider}

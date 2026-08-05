@@ -1,5 +1,6 @@
 import { isLocalOrPrivateUrl } from '@lobechat/utils';
 
+import { isFeishuDocumentsConnector, isFeishuDocumentsToolAllowed } from '@/const/connectorPresets';
 import { ConnectorMcpConnectionType, ConnectorToolPermission } from '@/database/schemas';
 import { deviceGateway } from '@/server/services/deviceGateway';
 import { mcpService } from '@/server/services/mcp';
@@ -41,6 +42,9 @@ export const callConnectorToolById = async (
   }
   if (!connector.isEnabled) {
     throw new ConnectorToolCallError('FORBIDDEN', 'Connector is disabled');
+  }
+  if (isFeishuDocumentsConnector(connector) && !isFeishuDocumentsToolAllowed(params.toolName)) {
+    throw new ConnectorToolCallError('FORBIDDEN', 'This Feishu connector is read-only');
   }
 
   // The tool MUST be present in the synced list — this is the single source of

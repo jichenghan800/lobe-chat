@@ -127,6 +127,19 @@ export class ConnectorActionImpl {
     }
   };
 
+  createConnectorPreset = async (
+    presetId: Parameters<typeof lambdaClient.connector.createPreset.mutate>[0]['presetId'],
+  ): Promise<{ id: string; isNew: boolean }> => {
+    this.#set({ connectorCreating: true }, false, 'createConnectorPreset/start');
+    try {
+      const created = await lambdaClient.connector.createPreset.mutate({ presetId });
+      await this.fetchConnectors();
+      return created;
+    } finally {
+      this.#set({ connectorCreating: false }, false, 'createConnectorPreset/end');
+    }
+  };
+
   /**
    * Begin the OAuth authorization-code flow for a custom connector and return
    * the authorize URL for the caller to open in a popup. Resolves the client

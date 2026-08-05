@@ -12,7 +12,7 @@ import { message } from '@/components/AntdStaticMethods';
 import FileIcon from '@/components/FileIcon';
 import RepoIcon from '@/components/LibIcon';
 import TipGuide from '@/components/TipGuide';
-import { openAttachKnowledgeModal } from '@/features/LibraryModal';
+import { openAttachKnowledgeModal, openSendFilesModal } from '@/features/LibraryModal';
 import { usePermission } from '@/hooks/usePermission';
 import { useVisualMediaUploadAbility } from '@/hooks/useVisualMediaUploadAbility';
 import { useAgentStore } from '@/store/agent';
@@ -207,6 +207,15 @@ const FileUpload = memo(() => {
         </Upload>
       ),
     },
+    {
+      icon: <Icon icon={LibraryBig} size={MENU_ICON_SIZE} />,
+      key: 'send-file-from-library',
+      label: t('attachment.fromLibrary'),
+      onClick: () => {
+        setDropdownOpen(false);
+        openSendFilesModal();
+      },
+    },
   ];
 
   const knowledgeItems: ItemType[] = [];
@@ -252,7 +261,7 @@ const FileUpload = memo(() => {
         })),
       ],
       key: 'relativeFilesOrLibraries',
-      label: t('knowledgeBase.relativeFilesOrLibraries'),
+      label: t('attachment.addAsKnowledge'),
       type: 'group',
     });
   }

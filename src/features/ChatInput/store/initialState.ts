@@ -64,6 +64,8 @@ export interface PublicState {
   leftActions: ActionKeys[];
   mentionItems?: SlashOptions['items'];
   mobile?: boolean;
+  /** Force the model catalog to one mode instead of deriving it from the Agent config. */
+  modelDisplayScope?: 'agent' | 'chat';
   onMarkdownContentChange?: (content: string) => void;
   onSend?: SendButtonHandler;
   rightActions: ActionKeys[];
@@ -74,6 +76,8 @@ export interface PublicState {
    * Slash menu placement: 'bottom' for home page (input in center), 'top' for page input (at bottom)
    */
   slashPlacement?: SlashPlacement;
+  /** Whether model controls may inherit the globally active topic's pinned model. */
+  topicModelScope: boolean;
 }
 
 export interface State extends PublicState {
@@ -97,4 +101,5 @@ export const initialState: State = {
   rightActions: [],
   slashMenuRef: { current: null },
   slashPlacement: 'top',
+  topicModelScope: true,
 };

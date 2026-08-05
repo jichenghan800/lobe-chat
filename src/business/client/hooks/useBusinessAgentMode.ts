@@ -1,7 +1,9 @@
-import { useClientDataSWR } from '@/libs/swr';
+import { mutate, useClientDataSWR } from '@/libs/swr';
 import { cottiAgentAccessService } from '@/services/cottiAgentAccess';
 
-const COTTI_AGENT_MODE_VISIBILITY_KEY = 'COTTI_AGENT_MODE_VISIBILITY';
+export const COTTI_AGENT_MODE_VISIBILITY_KEY = 'COTTI_AGENT_MODE_VISIBILITY';
+
+export const refreshBusinessAgentModeVisibility = () => mutate(COTTI_AGENT_MODE_VISIBILITY_KEY);
 
 export interface BusinessModelModeConfig {
   chatConfig?: {
@@ -16,15 +18,21 @@ export const useBusinessModelModeConfig = () => {
 };
 
 export const useBusinessAgentModeVisibility = () => {
-  const { data, error, isLoading, mutate } = useClientDataSWR(COTTI_AGENT_MODE_VISIBILITY_KEY, () =>
-    cottiAgentAccessService.getStatus(),
-  );
+  const {
+    data,
+    error,
+    isLoading,
+    mutate: refresh,
+  } = useClientDataSWR(COTTI_AGENT_MODE_VISIBILITY_KEY, () => cottiAgentAccessService.getStatus(), {
+    refreshInterval: 30_000,
+    revalidateOnFocus: true,
+  });
 
   return {
     error,
     isLoading: isLoading && data === undefined,
     isResolved: data !== undefined,
-    mutate,
+    mutate: refresh,
     visible: data?.visible ?? false,
   };
 };

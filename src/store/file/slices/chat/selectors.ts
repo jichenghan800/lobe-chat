@@ -8,6 +8,8 @@ const isImageUploading = (s: FilesStoreState) => s.uploadingIds.length > 0;
 
 const chatRawFileList = (s: FilesStoreState) => s.chatUploadFileList.map((item) => item.file);
 const chatUploadFileListHasItem = (s: FilesStoreState) => s.chatUploadFileList.length > 0;
+const hasAgentModeRequiredFiles = (s: FilesStoreState) =>
+  s.chatUploadFileList.some((item) => item.requiresAgentMode);
 const chatContextSelectionHasItem = (s: FilesStoreState) => s.chatContextSelections.length > 0;
 
 const isUploadingFiles = (s: FilesStoreState) =>
@@ -30,5 +32,6 @@ export const fileChatSelectors = {
   chatRawFileList,
   chatUploadFileList,
   chatUploadFileListHasItem,
+  hasAgentModeRequiredFiles,
   isUploadingFiles,
 };

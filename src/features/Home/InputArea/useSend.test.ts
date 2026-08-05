@@ -398,6 +398,26 @@ describe('Home InputArea useSend', () => {
     expect(routerMock.push).toHaveBeenCalledWith('/agent/agt_custom');
   });
 
+  it('keeps an Agent-only spreadsheet draft on Home instead of sending it through Chat', async () => {
+    fileState.chatUploadFileList = [
+      { id: 'file-sheet', requiresAgentMode: true, status: 'success' },
+    ] as any;
+    const { result } = renderHook(() => useSend('chat'));
+
+    await act(async () => {
+      await result.current.send({
+        clearContent: vi.fn(),
+        editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+        getEditorData: () => undefined,
+        getMarkdownContent: () => 'analyze this workbook',
+      });
+    });
+
+    expect(sendMessageMock).not.toHaveBeenCalled();
+    expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+    expect(messageErrorMock).toHaveBeenCalledWith('attachment.agentModeRequiredHome');
+  });
+
   it('captures the active workspace slug in default homepage sends', async () => {
     activeWorkspaceSlugMock.value = 'team';
     const { result } = renderHook(() => useSend());

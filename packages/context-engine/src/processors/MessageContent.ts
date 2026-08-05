@@ -1,6 +1,7 @@
 import { filesPrompts } from '@lobechat/prompts';
 import type { ChatFileItem, MessageContentPart } from '@lobechat/types';
 import { imageUrlToBase64 } from '@lobechat/utils/imageToBase64';
+import { isSpreadsheetFileNameOrType } from '@lobechat/utils/spreadsheet';
 import { parseDataUri } from '@lobechat/utils/uriParser';
 import { isDesktopLocalStaticServerUrl } from '@lobechat/utils/url';
 import debug from 'debug';
@@ -29,18 +30,6 @@ const log = debug('context-engine:processor:MessageContentProcessor');
 export const VISION_DOWNGRADE_PLACEHOLDER =
   '[image omitted: native vision is not supported. Do not infer or describe the image. If the request depends on it, use an available visual-analysis tool before answering; otherwise state that the image cannot be inspected.]';
 
-const EXCEL_MIME_TYPES = new Set([
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-]);
-
-const isExcelFile = (file: { fileType?: string; name?: string }) => {
-  const fileType = file.fileType?.toLowerCase() || '';
-  const extension = file.name?.split('.').pop()?.toLowerCase() || '';
-
-  return extension === 'xls' || extension === 'xlsx' || EXCEL_MIME_TYPES.has(fileType);
-};
-
 /**
  * Deserialize content string to message content parts
  * Returns null if content is not valid JSON array of parts
@@ -63,8 +52,8 @@ export interface FileContextConfig {
   enabled?: boolean;
   /** Whether to include file URLs in file context prompts */
   includeFileUrl?: boolean;
-  /** Whether to omit Excel body content while retaining its downloadable file reference */
-  omitExcelContent?: boolean;
+  /** Whether to omit spreadsheet body content while retaining its downloadable file reference */
+  omitSpreadsheetContent?: boolean;
 }
 
 export interface MessageContentConfig {
@@ -242,9 +231,11 @@ export class MessageContentProcessor extends BaseProcessor {
 
     // Add file context (if file context is enabled and has files, images, videos or audios)
     if ((hasFiles || hasImages || hasVideos || hasAudios) && this.config.fileContext?.enabled) {
-      const fileList = this.config.fileContext.omitExcelContent
+      const fileList = this.config.fileContext.omitSpreadsheetContent
         ? message.fileList?.map((file: ChatFileItem) =>
-            isExcelFile(file) ? { ...file, content: undefined } : file,
+            isSpreadsheetFileNameOrType(file.name, file.fileType)
+              ? { ...file, content: undefined }
+              : file,
           )
         : message.fileList;
 

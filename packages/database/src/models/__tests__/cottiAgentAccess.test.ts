@@ -161,4 +161,27 @@ describe('CottiAgentAccessModel', () => {
     expect(second.note).toBe('new');
     await expect(model.isSubjectAllowed({ email: 'user@cotti.com' })).resolves.toBe(true);
   });
+
+  it('toggles all email aliases that resolve to the same mailbox prefix', async () => {
+    const primary = await model.upsertRule({
+      type: 'email',
+      value: 'jicheng.han@cotticoffee.com',
+    });
+    await model.upsertRule({
+      type: 'email',
+      value: 'jicheng.han@abite.com',
+    });
+
+    await model.setRuleEnabled(primary.id, false);
+
+    const disabledAliases = (await model.listRules()).filter(
+      (rule) => normalizeCottiAgentAccessEmailPrefix(rule.value) === 'jicheng.han',
+    );
+    expect(disabledAliases).toHaveLength(2);
+    expect(disabledAliases.every((rule) => !rule.enabled)).toBe(true);
+    await expect(model.isSubjectAllowed({ email: 'jicheng.han@cotticoffee.com' })).resolves.toBe(
+      false,
+    );
+    await expect(model.isSubjectAllowed({ email: 'jicheng.han@abite.com' })).resolves.toBe(false);
+  });
 });

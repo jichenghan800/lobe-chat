@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { exchangeFeishuAuthorizationCode } from '@/server/services/connector/feishuOAuth';
+
 import { GET } from './route';
 
 const { mockConsume, mockFindById, mockSync, mockUpdate } = vi.hoisted(() => ({
@@ -11,6 +13,9 @@ const { mockConsume, mockFindById, mockSync, mockUpdate } = vi.hoisted(() => ({
 
 vi.mock('@/database/server', () => ({ serverDB: {} }));
 vi.mock('@/envs/app', () => ({ appEnv: { APP_URL: 'https://app.example.com' } }));
+vi.mock('@/envs/auth', () => ({
+  authEnv: { AUTH_FEISHU_APP_ID: 'cli_app', AUTH_FEISHU_APP_SECRET: 'app-secret' },
+}));
 vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: { initWithEnvKey: vi.fn().mockResolvedValue({}) },
 }));
@@ -22,10 +27,17 @@ vi.mock('@modelcontextprotocol/sdk/client/auth.js', () => ({
 vi.mock('@/server/services/connector/oauth', () => ({
   exchangeConnectorCode: vi.fn().mockResolvedValue({ access_token: 'tok' }),
 }));
+vi.mock('@/server/services/connector/feishuOAuth', () => ({
+  exchangeFeishuAuthorizationCode: vi.fn().mockResolvedValue({
+    access_token: 'feishu-uat',
+    refresh_token: 'feishu-refresh',
+  }),
+}));
 vi.mock('@/server/services/connector/tokens', () => ({
-  tokensToCredentials: vi
-    .fn()
-    .mockReturnValue({ credentials: { accessToken: 'tok', type: 'oauth2' }, tokenExpiresAt: null }),
+  tokensToCredentials: vi.fn((tokens: { access_token: string }) => ({
+    credentials: { accessToken: tokens.access_token, type: 'oauth2' },
+    tokenExpiresAt: null,
+  })),
 }));
 vi.mock('@/server/services/connector/stateStore', () => ({
   consumeConnectorOAuthState: mockConsume,
@@ -79,5 +91,35 @@ describe('connector OAuth callback', () => {
 
     expect(body).toContain('"success":true');
     expect(body).toContain('"synced":true');
+  });
+
+  it('uses standard Feishu OAuth and stores the token only on the user connector', async () => {
+    mockFindById.mockResolvedValue({
+      id: 'c1',
+      identifier: 'feishu-documents',
+      mcpServerUrl: 'https://mcp.feishu.cn/mcp',
+      metadata: { presetId: 'feishu_documents' },
+      oidcConfig: {
+        clientId: 'cli_app',
+        redirectUri: 'https://app.example.com/oauth/connector/callback',
+      },
+    });
+    mockSync.mockResolvedValue({ toolCount: 4 });
+
+    const body = await (await GET(makeReq())).text();
+
+    expect(body).toContain('"success":true');
+    expect(exchangeFeishuAuthorizationCode).toHaveBeenCalledWith({
+      authorizationCode: 'abc',
+      clientId: 'cli_app',
+      clientSecret: 'app-secret',
+      codeVerifier: 'v',
+      redirectUri: 'https://app.example.com/oauth/connector/callback',
+    });
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockUpdate).toHaveBeenCalledWith(
+      'c1',
+      expect.objectContaining({ credentials: expect.stringContaining('feishu-uat') }),
+    );
   });
 });

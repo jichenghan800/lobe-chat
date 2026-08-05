@@ -23,6 +23,16 @@ const n = setNamespace('composioStore');
 
 const VALID_COMPOSIO_IDENTIFIERS = new Set(COMPOSIO_APP_TYPES.map((t) => t.identifier));
 
+/**
+ * Reconcile the canonical personal connection list returned by the server while
+ * preserving agent-scoped connections, which are stored outside the legacy
+ * personal plugin projection queried by useFetchUserComposioConnections.
+ */
+export const reconcileComposioServers = (
+  current: ComposioServer[],
+  personal: ComposioServer[],
+): ComposioServer[] => [...personal, ...current.filter((server) => !!server.agentId)];
+
 type Setter = StoreSetter<ToolStore>;
 export const createComposioStoreSlice = (set: Setter, get: () => ToolStore, _api?: unknown) =>
   new ComposioStoreActionImpl(set, get, _api);
@@ -361,11 +371,11 @@ export class ComposioStoreActionImpl {
         onSuccess: (data) => {
           this.#set(
             produce((draft: ComposioStoreState) => {
-              if (data.length > 0) {
-                const existingIdentifiers = new Set(draft.composioServers.map((s) => s.identifier));
-                const newServers = data.filter((s) => !existingIdentifiers.has(s.identifier));
-                draft.composioServers = [...draft.composioServers, ...newServers];
-              }
+              // Server data is canonical for personal connections. Replace
+              // matching PENDING/stale rows with their ACTIVE representation,
+              // and clear personal rows removed remotely. Agent-scoped rows are
+              // not returned by this endpoint and must remain untouched.
+              draft.composioServers = reconcileComposioServers(draft.composioServers, data);
               draft.isComposioServersInit = true;
             }),
             false,

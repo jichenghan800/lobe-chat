@@ -13,6 +13,7 @@ import {
 } from '@/business/client/hooks/useBusinessChatInputSendAreaPrefix';
 import type { ActionKeys, ChatInputFeature } from '@/features/ChatInput';
 import { ChatInputProvider, DesktopChatInput } from '@/features/ChatInput';
+import { useEffectiveAgentMode } from '@/features/ChatInput/hooks/useEffectiveAgentMode';
 import {
   type SendButtonHandler,
   type SendButtonProps,
@@ -191,6 +192,7 @@ const ChatInput = memo<ChatInputProps>(
       s.sendMessage,
       s.stopGenerating,
     ]);
+    const { isAgentRuntimeMode } = useEffectiveAgentMode(agentId || '');
     const [enableHistoryCount, historyCount] = useAgentStore((s) => [
       chatConfigByIdSelectors.getEnableHistoryCountById(agentId || '')(s),
       chatConfigByIdSelectors.getHistoryCountById(agentId || '')(s),
@@ -257,6 +259,7 @@ const ChatInput = memo<ChatInputProps>(
     const fileList = useFileStore(fileChatSelectors.chatUploadFileList);
     const contextList = useFileStore(fileChatSelectors.chatContextSelections);
     const isUploadingFiles = useFileStore(fileChatSelectors.isUploadingFiles);
+    const hasAgentModeRequiredFiles = useFileStore(fileChatSelectors.hasAgentModeRequiredFiles);
 
     // Queue state
     const hasQueuedMessages = useChatStore(
@@ -292,7 +295,11 @@ const ChatInput = memo<ChatInputProps>(
     // When disableQueue is set (e.g. onboarding), block sending while loading.
     // disableSend hard-blocks regardless of content (host surface is read-only).
     const disabled =
-      isInputEmpty || isUploadingFiles || (!!disableQueue && isInputQueueBlocked) || !!disableSend;
+      isInputEmpty ||
+      isUploadingFiles ||
+      (hasAgentModeRequiredFiles && !isAgentRuntimeMode) ||
+      (!!disableQueue && isInputQueueBlocked) ||
+      !!disableSend;
     const shouldUsePlainSendButton = !showSendMenu && !!sendMenu;
     const businessAlerts = useBusinessChatInputAlerts();
     const businessSendAreaPrefix = getBusinessChatInputSendAreaPrefix(sendAreaPrefix);
@@ -311,6 +318,7 @@ const ChatInput = memo<ChatInputProps>(
         const currentContextList = fileChatSelectors.chatContextSelections(fileStore);
 
         if (currentIsUploading) return;
+        if (!isAgentRuntimeMode && currentFileList.some((item) => item.requiresAgentMode)) return;
 
         // Onboarding-style surfaces opt out of message queuing — pressing Enter
         // while the agent is streaming should be a no-op rather than enqueue.
@@ -359,7 +367,7 @@ const ChatInput = memo<ChatInputProps>(
           pageSelections,
         });
       },
-      [sendMessage, storeApi, disableQueue, disableSend, isInputQueueBlocked],
+      [sendMessage, storeApi, disableQueue, disableSend, isAgentRuntimeMode, isInputQueueBlocked],
     );
 
     const sendButtonProps: SendButtonProps = {
@@ -391,6 +399,11 @@ const ChatInput = memo<ChatInputProps>(
             </Flexbox>
           )}
           {businessAlerts}
+          {hasAgentModeRequiredFiles && !isAgentRuntimeMode && (
+            <Flexbox paddingBlock={'0 6px'} paddingInline={12}>
+              <Alert title={t('attachment.agentModeRequired')} type={'warning'} />
+            </Flexbox>
+          )}
           <Flexbox
             paddingInline={12}
             ref={overlayRef}

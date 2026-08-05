@@ -19,6 +19,7 @@ export const ChatInputProvider = memo<ChatInputProviderProps>(
     draftKey,
     feature = DEFAULT_CHAT_INPUT_FEATURE,
     leftActions,
+    modelDisplayScope,
     rightActions,
     mobile,
     sendButtonProps,
@@ -29,6 +30,7 @@ export const ChatInputProvider = memo<ChatInputProviderProps>(
     mentionItems,
     allowExpand = true,
     slashPlacement,
+    topicModelScope = true,
     getMessages,
   }) => {
     const editor = useEditor();
@@ -45,12 +47,14 @@ export const ChatInputProvider = memo<ChatInputProviderProps>(
             feature,
             leftActions,
             mentionItems,
+            modelDisplayScope,
             mobile,
             rightActions,
             sendButtonProps,
             sendMenu,
             slashMenuRef,
             slashPlacement,
+            topicModelScope,
           })
         }
       >
@@ -65,10 +69,12 @@ export const ChatInputProvider = memo<ChatInputProviderProps>(
           leftActions={leftActions}
           mentionItems={mentionItems}
           mobile={mobile}
+          modelDisplayScope={modelDisplayScope}
           rightActions={rightActions}
           sendButtonProps={sendButtonProps}
           sendMenu={sendMenu}
           slashPlacement={slashPlacement}
+          topicModelScope={topicModelScope}
           onMarkdownContentChange={onMarkdownContentChange}
           onSend={onSend}
         />

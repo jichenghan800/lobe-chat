@@ -1326,6 +1326,70 @@ describe('StreamingExecutor actions', () => {
       );
     });
 
+    it('should enable a tool selected from the latest user message editor data', () => {
+      act(() => {
+        useChatStore.setState({ executeClientAgent: realExecAgentRuntime });
+      });
+
+      const userMessage = {
+        createdAt: Date.now(),
+        id: TEST_IDS.USER_MESSAGE_ID,
+        role: 'user',
+        content: '<tool name="feishu-documents" label="飞书资料" />Search my docs',
+        editorData: {
+          root: {
+            children: [
+              {
+                children: [
+                  {
+                    actionCategory: 'tool',
+                    actionLabel: '飞书资料',
+                    actionType: 'feishu-documents',
+                    type: 'action-tag',
+                  },
+                ],
+                type: 'paragraph',
+              },
+            ],
+            type: 'root',
+          },
+        },
+        sessionId: TEST_IDS.SESSION_ID,
+        topicId: TEST_IDS.TOPIC_ID,
+        updatedAt: Date.now(),
+      } as UIChatMessage;
+
+      const generateToolsDetailed = vi.fn().mockReturnValue({
+        enabledManifests: [],
+        enabledToolIds: ['feishu-documents'],
+        tools: [],
+      });
+
+      vi.spyOn(agentConfigResolver, 'resolveAgentConfig').mockReturnValue({
+        agentConfig: createMockAgentConfig(),
+        chatConfig: createMockChatConfig(),
+        isBuiltinAgent: false,
+        plugins: ['lobe-artifacts'],
+      });
+      vi.spyOn(toolEngineering, 'createAgentToolsEngine').mockReturnValue({
+        generateToolsDetailed,
+      } as any);
+
+      const { result } = renderHook(() => useChatStore());
+      result.current.internal_createAgentState({
+        agentId: TEST_IDS.SESSION_ID,
+        messages: [userMessage],
+        parentMessageId: userMessage.id,
+        topicId: TEST_IDS.TOPIC_ID,
+      });
+
+      expect(generateToolsDetailed).toHaveBeenCalledWith(
+        expect.objectContaining({
+          toolIds: ['lobe-artifacts', 'feishu-documents'],
+        }),
+      );
+    });
+
     it('should enable visual understanding when a previous user message has visual media', () => {
       act(() => {
         useChatStore.setState({ executeClientAgent: realExecAgentRuntime });

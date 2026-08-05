@@ -10,6 +10,7 @@ import { ShieldCheckIcon, Trash2Icon, UserPlusIcon } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { refreshBusinessAgentModeVisibility } from '@/business/client/hooks/useBusinessAgentMode';
 import AsyncError from '@/components/AsyncError';
 import { useClientDataSWR } from '@/libs/swr';
 import { cottiAgentAccessService } from '@/services/cottiAgentAccess';
@@ -99,7 +100,7 @@ const AgentAccessSettings = memo(() => {
     setIsModeSaving(true);
     try {
       await cottiAgentAccessService.setMode(nextMode);
-      await detailSWR.mutate();
+      await Promise.all([detailSWR.mutate(), refreshBusinessAgentModeVisibility()]);
       toast.success(t('platformManagement.agentAccess.feedback.modeSaved'));
     } catch (error) {
       toast.error(
@@ -128,7 +129,7 @@ const AgentAccessSettings = memo(() => {
       });
       setRuleValue('');
       setNote('');
-      await detailSWR.mutate();
+      await Promise.all([detailSWR.mutate(), refreshBusinessAgentModeVisibility()]);
       toast.success(t('platformManagement.agentAccess.feedback.ruleSaved'));
     } catch (error) {
       toast.error(
@@ -146,7 +147,7 @@ const AgentAccessSettings = memo(() => {
       setPendingRuleId(id);
       try {
         await cottiAgentAccessService.setRuleEnabled(id, enabled);
-        await detailSWR.mutate();
+        await Promise.all([detailSWR.mutate(), refreshBusinessAgentModeVisibility()]);
         toast.success(t('platformManagement.agentAccess.feedback.ruleSaved'));
       } catch (error) {
         toast.error(
@@ -170,7 +171,7 @@ const AgentAccessSettings = memo(() => {
           setPendingRuleId(id);
           try {
             await cottiAgentAccessService.removeRule(id);
-            await detailSWR.mutate();
+            await Promise.all([detailSWR.mutate(), refreshBusinessAgentModeVisibility()]);
             toast.success(t('platformManagement.agentAccess.feedback.ruleRemoved'));
           } catch (error) {
             toast.error(

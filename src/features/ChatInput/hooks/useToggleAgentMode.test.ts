@@ -28,6 +28,9 @@ const testState = vi.hoisted(() => ({
   },
   businessCanEnable: true,
   canSelectModel: true,
+  chatInput: {
+    topicModelScope: true,
+  },
   chat: {
     activeTopicId: undefined as string | undefined,
     activeTopicModel: undefined as { model: string; provider: string } | undefined,
@@ -95,6 +98,11 @@ vi.mock('@/store/chat/slices/topic/selectors', () => ({
   },
 }));
 
+vi.mock('../store', () => ({
+  useChatInputStore: (selector: (s: typeof testState.chatInput) => unknown) =>
+    selector(testState.chatInput),
+}));
+
 vi.mock('@/store/user', () => ({
   useUserStore: (
     selector: (s: {
@@ -124,6 +132,7 @@ describe('useToggleAgentMode', () => {
   beforeEach(() => {
     testState.access.canManageAgent = false;
     testState.access.isAccessLoading = false;
+    testState.chatInput.topicModelScope = true;
     testState.agent.current = undefined;
     testState.aiInfra.enabledChatModelList = [
       {
@@ -230,6 +239,22 @@ describe('useToggleAgentMode', () => {
     });
     expect(testState.selectModel).not.toHaveBeenCalled();
     expect(testState.updateAgentChatConfig).toHaveBeenCalledWith({ enableAgentMode: true });
+  });
+
+  it('ignores the globally active Topic when the input disables topic model scope', async () => {
+    testState.chatInput.topicModelScope = false;
+    testState.currentModel = { model: 'agent-default', provider: 'openai' };
+    testState.chat.activeTopicId = 'previous-topic';
+    testState.chat.activeTopicModel = { model: 'shared-model', provider: 'openai' };
+    const { result } = renderHook(() => useToggleAgentMode());
+
+    await act(() => result.current(false));
+
+    expect(testState.selectModel).toHaveBeenCalledWith({
+      model: 'chat-default',
+      provider: 'openai',
+    });
+    expect(testState.chat.updateTopicModel).not.toHaveBeenCalled();
   });
 
   it('loads the model display config on demand before applying the fallback', async () => {

@@ -6,6 +6,11 @@ import {
   requireWorkspaceRoleWhenScoped,
   wsCompatProcedure,
 } from '@/business/server/trpc-middlewares/workspaceAuth';
+import {
+  ConnectorPresetId,
+  FEISHU_DOCUMENTS_CONNECTOR_PRESET,
+  isFeishuDocumentsConnector,
+} from '@/const/connectorPresets';
 import { AgentModel } from '@/database/models/agent';
 import { ConnectorModel } from '@/database/models/connector';
 import { ConnectorToolModel } from '@/database/models/connectorTool';
@@ -18,11 +23,18 @@ import {
   ConnectorToolPermission,
 } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
+import { authEnv } from '@/envs/auth';
 import { inferCrudType } from '@/libs/mcp/utils';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { callConnectorToolById, ConnectorToolCallError } from '@/server/services/connector/exec';
+import {
+  buildFeishuAuthorizationUrl,
+  FEISHU_OAUTH_AUTHORIZE_ENDPOINT,
+  FEISHU_OAUTH_ISSUER,
+  FEISHU_OAUTH_TOKEN_ENDPOINT,
+} from '@/server/services/connector/feishuOAuth';
 import {
   buildAuthorizationUrl,
   discoverConnectorOAuth,
@@ -63,6 +75,18 @@ const connectorProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts
 // Writes: workspace mode requires at least the member role, gating viewers
 // out (read-only role) while personal mode passes through unrestricted.
 const connectorWriteProcedure = connectorProcedure.use(requireWorkspaceRoleWhenScoped('member'));
+
+const getFeishuDocumentsOAuthClientId = (): string => {
+  const clientId = authEnv.AUTH_FEISHU_APP_ID;
+  if (!clientId) {
+    throw new TRPCError({
+      code: 'PRECONDITION_FAILED',
+      message: 'AUTH_FEISHU_APP_ID is required for the Feishu Documents connector',
+    });
+  }
+
+  return clientId;
+};
 
 const oidcConfigSchema = z.object({
   authorizationEndpoint: z.string().optional(),
@@ -360,6 +384,64 @@ export const connectorRouter = router({
     return { id: created.id, isNew: true };
   }),
 
+  createPreset: connectorWriteProcedure
+    .input(z.object({ presetId: z.literal(ConnectorPresetId.feishuDocuments) }))
+    .mutation(async ({ ctx }) => {
+      if (ctx.workspaceId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Feishu Documents must be connected from personal settings',
+        });
+      }
+
+      const preset = FEISHU_DOCUMENTS_CONNECTOR_PRESET;
+      const existing = await ctx.connectorModel.findScopedByIdentifier(preset.identifier);
+      const { customHeaders: _legacyHeaders, ...existingMetadata } = existing?.metadata ?? {};
+      const metadata = {
+        ...existingMetadata,
+        description: preset.description,
+        presetId: preset.presetId,
+      };
+      const oidcConfig: OIDCConfig = {
+        clientId: getFeishuDocumentsOAuthClientId(),
+        scheme: 'pre_registration',
+        scopes: [...preset.scopes],
+        usePKCE: true,
+      };
+
+      if (existing) {
+        assertWorkspaceRowManageable(ctx, existing.userId, 'connector');
+        await ctx.connectorModel.update(existing.id, {
+          isEnabled: true,
+          mcpConnectionType: ConnectorMcpConnectionType.http,
+          mcpServerUrl: preset.mcpServerUrl,
+          metadata,
+          name: preset.name,
+          oidcConfig,
+          sourceType: ConnectorSourceType.custom,
+        });
+        await ctx.connectorToolModel.deleteToolsNotIn(existing.id, [...preset.allowedTools]);
+        return { id: existing.id, isNew: false };
+      }
+
+      const created = await ctx.connectorModel.create({
+        agentId: null,
+        credentials: null,
+        identifier: preset.identifier,
+        isEnabled: true,
+        mcpConnectionType: ConnectorMcpConnectionType.http,
+        mcpServerUrl: preset.mcpServerUrl,
+        mcpStdioConfig: null,
+        metadata,
+        name: preset.name,
+        oidcConfig,
+        sourceType: ConnectorSourceType.custom,
+        status: ConnectorStatus.disconnected,
+      });
+
+      return { id: created.id, isNew: true };
+    }),
+
   /**
    * Bind an existing connector to an agent (transfer it into the agent scope).
    * The connector then resolves only for that agent's runs and shadows the
@@ -541,7 +623,58 @@ export const connectorRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Connector has no MCP server URL' });
       }
 
-      const existing: OIDCConfig = connector.oidcConfig ?? { scheme: 'dcr' };
+      if (isFeishuDocumentsConnector(connector)) {
+        if (ctx.workspaceId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Feishu Documents must be connected from personal settings',
+          });
+        }
+        if (connector.mcpServerUrl !== FEISHU_DOCUMENTS_CONNECTOR_PRESET.mcpServerUrl) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid Feishu MCP endpoint' });
+        }
+
+        const clientId = getFeishuDocumentsOAuthClientId();
+        if (!authEnv.AUTH_FEISHU_APP_SECRET) {
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message: 'AUTH_FEISHU_APP_SECRET is required for the Feishu Documents connector',
+          });
+        }
+        const redirectUri = getConnectorRedirectUri();
+        const scopes = [...FEISHU_DOCUMENTS_CONNECTOR_PRESET.scopes];
+        const resolvedOidc: OIDCConfig = {
+          authorizationEndpoint: FEISHU_OAUTH_AUTHORIZE_ENDPOINT,
+          clientId,
+          issuer: FEISHU_OAUTH_ISSUER,
+          redirectUri,
+          scheme: 'pre_registration',
+          scopes,
+          tokenEndpoint: FEISHU_OAUTH_TOKEN_ENDPOINT,
+          usePKCE: true,
+        };
+        await ctx.connectorModel.update(input.id, { oidcConfig: resolvedOidc });
+
+        const state = generateConnectorOAuthState();
+        const { authorizationUrl, codeVerifier } = await buildFeishuAuthorizationUrl({
+          clientId,
+          redirectUri,
+          scopes,
+          state,
+        });
+        await saveConnectorOAuthState(state, {
+          authorizationServerUrl: FEISHU_OAUTH_ISSUER,
+          codeVerifier,
+          connectorId: input.id,
+          lobeUserId: ctx.userId,
+          returnTo: input.returnTo,
+        });
+
+        return { authorizationUrl };
+      }
+
+      const storedOidc: OIDCConfig = connector.oidcConfig ?? { scheme: 'dcr' };
+      const existing: OIDCConfig = storedOidc;
       const redirectUri = getConnectorRedirectUri();
 
       // 1. Discover the authorization server backing the MCP resource.
@@ -558,7 +691,8 @@ export const connectorRouter = router({
       // 2. Resolve the OAuth client: pre-registration vs. DCR.
       let clientId = existing.clientId;
       let clientSecret = existing.clientSecret;
-      const scheme: OIDCConfig['scheme'] = clientId ? 'pre_registration' : 'dcr';
+      const scheme: OIDCConfig['scheme'] =
+        existing.scheme === 'dcr' || !clientId ? 'dcr' : 'pre_registration';
 
       if (!clientId) {
         if (!metadata.registration_endpoint) {
@@ -634,6 +768,24 @@ export const connectorRouter = router({
       const target = await ctx.connectorModel.findById(input.id);
       if (!target) throw new TRPCError({ code: 'NOT_FOUND', message: 'Connector not found' });
       assertWorkspaceRowManageable(ctx, target.userId, 'connector');
+
+      if (isFeishuDocumentsConnector(target)) {
+        const protectedKeys = [
+          'credentials',
+          'mcpConnectionType',
+          'mcpServerUrl',
+          'mcpStdioConfig',
+          'metadata',
+          'name',
+          'oidcConfig',
+        ] as const;
+        if (protectedKeys.some((key) => input.patch[key] !== undefined)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Feishu Documents preset configuration cannot be edited',
+          });
+        }
+      }
 
       const { credentials, ...patch } = input.patch;
       // Preserve the server-owned `composio.linkedByUserId` from the stored row
@@ -1026,8 +1178,14 @@ async function upsertConnectorEntry(
     const row = existing[0];
     const writable = canWrite && (!isWorkspaceNonOwner(ctx) || row.userId === ctx.userId);
     if (writable) {
-      // Update metadata with latest description/avatar from manifest
-      await ctx.connectorModel.update(row.id, { metadata });
+      // Update manifest-owned presentation fields without dropping runtime
+      // metadata owned by another connector type. In particular, Composio
+      // stores its connected account and ACTIVE status in metadata.composio;
+      // replacing the object here made a successfully authorized connector
+      // disappear from runtime and from the @ picker after plugin tool sync.
+      await ctx.connectorModel.update(row.id, {
+        metadata: { ...row.metadata, ...metadata },
+      });
     }
     return { connectorId: row.id, writable };
   }

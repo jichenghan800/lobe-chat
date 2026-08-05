@@ -4,6 +4,7 @@ import { type SWRResponse } from 'swr';
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { agentKnowledgeKeys } from '@/libs/swr/keys';
 import { agentService } from '@/services/agent';
+import { ragService } from '@/services/rag';
 import { type StoreSetter } from '@/store/types';
 
 import { type AgentStore } from '../../store';
@@ -33,8 +34,20 @@ export class KnowledgeSliceActionImpl {
     if (fileIds.length === 0) return;
 
     await agentService.createAgentFiles(activeAgentId, fileIds, enabled);
-    await internal_refreshAgentConfig(activeAgentId);
-    await internal_refreshAgentKnowledge();
+
+    try {
+      // Chat attachments share the same file inventory but are intentionally
+      // not chunked. Once the user explicitly adds a file as Agent knowledge,
+      // start the official chunk pipeline (and embedding when the server's
+      // CHUNKS_AUTO_EMBEDDING switch is enabled). `skipExist` keeps this
+      // idempotent for resources that were already prepared in the library.
+      if (enabled !== false) {
+        await Promise.all(fileIds.map((id) => ragService.createParseFileTask(id, true)));
+      }
+    } finally {
+      await internal_refreshAgentConfig(activeAgentId);
+      await internal_refreshAgentKnowledge();
+    }
   };
 
   addKnowledgeBaseToAgent = async (knowledgeBaseId: string): Promise<void> => {
@@ -84,7 +97,12 @@ export class KnowledgeSliceActionImpl {
     if (!activeAgentId) return;
 
     await agentService.toggleFile(activeAgentId, id, open);
-    await internal_refreshAgentConfig(activeAgentId);
+
+    try {
+      if (open === true) await ragService.createParseFileTask(id, true);
+    } finally {
+      await internal_refreshAgentConfig(activeAgentId);
+    }
   };
 
   toggleKnowledgeBase = async (id: string, open?: boolean): Promise<void> => {

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { FEISHU_DOCUMENTS_CONNECTOR_PRESET } from '@/const/connectorPresets';
 import { ConnectorToolPermission } from '@/database/schemas';
 import { deviceGateway } from '@/server/services/deviceGateway';
 import { mcpService } from '@/server/services/mcp';
@@ -75,6 +76,23 @@ describe('callConnectorToolById', () => {
     const ctx = makeCtx([connector], [tool({ permission: ConnectorToolPermission.disabled })]);
     await expect(
       callConnectorToolById({ identifier: 'my-conn', toolName: 'do_thing' }, ctx),
+    ).rejects.toHaveProperty('code', 'FORBIDDEN');
+    expect(mcpService.callTool).not.toHaveBeenCalled();
+  });
+
+  it('hard-blocks a stale tool outside the Feishu preset allowlist', async () => {
+    const feishuConnector = {
+      ...connector,
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'update-doc' })]);
+
+    await expect(
+      callConnectorToolById(
+        { identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier, toolName: 'update-doc' },
+        ctx,
+      ),
     ).rejects.toHaveProperty('code', 'FORBIDDEN');
     expect(mcpService.callTool).not.toHaveBeenCalled();
   });

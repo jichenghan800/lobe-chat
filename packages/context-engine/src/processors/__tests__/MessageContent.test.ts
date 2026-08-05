@@ -539,11 +539,11 @@ describe('MessageContentProcessor', () => {
       expect(content[0].text).not.toContain('http://example.com/test.txt');
     });
 
-    it('should omit Excel body content while retaining its URL when configured', async () => {
+    it('should omit spreadsheet body content while retaining its URL when configured', async () => {
       mockIsCanUseVision.mockReturnValue(false);
 
       const processor = new MessageContentProcessor({
-        fileContext: { enabled: true, omitExcelContent: true },
+        fileContext: { enabled: true, omitSpreadsheetContent: true },
         isCanUseVision: mockIsCanUseVision,
         model: 'gpt-4',
         provider: 'openai',
@@ -570,6 +570,14 @@ describe('MessageContentProcessor', () => {
               size: 100,
               url: 'http://example.com/note.txt',
             },
+            {
+              content: 'large csv body that should not reach the model',
+              fileType: 'text/csv',
+              id: 'csv-1',
+              name: 'transactions.csv',
+              size: 768_000,
+              url: 'http://example.com/transactions.csv',
+            },
           ],
           id: 'test',
           role: 'user',
@@ -584,6 +592,7 @@ describe('MessageContentProcessor', () => {
         '<file id="excel-1" name="report.xlsx" type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" size="512000" url="http://example.com/report.xlsx"></file>',
       );
       expect(content[0].text).not.toContain('expanded excel markdown');
+      expect(content[0].text).not.toContain('large csv body');
       expect(content[0].text).toContain('small text body');
     });
 

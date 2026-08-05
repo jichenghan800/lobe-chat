@@ -109,6 +109,42 @@ describe('connectorRouter.syncPluginTools — customPlugin guard', () => {
     );
   });
 
+  it('preserves Composio runtime metadata when syncing its projected plugin tools', async () => {
+    const composio = {
+      appSlug: 'gmail',
+      authConfigId: 'ac-gmail',
+      connectedAccountId: 'ca-gmail',
+      linkedByUserId: 'user_test',
+      status: 'ACTIVE',
+    };
+    pluginModelMock.findById.mockResolvedValueOnce({
+      customParams: { composio },
+      manifest: {
+        api: [{ name: 'GMAIL_LIST_MESSAGES', parameters: { type: 'object' } }],
+        meta: { avatar: '📧', description: 'Composio: Gmail', title: 'Gmail' },
+      },
+      type: 'plugin',
+    });
+    connectorModelMock.queryByIdentifiers.mockResolvedValueOnce([
+      {
+        id: 'connector-gmail',
+        metadata: { composio, existingKey: 'keep-me' },
+        userId: 'user_test',
+      },
+    ]);
+
+    await callerFor().syncPluginTools({ identifier: 'gmail' });
+
+    expect(connectorModelMock.update).toHaveBeenCalledWith('connector-gmail', {
+      metadata: {
+        avatar: '📧',
+        composio,
+        description: 'Composio: Gmail',
+        existingKey: 'keep-me',
+      },
+    });
+  });
+
   it('also defers when plugin has type=customPlugin AND has a manifest (no half-baked row written)', async () => {
     // Some legacy customPlugin rows DO have a manifest (cached from a successful
     // tools/list call earlier). The guard must not fall through just because a

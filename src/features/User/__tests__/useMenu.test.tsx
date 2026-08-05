@@ -1,10 +1,15 @@
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ServerConfigStoreProvider } from '@/store/serverConfig/Provider';
 import { useUserStore } from '@/store/user';
 
 import { useMenu } from '../UserPanel/useMenu';
+
+const platformManagementMocks = vi.hoisted(() => ({
+  enabled: false,
+  isAdmin: false,
+}));
 
 const wrapper: React.JSXElementConstructor<{ children: React.ReactNode }> = ({ children }) => (
   <ServerConfigStoreProvider>{children}</ServerConfigStoreProvider>
@@ -25,6 +30,17 @@ vi.mock('@/hooks/useInterceptingRoutes', () => ({
   useOpenSettings: vi.fn(() => vi.fn()),
 }));
 
+vi.mock('@/_custom/registry/platformManagement', () => ({
+  isCottiPlatformManagementEnabled: () => platformManagementMocks.enabled,
+}));
+
+vi.mock('@/features/CottiPlatformAnalytics/hooks', () => ({
+  useCottiPlatformAdminAccess: () => ({
+    enabled: platformManagementMocks.enabled,
+    swr: { data: { isAdmin: platformManagementMocks.isAdmin } },
+  }),
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: vi.fn(() => ({
     t: vi.fn((key) => key),
@@ -43,6 +59,11 @@ vi.mock('@/services/config', () => ({
 vi.mock('./useNewVersion', () => ({
   useNewVersion: vi.fn(() => false),
 }));
+
+afterEach(() => {
+  platformManagementMocks.enabled = false;
+  platformManagementMocks.isAdmin = false;
+});
 
 describe('useMenu', () => {
   it('should provide correct menu items when user is logged in with auth', () => {
@@ -98,5 +119,22 @@ describe('useMenu', () => {
         expect(isDivider(prev) && isDivider(curr)).toBe(false);
       }
     });
+  });
+
+  it('shows platform management before app settings for an administrator and omits get app', () => {
+    platformManagementMocks.enabled = true;
+    platformManagementMocks.isAdmin = true;
+    act(() => {
+      useUserStore.setState({ isSignedIn: true });
+    });
+
+    const { result } = renderHook(() => useMenu(), { wrapper });
+    const itemKeys = result.current.mainItems
+      ?.filter((item) => item && 'key' in item && item.key)
+      .map((item) => item?.key);
+
+    expect(itemKeys?.slice(0, 2)).toEqual(['platform-management', 'setting']);
+    expect(itemKeys).not.toContain('get-app');
+    expect(result.current.logoutItems.some((item) => item?.key === 'logout')).toBe(true);
   });
 });

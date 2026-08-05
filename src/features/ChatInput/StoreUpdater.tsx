@@ -21,6 +21,7 @@ const StoreUpdater = memo<StoreUpdaterProps>(
     contextWindowMessages,
     draftKey,
     feature = DEFAULT_CHAT_INPUT_FEATURE,
+    modelDisplayScope,
     mobile,
     sendButtonProps,
     leftActions,
@@ -31,6 +32,7 @@ const StoreUpdater = memo<StoreUpdaterProps>(
     mentionItems,
     allowExpand,
     slashPlacement,
+    topicModelScope,
     getMessages,
   }) => {
     const storeApi = useStoreApi();
@@ -46,7 +48,9 @@ const StoreUpdater = memo<StoreUpdaterProps>(
     useStoreUpdater('rightActions', rightActions!);
     useStoreUpdater('allowExpand', allowExpand);
     useStoreUpdater('feature', feature);
+    useStoreUpdater('modelDisplayScope', modelDisplayScope);
     useStoreUpdater('slashPlacement', slashPlacement);
+    useStoreUpdater('topicModelScope', topicModelScope!);
     useStoreUpdater('getMessages', getMessages);
 
     useStoreUpdater('sendButtonProps', sendButtonProps);

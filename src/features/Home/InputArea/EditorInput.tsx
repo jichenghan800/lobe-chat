@@ -1,6 +1,14 @@
 import { ActionIcon, Flexbox } from '@lobehub/ui';
 import { PlusIcon } from 'lucide-react';
-import { memo, type ReactNode, useMemo } from 'react';
+import {
+  memo,
+  type MutableRefObject,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 
 import {
   type ActionKeys,
@@ -9,6 +17,8 @@ import {
   type SendButtonHandler,
 } from '@/features/ChatInput';
 import ActionBar from '@/features/ChatInput/ActionBar';
+import { useEffectiveAgentMode } from '@/features/ChatInput/hooks/useEffectiveAgentMode';
+import { useToggleAgentMode } from '@/features/ChatInput/hooks/useToggleAgentMode';
 import { useChatStore } from '@/store/chat';
 
 import type { HomeMode } from '../types';
@@ -34,18 +44,63 @@ export interface HomeEditorInputProps {
   send: SendButtonHandler;
 }
 
-const HomeEditorInput = memo<HomeEditorInputProps>(
+interface HomeEditorContentProps extends HomeEditorInputProps {
+  sendHandlerRef: MutableRefObject<SendButtonHandler>;
+}
+
+const HomeEditorContent = memo<HomeEditorContentProps>(
   ({
     agentId,
     initialValue,
     isAgentConfigLoading,
-    loading,
     mode,
     onModeChange,
-    onValueChange,
     placeholder,
     send,
+    sendHandlerRef,
   }) => {
+    const toggleAgentMode = useToggleAgentMode();
+    const modeSyncAgentRef = useRef<string | undefined>(undefined);
+    const { isPreferenceLoading, requestedAgentModeEnabled } = useEffectiveAgentMode(agentId ?? '');
+
+    const handleSend = useCallback<SendButtonHandler>(
+      async (params) => {
+        if (mode === 'chat' && requestedAgentModeEnabled) await toggleAgentMode(false);
+        await send(params);
+      },
+      [mode, requestedAgentModeEnabled, send, toggleAgentMode],
+    );
+
+    sendHandlerRef.current = handleSend;
+
+    // Home's primary action is explicitly Chat. The selected Agent can retain
+    // Agent mode from the previous conversation, so normalize it before the
+    // first Home send and reuse the existing Chat-default model resolver.
+    useEffect(() => {
+      if (!requestedAgentModeEnabled) modeSyncAgentRef.current = undefined;
+      if (
+        mode !== 'chat' ||
+        !agentId ||
+        isAgentConfigLoading ||
+        isPreferenceLoading ||
+        !requestedAgentModeEnabled ||
+        modeSyncAgentRef.current === agentId
+      )
+        return;
+
+      modeSyncAgentRef.current = agentId;
+      void toggleAgentMode(false).catch(() => {
+        modeSyncAgentRef.current = undefined;
+      });
+    }, [
+      agentId,
+      isAgentConfigLoading,
+      isPreferenceLoading,
+      mode,
+      requestedAgentModeEnabled,
+      toggleAgentMode,
+    ]);
+
     const inputContainerProps = useMemo(
       () => ({
         minHeight: HOME_INPUT_BODY_HEIGHT,
@@ -67,47 +122,60 @@ const HomeEditorInput = memo<HomeEditorInputProps>(
     );
 
     return (
-      <ChatInputProvider
-        agentId={agentId}
-        allowExpand={false}
-        leftActions={leftActions}
-        rightActions={rightActions}
-        slashPlacement="bottom"
-        chatInputEditorRef={(instance) => {
-          if (!instance) return;
-          useChatStore.setState({ mainInputEditor: instance });
-        }}
-        sendButtonProps={{
-          disabled: loading || isAgentConfigLoading,
-          generating: loading,
-          onStop: () => {},
-          shape: 'round',
-        }}
-        onMarkdownContentChange={onValueChange}
-        onSend={send}
-      >
-        <DesktopChatInput
-          actionBarStyle={actionBarStyle}
-          dropdownPlacement="bottomLeft"
-          initialContent={initialValue}
-          inputContainerProps={inputContainerProps}
-          placeholder={placeholder}
-          showControlBar={false}
-          leftContent={
-            <Flexbox horizontal align={'center'} gap={2}>
-              <ModeSelect value={mode} onChange={onModeChange} />
-              {mode !== 'chat' ? null : isAgentConfigLoading ? (
-                <ActionIcon disabled icon={PlusIcon} size={'small'} />
-              ) : (
-                <ActionBar disableCollapse dropdownPlacement="bottomLeft" />
-              )}
-            </Flexbox>
-          }
-        />
-      </ChatInputProvider>
+      <DesktopChatInput
+        actionBarStyle={actionBarStyle}
+        dropdownPlacement="bottomLeft"
+        initialContent={initialValue}
+        inputContainerProps={inputContainerProps}
+        placeholder={placeholder}
+        showControlBar={false}
+        leftContent={
+          <Flexbox horizontal align={'center'} gap={2}>
+            <ModeSelect value={mode} onChange={onModeChange} />
+            {mode !== 'chat' ? null : isAgentConfigLoading ? (
+              <ActionIcon disabled icon={PlusIcon} size={'small'} />
+            ) : (
+              <ActionBar disableCollapse dropdownPlacement="bottomLeft" />
+            )}
+          </Flexbox>
+        }
+      />
     );
   },
 );
+
+HomeEditorContent.displayName = 'HomeEditorContent';
+
+const HomeEditorInput = memo<HomeEditorInputProps>((props) => {
+  const sendHandlerRef = useRef<SendButtonHandler>(props.send);
+  const handleSend = useCallback<SendButtonHandler>((params) => sendHandlerRef.current(params), []);
+
+  return (
+    <ChatInputProvider
+      agentId={props.agentId}
+      allowExpand={false}
+      leftActions={leftActions}
+      modelDisplayScope="chat"
+      rightActions={rightActions}
+      slashPlacement="bottom"
+      topicModelScope={false}
+      chatInputEditorRef={(instance) => {
+        if (!instance) return;
+        useChatStore.setState({ mainInputEditor: instance });
+      }}
+      sendButtonProps={{
+        disabled: props.loading || props.isAgentConfigLoading,
+        generating: props.loading,
+        onStop: () => {},
+        shape: 'round',
+      }}
+      onMarkdownContentChange={props.onValueChange}
+      onSend={handleSend}
+    >
+      <HomeEditorContent {...props} sendHandlerRef={sendHandlerRef} />
+    </ChatInputProvider>
+  );
+});
 
 HomeEditorInput.displayName = 'HomeEditorInput';
 

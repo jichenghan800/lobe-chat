@@ -18,6 +18,7 @@ import { type FileListItem } from '@/types/files';
 import { type UploadFileItem } from '@/types/files/upload';
 import { isChunkingUnsupported } from '@/utils/isChunkingUnsupported';
 import { sleep } from '@/utils/sleep';
+import { isSpreadsheetFileNameOrType } from '@/utils/spreadsheet';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type FileStore } from '../../store';
@@ -26,6 +27,12 @@ import { filterExcelChatUploadFiles, filterSupportedChatUploadFiles } from './up
 const n = setNamespace('chat');
 
 type Setter = StoreSetter<FileStore>;
+
+export interface UploadChatFilesOptions {
+  /** Called only after accepted files have entered the visible pending-upload list. */
+  onPrepared?: () => void;
+}
+
 export const createFileSlice = (set: Setter, get: () => FileStore, _api?: unknown) =>
   new FileActionImpl(set, get, _api);
 
@@ -58,6 +65,31 @@ const getUploadErrorDescription = (error: unknown): string => {
   return typeof error === 'string'
     ? error
     : t('upload.unknownError', { ns: 'error', reason: getErrorMessage(error) });
+};
+
+const resourceToChatUploadItem = (item: FileListItem): UploadFileItem | undefined => {
+  const fileId = item.fileId ?? item.id;
+
+  // A page without a backing file cannot be sent through messages_files. The
+  // file picker only exposes file-backed resources, but keep this guard at the
+  // store boundary so other callers cannot create a broken draft attachment.
+  if (item.sourceType !== 'file' && !item.fileId) return;
+
+  const previewUrl =
+    item.fileType.startsWith('image') || item.fileType.startsWith('video') ? item.url : undefined;
+
+  return {
+    file: new File([], item.name, { type: item.fileType || 'application/octet-stream' }),
+    fileUrl: item.url,
+    id: fileId,
+    previewUrl,
+    // Resource entries do not carry a browser File body, so the client cannot
+    // safely inspect workbook size/sheet count. Keep spreadsheets visible but
+    // require Agent tools instead of risking full prompt expansion in Chat.
+    requiresAgentMode: isSpreadsheetFileNameOrType(item.name, item.fileType),
+    skipRemoveFile: true,
+    status: 'success',
+  };
 };
 
 export class FileActionImpl {
@@ -111,6 +143,39 @@ export class FileActionImpl {
     await fileService.removeFile(id);
   };
 
+  attachResourceFilesToChat = async (ids: string[]): Promise<number> => {
+    const uniqueIds = [...new Set(ids)];
+    if (uniqueIds.length === 0) return 0;
+
+    const existingIds = new Set(this.#get().chatUploadFileList.map((item) => item.id));
+    const resolvedItems = await Promise.all(
+      uniqueIds.map(async (id) => {
+        try {
+          return await fileService.getKnowledgeItem(id);
+        } catch (error) {
+          console.error('Failed to resolve resource file for message attachment:', error);
+          return null;
+        }
+      }),
+    );
+
+    const files = resolvedItems
+      .filter((item): item is FileListItem => Boolean(item))
+      .map(resourceToChatUploadItem)
+      .filter((item): item is UploadFileItem => Boolean(item))
+      .filter((item) => !existingIds.has(item.id));
+
+    if (files.length === 0) {
+      if (resolvedItems.every((item) => !item)) {
+        toast.error(t('attachment.resourceUnavailable', { ns: 'chat' }));
+      }
+      return 0;
+    }
+
+    this.#get().dispatchChatUploadFileList({ files, type: 'addFiles' });
+    return files.length;
+  };
+
   startAsyncTask = async (
     id: string,
     runner: (id: string) => Promise<string>,
@@ -149,7 +214,11 @@ export class FileActionImpl {
     }
   };
 
-  uploadChatFiles = async (rawFiles: File[], agentId: string): Promise<void> => {
+  uploadChatFiles = async (
+    rawFiles: File[],
+    agentId: string,
+    options?: UploadChatFilesOptions,
+  ): Promise<void> => {
     const { dispatchChatUploadFileList } = this.#get();
     // 0. skip file in blacklist
     const filteredFiles = rawFiles.filter((file) => !FILE_UPLOAD_BLACKLIST.includes(file.name));
@@ -169,9 +238,14 @@ export class FileActionImpl {
       ? filterSupportedChatUploadFiles(filteredFiles)
       : { supportedFiles: filteredFiles, unsupportedFiles: [] as File[] };
 
-    const { allowedFiles: supportedFiles, excelFilesRequiringAgentMode } = enforceFileTypeWhitelist
+    const { excelFilesRequiringAgentMode } = enforceFileTypeWhitelist
       ? await filterExcelChatUploadFiles(typeSupportedFiles)
-      : { allowedFiles: typeSupportedFiles, excelFilesRequiringAgentMode: [] as File[] };
+      : { excelFilesRequiringAgentMode: [] as File[] };
+    const filesRequiringAgentMode = new Set(excelFilesRequiringAgentMode);
+    // Keep accepted spreadsheets in the visible draft even when ordinary Chat
+    // must not send them. The user can switch to Agent without selecting or
+    // uploading the file again.
+    const supportedFiles = typeSupportedFiles;
 
     if (unsupportedFiles.length > 0) {
       toast.error(
@@ -183,7 +257,7 @@ export class FileActionImpl {
     }
 
     if (excelFilesRequiringAgentMode.length > 0) {
-      toast.error(
+      toast.warning(
         t('upload.validation.largeExcelFileInChat', {
           files: excelFilesRequiringAgentMode.map((file) => file.name).join(', '),
           ns: 'chat',
@@ -215,11 +289,19 @@ export class FileActionImpl {
           base64Url = `data:${file.type};base64,${base64}`;
         }
 
-        return { base64Url, file, id: file.name, previewUrl, status: 'pending' } as UploadFileItem;
+        return {
+          base64Url,
+          file,
+          id: file.name,
+          previewUrl,
+          requiresAgentMode: filesRequiringAgentMode.has(file),
+          status: 'pending',
+        } as UploadFileItem;
       }),
     );
 
     dispatchChatUploadFileList({ files: uploadFiles, type: 'addFiles' });
+    options?.onPrepared?.();
 
     // upload files and process it
     const pools = files.map(async (file) => {
@@ -249,6 +331,10 @@ export class FileActionImpl {
       // Agent runtimes receive uploaded files as files and should inspect them with tools.
       // Parsing here would push large document content through the chat/context pipeline.
       if (enableAgentMode || isHeterogeneousAgent) return;
+
+      // The file stays attached so a mode switch can reuse the completed
+      // upload, but Chat must not parse the full workbook into the prompt.
+      if (filesRequiringAgentMode.has(file)) return;
 
       await ragService.parseFileContent(fileResult.id);
     });

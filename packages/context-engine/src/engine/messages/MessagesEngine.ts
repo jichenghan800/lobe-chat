@@ -497,7 +497,7 @@ export class MessagesEngine {
         fileContext: {
           enabled: true,
           includeFileUrl: true,
-          omitExcelContent: isAgentMode,
+          omitSpreadsheetContent: isAgentMode,
           ...fileContext,
         },
         isCanUseAudio: capabilities?.isCanUseAudio || (() => false),
