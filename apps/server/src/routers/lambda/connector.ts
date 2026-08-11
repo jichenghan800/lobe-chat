@@ -9,6 +9,7 @@ import {
 import {
   ConnectorPresetId,
   FEISHU_DOCUMENTS_CONNECTOR_PRESET,
+  hasFeishuDocumentsCurrentAuthorization,
   isFeishuDocumentsConnector,
 } from '@/const/connectorPresets';
 import { AgentModel } from '@/database/models/agent';
@@ -174,6 +175,8 @@ export const connectorRouter = router({
           authorizedByAvatar: author?.avatar ?? null,
           authorizedByName: author?.name ?? null,
           oidcConfig: safeOidcConfig,
+          requiresReauthorization:
+            isFeishuDocumentsConnector(c) && !hasFeishuDocumentsCurrentAuthorization(c),
           tools,
         };
       }),
@@ -212,6 +215,8 @@ export const connectorRouter = router({
             authorizedByAvatar: author?.avatar ?? null,
             authorizedByName: author?.name ?? null,
             oidcConfig: safeOidcConfig,
+            requiresReauthorization:
+              isFeishuDocumentsConnector(c) && !hasFeishuDocumentsCurrentAuthorization(c),
             tools,
           };
         }),
@@ -261,6 +266,8 @@ export const connectorRouter = router({
             agentAvatar: meta?.avatar ?? null,
             agentTitle: meta?.title ?? null,
             oidcConfig: safeOidcConfig,
+            requiresReauthorization:
+              isFeishuDocumentsConnector(c) && !hasFeishuDocumentsCurrentAuthorization(c),
             tools,
           };
         }),

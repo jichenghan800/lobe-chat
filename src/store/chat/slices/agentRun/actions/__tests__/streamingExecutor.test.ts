@@ -11,6 +11,7 @@ import { chatService } from '@/services/chat';
 import * as agentConfigResolver from '@/services/chat/mecha/agentConfigResolver';
 import { useAgentStore } from '@/store/agent';
 import { useAiInfraStore } from '@/store/aiInfra';
+import { useToolStore } from '@/store/tool';
 import { pageAgentRuntime } from '@/store/tool/slices/builtin/executors/pageAgentRuntime';
 
 import { useChatStore } from '../../../../store';
@@ -194,6 +195,9 @@ beforeEach(() => {
     // executeClientAgent waits for the aiProvider runtime-state before building
     // tools; mark it ready so that guard is a no-op in these tests.
     useAiInfraStore.setState({ isInitAiProviderRuntimeState: true });
+    // Connector hydration is normally completed by the SPA initializer. Keep
+    // unrelated executor tests focused; the reload race has a dedicated test.
+    useToolStore.setState({ isConnectorsInit: true });
     useChatStore.setState({
       refreshMessages: vi.fn(),
       executeClientAgent: vi.fn(),
@@ -209,6 +213,71 @@ afterEach(() => {
 
 describe('StreamingExecutor actions', () => {
   describe('executeClientAgent', () => {
+    it('waits for connector hydration before freezing the tools engine after reload', async () => {
+      const events: string[] = [];
+      const fetchConnectors = vi.fn(async () => {
+        events.push('connectors');
+        useToolStore.setState({ isConnectorsInit: true });
+      });
+      useToolStore.setState({ fetchConnectors, isConnectorsInit: false });
+
+      const createAgentState = useChatStore.getState().internal_createAgentState;
+      act(() => {
+        useChatStore.setState({
+          executeClientAgent: realExecAgentRuntime,
+          internal_createAgentState: (...args) => {
+            events.push('tools-engine');
+            return createAgentState(...args);
+          },
+        });
+      });
+
+      const { result } = renderHook(() => useChatStore());
+      const userMessage = createMockMessage({
+        id: TEST_IDS.USER_MESSAGE_ID,
+        role: 'user',
+        content: '<tool name="feishu-documents" label="飞书资料" />查询今天飞书群“人”的聊天记录',
+        editorData: {
+          root: {
+            children: [
+              {
+                children: [
+                  {
+                    actionCategory: 'tool',
+                    actionLabel: '飞书资料',
+                    actionType: 'feishu-documents',
+                    type: 'action-tag',
+                  },
+                ],
+                type: 'paragraph',
+              },
+            ],
+            type: 'root',
+          },
+        },
+        sessionId: TEST_IDS.SESSION_ID,
+        topicId: TEST_IDS.TOPIC_ID,
+      });
+      seedDbMessages({ agentId: TEST_IDS.SESSION_ID, topicId: TEST_IDS.TOPIC_ID }, [userMessage]);
+
+      const streamSpy = spyOnClientLLMStream(async ({ onFinish }) => {
+        await onFinish?.(TEST_CONTENT.AI_RESPONSE, {} as any);
+      });
+
+      await act(async () => {
+        await result.current.executeClientAgent({
+          context: { agentId: TEST_IDS.SESSION_ID, topicId: TEST_IDS.TOPIC_ID },
+          messages: [userMessage],
+          parentMessageId: userMessage.id,
+          parentMessageType: 'user',
+        });
+      });
+
+      expect(fetchConnectors).toHaveBeenCalledTimes(1);
+      expect(events).toEqual(['connectors', 'tools-engine']);
+      streamSpy.mockRestore();
+    });
+
     it('should handle the core AI message processing', async () => {
       act(() => {
         useChatStore.setState({ executeClientAgent: realExecAgentRuntime });

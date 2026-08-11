@@ -11,6 +11,8 @@ import {
   messagePlugins,
   messages,
   messagesFiles,
+  tasks,
+  taskTopics,
   topics,
   users,
 } from '@lobechat/database/schemas';
@@ -24,6 +26,7 @@ const userIds = [
   'cotti-analytics-user-a',
   'cotti-analytics-user-b',
   'cotti-analytics-user-after-range',
+  'cotti-analytics-user-auto-task',
 ];
 const agentIds = ['cotti-analytics-agent-a', 'cotti-analytics-agent-b'];
 const operationIds = [
@@ -96,6 +99,11 @@ describe('CottiPlatformAnalyticsService', () => {
         username: 'bravo-cotti',
       },
       { createdAt: new Date('2032-08-03T16:00:00.000Z'), id: userIds[2] },
+      {
+        createdAt: new Date('2032-11-01T00:00:00.000Z'),
+        email: 'auto-task.cotti@example.com',
+        id: userIds[3],
+      },
     ]);
     await db.insert(agents).values([
       {
@@ -109,8 +117,36 @@ describe('CottiPlatformAnalyticsService', () => {
     await db.insert(topics).values([
       { id: 'cotti-analytics-topic-a', userId: userIds[0] },
       { id: 'cotti-analytics-topic-b', userId: userIds[1] },
+      { id: 'cotti-analytics-topic-auto-task', trigger: 'task', userId: userIds[3] },
     ]);
+    await db.insert(tasks).values({
+      automationMode: 'schedule',
+      createdByUserId: userIds[3],
+      id: 'cotti-analytics-task-auto',
+      identifier: 'TASK-1',
+      instruction: 'Generate the daily report',
+      schedulePattern: '0 9 * * *',
+      seq: 1,
+      status: 'scheduled',
+    });
+    await db.insert(taskTopics).values({
+      id: '00000000-0000-4000-8000-000000000201',
+      seq: 1,
+      status: 'completed',
+      taskId: 'cotti-analytics-task-auto',
+      topicId: 'cotti-analytics-topic-auto-task',
+      trigger: 'schedule',
+      userId: userIds[3],
+    });
     await db.insert(messages).values([
+      {
+        content: 'automatically generated task prompt',
+        createdAt: new Date('2032-11-01T01:00:00.000Z'),
+        id: 'cotti-analytics-message-auto-task',
+        role: 'user',
+        topicId: 'cotti-analytics-topic-auto-task',
+        userId: userIds[3],
+      },
       {
         content: 'excluded before range',
         createdAt: new Date('2032-07-31T15:59:59.999Z'),
@@ -925,6 +961,7 @@ describe('CottiPlatformAnalyticsService', () => {
         errorMessages: 1,
         errorRate: 1 / 3,
         newUsers: 1,
+        realActiveUsers: 2,
         recordedCost: 0.12,
         totalInputTokens: 60,
         totalOutputTokens: 30,
@@ -947,6 +984,7 @@ describe('CottiPlatformAnalyticsService', () => {
           day: '2032-08-01',
           errorMessages: 0,
           errorRate: 0,
+          realActiveUsers: 1,
           recordedCost: 0.06,
           totalMessages: 3,
           totalTokens: 45,
@@ -958,6 +996,7 @@ describe('CottiPlatformAnalyticsService', () => {
           day: '2032-08-02',
           errorMessages: 0,
           errorRate: 0,
+          realActiveUsers: 0,
           recordedCost: 0,
           totalMessages: 0,
           totalTokens: 0,
@@ -969,6 +1008,7 @@ describe('CottiPlatformAnalyticsService', () => {
           day: '2032-08-03',
           errorMessages: 1,
           errorRate: 1,
+          realActiveUsers: 1,
           recordedCost: 0.06,
           totalMessages: 2,
           totalTokens: 45,
@@ -976,6 +1016,25 @@ describe('CottiPlatformAnalyticsService', () => {
         },
       ],
     });
+  });
+
+  it('keeps automated Task owners in total activity but excludes them from real activity', async () => {
+    const service = new CottiPlatformAnalyticsService(db);
+
+    const result = await service.getDashboard({
+      endDate: '2032-11-01',
+      startDate: '2032-11-01',
+      type: 'custom',
+    });
+
+    expect(result.overview).toMatchObject({ activeUsers: 1, realActiveUsers: 0 });
+    expect(result.trends).toEqual([
+      expect.objectContaining({
+        activeUsers: 1,
+        day: '2032-11-01',
+        realActiveUsers: 0,
+      }),
+    ]);
   });
 
   it('returns Chat users aggregated by user with identity and activity semantics', async () => {

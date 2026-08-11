@@ -1,5 +1,5 @@
 import { getComposioAppByIdentifier, getLobehubSkillProviderById } from '@lobechat/const';
-import { Tooltip } from '@lobehub/ui';
+import { Alert, Flexbox, Tooltip } from '@lobehub/ui';
 import { Button, confirmModal } from '@lobehub/ui/base-ui';
 import { App } from 'antd';
 import { PencilIcon, RefreshCwIcon, SquareArrowOutUpRight, Trash2 } from 'lucide-react';
@@ -233,7 +233,7 @@ const ConnectorDetail = memo<ConnectorDetailProps>(
         >
           <div style={{ fontSize: 14, fontWeight: 500 }}>{connectorName}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            {isManagedPreset && (
+            {isManagedPreset && !connector?.requiresReauthorization && (
               <Button
                 icon={<SquareArrowOutUpRight size={14} />}
                 loading={connectingFeishuDocuments}
@@ -363,6 +363,24 @@ const ConnectorDetail = memo<ConnectorDetailProps>(
             padding: 16,
           }}
         >
+          {isManagedPreset && connector.requiresReauthorization && (
+            <Flexbox gap={8} style={{ marginBlockEnd: 16 }}>
+              <Alert
+                showIcon
+                description={ts('connectorPreset.authorizationUpgrade.description')}
+                title={ts('connectorPreset.authorizationUpgrade.title')}
+                type="warning"
+              />
+              <Button
+                loading={connectingFeishuDocuments}
+                type="primary"
+                onClick={connectFeishuDocuments}
+              >
+                {ts('connectorPreset.authorizationUpgrade.action')}
+              </Button>
+            </Flexbox>
+          )}
+
           {/* Description */}
           {connectorDescription && (
             <div

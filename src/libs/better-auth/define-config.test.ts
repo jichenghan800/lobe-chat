@@ -102,6 +102,12 @@ vi.mock('@/libs/oidc-provider/session-cleanup', () => ({
   clearMismatchedOIDCSession: mocks.clearMismatchedOIDCSession,
 }));
 
+vi.mock('@/server/services/cotti/peopleManagement', () => ({
+  CottiPeopleManagementService: vi.fn(() => ({
+    isRegistrationAllowed: vi.fn().mockResolvedValue(true),
+  })),
+}));
+
 vi.mock('@/server/services/email', () => ({
   EmailService: vi.fn(),
 }));

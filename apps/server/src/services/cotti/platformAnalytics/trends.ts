@@ -4,6 +4,7 @@ import { messages } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
 import type { CottiPlatformAnalyticsTrendItem } from '@/types/cotti/platformAnalytics';
 
+import { cottiRealUserMessageCondition } from './activitySql';
 import type { ResolvedCottiPlatformAnalyticsPeriod } from './range';
 import { listCottiPlatformAnalyticsDays } from './range';
 import { cottiMessageUsageNumber } from './usageSql';
@@ -13,6 +14,7 @@ interface TrendRow {
   assistantMessages: number;
   day: string;
   errorMessages: number;
+  realActiveUsers: number;
   recordedCost: number;
   totalTokens: number;
   userMessages: number;
@@ -46,6 +48,10 @@ export const getCottiPlatformAnalyticsTrends = async (
       day,
       errorMessages:
         sql<number>`COUNT(*) FILTER (WHERE ${messages.role} = 'assistant' AND ${messages.error} IS NOT NULL)`.mapWith(
+          Number,
+        ),
+      realActiveUsers:
+        sql<number>`COUNT(DISTINCT ${messages.userId}) FILTER (WHERE ${cottiRealUserMessageCondition})`.mapWith(
           Number,
         ),
       recordedCost:
@@ -83,6 +89,7 @@ export const getCottiPlatformAnalyticsTrends = async (
       day: date,
       errorMessages,
       errorRate: assistantMessages > 0 ? errorMessages / assistantMessages : 0,
+      realActiveUsers: toFiniteNumber(row?.realActiveUsers),
       recordedCost: toFiniteNumber(row?.recordedCost),
       totalMessages: userMessages + assistantMessages,
       totalTokens: toFiniteNumber(row?.totalTokens),

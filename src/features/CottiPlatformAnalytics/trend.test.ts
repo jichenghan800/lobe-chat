@@ -10,6 +10,7 @@ const item: CottiPlatformAnalyticsTrendItem = {
   day: '2026-08-03',
   errorMessages: 2,
   errorRate: 0.04,
+  realActiveUsers: 10,
   recordedCost: 1.25,
   totalMessages: 50,
   totalTokens: 12_000,
@@ -31,5 +32,11 @@ describe('COTTI platform analytics trend', () => {
     expect(buildCottiPlatformAnalyticsTrendData([item], 'totalMessages', '消息数')).toEqual([
       { day: '2026-08-03', 消息数: 50 },
     ]);
+  });
+
+  it('builds real and total active-user series together', () => {
+    expect(
+      buildCottiPlatformAnalyticsTrendData([item], 'activeUsers', '真实活跃', '总活跃'),
+    ).toEqual([{ day: '2026-08-03', 真实活跃: 10, 总活跃: 12 }]);
   });
 });

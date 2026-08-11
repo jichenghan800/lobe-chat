@@ -25,10 +25,20 @@ interface TrendSectionProps {
 
 const TrendSection = memo<TrendSectionProps>(({ data, loading, metric, setMetric }) => {
   const { t } = useTranslation('setting');
-  const seriesLabel = t(`platformAnalytics.trend.metric.${metric}` as const);
+  const isActiveUsersMetric = metric === 'activeUsers';
+  const seriesLabel = isActiveUsersMetric
+    ? t('platformAnalytics.trend.series.realActiveUsers')
+    : t(`platformAnalytics.trend.metric.${metric}` as const);
+  const totalActiveUsersSeriesLabel = t('platformAnalytics.trend.series.totalActiveUsers');
   const chartData = useMemo(
-    () => buildCottiPlatformAnalyticsTrendData(data ?? [], metric, seriesLabel),
-    [data, metric, seriesLabel],
+    () =>
+      buildCottiPlatformAnalyticsTrendData(
+        data ?? [],
+        metric,
+        seriesLabel,
+        isActiveUsersMetric ? totalActiveUsersSeriesLabel : undefined,
+      ),
+    [data, isActiveUsersMetric, metric, seriesLabel, totalActiveUsersSeriesLabel],
   );
   const hasActivity = (data ?? []).some((item) => item.totalMessages > 0);
 
@@ -83,14 +93,16 @@ const TrendSection = memo<TrendSectionProps>(({ data, loading, metric, setMetric
       ) : hasActivity ? (
         <LineChart
           showGridLines
-          categories={[seriesLabel]}
           className={styles.chart}
           data={chartData}
           height={320}
           index={'day'}
-          showLegend={false}
+          showLegend={isActiveUsersMetric}
           startEndOnly={(data?.length ?? 0) > 14}
           valueFormatter={valueFormatter}
+          categories={
+            isActiveUsersMetric ? [seriesLabel, totalActiveUsersSeriesLabel] : [seriesLabel]
+          }
         />
       ) : (
         <Empty

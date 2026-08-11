@@ -277,7 +277,7 @@ describe('createServerAgentToolsEngine', () => {
     expect(result.enabledToolIds).not.toContain(WebBrowsingManifest.identifier);
   });
 
-  it('should enable ImageGeneration in chat mode when model lacks native image output', () => {
+  it('should not enable ImageGeneration by default in chat mode', () => {
     const context = createMockContext();
     const engine = createServerAgentToolsEngine(context, {
       agentConfig: {
@@ -293,6 +293,28 @@ describe('createServerAgentToolsEngine', () => {
       model: 'claude-sonnet',
       provider: 'anthropic',
       toolIds: [],
+    });
+
+    expect(result.enabledToolIds).not.toContain(ImageGenerationManifest.identifier);
+  });
+
+  it('should enable ImageGeneration when explicitly selected for the current chat turn', () => {
+    const context = createMockContext();
+    const engine = createServerAgentToolsEngine(context, {
+      agentConfig: {
+        chatConfig: { enableAgentMode: false },
+        plugins: [],
+      },
+      model: 'claude-sonnet',
+      modelAbilities: { functionCall: true, imageOutput: false },
+      provider: 'anthropic',
+      selectedToolIds: [ImageGenerationManifest.identifier],
+    });
+
+    const result = engine.generateToolsDetailed({
+      model: 'claude-sonnet',
+      provider: 'anthropic',
+      toolIds: [ImageGenerationManifest.identifier],
     });
 
     expect(result.enabledToolIds).toContain(ImageGenerationManifest.identifier);
@@ -339,6 +361,29 @@ describe('createServerAgentToolsEngine', () => {
       toolIds: [],
     });
 
+    expect(result.enabledToolIds).not.toContain(ImageGenerationManifest.identifier);
+  });
+
+  it('should enable only the tool explicitly selected for the current chat turn', () => {
+    const context = createMockContext();
+    const engine = createServerAgentToolsEngine(context, {
+      agentConfig: {
+        chatConfig: { enableAgentMode: false },
+        plugins: ['another-plugin', 'test-plugin'],
+      },
+      model: 'gpt-4',
+      provider: 'openai',
+      selectedToolIds: ['test-plugin'],
+    });
+
+    const result = engine.generateToolsDetailed({
+      model: 'gpt-4',
+      provider: 'openai',
+      toolIds: ['another-plugin', 'test-plugin'],
+    });
+
+    expect(result.enabledToolIds).toContain('test-plugin');
+    expect(result.enabledToolIds).not.toContain('another-plugin');
     expect(result.enabledToolIds).not.toContain(ImageGenerationManifest.identifier);
   });
 

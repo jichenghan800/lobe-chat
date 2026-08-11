@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // Get mocked module
 import { authEnv } from '@/envs/auth';
 
-import { isEmailAllowed } from './email-whitelist';
+import { emailWhitelist, isEmailAllowed } from './email-whitelist';
 
 // Mock authEnv
 vi.mock('@/envs/auth', () => ({
@@ -116,5 +116,20 @@ describe('isEmailAllowed', () => {
       // split('@')[1] returns 'middle@example.com', which won't match 'example.com'
       expect(isEmailAllowed('user@middle@example.com')).toBe(false);
     });
+  });
+});
+
+describe('emailWhitelist plugin', () => {
+  it('uses an asynchronous database-backed resolver before user creation', async () => {
+    const resolver = vi.fn().mockResolvedValue(false);
+    const plugin = emailWhitelist({ isAllowed: resolver });
+    const initResult = await plugin.init?.({} as never);
+    if (!initResult) throw new Error('Email whitelist plugin did not initialize');
+    const hooks = initResult.options?.databaseHooks;
+
+    await expect(
+      hooks?.user?.create?.before?.({ email: 'blocked@example.com' } as never, {} as never),
+    ).rejects.toMatchObject({ body: expect.objectContaining({ code: 'EMAIL_NOT_ALLOWED' }) });
+    expect(resolver).toHaveBeenCalledWith('blocked@example.com');
   });
 });

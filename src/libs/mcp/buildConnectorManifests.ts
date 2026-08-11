@@ -1,6 +1,10 @@
 import type { ToolManifest } from '@lobechat/types';
 
-import { getConnectorRuntimeName } from '@/const/connectorPresets';
+import {
+  getConnectorRuntimeName,
+  isFeishuDocumentsConnector,
+  isFeishuDocumentsToolAuthorized,
+} from '@/const/connectorPresets';
 import type { DecryptedConnector } from '@/database/models/connector';
 import type { UserConnectorToolItem } from '@/database/schemas';
 import { ConnectorToolPermission } from '@/database/schemas';
@@ -32,7 +36,11 @@ export function buildConnectorManifests(
   for (const connector of connectors) {
     if (!connector.isEnabled) continue;
 
-    const connectorTools = toolsByConnector.get(connector.id) ?? [];
+    const connectorTools = (toolsByConnector.get(connector.id) ?? []).filter(
+      (tool) =>
+        !isFeishuDocumentsConnector(connector) ||
+        isFeishuDocumentsToolAuthorized(connector, tool.toolName),
+    );
 
     // Include ALL tools in the manifest so the AI is aware of their existence.
     // Disabled tools get a blocking description so the AI knows not to call them.

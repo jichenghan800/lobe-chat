@@ -3,7 +3,6 @@
  */
 import { BrowserManifest } from '@lobechat/builtin-tool-browser';
 import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
-import { ImageGenerationManifest } from '@lobechat/builtin-tool-image-generation';
 import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
@@ -25,7 +24,6 @@ import { isToolAvailableInCurrentEnv } from '@/helpers/toolAvailability';
 import { patchManifestWithPermissions } from '@/libs/mcp/patchManifestPermissions';
 import { getAgentStoreState } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
-import { aiModelSelectors, getAiInfraStoreState } from '@/store/aiInfra';
 import { getToolStoreState } from '@/store/tool';
 import {
   composioStoreSelectors,
@@ -214,6 +212,8 @@ export const createAgentToolsEngine = (
   pluginIds?: string[],
   /** Conversation context for context-aware builtin manifests (scope, isSubAgent). */
   manifestContext?: BuiltinToolResolveContext,
+  /** Tool IDs the user explicitly selected for this turn (for example via an @ mention). */
+  selectedToolIds?: string[],
 ) => {
   const searchConfig = getSearchConfig(workingModel.model, workingModel.provider);
   const agentState = getAgentStoreState();
@@ -234,17 +234,12 @@ export const createAgentToolsEngine = (
     agentChatConfigSelectors.currentChatConfig(agentState).memory?.enabled ??
     settingsSelectors.memoryEnabled(useUserStore.getState());
   const webBrowsingEnabled = searchConfig.useApplicationBuiltinSearchTool;
-  const imageGenerationEnabled =
-    isCanUseFC(workingModel.model, workingModel.provider) &&
-    !aiModelSelectors.isModelSupportImageOutput(
-      workingModel.model,
-      workingModel.provider,
-    )(getAiInfraStoreState());
-
   const chatModeRules = {
-    // Example: Claude can call tools but lacks native imageOutput, so expose the
-    // image-generation fallback; image-output models should use their native path.
-    [ImageGenerationManifest.identifier]: imageGenerationEnabled,
+    // Chat mode stays a strict whitelist, but a tool the user deliberately
+    // selected for this turn must be usable. Do not reuse `pluginIds` here:
+    // it also contains the agent's pinned/runtime tools, which would silently
+    // broaden Chat mode back into Agent mode.
+    ...(selectedToolIds && Object.fromEntries(selectedToolIds.map((id) => [id, true]))),
     [KnowledgeBaseManifest.identifier]: kbEnabled,
     [MemoryManifest.identifier]: memoryEnabled,
     [WebBrowsingManifest.identifier]: webBrowsingEnabled,

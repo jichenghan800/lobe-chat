@@ -840,6 +840,13 @@
       "when": 1785724387923,
       "tag": "0119_reconcile_v2213_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 120,
+      "version": "7",
+      "when": 1786088099399,
+      "tag": "0120_add_cotti_people_management",
+      "breakpoints": true
     }
   ],
   "version": "6"

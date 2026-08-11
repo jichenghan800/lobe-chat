@@ -31,4 +31,8 @@ describe('COTTI platform management section state', () => {
     expect(next.get('section')).toBeNull();
     expect(next.get('range')).toBe('7');
   });
+
+  it('accepts the compliance audit section', () => {
+    expect(parseCottiPlatformManagementSection(new URLSearchParams('section=audit'))).toBe('audit');
+  });
 });

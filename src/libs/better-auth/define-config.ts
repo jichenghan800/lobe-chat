@@ -25,6 +25,7 @@ import { initBetterAuthSSOProviders } from '@/libs/better-auth/sso';
 import { createSecondaryStorage, getTrustedOrigins } from '@/libs/better-auth/utils/config';
 import { parseSSOProviders } from '@/libs/better-auth/utils/server';
 import { clearMismatchedOIDCSession } from '@/libs/oidc-provider/session-cleanup';
+import { CottiPeopleManagementService } from '@/server/services/cotti/peopleManagement';
 import { EmailService } from '@/server/services/email';
 import { UserService } from '@/server/services/user';
 
@@ -291,7 +292,10 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
     },
     plugins: [
       ...customOptions.plugins,
-      emailWhitelist(),
+      emailWhitelist({
+        isAllowed: (email) =>
+          new CottiPeopleManagementService(serverDB).isRegistrationAllowed(email),
+      }),
       expo(),
       admin(),
       // Email OTP plugin for mobile verification

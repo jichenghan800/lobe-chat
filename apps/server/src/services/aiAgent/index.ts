@@ -3183,6 +3183,7 @@ export class AiAgentService {
         },
         model,
         provider,
+        selectedToolIds,
         useApplicationBuiltinSearchTool: searchDecision.useApplicationBuiltinSearchTool,
       });
 

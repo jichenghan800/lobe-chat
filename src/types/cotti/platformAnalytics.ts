@@ -77,6 +77,7 @@ export interface CottiPlatformAnalyticsOverview {
   errorMessages: number;
   errorRate: number;
   newUsers: number;
+  realActiveUsers: number;
   recordedCost: number;
   totalInputTokens: number;
   totalOutputTokens: number;
@@ -91,6 +92,7 @@ export interface CottiPlatformAnalyticsTrendItem {
   day: string;
   errorMessages: number;
   errorRate: number;
+  realActiveUsers: number;
   recordedCost: number;
   totalMessages: number;
   totalTokens: number;

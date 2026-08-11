@@ -53,6 +53,7 @@ import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { getElectronStoreState } from '@/store/electron';
 import { getServerConfigStoreState, serverConfigSelectors } from '@/store/serverConfig';
 import { getTaskStoreState } from '@/store/task';
+import { getToolStoreState } from '@/store/tool';
 import { pageAgentRuntime } from '@/store/tool/slices/builtin/executors/pageAgentRuntime';
 import { type StoreSetter } from '@/store/types';
 import { toolInterventionSelectors } from '@/store/user/selectors';
@@ -256,6 +257,10 @@ export class StreamingExecutorActionImpl {
       // sub-agent runs. Replaces the former dropSubAgentInGroup + applyPluginFilters
       // isSubAgent hard-coding.
       { isSubAgent, scope },
+      // Chat mode normally exposes only its small builtin whitelist. Preserve
+      // that boundary while allowing tools the user explicitly selected for
+      // this turn (for example @飞书资料).
+      selectedToolIds,
     );
     // When skillActivateMode is 'manual':
     // Exclude only discovery tools (activator, skill-store) so runtime-managed defaults
@@ -588,6 +593,21 @@ export class StreamingExecutorActionImpl {
 
     // Create a new array to avoid modifying the original messages
     const messages = [...originalMessages];
+
+    // The post-render connector warmup is intentionally non-blocking, so a
+    // message sent immediately after a full reload can otherwise build its
+    // immutable tools engine from an empty connector store. Wait at the one
+    // boundary where connector manifests are consumed. This remains a no-op
+    // after initialization and keeps ordinary chat independent from the
+    // settings/tools surfaces having mounted first.
+    const toolStore = getToolStoreState();
+    if (!toolStore.isConnectorsInit) {
+      try {
+        await toolStore.fetchConnectors();
+      } catch (error) {
+        log('[executeClientAgent] connector initialization failed: %O', error);
+      }
+    }
 
     // Decide tool / function-calling capability from real data, not a guess.
     // The enabled-model list hydrates asynchronously (auth session → aiProvider

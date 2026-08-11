@@ -1,4 +1,7 @@
-import { isFeishuDocumentsConnector, isFeishuDocumentsToolAllowed } from '@/const/connectorPresets';
+import {
+  isFeishuDocumentsConnector,
+  isFeishuDocumentsToolAuthorized,
+} from '@/const/connectorPresets';
 import type { ConnectorModel, DecryptedConnector } from '@/database/models/connector';
 import type { ConnectorToolModel } from '@/database/models/connectorTool';
 import { ConnectorMcpConnectionType, ConnectorStatus } from '@/database/schemas';
@@ -9,6 +12,8 @@ import {
 import { inferCrudType } from '@/libs/mcp/utils';
 import { mcpService } from '@/server/services/mcp';
 
+import { FEISHU_MESSAGE_TOOL_DEFINITIONS } from './feishuMessages';
+import { FEISHU_SHEET_TOOL_DEFINITIONS } from './feishuSheets';
 import { ensureFreshConnectorToken } from './tokens';
 
 export interface ConnectorToolSyncContext {
@@ -84,15 +89,24 @@ export const syncConnectorToolsById = async (
   }
 
   const availableTools = isFeishuDocumentsConnector(connector)
-    ? rawTools.filter((tool) => isFeishuDocumentsToolAllowed(tool.name))
+    ? rawTools.filter((tool) => isFeishuDocumentsToolAuthorized(connector, tool.name))
     : rawTools;
 
-  const syncInputs = availableTools.map((t) => ({
+  const remoteSyncInputs = availableTools.map((t) => ({
     crudType: inferCrudType(t.name),
-    description: t.description,
+    description:
+      isFeishuDocumentsConnector(connector) && t.name === 'fetch-doc'
+        ? `${t.description || 'Read a Feishu document.'} Electronic spreadsheets are not supported by this tool; use fetch-sheet instead.`
+        : t.description,
     inputSchema: t.inputSchema as Record<string, unknown>,
     toolName: t.name,
   }));
+  const virtualSyncInputs = isFeishuDocumentsConnector(connector)
+    ? [...FEISHU_MESSAGE_TOOL_DEFINITIONS, ...FEISHU_SHEET_TOOL_DEFINITIONS].filter((tool) =>
+        isFeishuDocumentsToolAuthorized(connector, tool.toolName),
+      )
+    : [];
+  const syncInputs = [...remoteSyncInputs, ...virtualSyncInputs];
 
   await ctx.connectorToolModel.upsertMany(connectorId, syncInputs);
   if (isFeishuDocumentsConnector(connector)) {

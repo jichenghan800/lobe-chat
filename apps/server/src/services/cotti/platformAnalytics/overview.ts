@@ -4,6 +4,7 @@ import { messages, users } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
 import type { CottiPlatformAnalyticsOverview } from '@/types/cotti/platformAnalytics';
 
+import { cottiRealUserMessageCondition } from './activitySql';
 import type { ResolvedCottiPlatformAnalyticsPeriod } from './range';
 import { cottiMessageUsageNumber } from './usageSql';
 
@@ -41,6 +42,10 @@ export const getCottiPlatformAnalyticsOverview = async (
           ),
         activeUsers:
           sql<number>`COUNT(DISTINCT ${messages.userId}) FILTER (WHERE ${messages.role} = 'user')`.mapWith(
+            Number,
+          ),
+        realActiveUsers:
+          sql<number>`COUNT(DISTINCT ${messages.userId}) FILTER (WHERE ${cottiRealUserMessageCondition})`.mapWith(
             Number,
           ),
         assistantMessages:
@@ -89,6 +94,7 @@ export const getCottiPlatformAnalyticsOverview = async (
     errorMessages,
     errorRate: assistantMessages > 0 ? errorMessages / assistantMessages : 0,
     newUsers: toFiniteNumber(userRow?.newUsers),
+    realActiveUsers: toFiniteNumber(messageRow?.realActiveUsers),
     recordedCost: cost,
     totalInputTokens,
     totalOutputTokens,

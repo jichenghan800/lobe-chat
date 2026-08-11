@@ -17,6 +17,7 @@ export * from './cottiAgentAccess';
 export * from './cottiAudit';
 export * from './cottiHomeNotification';
 export * from './cottiModelDisplay';
+export * from './cottiPeople';
 export * from './device';
 export * from './documentHistory';
 export * from './documentShare';

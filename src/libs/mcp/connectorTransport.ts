@@ -1,5 +1,5 @@
 import {
-  FEISHU_DOCUMENTS_ALLOWED_TOOLS_HEADER,
+  getFeishuDocumentsAuthorizedToolsHeader,
   isFeishuDocumentsConnector,
 } from '@/const/connectorPresets';
 import type { DecryptedConnector } from '@/database/models/connector';
@@ -46,7 +46,7 @@ export const buildConnectorHttpTransport = (
     const credentials = connector.credentials;
     return {
       headers: {
-        'X-Lark-MCP-Allowed-Tools': FEISHU_DOCUMENTS_ALLOWED_TOOLS_HEADER,
+        'X-Lark-MCP-Allowed-Tools': getFeishuDocumentsAuthorizedToolsHeader(connector),
         ...(credentials?.type === 'oauth2' && credentials.accessToken
           ? { 'X-Lark-MCP-UAT': credentials.accessToken }
           : {}),

@@ -3,6 +3,10 @@ import { type BetterAuthPlugin } from 'better-auth/types';
 
 import { authEnv } from '@/envs/auth';
 
+interface EmailWhitelistOptions {
+  isAllowed?: (email: string) => boolean | Promise<boolean>;
+}
+
 /**
  * Parse comma-separated email whitelist string into array.
  */
@@ -36,7 +40,7 @@ export function isEmailAllowed(email: string): boolean {
  * Better Auth plugin to restrict registration to whitelisted emails/domains.
  * Intercepts user creation (both email signup and SSO) via databaseHooks.
  */
-export const emailWhitelist = (): BetterAuthPlugin => ({
+export const emailWhitelist = (options: EmailWhitelistOptions = {}): BetterAuthPlugin => ({
   id: 'email-whitelist',
   init() {
     return {
@@ -47,7 +51,10 @@ export const emailWhitelist = (): BetterAuthPlugin => ({
               before: async (user) => {
                 if (!user.email) return { data: user };
 
-                if (!isEmailAllowed(user.email)) {
+                const allowed = await (options.isAllowed?.(user.email) ??
+                  isEmailAllowed(user.email));
+
+                if (!allowed) {
                   throw new APIError('FORBIDDEN', {
                     code: 'EMAIL_NOT_ALLOWED',
                     message: 'EMAIL_NOT_ALLOWED',

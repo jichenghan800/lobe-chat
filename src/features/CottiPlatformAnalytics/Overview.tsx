@@ -35,6 +35,7 @@ const Overview = memo<OverviewProps>(({ data, loading }) => {
     errorMessages: 0,
     errorRate: 0,
     newUsers: 0,
+    realActiveUsers: 0,
     recordedCost: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
@@ -67,11 +68,14 @@ const Overview = memo<OverviewProps>(({ data, loading }) => {
       <div className={styles.metricGrid}>
         <MetricCard
           description={t('platformAnalytics.metric.activeUsers.desc')}
-          fullValue={formatNumber(overview.activeUsers)}
           icon={UsersIcon}
           loading={loading}
           title={t('platformAnalytics.metric.activeUsers.title')}
-          value={formatUsageValue(overview.activeUsers)}
+          value={`${formatUsageValue(overview.realActiveUsers)} / ${formatUsageValue(overview.activeUsers)}`}
+          fullValue={t('platformAnalytics.metric.activeUsers.fullValue', {
+            real: formatNumber(overview.realActiveUsers),
+            total: formatNumber(overview.activeUsers),
+          })}
         />
         <MetricCard
           description={t('platformAnalytics.metric.assistantMessages.desc')}

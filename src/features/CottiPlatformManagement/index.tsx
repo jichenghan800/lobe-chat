@@ -2,7 +2,14 @@
 
 import { Empty, Flexbox, Skeleton, Text } from '@lobehub/ui';
 import { Tabs } from '@lobehub/ui/base-ui';
-import { BarChart3Icon, BellRingIcon, BotIcon, Settings2Icon, ShieldCheckIcon } from 'lucide-react';
+import {
+  BarChart3Icon,
+  BellRingIcon,
+  BotIcon,
+  ScanSearchIcon,
+  Settings2Icon,
+  UsersIcon,
+} from 'lucide-react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
@@ -10,13 +17,14 @@ import { useSearchParams } from 'react-router';
 import { isCottiPlatformManagementEnabled } from '@/_custom/registry/platformManagement';
 import AsyncError from '@/components/AsyncError';
 import CottiPlatformAnalytics from '@/features/CottiPlatformAnalytics';
+import CottiPlatformAudit from '@/features/CottiPlatformAudit';
 import NavHeader from '@/features/NavHeader';
 import SettingContainer from '@/features/Setting/SettingContainer';
 
 import { useCottiPlatformAdminAccess } from '../CottiPlatformAnalytics/hooks';
-import AgentAccessSettings from './AgentAccessSettings';
 import HomeNotificationSettings from './HomeNotificationSettings';
 import ModelDisplaySettings from './ModelDisplaySettings';
+import PeopleManagementSettings from './PeopleManagementSettings';
 import {
   type CottiPlatformManagementSection,
   parseCottiPlatformManagementSection,
@@ -65,12 +73,17 @@ const CottiPlatformManagement = memo(() => {
               label: t('platformManagement.sections.overview'),
             },
             {
+              icon: <ScanSearchIcon size={16} />,
+              key: 'audit',
+              label: t('platformManagement.sections.audit'),
+            },
+            {
               icon: <BotIcon size={16} />,
               key: 'models',
               label: t('platformManagement.sections.models'),
             },
             {
-              icon: <ShieldCheckIcon size={16} />,
+              icon: <UsersIcon size={16} />,
               key: 'agent-access',
               label: t('platformManagement.sections.agentAccess'),
             },
@@ -88,8 +101,10 @@ const CottiPlatformManagement = memo(() => {
           <CottiPlatformAnalytics embedded />
         ) : section === 'models' ? (
           <ModelDisplaySettings />
+        ) : section === 'audit' ? (
+          <CottiPlatformAudit />
         ) : section === 'agent-access' ? (
-          <AgentAccessSettings />
+          <PeopleManagementSettings />
         ) : (
           <HomeNotificationSettings />
         )}

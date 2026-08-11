@@ -54,6 +54,17 @@ describe('COTTI platform admin access policy', () => {
       ).toBe('global_super_admin');
     });
 
+    it('allows a database-managed platform administrator', () => {
+      expect(
+        resolveCottiPlatformAdminSource({
+          adminEmails: new Set(),
+          hasDatabaseAssignment: true,
+          hasGlobalSuperAdmin: false,
+          user: ordinaryUser,
+        }),
+      ).toBe('database_assignment');
+    });
+
     it('keeps the production Better Auth admin compatibility', () => {
       expect(
         resolveCottiPlatformAdminSource({

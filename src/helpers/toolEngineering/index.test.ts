@@ -319,7 +319,7 @@ describe('toolEngineering', () => {
   });
 
   describe('createChatToolsEngine', () => {
-    it('should enable image generation in chat mode when model lacks native image output', () => {
+    it('should not enable image generation by default in chat mode', () => {
       mockCurrentChatConfig = { enableAgentMode: false };
       mockImageOutputSupport = false;
 
@@ -330,6 +330,26 @@ describe('toolEngineering', () => {
 
       const result = toolsEngine.generateToolsDetailed({
         toolIds: [],
+        model: 'claude-sonnet',
+        provider: 'anthropic',
+      });
+
+      expect(result.enabledToolIds).not.toContain('lobe-image-generation');
+    });
+
+    it('should enable image generation when explicitly selected for the current chat turn', () => {
+      mockCurrentChatConfig = { enableAgentMode: false };
+      mockImageOutputSupport = false;
+
+      const toolsEngine = createAgentToolsEngine(
+        { model: 'claude-sonnet', provider: 'anthropic' },
+        undefined,
+        undefined,
+        ['lobe-image-generation'],
+      );
+
+      const result = toolsEngine.generateToolsDetailed({
+        toolIds: ['lobe-image-generation'],
         model: 'claude-sonnet',
         provider: 'anthropic',
       });
@@ -370,6 +390,53 @@ describe('toolEngineering', () => {
         provider: 'test',
       });
 
+      expect(result.enabledToolIds).not.toContain('lobe-image-generation');
+    });
+
+    it('should enable only the tool explicitly selected for the current chat turn', () => {
+      mockCurrentChatConfig = { enableAgentMode: false };
+      mockInstalledPluginManifestList = () => [
+        {
+          api: [
+            {
+              description: 'Create a Feishu document',
+              name: 'create-doc',
+              parameters: { properties: {}, required: [], type: 'object' },
+            },
+          ],
+          identifier: 'feishu-documents',
+          meta: { avatar: '📄', title: '飞书资料' },
+          type: 'default',
+        } as unknown as ToolManifest,
+        {
+          api: [
+            {
+              description: 'A pinned tool that was not selected this turn',
+              name: 'run',
+              parameters: { properties: {}, required: [], type: 'object' },
+            },
+          ],
+          identifier: 'pinned-agent-tool',
+          meta: { avatar: '🔒', title: 'Pinned Agent Tool' },
+          type: 'default',
+        } as unknown as ToolManifest,
+      ];
+
+      const toolsEngine = createAgentToolsEngine(
+        { model: 'gemini-3.6-flash', provider: 'vertexai' },
+        ['pinned-agent-tool', 'feishu-documents'],
+        undefined,
+        ['feishu-documents'],
+      );
+
+      const result = toolsEngine.generateToolsDetailed({
+        model: 'gemini-3.6-flash',
+        provider: 'vertexai',
+        toolIds: ['pinned-agent-tool', 'feishu-documents'],
+      });
+
+      expect(result.enabledToolIds).toContain('feishu-documents');
+      expect(result.enabledToolIds).not.toContain('pinned-agent-tool');
       expect(result.enabledToolIds).not.toContain('lobe-image-generation');
     });
 

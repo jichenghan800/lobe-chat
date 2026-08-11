@@ -21,6 +21,7 @@ const dashboard = {
     errorMessages: 0,
     errorRate: 0,
     newUsers: 1,
+    realActiveUsers: 1,
     recordedCost: 0.01,
     totalInputTokens: 10,
     totalOutputTokens: 5,

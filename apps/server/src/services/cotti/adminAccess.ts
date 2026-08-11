@@ -1,13 +1,18 @@
 import { TRPCError } from '@trpc/server';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 
+import { CottiPlatformAdminModel } from '@/database/models/cottiPlatformAdmin';
 import { roles, userRoles, users } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
 
 const GLOBAL_SUPER_ADMIN_ROLE = 'super_admin';
 
 export type CottiPlatformAdminSource =
-  'email_allowlist' | 'global_super_admin' | 'legacy_admin_role' | 'wildcard';
+  | 'database_assignment'
+  | 'email_allowlist'
+  | 'global_super_admin'
+  | 'legacy_admin_role'
+  | 'wildcard';
 
 export interface CottiPlatformAdminIdentity {
   email: null | string;
@@ -24,6 +29,7 @@ interface CottiPlatformAdminUser {
 
 interface ResolveCottiPlatformAdminSourceOptions {
   adminEmails: ReadonlySet<string>;
+  hasDatabaseAssignment?: boolean;
   hasGlobalSuperAdmin: boolean;
   user: CottiPlatformAdminUser;
 }
@@ -42,6 +48,7 @@ export const parseCottiPlatformAdminEmails = (
 
 export const resolveCottiPlatformAdminSource = ({
   adminEmails,
+  hasDatabaseAssignment,
   hasGlobalSuperAdmin,
   user,
 }: ResolveCottiPlatformAdminSourceOptions): CottiPlatformAdminSource | undefined => {
@@ -49,6 +56,7 @@ export const resolveCottiPlatformAdminSource = ({
 
   const email = normalizeEmail(user.normalizedEmail || user.email);
   if (email && adminEmails.has(email)) return 'email_allowlist';
+  if (hasDatabaseAssignment) return 'database_assignment';
   if (hasGlobalSuperAdmin) return 'global_super_admin';
 
   // Keep compatibility with the production implementation, where Better Auth
@@ -66,7 +74,8 @@ export class CottiPlatformAdminAccessService {
   }
 
   async requireAccess(): Promise<CottiPlatformAdminIdentity> {
-    const [[user], globalSuperAdminRows] = await Promise.all([
+    const platformAdminModel = new CottiPlatformAdminModel(this.db);
+    const [[user], globalSuperAdminRows, hasDatabaseAssignment] = await Promise.all([
       this.db
         .select({
           email: users.email,
@@ -90,6 +99,10 @@ export class CottiPlatformAdminAccessService {
           ),
         )
         .limit(1),
+      platformAdminModel.isAssigned(this.userId).catch((error) => {
+        console.error('[CottiPlatformAdminAccess] Database assignment lookup failed:', error);
+        return false;
+      }),
     ]);
 
     if (!user) {
@@ -98,6 +111,7 @@ export class CottiPlatformAdminAccessService {
 
     const source = resolveCottiPlatformAdminSource({
       adminEmails: parseCottiPlatformAdminEmails(),
+      hasDatabaseAssignment,
       hasGlobalSuperAdmin: globalSuperAdminRows.length > 0,
       user,
     });
