@@ -36,18 +36,18 @@ describe('CottiModelDisplayModel', () => {
       {
         displayName: 'COTTI-专业',
         enabled: true,
-        model: 'gemini-3.6-flash',
+        model: 'gemini-3.7-flash',
         provider: 'vertexai',
       },
     ]);
     expect(DEFAULT_COTTI_MODEL_DISPLAY_CONFIG.agent[0]).toEqual({
       displayName: 'COTTI-专业',
       enabled: true,
-      model: 'gemini-3.6-flash',
+      model: 'gemini-3.7-flash',
       provider: 'vertexai',
     });
     expect(DEFAULT_COTTI_MODEL_DISPLAY_CONFIG.defaults).toEqual({
-      agent: { model: 'gemini-3.6-flash', provider: 'vertexai' },
+      agent: { model: 'gemini-3.7-flash', provider: 'vertexai' },
       chat: { model: 'gemini-3.5-flash-lite', provider: 'vertexai' },
     });
   });
@@ -118,17 +118,17 @@ describe('CottiModelDisplayModel', () => {
   it('adds explicit COTTI defaults when reading a historical config without defaults', async () => {
     await serverDB.insert(cottiModelDisplaySettings).values({
       config: {
-        agent: [{ enabled: true, model: 'gemini-3.6-flash', provider: 'vertexai' }],
+        agent: [{ enabled: true, model: 'gemini-3.7-flash', provider: 'vertexai' }],
         chat: [{ enabled: true, model: 'gemini-3.5-flash-lite', provider: 'vertexai' }],
       },
       id: 'default',
     });
 
     await expect(model.getConfig()).resolves.toEqual({
-      agent: [{ enabled: true, model: 'gemini-3.6-flash', provider: 'vertexai' }],
+      agent: [{ enabled: true, model: 'gemini-3.7-flash', provider: 'vertexai' }],
       chat: [{ enabled: true, model: 'gemini-3.5-flash-lite', provider: 'vertexai' }],
       defaults: {
-        agent: { model: 'gemini-3.6-flash', provider: 'vertexai' },
+        agent: { model: 'gemini-3.7-flash', provider: 'vertexai' },
         chat: { model: 'gemini-3.5-flash-lite', provider: 'vertexai' },
       },
     });

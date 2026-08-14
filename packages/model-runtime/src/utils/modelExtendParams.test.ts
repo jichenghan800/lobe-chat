@@ -63,6 +63,26 @@ describe('applyModelExtendParams', () => {
     expect(result.thinkingLevel).toBe('medium');
   });
 
+  it('defaults Gemini 3.7 Flash thinkingLevel to medium', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({}),
+      extendParams: ['thinkingLevel3'],
+      model: 'gemini-3.7-flash',
+    });
+
+    expect(result.thinkingLevel).toBe('medium');
+  });
+
+  it('honors an explicit supported Gemini 3.7 Flash thinkingLevel value', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({ thinkingLevel3: 'low' }),
+      extendParams: ['thinkingLevel3'],
+      model: 'gemini-3.7-flash',
+    });
+
+    expect(result.thinkingLevel).toBe('low');
+  });
+
   it('honors an explicit Gemini 3.6 Flash thinkingLevel value', () => {
     const result = applyModelExtendParams({
       chatConfig: chatConfig({ thinkingLevel: 'low' }),
@@ -256,6 +276,7 @@ describe('resolveDefaultThinkingLevelForModel', () => {
   it('uses per-model defaults', () => {
     expect(resolveDefaultThinkingLevelForModel('gemini-flash-latest')).toBe('medium');
     expect(resolveDefaultThinkingLevelForModel('gemini-flash-lite-latest')).toBe('minimal');
+    expect(resolveDefaultThinkingLevelForModel('gemini-3.7-flash')).toBe('medium');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.6-flash')).toBe('medium');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.5-flash')).toBe('medium');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.5-flash-lite')).toBe('minimal');

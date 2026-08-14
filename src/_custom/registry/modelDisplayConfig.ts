@@ -20,7 +20,7 @@ const normalizeModelKey = (provider: string, model: string) =>
   `${provider.trim().toLowerCase()}/${model.trim().toLowerCase()}`;
 
 export const COTTI_MODEL_DISPLAY_DEFAULTS = {
-  agent: { model: 'gemini-3.6-flash', provider: 'vertexai' },
+  agent: { model: 'gemini-3.7-flash', provider: 'vertexai' },
   chat: { model: 'gemini-3.5-flash-lite', provider: 'vertexai' },
 } as const satisfies Required<ModelDisplayDefaults>;
 

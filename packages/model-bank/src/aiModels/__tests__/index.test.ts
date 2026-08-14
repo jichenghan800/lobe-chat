@@ -151,6 +151,42 @@ describe('Google rolling model aliases', () => {
   });
 });
 
+describe('Vertex AI Gemini 3.7 Flash', () => {
+  it('exposes the GA model with its verified limits, capabilities, and Flash pricing', () => {
+    const vertexModels = LOBE_DEFAULT_MODEL_LIST.filter(
+      (model) => model.providerId === ModelProvider.VertexAI,
+    );
+    const gemini37Flash = vertexModels.find((model) => model.id === 'gemini-3.7-flash');
+    const gemini36Flash = vertexModels.find((model) => model.id === 'gemini-3.6-flash');
+
+    expect(gemini37Flash).toEqual(
+      expect.objectContaining({
+        abilities: expect.objectContaining({
+          audio: true,
+          functionCall: true,
+          reasoning: true,
+          search: true,
+          structuredOutput: true,
+          video: true,
+          vision: true,
+        }),
+        contextWindowTokens: 1_114_112,
+        enabled: true,
+        generation: 'gemini-3.7',
+        maxOutput: 65_536,
+        releasedAt: '2026-08-13',
+      }),
+    );
+    expect(gemini37Flash?.pricing).toEqual(gemini36Flash?.pricing);
+    expect(gemini37Flash?.settings).toEqual({
+      disabledParams: ['temperature', 'top_p'],
+      extendParams: ['thinkingLevel3', 'urlContext'],
+      searchImpl: 'params',
+      searchProvider: 'google',
+    });
+  });
+});
+
 describe('Gemini native image models', () => {
   it.each([ModelProvider.Google, ModelProvider.VertexAI])(
     'exposes the generally available Nano Banana 2 model for %s',

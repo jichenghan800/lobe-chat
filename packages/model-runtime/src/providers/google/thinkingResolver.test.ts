@@ -40,6 +40,7 @@ describe('thinkingResolver', () => {
       it.each([
         'gemini-2.5-flash',
         'gemini-2.5-flash-preview',
+        'gemini-3.7-flash',
         'gemini-3.6-flash',
         'gemini-3.5-flash',
         'gemini-3-flash',
@@ -91,6 +92,7 @@ describe('thinkingResolver', () => {
       'gemini-pro-latest',
       'gemini-flash-latest',
       'gemini-flash-lite-latest',
+      'gemini-3.7-flash',
       'gemini-3.6-flash',
       'gemini-3.5-flash',
       'gemini-3.5-flash-lite',
@@ -319,6 +321,31 @@ describe('thinkingResolver', () => {
           includeThoughts: true,
           thinkingBudget: undefined,
           thinkingLevel: 'medium',
+        });
+      });
+    });
+
+    describe('gemini-3.7-flash (Vertex AI supports low, medium, and high)', () => {
+      it.each(['low', 'medium', 'high'] as const)(
+        'should preserve the supported %s thinking level',
+        (thinkingLevel) => {
+          expect(resolveGoogleThinkingConfig('gemini-3.7-flash', { thinkingLevel })).toEqual({
+            includeThoughts: true,
+            thinkingBudget: undefined,
+            thinkingLevel,
+          });
+        },
+      );
+
+      it.each([
+        'gemini-3.7-flash',
+        'google/gemini-3.7-flash',
+        'publishers/google/models/gemini-3.7-flash',
+      ])('should normalize a legacy minimal level to low for %s', (model) => {
+        expect(resolveGoogleThinkingConfig(model, { thinkingLevel: 'minimal' })).toEqual({
+          includeThoughts: true,
+          thinkingBudget: undefined,
+          thinkingLevel: 'low',
         });
       });
     });

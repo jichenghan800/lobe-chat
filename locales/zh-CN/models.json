@@ -545,6 +545,7 @@
   "gemini-3.5-flash-lite.description": "Gemini 3.5 Flash-Lite 是 Google 最快、最具成本效益的 3.5 模型，适用于高吞吐量的代理任务、文档解析和简单数据提取。",
   "gemini-3.5-flash.description": "Gemini 的最智能模型，专为速度而设计，结合前沿智能与卓越的搜索和基础能力。",
   "gemini-3.6-flash.description": "Gemini 3.6 Flash 在代理和多模态任务中平衡了速度与智能，输出成本低于 3.5 Flash。",
+  "gemini-3.7-flash.description": "Gemini 3.7 Flash 以 Flash 级成本和速度提供接近 Pro 的智能，并具备 Google 最强的 Flash 智能体任务表现。",
   "gemini-flash-latest.description": "指向 gemini-3.6-flash",
   "gemini-flash-lite-latest.description": "指向 gemini-3.5-flash-lite",
   "gemini-pro-latest.description": "指向 gemini-3.1-pro-preview",

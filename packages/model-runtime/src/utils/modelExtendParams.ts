@@ -28,10 +28,7 @@ export interface ModelExtendParams {
 }
 
 type ThinkingLevelExtendParam =
-  | 'thinkingLevel'
-  | 'thinkingLevel2'
-  | 'thinkingLevel3'
-  | 'thinkingLevel4';
+  'thinkingLevel' | 'thinkingLevel2' | 'thinkingLevel3' | 'thinkingLevel4';
 
 type ThinkingLevelValue = NonNullable<LobeAgentChatConfig['thinkingLevel']>;
 
@@ -53,6 +50,10 @@ const MODEL_THINKING_LEVEL_DEFAULTS: Partial<
   },
   'gemini-3.6-flash': {
     thinkingLevel: 'medium',
+  },
+  'gemini-3.7-flash': {
+    thinkingLevel: 'medium',
+    thinkingLevel3: 'medium',
   },
   'gemini-3.5-flash': {
     thinkingLevel: 'medium',

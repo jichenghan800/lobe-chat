@@ -137,7 +137,7 @@ describe('cotti.modelDisplay router', () => {
     mockAdminAccess();
     const caller = cottiRouter.createCaller({ userId: 'admin-user' });
     const historicalConfig = {
-      agent: [{ enabled: true, model: 'gemini-3.6-flash', provider: 'vertexai' }],
+      agent: [{ enabled: true, model: 'gemini-3.7-flash', provider: 'vertexai' }],
       chat: [{ enabled: true, model: 'gemini-3.5-flash-lite', provider: 'vertexai' }],
     };
     mocks.updateConfig.mockResolvedValueOnce({ config: historicalConfig });
