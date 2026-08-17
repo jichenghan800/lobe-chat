@@ -29,16 +29,3 @@ export interface ModelDisplayOption {
   model: string;
   provider: string;
 }
-
-export interface CottiProfessionalModelStatus {
-  affectedAgentCount: number;
-  currentModel: ModelDisplayModelRef;
-  options: ModelDisplayOption[];
-}
-
-export interface CottiProfessionalModelSwitchResult {
-  affectedAgentCount: number;
-  config: ModelDisplayConfig;
-  previousModel: ModelDisplayModelRef;
-  targetModel: ModelDisplayModelRef;
-}

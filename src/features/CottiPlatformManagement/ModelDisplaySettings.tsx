@@ -10,7 +10,6 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCottiModelDisplayConfig } from '@/_custom/hooks/useCottiModelDisplayConfig';
-import { isCottiProfessionalModel } from '@/_custom/registry/modelDisplayConfig';
 import AsyncError from '@/components/AsyncError';
 import { useClientDataSWR } from '@/libs/swr';
 import { cottiModelDisplayService } from '@/services/cottiModelDisplay';
@@ -29,7 +28,6 @@ import {
   setModelDisplayItemEnabled,
   setModelDisplayName,
 } from './modelDisplayDraft';
-import ProfessionalModelChannel from './ProfessionalModelChannel';
 import { sharedStyles } from './sharedStyle';
 
 const styles = createStaticStyles(({ css }) => ({
@@ -114,7 +112,7 @@ const ModelDisplaySettings = memo(() => {
   const availableOptions = useMemo(
     () =>
       [...optionMap.entries()]
-        .filter(([key, option]) => !configuredKeys.has(key) && !isCottiProfessionalModel(option))
+        .filter(([key]) => !configuredKeys.has(key))
         .map(([value, option]) => ({ label: option.label, value })),
     [configuredKeys, optionMap],
   );
@@ -158,13 +156,6 @@ const ModelDisplaySettings = memo(() => {
 
   return (
     <Flexbox gap={16}>
-      <ProfessionalModelChannel
-        disabled={dirty || saving}
-        onSwitched={async (config) => {
-          setDraft(config);
-          await configSWR.mutate(config, { revalidate: false });
-        }}
-      />
       <Block className={sharedStyles.card} gap={16} padding={20} variant={'outlined'}>
         <Flexbox className={sharedStyles.sectionHeader} gap={4}>
           <Text className={sharedStyles.sectionTitle}>{t('platformManagement.models.title')}</Text>
@@ -211,7 +202,6 @@ const ModelDisplaySettings = memo(() => {
           <div className={styles.modelList}>
             {draft[scope].map((item, index) => {
               const isDefault = isModelDisplayDefault(draft, scope, item);
-              const isProfessionalChannel = isCottiProfessionalModel(item);
 
               return (
                 <div className={styles.modelRow} key={getModelDisplayKey(item)}>
@@ -232,7 +222,6 @@ const ModelDisplaySettings = memo(() => {
                   </Flexbox>
                   <Input
                     className={styles.displayName}
-                    disabled={isProfessionalChannel}
                     maxLength={100}
                     placeholder={t('platformManagement.models.displayName.placeholder')}
                     value={item.displayName}
@@ -242,7 +231,6 @@ const ModelDisplaySettings = memo(() => {
                   />
                   <Switch
                     checked={item.enabled}
-                    disabled={isProfessionalChannel}
                     onChange={(enabled) => {
                       const next = setModelDisplayItemEnabled(draft, scope, item, enabled);
                       if (!next) {

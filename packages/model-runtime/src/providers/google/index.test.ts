@@ -314,7 +314,6 @@ describe('LobeGoogleAI', () => {
     });
 
     it.each([
-      ['gemini-3.7-flash', 'medium'],
       ['gemini-3.6-flash', 'medium'],
       ['gemini-3.5-flash-lite', 'minimal'],
     ] as const)('should omit deprecated generation config for %s', async (model, thinkingLevel) => {
@@ -338,7 +337,7 @@ describe('LobeGoogleAI', () => {
       });
     });
 
-    it.each(['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite'])(
+    it.each(['gemini-3.6-flash', 'gemini-3.5-flash-lite'])(
       'should drop assistant prefill turns for %s',
       async (model) => {
         await instance.chat({
@@ -944,7 +943,6 @@ describe('thinkingConfig includeThoughts logic', () => {
 
 describe('sampling params compatibility', () => {
   it.each([
-    'gemini-3.7-flash',
     'gemini-3.6-flash',
     'gemini-3.5-flash-lite',
     'gemini-flash-latest',

@@ -10,9 +10,7 @@ const mocks = vi.hoisted(() => ({
   CottiModelDisplayModel: vi.fn(),
   getConfig: vi.fn(),
   getEnabledModelDisplayItems: vi.fn(),
-  getProfessionalModelStatus: vi.fn(),
   getServerGlobalConfig: vi.fn(),
-  switchProfessionalModel: vi.fn(),
   updateConfig: vi.fn(),
 }));
 
@@ -42,23 +40,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.CottiModelDisplayModel.mockImplementation(() => ({
     getConfig: mocks.getConfig,
-    getProfessionalModelStatus: mocks.getProfessionalModelStatus,
-    switchProfessionalModel: mocks.switchProfessionalModel,
     updateConfig: mocks.updateConfig,
   }));
   mocks.getConfig.mockResolvedValue(config);
   mocks.getEnabledModelDisplayItems.mockReturnValue([...config.chat, ...config.agent]);
-  mocks.getProfessionalModelStatus.mockResolvedValue({
-    affectedAgentCount: 35,
-    currentModel: { model: 'gemini-3.7-flash', provider: 'vertexai' },
-  });
-  mocks.getServerGlobalConfig.mockResolvedValue({ aiProvider: {} });
-  mocks.switchProfessionalModel.mockResolvedValue({
-    affectedAgentCount: 35,
-    config,
-    previousModel: { model: 'gemini-3.7-flash', provider: 'vertexai' },
-    targetModel: { model: 'gemini-3.6-flash', provider: 'vertexai' },
-  });
   mocks.updateConfig.mockResolvedValue({ config });
 });
 
@@ -148,84 +133,11 @@ describe('cotti.modelDisplay router', () => {
     expect(mocks.updateConfig).toHaveBeenCalledWith(config, 'admin-user');
   });
 
-  it('returns the current professional channel and only its deployed model versions', async () => {
-    mockAdminAccess();
-    mocks.getServerGlobalConfig.mockResolvedValue({
-      aiProvider: {
-        vertexai: {
-          enabled: true,
-          serverModelLists: [
-            { displayName: 'Gemini 3.6 Flash', id: 'gemini-3.6-flash', type: 'chat' },
-            { displayName: 'Gemini 3.7 Flash', id: 'gemini-3.7-flash', type: 'chat' },
-            { displayName: 'Fast', id: 'gemini-3.5-flash-lite', type: 'chat' },
-          ],
-        },
-      },
-    });
-    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
-
-    await expect(caller.modelDisplay.professionalModel()).resolves.toEqual({
-      data: {
-        affectedAgentCount: 35,
-        currentModel: { model: 'gemini-3.7-flash', provider: 'vertexai' },
-        options: [
-          {
-            displayName: 'Gemini 3.6 Flash',
-            label: 'Gemini 3.6 Flash (vertexai/gemini-3.6-flash)',
-            model: 'gemini-3.6-flash',
-            provider: 'vertexai',
-          },
-          {
-            displayName: 'Gemini 3.7 Flash',
-            label: 'Gemini 3.7 Flash (vertexai/gemini-3.7-flash)',
-            model: 'gemini-3.7-flash',
-            provider: 'vertexai',
-          },
-        ],
-      },
-      success: true,
-    });
-  });
-
-  it('switches the professional channel after validating the model is deployed', async () => {
-    mockAdminAccess();
-    mocks.getServerGlobalConfig.mockResolvedValue({
-      aiProvider: {
-        vertexai: {
-          enabled: true,
-          serverModelLists: [{ id: 'gemini-3.6-flash', type: 'chat' }],
-        },
-      },
-    });
-    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
-
-    await expect(
-      caller.modelDisplay.switchProfessionalModel({ model: 'gemini-3.6-flash' }),
-    ).resolves.toMatchObject({
-      data: {
-        affectedAgentCount: 35,
-        targetModel: { model: 'gemini-3.6-flash', provider: 'vertexai' },
-      },
-      success: true,
-    });
-    expect(mocks.switchProfessionalModel).toHaveBeenCalledWith('gemini-3.6-flash', 'admin-user');
-  });
-
-  it('rejects switching to a professional model that is not deployed', async () => {
-    mockAdminAccess();
-    const caller = cottiRouter.createCaller({ userId: 'admin-user' });
-
-    await expect(
-      caller.modelDisplay.switchProfessionalModel({ model: 'gemini-3.6-flash' }),
-    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
-    expect(mocks.switchProfessionalModel).not.toHaveBeenCalled();
-  });
-
   it('accepts a historical payload without defaults when both COTTI defaults are enabled', async () => {
     mockAdminAccess();
     const caller = cottiRouter.createCaller({ userId: 'admin-user' });
     const historicalConfig = {
-      agent: [{ enabled: true, model: 'gemini-3.7-flash', provider: 'vertexai' }],
+      agent: [{ enabled: true, model: 'gemini-3.6-flash', provider: 'vertexai' }],
       chat: [{ enabled: true, model: 'gemini-3.5-flash-lite', provider: 'vertexai' }],
     };
     mocks.updateConfig.mockResolvedValueOnce({ config: historicalConfig });
