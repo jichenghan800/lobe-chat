@@ -336,18 +336,6 @@ describe('thinkingResolver', () => {
           });
         },
       );
-
-      it.each([
-        'gemini-3.7-flash',
-        'google/gemini-3.7-flash',
-        'publishers/google/models/gemini-3.7-flash',
-      ])('should normalize a legacy minimal level to low for %s', (model) => {
-        expect(resolveGoogleThinkingConfig(model, { thinkingLevel: 'minimal' })).toEqual({
-          includeThoughts: true,
-          thinkingBudget: undefined,
-          thinkingLevel: 'low',
-        });
-      });
     });
 
     describe('gemini-3-pro-image-preview (thinking-enabled model)', () => {

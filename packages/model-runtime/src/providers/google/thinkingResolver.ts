@@ -80,20 +80,6 @@ const hasModifier = (model: string, modifier: string): boolean => {
   return !!parsed && parsed.modifiers.includes(modifier);
 };
 
-const resolveSupportedThinkingLevel = (
-  model: string,
-  thinkingLevel: GoogleThinkingLevel | undefined,
-): GoogleThinkingLevel | undefined => {
-  const normalizedModelId = normalizeGoogleModelId(model);
-
-  // Vertex AI's Gemini 3.7 Flash endpoint currently accepts LOW, MEDIUM, and HIGH,
-  // but rejects MINIMAL with INVALID_ARGUMENT. LOW is the closest supported level
-  // for legacy sessions that persisted MINIMAL before switching models.
-  if (normalizedModelId === 'gemini-3.7-flash' && thinkingLevel === 'minimal') return 'low';
-
-  return thinkingLevel;
-};
-
 // ============================================================================
 // Exported Functions
 // ============================================================================
@@ -279,8 +265,7 @@ export const resolveGoogleThinkingConfig = (
   model: string,
   options: GoogleThinkingResolverOptions = {},
 ): ResolvedGoogleThinkingConfig => {
-  const { thinkingBudget } = options;
-  const thinkingLevel = resolveSupportedThinkingLevel(model, options.thinkingLevel);
+  const { thinkingBudget, thinkingLevel } = options;
 
   const isGemini3 = isGemini3Model(model);
   const hasExplicitBudget = thinkingBudget !== undefined && thinkingBudget !== null;

@@ -44,6 +44,7 @@ const MODEL_THINKING_LEVEL_DEFAULTS: Partial<
 > = {
   'gemini-flash-latest': {
     thinkingLevel: 'medium',
+    thinkingLevel3: 'medium',
   },
   'gemini-flash-lite-latest': {
     thinkingLevel: 'minimal',
@@ -97,11 +98,17 @@ const isThinkingLevelExtendParam = (
   extendParam: ExtendParamsType,
 ): extendParam is ThinkingLevelExtendParam => extendParam in DEFAULT_THINKING_LEVEL_BY_EXTEND_PARAM;
 
-export const resolveDefaultThinkingLevelForModel = (model?: string): ThinkingLevelValue => {
-  if (!model) return DEFAULT_THINKING_LEVEL_BY_EXTEND_PARAM.thinkingLevel;
+export function resolveDefaultThinkingLevelForModel<
+  T extends ThinkingLevelExtendParam = 'thinkingLevel',
+>(model?: string, extendParam?: T): NonNullable<LobeAgentChatConfig[T]> {
+  const param = (extendParam ?? 'thinkingLevel') as T;
 
-  return resolveThinkingLevelDefault(model, 'thinkingLevel');
-};
+  if (!model) {
+    return DEFAULT_THINKING_LEVEL_BY_EXTEND_PARAM[param] as NonNullable<LobeAgentChatConfig[T]>;
+  }
+
+  return resolveThinkingLevelDefault(model, param) as NonNullable<LobeAgentChatConfig[T]>;
+}
 
 /**
  * Returns `true` for models that ship adaptive thinking on, `undefined` when the model has

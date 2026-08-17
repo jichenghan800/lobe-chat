@@ -16,12 +16,13 @@ const vertexaiChatModels: AIChatModelCard[] = [
     },
     contextWindowTokens: 1_048_576 + 65_536,
     description:
-      "Gemini 3.7 Flash delivers near-Pro intelligence at Flash-tier cost and speed, with Google's strongest Flash performance for agentic tasks.",
+      'Gemini 3.7 Flash is the next iteration in the Gemini 3 series of highly-capable, natively multimodal, reasoning models, with support for computer use and file search.',
     displayName: 'Gemini 3.7 Flash',
     enabled: true,
     family: 'gemini',
     generation: 'gemini-3.7',
     id: 'gemini-3.7-flash',
+    knowledgeCutoff: '2026-03',
     maxOutput: 65_536,
     pricing: {
       units: [
@@ -62,7 +63,6 @@ const vertexaiChatModels: AIChatModelCard[] = [
     description:
       'Gemini 3.6 Flash balances speed with intelligence for agentic and multimodal tasks, with lower output cost than 3.5 Flash.',
     displayName: 'Gemini 3.6 Flash',
-    enabled: true,
     family: 'gemini',
     generation: 'gemini-3.6',
     id: 'gemini-3.6-flash',

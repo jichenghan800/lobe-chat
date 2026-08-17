@@ -127,18 +127,19 @@ describe('Google rolling model aliases', () => {
   it('tracks the current Flash and Flash-Lite model versions', () => {
     const googleModels = LOBE_DEFAULT_MODEL_LIST.filter((model) => model.providerId === 'google');
     const flashLatest = googleModels.find((model) => model.id === 'gemini-flash-latest');
-    const flash = googleModels.find((model) => model.id === 'gemini-3.6-flash');
+    const flash = googleModels.find((model) => model.id === 'gemini-3.7-flash');
     const flashLiteLatest = googleModels.find((model) => model.id === 'gemini-flash-lite-latest');
     const flashLite = googleModels.find((model) => model.id === 'gemini-3.5-flash-lite');
 
     expect(flashLatest).toEqual(
       expect.objectContaining({
-        description: 'Points to gemini-3.6-flash',
+        description: 'Points to gemini-3.7-flash',
         knowledgeCutoff: '2026-03',
       }),
     );
     expect(flashLatest?.pricing).toEqual(flash?.pricing);
     expect(flashLatest?.settings?.disabledParams).toEqual(['temperature', 'top_p']);
+    expect(flashLatest?.settings?.extendParams).toEqual(['thinkingLevel3', 'urlContext']);
 
     expect(flashLiteLatest).toEqual(
       expect.objectContaining({
@@ -173,6 +174,7 @@ describe('Vertex AI Gemini 3.7 Flash', () => {
         contextWindowTokens: 1_114_112,
         enabled: true,
         generation: 'gemini-3.7',
+        knowledgeCutoff: '2026-03',
         maxOutput: 65_536,
         releasedAt: '2026-08-13',
       }),

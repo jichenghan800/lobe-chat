@@ -63,7 +63,7 @@ describe('applyModelExtendParams', () => {
     expect(result.thinkingLevel).toBe('medium');
   });
 
-  it('defaults Gemini 3.7 Flash thinkingLevel to medium', () => {
+  it('defaults Gemini 3.7 Flash thinkingLevel to medium (thinkingLevel3)', () => {
     const result = applyModelExtendParams({
       chatConfig: chatConfig({}),
       extendParams: ['thinkingLevel3'],
@@ -73,7 +73,7 @@ describe('applyModelExtendParams', () => {
     expect(result.thinkingLevel).toBe('medium');
   });
 
-  it('honors an explicit supported Gemini 3.7 Flash thinkingLevel value', () => {
+  it('honors an explicit Gemini 3.7 Flash thinkingLevel3 value', () => {
     const result = applyModelExtendParams({
       chatConfig: chatConfig({ thinkingLevel3: 'low' }),
       extendParams: ['thinkingLevel3'],
@@ -271,12 +271,20 @@ describe('resolveDefaultEnableAdaptiveThinkingForModel', () => {
 describe('resolveDefaultThinkingLevelForModel', () => {
   it('falls back to high without a model', () => {
     expect(resolveDefaultThinkingLevelForModel()).toBe('high');
+    expect(resolveDefaultThinkingLevelForModel(undefined, 'thinkingLevel3')).toBe('high');
+    expect(resolveDefaultThinkingLevelForModel(undefined, 'thinkingLevel4')).toBe('minimal');
   });
 
   it('uses per-model defaults', () => {
     expect(resolveDefaultThinkingLevelForModel('gemini-flash-latest')).toBe('medium');
+    expect(resolveDefaultThinkingLevelForModel('gemini-flash-latest', 'thinkingLevel3')).toBe(
+      'medium',
+    );
     expect(resolveDefaultThinkingLevelForModel('gemini-flash-lite-latest')).toBe('minimal');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.7-flash')).toBe('medium');
+    expect(resolveDefaultThinkingLevelForModel('gemini-3.7-flash', 'thinkingLevel3')).toBe(
+      'medium',
+    );
     expect(resolveDefaultThinkingLevelForModel('gemini-3.6-flash')).toBe('medium');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.5-flash')).toBe('medium');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.5-flash-lite')).toBe('minimal');

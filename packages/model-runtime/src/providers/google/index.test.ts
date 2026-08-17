@@ -338,22 +338,6 @@ describe('LobeGoogleAI', () => {
       });
     });
 
-    it('should normalize unsupported Gemini 3.7 minimal thinking to low', async () => {
-      await instance.chat({
-        messages: [{ content: 'Hello', role: 'user' }],
-        model: 'gemini-3.7-flash',
-        thinkingLevel: 'minimal',
-      });
-
-      const callArgs = (instance['client'].models.generateContentStream as any).mock.calls[0];
-      const config = callArgs[0].config;
-
-      expect(config.thinkingConfig).toMatchObject({
-        thinkingBudget: undefined,
-        thinkingLevel: 'low',
-      });
-    });
-
     it.each(['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite'])(
       'should drop assistant prefill turns for %s',
       async (model) => {
