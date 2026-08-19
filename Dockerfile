@@ -93,6 +93,20 @@ RUN rm -rf src/app/desktop "src/app/(backend)/trpc/desktop"
 # run build standalone for docker version
 RUN npm run build:docker
 
+# Next.js 16.3.1 can omit the ESM half of @swc/helpers from standalone output even
+# though the server runtime imports it. Copy the matching package content and fail
+# the image build early if the runtime helper is still absent.
+RUN set -e && \
+    for helpers_dir in node_modules/.pnpm/@swc+helpers@*; do \
+        standalone_helpers_dir=".next/standalone/${helpers_dir}/node_modules/@swc/helpers"; \
+        if [ -d "${standalone_helpers_dir}" ]; then \
+            cp -R "${helpers_dir}/node_modules/@swc/helpers/esm" "${standalone_helpers_dir}/esm"; \
+        fi; \
+    done && \
+    find .next/standalone/node_modules/.pnpm \
+        -path '*/@swc/helpers/esm/_interop_require_default.js' \
+        -print -quit | grep -q .
+
 ## Application image, copy all the files for production
 FROM busybox:latest AS app
 
