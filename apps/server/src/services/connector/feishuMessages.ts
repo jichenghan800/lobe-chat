@@ -23,6 +23,8 @@ const MAX_SEARCH_PAGE_SIZE = 10;
 const MAX_GROUP_LOOKUP_PAGES = 5;
 const MAX_MEMBER_CHAT_LOOKUPS = 5;
 const MAX_MEMBER_PAGES = 5;
+const MAX_HISTORY_PAGES = 50;
+const MAX_HISTORY_ITEMS_JSON_LENGTH = 18_000;
 const MAX_MESSAGE_TEXT_LENGTH = 1000;
 const DEFAULT_TIME_ZONE = 'Asia/Shanghai';
 
@@ -116,12 +118,22 @@ const listChatMessagesArgsSchema = z
 
 const getChatMessageArgsSchema = z.object({ message_id: z.string().min(1) });
 
-const queryChatHistoryArgsSchema = z.object({
-  date: calendarDateSchema.optional(),
-  page_size: messagePageSizeSchema,
-  target_name: z.string().trim().min(1).max(100),
-  target_type: z.enum(['group', 'person']),
-});
+const queryChatHistoryArgsSchema = z
+  .object({
+    date: calendarDateSchema.optional(),
+    page_size: messagePageSizeSchema,
+    page_token: z.string().min(1).optional(),
+    target_name: z.string().trim().min(1).max(100).optional(),
+    target_type: z.enum(['all', 'group', 'person']).default('all'),
+  })
+  .superRefine((value, ctx) => {
+    if (value.target_type !== 'all' && !value.target_name) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'target_name is required for person or group history',
+      });
+    }
+  });
 
 type ListChatMessagesInput = z.infer<typeof listChatMessagesArgsSchema>;
 type QueryChatHistoryInput = z.infer<typeof queryChatHistoryArgsSchema>;
@@ -135,8 +147,8 @@ export const FEISHU_MESSAGE_TOOL_DEFINITIONS = [
     // client runtime cannot complete a server-side approval intervention.
     defaultPermission: ConnectorToolPermission.auto,
     description:
-      "Query one calendar day's Feishu chat history by an exact person name or group name in one call. Always use this first when the user asks for messages with a named person or from a named group. It resolves the Feishu identity/chat internally, verifies exact matches, and reads the conversation. Do not ask the user for open_id, chat_id, a group link or a forwarded message before calling it. If the result is ambiguous or not_found, relay its clarification_message naturally. Dates and displayed times always use Asia/Shanghai.",
-    displayName: '按名称查询飞书聊天记录',
+      "Query one calendar day's Feishu chat history in one call. Always use this first for a daily report, all messages from a day, messages with a named person, or messages from a named group. Omit target_name and use target_type=all to include both private and group chats visible to the current user. Named-person and named-group queries resolve exact identities internally. The server follows pagination until the day is complete or a safe result boundary is reached. Never claim the result is complete when complete=false. Dates and displayed times always use Asia/Shanghai.",
+    displayName: '查询飞书聊天记录',
     inputSchema: {
       additionalProperties: false,
       properties: {
@@ -146,24 +158,31 @@ export const FEISHU_MESSAGE_TOOL_DEFINITIONS = [
           type: 'string',
         },
         page_size: {
-          default: DEFAULT_PAGE_SIZE,
-          description: `Number of conversation messages to return, from 1 to ${MAX_MESSAGE_PAGE_SIZE}.`,
+          default: DEFAULT_SEARCH_PAGE_SIZE,
+          description: `Number of messages to request per Feishu page, from 1 to ${MAX_MESSAGE_PAGE_SIZE}. The server follows subsequent pages automatically.`,
           maximum: MAX_MESSAGE_PAGE_SIZE,
           minimum: 1,
           type: 'integer',
         },
+        page_token: {
+          description:
+            'Continuation token returned by a previous partial result. Omit for the first batch.',
+          type: 'string',
+        },
         target_name: {
-          description: 'Exact Feishu display name of the person or exact group name.',
+          description:
+            'Exact Feishu display name of the person or exact group name. Omit when target_type=all.',
           maxLength: 100,
           type: 'string',
         },
         target_type: {
-          description: 'Whether target_name identifies a person or a group.',
-          enum: ['person', 'group'],
+          default: 'all',
+          description:
+            'Use all for every visible private and group message in the day, or identify target_name as a person or group.',
+          enum: ['all', 'person', 'group'],
           type: 'string',
         },
       },
-      required: ['target_name', 'target_type'],
       type: 'object',
     },
     toolName: 'query-chat-history',
@@ -948,11 +967,135 @@ const toHistoryMessage = (
   text: item.text_for_analysis,
 });
 
+interface NormalizedHistoryPage {
+  errors?: unknown[];
+  has_more: boolean;
+  items: NormalizedFeishuMessageItem[];
+  page_token?: string;
+}
+
+interface CollectHistoryPagesOptions {
+  initialPageToken?: string;
+  loadPage: (pageToken?: string) => Promise<NormalizedHistoryPage>;
+  target?: { id: string; name: string };
+}
+
+const collectHistoryPages = async ({
+  initialPageToken,
+  loadPage,
+  target,
+}: CollectHistoryPagesOptions) => {
+  const items: ReturnType<typeof toHistoryMessage>[] = [];
+  const messageIds = new Set<string>();
+  let complete = false;
+  let continuationPageToken = initialPageToken;
+  let failedMessageCount = 0;
+  let incompleteReason:
+    'message_detail_errors' | 'missing_page_token' | 'page_limit' | 'result_size_limit' | undefined;
+  let pagesRead = 0;
+
+  for (let page = 0; page < MAX_HISTORY_PAGES; page += 1) {
+    const pageToken = continuationPageToken;
+    const history = await loadPage(pageToken);
+    failedMessageCount += history.errors?.length ?? 0;
+    const nextItems = history.items
+      .filter((item) => !item.message_id || !messageIds.has(item.message_id))
+      .map((item) => ({ item, message: toHistoryMessage(item, target) }));
+    const candidateItems = [...items, ...nextItems.map(({ message }) => message)];
+
+    if (
+      items.length > 0 &&
+      JSON.stringify(candidateItems, null, 2).length > MAX_HISTORY_ITEMS_JSON_LENGTH
+    ) {
+      incompleteReason = 'result_size_limit';
+      continuationPageToken = pageToken;
+      break;
+    }
+
+    for (const { item, message } of nextItems) {
+      if (item.message_id) messageIds.add(item.message_id);
+      items.push(message);
+    }
+    pagesRead += 1;
+
+    if (!history.has_more) {
+      complete = failedMessageCount === 0;
+      if (!complete) incompleteReason = 'message_detail_errors';
+      continuationPageToken = undefined;
+      break;
+    }
+    if (!history.page_token) {
+      incompleteReason = 'missing_page_token';
+      continuationPageToken = undefined;
+      break;
+    }
+
+    continuationPageToken = history.page_token;
+  }
+
+  if (!complete && !incompleteReason) incompleteReason = 'page_limit';
+
+  return {
+    complete,
+    continuation_page_token: continuationPageToken,
+    failed_message_count: failedMessageCount,
+    has_more: Boolean(continuationPageToken),
+    incomplete_reason: incompleteReason,
+    items,
+    message_count: items.length,
+    pages_read: pagesRead,
+  };
+};
+
+const getHistoryPresentationInstruction = (
+  complete: boolean,
+  targetLabel: string,
+  continuationPageToken?: string,
+) =>
+  complete
+    ? `The server reached the final Feishu page. Summarize all returned plain-text records for ${targetLabel} and state the exact message count.`
+    : continuationPageToken
+      ? `This is only a partial batch for ${targetLabel}. Explicitly state that more Feishu records exist and do not call it a complete daily report. Call query-chat-history again with continuation_page_token as page_token before producing a complete report.`
+      : `The server could not verify a complete result for ${targetLabel}. Explicitly state that some Feishu records could not be read and do not call it a complete daily report.`;
+
 const queryNamedChatHistory = async (
   connector: DecryptedConnector,
   input: QueryChatHistoryInput,
 ) => {
   const date = input.date ?? dayjs().tz(DEFAULT_TIME_ZONE).format('YYYY-MM-DD');
+
+  if (input.target_type === 'all') {
+    const history = await collectHistoryPages({
+      initialPageToken: input.page_token,
+      loadPage: (pageToken) =>
+        searchAndNormalizeMessages(connector, {
+          date,
+          page_size: Math.min(input.page_size ?? MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_PAGE_SIZE),
+          page_token: pageToken,
+          query: '',
+        }),
+    });
+
+    return {
+      ...history,
+      date,
+      presentation_instruction: getHistoryPresentationInstruction(
+        history.complete,
+        `all visible private and group chats on ${date}`,
+        history.continuation_page_token,
+      ),
+      privacy_boundary:
+        'Only messages visible to the currently authorized Feishu user are returned.',
+      status: history.items.length > 0 ? 'found' : 'not_found',
+      target_type: input.target_type,
+      time_zone: DEFAULT_TIME_ZONE,
+    };
+  }
+
+  const targetName = input.target_name;
+  if (!targetName) {
+    throw new FeishuMessageToolError('target_name is required for person or group history');
+  }
 
   if (input.target_type === 'group') {
     const exactMatches: FeishuChatItem[] = [];
@@ -969,8 +1112,8 @@ const queryNamedChatHistory = async (
       for (const chat of data.items ?? []) {
         const name = chat.name?.trim();
         if (!name) continue;
-        if (name === input.target_name) exactMatches.push(chat);
-        else if (name.includes(input.target_name) || input.target_name.includes(name)) {
+        if (name === targetName) exactMatches.push(chat);
+        else if (name.includes(targetName) || targetName.includes(name)) {
           similarNames.add(name);
         }
       }
@@ -985,42 +1128,48 @@ const queryNamedChatHistory = async (
     ];
     if (uniqueMatches.length === 0) {
       return {
-        clarification_message: `未找到名称完全匹配“${input.target_name}”的飞书群，请确认群名是否完整。`,
+        clarification_message: `未找到名称完全匹配“${targetName}”的飞书群，请确认群名是否完整。`,
         date,
         similar_group_names: [...similarNames].slice(0, 5),
         status: 'not_found',
-        target_name: input.target_name,
+        target_name: targetName,
         target_type: input.target_type,
         time_zone: DEFAULT_TIME_ZONE,
       };
     }
     if (uniqueMatches.length > 1) {
       return {
-        clarification_message: `找到多个名为“${input.target_name}”的飞书群，请补充群链接或群内任意一条消息以确认。`,
+        clarification_message: `找到多个名为“${targetName}”的飞书群，请补充群链接或群内任意一条消息以确认。`,
         date,
         match_count: uniqueMatches.length,
         status: 'ambiguous',
-        target_name: input.target_name,
+        target_name: targetName,
         target_type: input.target_type,
         time_zone: DEFAULT_TIME_ZONE,
       };
     }
 
-    const history = await listAndNormalizeMessages(connector, {
-      chat_id: uniqueMatches[0].chat_id!,
-      date,
-      page_size: input.page_size,
-      sort_type: 'ByCreateTimeAsc',
+    const history = await collectHistoryPages({
+      initialPageToken: input.page_token,
+      loadPage: (pageToken) =>
+        listAndNormalizeMessages(connector, {
+          chat_id: uniqueMatches[0].chat_id!,
+          date,
+          page_size: input.page_size,
+          page_token: pageToken,
+          sort_type: 'ByCreateTimeAsc',
+        }),
     });
     return {
+      ...history,
       date,
-      has_more: history.has_more,
-      items: history.items.map((item) => toHistoryMessage(item)),
-      message_count: history.items.length,
-      presentation_instruction:
-        'Summarize the returned plain-text records directly. Mention the exact group name, date and message count. Do not expose internal IDs.',
+      presentation_instruction: getHistoryPresentationInstruction(
+        history.complete,
+        `the exact group “${targetName}” on ${date}`,
+        history.continuation_page_token,
+      ),
       status: 'found',
-      target_name: input.target_name,
+      target_name: targetName,
       target_type: input.target_type,
       time_zone: DEFAULT_TIME_ZONE,
     };
@@ -1028,43 +1177,43 @@ const queryNamedChatHistory = async (
 
   const identitySearch = await searchAndNormalizeMessages(connector, {
     page_size: MAX_SEARCH_PAGE_SIZE,
-    query: input.target_name,
+    query: targetName,
   });
   const candidates = new Map<string, string>();
   for (const item of identitySearch.items) {
     for (const mention of item.mentions) {
-      if (mention.name === input.target_name && mention.id) {
+      if (mention.name === targetName && mention.id) {
         candidates.set(mention.id, mention.name);
       }
     }
-    if (item.sender.name_verified && item.sender.name === input.target_name && item.sender.id) {
+    if (item.sender.name_verified && item.sender.name === targetName && item.sender.id) {
       candidates.set(item.sender.id, item.sender.name);
     }
   }
 
   if (candidates.size === 0) {
     return {
-      clarification_message: `未能在当前可见消息中确认“${input.target_name}”的飞书身份，请确认姓名是否完整，或补充你们所在的群名。`,
+      clarification_message: `未能在当前可见消息中确认“${targetName}”的飞书身份，请确认姓名是否完整，或补充你们所在的群名。`,
       date,
       status: 'not_found',
-      target_name: input.target_name,
+      target_name: targetName,
       target_type: input.target_type,
       time_zone: DEFAULT_TIME_ZONE,
     };
   }
   if (candidates.size > 1) {
     return {
-      clarification_message: `找到多个名为“${input.target_name}”的飞书用户，请补充所在部门或你们共同的群名。`,
+      clarification_message: `找到多个名为“${targetName}”的飞书用户，请补充所在部门或你们共同的群名。`,
       date,
       match_count: candidates.size,
       status: 'ambiguous',
-      target_name: input.target_name,
+      target_name: targetName,
       target_type: input.target_type,
       time_zone: DEFAULT_TIME_ZONE,
     };
   }
 
-  const [[targetId, targetName]] = [...candidates.entries()];
+  const [[targetId, verifiedTargetName]] = [...candidates.entries()];
   const p2pSearch = await searchAndNormalizeMessages(connector, {
     chat_type: 'p2p_chat',
     from_ids: [targetId],
@@ -1076,41 +1225,48 @@ const queryNamedChatHistory = async (
   ];
   if (chatIds.length === 0) {
     return {
-      clarification_message: `已确认“${input.target_name}”，但未找到可读取的单聊会话，请确认你们是否有过飞书单聊。`,
+      clarification_message: `已确认“${targetName}”，但未找到可读取的单聊会话，请确认你们是否有过飞书单聊。`,
       date,
       status: 'not_found',
-      target_name: input.target_name,
+      target_name: targetName,
       target_type: input.target_type,
       time_zone: DEFAULT_TIME_ZONE,
     };
   }
   if (chatIds.length > 1) {
     return {
-      clarification_message: `“${input.target_name}”对应多个可读取的单聊会话，请补充更具体的时间或消息内容。`,
+      clarification_message: `“${targetName}”对应多个可读取的单聊会话，请补充更具体的时间或消息内容。`,
       date,
       match_count: chatIds.length,
       status: 'ambiguous',
-      target_name: input.target_name,
+      target_name: targetName,
       target_type: input.target_type,
       time_zone: DEFAULT_TIME_ZONE,
     };
   }
 
-  const history = await listAndNormalizeMessages(connector, {
-    chat_id: chatIds[0],
-    date,
-    page_size: input.page_size,
-    sort_type: 'ByCreateTimeAsc',
+  const history = await collectHistoryPages({
+    initialPageToken: input.page_token,
+    loadPage: (pageToken) =>
+      listAndNormalizeMessages(connector, {
+        chat_id: chatIds[0],
+        date,
+        page_size: input.page_size,
+        page_token: pageToken,
+        sort_type: 'ByCreateTimeAsc',
+      }),
+    target: { id: targetId, name: verifiedTargetName },
   });
   return {
+    ...history,
     date,
-    has_more: history.has_more,
-    items: history.items.map((item) => toHistoryMessage(item, { id: targetId, name: targetName })),
-    message_count: history.items.length,
-    presentation_instruction:
-      'Summarize the returned plain-text records directly. Mention the verified person name, date and message count. Do not expose internal IDs.',
+    presentation_instruction: getHistoryPresentationInstruction(
+      history.complete,
+      `the verified person “${targetName}” on ${date}`,
+      history.continuation_page_token,
+    ),
     status: 'found',
-    target_name: input.target_name,
+    target_name: targetName,
     target_type: input.target_type,
     time_zone: DEFAULT_TIME_ZONE,
   };

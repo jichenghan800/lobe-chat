@@ -23,15 +23,157 @@ afterEach(() => {
 });
 
 describe('callFeishuMessageTool', () => {
-  it('offers one direct tool for named person or group history before low-level tools', () => {
+  it('offers one direct tool for all, named-person, or named-group history', () => {
     expect(FEISHU_MESSAGE_TOOL_DEFINITIONS[0]).toMatchObject({
       defaultPermission: 'auto',
-      displayName: '按名称查询飞书聊天记录',
+      displayName: '查询飞书聊天记录',
       toolName: 'query-chat-history',
     });
+    expect(FEISHU_MESSAGE_TOOL_DEFINITIONS[0]).toMatchObject({
+      inputSchema: {
+        properties: {
+          target_type: { default: 'all', enum: ['all', 'person', 'group'] },
+        },
+      },
+    });
     expect(FEISHU_MESSAGE_TOOL_DEFINITIONS[0].description).toContain(
-      'Do not ask the user for open_id',
+      'Always use this first for a daily report',
     );
+  });
+
+  it('reads every search page for a complete all-chat daily history', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              has_more: true,
+              items: [{ message_id: 'om_1' }, { message_id: 'om_2' }],
+              page_token: 'search-page-2',
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              items: [
+                {
+                  body: { content: JSON.stringify({ text: '第一条' }) },
+                  chat_id: 'oc_p2p',
+                  create_time: '1786986000000',
+                  message_id: 'om_1',
+                },
+              ],
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              items: [
+                {
+                  body: { content: JSON.stringify({ text: '第二条' }) },
+                  chat_id: 'oc_group',
+                  create_time: '1786989600000',
+                  message_id: 'om_2',
+                },
+              ],
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: 0, data: { has_more: false, items: ['om_3'] } }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              items: [
+                {
+                  body: { content: JSON.stringify({ text: '第三条' }) },
+                  chat_id: 'oc_p2p',
+                  create_time: '1786993200000',
+                  message_id: 'om_3',
+                },
+              ],
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await callFeishuMessageTool(
+      connector,
+      'query-chat-history',
+      JSON.stringify({ date: '2026-08-18' }),
+    );
+
+    expect(result.state?.structuredContent).toMatchObject({
+      complete: true,
+      has_more: false,
+      items: [{ text: '第一条' }, { text: '第二条' }, { text: '第三条' }],
+      message_count: 3,
+      pages_read: 2,
+      status: 'found',
+      target_type: 'all',
+      time_zone: 'Asia/Shanghai',
+    });
+    const [secondSearchUrl, secondSearchInit] = fetchMock.mock.calls[3] as [URL, RequestInit];
+    expect(secondSearchUrl.searchParams.get('page_token')).toBe('search-page-2');
+    expect(JSON.parse(secondSearchInit.body as string)).not.toHaveProperty('chat_type');
+    expect(result.content).not.toContain('search-page-2');
+    expect(result.content).not.toContain('oc_p2p');
+  });
+
+  it('does not report a complete day when a matched message detail cannot be read', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ code: 0, data: { has_more: false, items: ['om_unavailable'] } }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: 230001, msg: 'message unavailable' }), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 400,
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await callFeishuMessageTool(
+      connector,
+      'query-chat-history',
+      JSON.stringify({ date: '2026-08-18', target_type: 'all' }),
+    );
+
+    expect(result.state?.structuredContent).toMatchObject({
+      complete: false,
+      failed_message_count: 1,
+      has_more: false,
+      incomplete_reason: 'message_detail_errors',
+      message_count: 0,
+      pages_read: 1,
+    });
+    expect(result.content).toContain('do not call it a complete daily report');
   });
 
   it('resolves an exact mentioned person and returns the complete p2p day in one call', async () => {
@@ -163,12 +305,43 @@ describe('callFeishuMessageTool', () => {
           JSON.stringify({
             code: 0,
             data: {
+              has_more: true,
               items: [
                 {
                   body: { content: JSON.stringify({ text: '中午吃饭么？' }) },
                   chat_id: 'oc_people',
                   create_time: '1786152815000',
                   message_id: 'om_group',
+                  sender: { id: 'ou_liu' },
+                },
+              ],
+              page_token: 'group-page-2',
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: { has_more: false, items: [{ member_id: 'ou_liu', name: '刘悦祥' }] },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              has_more: false,
+              items: [
+                {
+                  body: { content: JSON.stringify({ text: '第二页消息' }) },
+                  chat_id: 'oc_people',
+                  create_time: '1786152875000',
+                  message_id: 'om_group_2',
                   sender: { id: 'ou_liu' },
                 },
               ],
@@ -195,14 +368,79 @@ describe('callFeishuMessageTool', () => {
     );
 
     expect(result.state?.structuredContent).toMatchObject({
-      items: [{ sender_name: '刘悦祥', text: '中午吃饭么？' }],
-      message_count: 1,
+      complete: true,
+      items: [
+        { sender_name: '刘悦祥', text: '中午吃饭么？' },
+        { sender_name: '刘悦祥', text: '第二页消息' },
+      ],
+      message_count: 2,
+      pages_read: 2,
       status: 'found',
       target_name: '人',
       target_type: 'group',
     });
+    const [secondHistoryUrl] = fetchMock.mock.calls[3] as [URL];
+    expect(secondHistoryUrl.searchParams.get('page_token')).toBe('group-page-2');
     expect(result.content).not.toContain('oc_people');
     expect(result.content).not.toContain('ou_liu');
+  });
+
+  it('returns an explicit continuation instead of overflowing a daily history result', async () => {
+    const createItems = (prefix: string) =>
+      Array.from({ length: 10 }, (_, index) => ({
+        body: { content: JSON.stringify({ text: `${prefix}-${index}-${'字'.repeat(1000)}` }) },
+        chat_id: 'oc_large_group',
+        message_id: `${prefix}-${index}`,
+      }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: { has_more: false, items: [{ chat_id: 'oc_large_group', name: '大群' }] },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: { has_more: true, items: createItems('first'), page_token: 'large-page-2' },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ code: 0, data: { has_more: false, items: createItems('second') } }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await callFeishuMessageTool(
+      connector,
+      'query-chat-history',
+      JSON.stringify({
+        date: '2026-08-08',
+        page_size: 10,
+        target_name: '大群',
+        target_type: 'group',
+      }),
+    );
+
+    expect(result.state?.structuredContent).toMatchObject({
+      complete: false,
+      continuation_page_token: 'large-page-2',
+      has_more: true,
+      incomplete_reason: 'result_size_limit',
+      message_count: 10,
+      pages_read: 1,
+    });
+    expect(result.content).toContain('do not call it a complete daily report');
+    expect(result.content.length).toBeLessThan(25_000);
   });
 
   it('orders group discovery by recent activity and explains the p2p search boundary', async () => {
