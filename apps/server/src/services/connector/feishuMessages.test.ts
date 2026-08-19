@@ -142,6 +142,52 @@ describe('callFeishuMessageTool', () => {
     expect(result.content).not.toContain('oc_p2p');
   });
 
+  it('treats a blank named target as an all-chat daily history', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ code: 0, data: { has_more: false, items: ['om_private'] } }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              items: [
+                {
+                  body: { content: JSON.stringify({ text: '单聊日报内容' }) },
+                  chat_id: 'oc_private',
+                  create_time: '1786986000000',
+                  message_id: 'om_private',
+                },
+              ],
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await callFeishuMessageTool(
+      connector,
+      'query-chat-history',
+      JSON.stringify({ date: '2026-08-18', target_name: '', target_type: 'person' }),
+    );
+
+    expect(result.state?.structuredContent).toMatchObject({
+      complete: true,
+      items: [{ text: '单聊日报内容' }],
+      message_count: 1,
+      status: 'found',
+      target_type: 'all',
+    });
+    const [, searchInit] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(JSON.parse(searchInit.body as string)).not.toHaveProperty('chat_type');
+  });
+
   it('does not report a complete day when a matched message detail cannot be read', async () => {
     const fetchMock = vi
       .fn()

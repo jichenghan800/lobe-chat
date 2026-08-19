@@ -123,17 +123,12 @@ const queryChatHistoryArgsSchema = z
     date: calendarDateSchema.optional(),
     page_size: messagePageSizeSchema,
     page_token: z.string().min(1).optional(),
-    target_name: z.string().trim().min(1).max(100).optional(),
+    target_name: z.string().trim().max(100).optional(),
     target_type: z.enum(['all', 'group', 'person']).default('all'),
   })
-  .superRefine((value, ctx) => {
-    if (value.target_type !== 'all' && !value.target_name) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'target_name is required for person or group history',
-      });
-    }
-  });
+  .transform((value) =>
+    value.target_name ? value : { ...value, target_name: undefined, target_type: 'all' as const },
+  );
 
 type ListChatMessagesInput = z.infer<typeof listChatMessagesArgsSchema>;
 type QueryChatHistoryInput = z.infer<typeof queryChatHistoryArgsSchema>;
@@ -147,7 +142,7 @@ export const FEISHU_MESSAGE_TOOL_DEFINITIONS = [
     // client runtime cannot complete a server-side approval intervention.
     defaultPermission: ConnectorToolPermission.auto,
     description:
-      "Query one calendar day's Feishu chat history in one call. Always use this first for a daily report, all messages from a day, messages with a named person, or messages from a named group. Omit target_name and use target_type=all to include both private and group chats visible to the current user. Named-person and named-group queries resolve exact identities internally. The server follows pagination until the day is complete or a safe result boundary is reached. Never claim the result is complete when complete=false. Dates and displayed times always use Asia/Shanghai.",
+      "Query one calendar day's Feishu chat history in one call. Always use this first for a daily report, all messages from a day, messages with a named person, or messages from a named group. Omit target_name and use target_type=all to include both private and group chats visible to the current user. If target_name is omitted or blank, the server safely normalizes the query to target_type=all even when another target_type was supplied. Named-person and named-group queries resolve exact identities internally. The server follows pagination until the day is complete or a safe result boundary is reached. Never claim the result is complete when complete=false. Dates and displayed times always use Asia/Shanghai.",
     displayName: '查询飞书聊天记录',
     inputSchema: {
       additionalProperties: false,
@@ -171,7 +166,7 @@ export const FEISHU_MESSAGE_TOOL_DEFINITIONS = [
         },
         target_name: {
           description:
-            'Exact Feishu display name of the person or exact group name. Omit when target_type=all.',
+            'Exact Feishu display name of the person or exact group name. Omit for a daily report across all visible chats. A missing or blank value is treated as target_type=all.',
           maxLength: 100,
           type: 'string',
         },
