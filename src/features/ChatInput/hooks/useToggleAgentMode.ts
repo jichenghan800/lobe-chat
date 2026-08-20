@@ -58,7 +58,9 @@ export const useToggleAgentMode = () => {
 
   return useCallback(
     async (enable: boolean) => {
-      if (isAccessLoading) return;
+      if (isAccessLoading) return false;
+
+      if (enable && !canEnableBusinessAgentMode) return false;
 
       const enableAgentMode = enable && canEnableBusinessAgentMode;
       const targetScope = enableAgentMode ? 'agent' : 'chat';
@@ -71,10 +73,10 @@ export const useToggleAgentMode = () => {
             '[useToggleAgentMode] Failed to load the COTTI model display config',
             error,
           );
-          return;
+          return false;
         }
       }
-      if (!resolvedModelDisplayConfig) return;
+      if (!resolvedModelDisplayConfig) return false;
 
       const availableModels = applyModelDisplayConfig(
         enabledChatModelList,
@@ -86,10 +88,10 @@ export const useToggleAgentMode = () => {
         currentModel,
         targetScope,
       });
-      if (!targetModel) return;
+      if (!targetModel) return false;
 
       if (!isSameModelDisplayRef(currentModel, targetModel)) {
-        if (!canSelectModel) return;
+        if (!canSelectModel) return false;
 
         if (topicModelScope && activeTopicId) await updateTopicModel(activeTopicId, targetModel);
         else await selectModel(targetModel);
@@ -99,10 +101,11 @@ export const useToggleAgentMode = () => {
         await updateWorkspaceUserPreference({
           agentModeOverrides: { [agentId]: enableAgentMode },
         });
-        return;
+        return true;
       }
 
       await updateAgentChatConfig({ enableAgentMode });
+      return true;
     },
     [
       activeTopicId,

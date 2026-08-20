@@ -9,6 +9,7 @@ import HomeInbox from '@/features/HomeInbox';
 import { useChatStore } from '@/store/chat';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
+import { useHomeStore } from '@/store/home';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/slices/auth/selectors';
 
@@ -288,6 +289,11 @@ const Home = memo(() => {
     useChatStore.setState({ inputMessage: value });
   }, []);
 
+  const handleModeChange = useCallback((nextMode: HomeMode) => {
+    useHomeStore.getState().clearInputMode();
+    setMode(nextMode);
+  }, []);
+
   const handleSuggestionSelect = useCallback(
     (prompt: string) => {
       handleInputValueChange(prompt);
@@ -327,7 +333,7 @@ const Home = memo(() => {
             inputValue={inputValue}
             mode={mode}
             onInputValueChange={handleInputValueChange}
-            onModeChange={setMode}
+            onModeChange={handleModeChange}
           />
         </div>
         <ScrollArea

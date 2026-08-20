@@ -122,9 +122,10 @@ export const useSend = (mode: HomeMode = 'chat') => {
 
       if (!canCreateContent) return;
 
-      if ((mode === 'task' || !inputActiveMode) && !canUseResource) return;
+      const usesStarterMode = mode === 'chat' && Boolean(inputActiveMode);
+      if ((mode === 'task' || !usesStarterMode) && !canUseResource) return;
 
-      if (fileList.some((item) => item.requiresAgentMode)) {
+      if (mode === 'chat' && fileList.some((item) => item.requiresAgentMode)) {
         antdMessage.error(tChat('attachment.agentModeRequiredHome'));
         return;
       }
@@ -185,75 +186,78 @@ export const useSend = (mode: HomeMode = 'chat') => {
           return;
         }
 
-        switch (inputActiveMode) {
-          case 'agent': {
-            await sendAsAgent({
-              contextSelections,
-              editorData,
-              message,
-              pageSelections,
-              workspaceSlug: activeWorkspaceSlug,
-            });
-            submitted = true;
-            break;
-          }
+        // Starter `agent` means "create an Agent", not Agent chat mode. Only
+        // Chat consumes starter actions; explicit Agent mode must always enter
+        // the selected Agent's conversation runtime.
+        if (mode === 'chat') {
+          switch (inputActiveMode) {
+            case 'agent': {
+              await sendAsAgent({
+                contextSelections,
+                editorData,
+                message,
+                pageSelections,
+                workspaceSlug: activeWorkspaceSlug,
+              });
+              submitted = true;
+              return;
+            }
 
-          case 'group': {
-            await sendAsGroup({
-              contextSelections,
-              editorData,
-              message,
-              pageSelections,
-              workspaceSlug: activeWorkspaceSlug,
-            });
-            submitted = true;
-            break;
-          }
+            case 'group': {
+              await sendAsGroup({
+                contextSelections,
+                editorData,
+                message,
+                pageSelections,
+                workspaceSlug: activeWorkspaceSlug,
+              });
+              submitted = true;
+              return;
+            }
 
-          case 'write': {
-            await sendAsWrite({
-              contextSelections,
-              editorData,
-              message,
-              pageSelections,
-              workspaceSlug: activeWorkspaceSlug,
-            });
-            submitted = true;
-            break;
-          }
+            case 'write': {
+              await sendAsWrite({
+                contextSelections,
+                editorData,
+                message,
+                pageSelections,
+                workspaceSlug: activeWorkspaceSlug,
+              });
+              submitted = true;
+              return;
+            }
 
-          case 'research': {
-            await sendAsResearch(message);
-            submitted = true;
-            break;
-          }
-
-          default: {
-            if (!selectedAgentId) return;
-
-            await ensureAgentConfigLoaded(selectedAgentId);
-
-            sendMessage({
-              context: {
-                agentId: selectedAgentId,
-                isolatedTopic: true,
-                ...(activeWorkspaceSlug ? { workspaceSlug: activeWorkspaceSlug } : {}),
-              },
-              contextSelections,
-              contexts: contextList,
-              editorData,
-              files: fileList,
-              message,
-              onTopicCreated: (topicId) => {
-                router.replace(AGENT_CHAT_TOPIC_URL(selectedAgentId, topicId, false));
-              },
-              pageSelections,
-            });
-
-            submitted = true;
-            router.push(AGENT_CHAT_URL(selectedAgentId, false));
+            case 'research': {
+              await sendAsResearch(message);
+              submitted = true;
+              return;
+            }
           }
         }
+
+        if (!selectedAgentId) return;
+
+        await ensureAgentConfigLoaded(selectedAgentId);
+
+        void sendMessage({
+          context: {
+            agentId: selectedAgentId,
+            isolatedTopic: true,
+            ...(activeWorkspaceSlug ? { workspaceSlug: activeWorkspaceSlug } : {}),
+          },
+          contextSelections,
+          contexts: contextList,
+          editorData,
+          files: fileList,
+          message,
+          onTopicCreated: (topicId) => {
+            router.replace(AGENT_CHAT_TOPIC_URL(selectedAgentId, topicId, false));
+          },
+          pageSelections,
+        });
+
+        submitted = true;
+        router.push(AGENT_CHAT_URL(selectedAgentId, false));
       } catch (error) {
         console.error('[home:send]', error);
         antdMessage.error(t('dashboard.submitFailed'));

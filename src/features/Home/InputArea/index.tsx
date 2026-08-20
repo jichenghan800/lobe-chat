@@ -106,7 +106,7 @@ const InputArea = ({ inputValue, mode, onInputValueChange, onModeChange }: Input
         style={{ paddingBottom: showMessengerBanner ? 32 : 0, position: 'relative' }}
       >
         {showMessengerBanner && <MessengerBanner />}
-        {mode === 'chat' ? (
+        {mode !== 'task' ? (
           <InputDragUpload
             radius={20}
             style={{ position: 'relative', zIndex: 1 }}

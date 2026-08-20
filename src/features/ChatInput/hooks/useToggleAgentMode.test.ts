@@ -200,8 +200,12 @@ describe('useToggleAgentMode', () => {
     testState.agent.current = { visibility: 'public', workspaceId: 'workspace-1' };
     const { result } = renderHook(() => useToggleAgentMode());
 
-    await act(() => result.current(true));
+    let applied: boolean | undefined;
+    await act(async () => {
+      applied = await result.current(true);
+    });
 
+    expect(applied).toBe(false);
     expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
     expect(testState.updateWorkspaceUserPreference).not.toHaveBeenCalled();
   });
@@ -305,8 +309,12 @@ describe('useToggleAgentMode', () => {
     ];
     const { result } = renderHook(() => useToggleAgentMode());
 
-    await act(() => result.current(true));
+    let applied: boolean | undefined;
+    await act(async () => {
+      applied = await result.current(true);
+    });
 
+    expect(applied).toBe(false);
     expect(testState.selectModel).not.toHaveBeenCalled();
     expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
   });

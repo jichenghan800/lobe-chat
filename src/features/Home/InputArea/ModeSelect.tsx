@@ -1,15 +1,22 @@
 import { Flexbox, Icon } from '@lobehub/ui';
 import { Button, Popover } from '@lobehub/ui/base-ui';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
-import { ChevronDownIcon, InfinityIcon, MessageCircleIcon } from 'lucide-react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import {
+  ChevronDownIcon,
+  InfinityIcon,
+  ListTodoIcon,
+  LockKeyholeIcon,
+  MessageCircleIcon,
+} from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useBusinessAgentModeVisibility } from '@/business/client/hooks/useBusinessAgentMode';
 import { usePermission } from '@/hooks/usePermission';
 
 import type { HomeMode } from '../types';
 import { isHomeModeDisabled, resolvePermittedHomeMode } from './modePermission';
-import { homeModePresentation } from './modePresentation';
+import { HOME_MODE_ORDER, homeModePresentation } from './modePresentation';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   activeOption: css`
@@ -95,10 +102,13 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   `,
 }));
 
-const MODES = [
-  { icon: MessageCircleIcon, key: 'chat' },
-  { icon: InfinityIcon, key: 'task' },
-] as const;
+const MODE_ICONS = {
+  agent: InfinityIcon,
+  chat: MessageCircleIcon,
+  task: ListTodoIcon,
+} as const satisfies Record<HomeMode, typeof MessageCircleIcon>;
+
+const MODES = HOME_MODE_ORDER.map((key) => ({ icon: MODE_ICONS[key], key }));
 
 interface ModeSelectProps {
   onChange: (mode: HomeMode) => void;
@@ -110,12 +120,22 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
   const { t: tChat } = useTranslation('chat');
   const { allowed: canCreateContent, reason: createContentReason } =
     usePermission('create_content');
+  const {
+    error: agentModeAccessError,
+    isLoading: isAgentModeAccessLoading,
+    isResolved: isAgentModeAccessResolved,
+    visible: canEnableAgentMode,
+  } = useBusinessAgentModeVisibility();
   const [open, setOpen] = useState(false);
+  const permission = useMemo(
+    () => ({ canCreateContent, canEnableAgentMode, isAgentModeAccessResolved }),
+    [canCreateContent, canEnableAgentMode, isAgentModeAccessResolved],
+  );
 
   useEffect(() => {
-    const permittedMode = resolvePermittedHomeMode(value, canCreateContent);
+    const permittedMode = resolvePermittedHomeMode(value, permission);
     if (permittedMode !== value) onChange(permittedMode);
-  }, [canCreateContent, onChange, value]);
+  }, [permission, onChange, value]);
 
   const handleSelect = useCallback(
     (mode: HomeMode) => {
@@ -130,8 +150,19 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
   const content = (
     <Flexbox gap={4} role={'menu'} style={{ maxWidth: 320, minWidth: 280 }}>
       {MODES.map(({ icon, key }) => {
-        const disabled = isHomeModeDisabled(key, canCreateContent);
+        const disabled = isHomeModeDisabled(key, permission);
         const presentation = homeModePresentation[key];
+        const disabledReason = !canCreateContent
+          ? createContentReason
+          : key !== 'agent'
+            ? undefined
+            : isAgentModeAccessLoading
+              ? tChat('chatMode.agentStatusLoading')
+              : agentModeAccessError && !isAgentModeAccessResolved
+                ? tChat('chatMode.agentStatusError')
+                : !canEnableAgentMode
+                  ? tChat('chatMode.agentAdminRequired')
+                  : undefined;
 
         return (
           <Button
@@ -140,7 +171,7 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
             disabled={disabled}
             key={key}
             role={'menuitemradio'}
-            title={disabled ? createContentReason : undefined}
+            title={disabled ? disabledReason : undefined}
             type={'text'}
             onClick={() => handleSelect(key)}
           >
@@ -162,6 +193,9 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
                     : t(presentation.descriptionKey)}
                 </div>
               </Flexbox>
+              {key === 'agent' && isAgentModeAccessResolved && !canEnableAgentMode && (
+                <Icon icon={LockKeyholeIcon} size={14} />
+              )}
             </Flexbox>
           </Button>
         );

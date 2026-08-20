@@ -6,7 +6,7 @@ interface UseAgentModeAccessSyncParams {
   isAccessResolved: boolean;
   isPreferenceLoading: boolean;
   requestedAgentModeEnabled: boolean;
-  toggleAgentMode: (enabled: boolean) => Promise<void>;
+  toggleAgentMode: (enabled: boolean) => Promise<unknown>;
 }
 
 /**

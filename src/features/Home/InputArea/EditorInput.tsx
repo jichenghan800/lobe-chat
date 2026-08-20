@@ -62,41 +62,51 @@ const HomeEditorContent = memo<HomeEditorContentProps>(
     const toggleAgentMode = useToggleAgentMode();
     const modeSyncAgentRef = useRef<string | undefined>(undefined);
     const { isPreferenceLoading, requestedAgentModeEnabled } = useEffectiveAgentMode(agentId ?? '');
+    const desiredAgentMode = mode === 'agent';
+    const isConversationMode = mode === 'chat' || mode === 'agent';
 
     const handleSend = useCallback<SendButtonHandler>(
       async (params) => {
-        if (mode === 'chat' && requestedAgentModeEnabled) await toggleAgentMode(false);
+        if (isConversationMode && requestedAgentModeEnabled !== desiredAgentMode) {
+          const applied = await toggleAgentMode(desiredAgentMode);
+          if (!applied) return;
+        }
         await send(params);
       },
-      [mode, requestedAgentModeEnabled, send, toggleAgentMode],
+      [desiredAgentMode, isConversationMode, requestedAgentModeEnabled, send, toggleAgentMode],
     );
 
     sendHandlerRef.current = handleSend;
 
-    // Home's primary action is explicitly Chat. The selected Agent can retain
-    // Agent mode from the previous conversation, so normalize it before the
-    // first Home send and reuse the existing Chat-default model resolver.
+    // Home exposes Chat and Agent as explicit conversation intents. Keep the
+    // selected Agent in sync before the first send so the runtime and the page
+    // users land on cannot disagree about the chosen mode.
     useEffect(() => {
-      if (!requestedAgentModeEnabled) modeSyncAgentRef.current = undefined;
+      const syncKey = agentId ? `${agentId}:${desiredAgentMode ? 'agent' : 'chat'}` : undefined;
       if (
-        mode !== 'chat' ||
+        !isConversationMode ||
         !agentId ||
         isAgentConfigLoading ||
         isPreferenceLoading ||
-        !requestedAgentModeEnabled ||
-        modeSyncAgentRef.current === agentId
+        requestedAgentModeEnabled === desiredAgentMode ||
+        modeSyncAgentRef.current === syncKey
       )
         return;
 
-      modeSyncAgentRef.current = agentId;
-      void toggleAgentMode(false).catch(() => {
-        modeSyncAgentRef.current = undefined;
-      });
+      modeSyncAgentRef.current = syncKey;
+      void toggleAgentMode(desiredAgentMode)
+        .then((applied) => {
+          if (!applied) modeSyncAgentRef.current = undefined;
+        })
+        .catch(() => {
+          modeSyncAgentRef.current = undefined;
+        });
     }, [
       agentId,
+      desiredAgentMode,
       isAgentConfigLoading,
+      isConversationMode,
       isPreferenceLoading,
-      mode,
       requestedAgentModeEnabled,
       toggleAgentMode,
     ]);
@@ -132,7 +142,7 @@ const HomeEditorContent = memo<HomeEditorContentProps>(
         leftContent={
           <Flexbox horizontal align={'center'} gap={2}>
             <ModeSelect value={mode} onChange={onModeChange} />
-            {mode !== 'chat' ? null : isAgentConfigLoading ? (
+            {mode === 'task' ? null : isAgentConfigLoading ? (
               <ActionIcon disabled icon={PlusIcon} size={'small'} />
             ) : (
               <ActionBar disableCollapse dropdownPlacement="bottomLeft" />
@@ -155,7 +165,7 @@ const HomeEditorInput = memo<HomeEditorInputProps>((props) => {
       agentId={props.agentId}
       allowExpand={false}
       leftActions={leftActions}
-      modelDisplayScope="chat"
+      modelDisplayScope={props.mode === 'agent' ? 'agent' : 'chat'}
       rightActions={rightActions}
       slashPlacement="bottom"
       topicModelScope={false}

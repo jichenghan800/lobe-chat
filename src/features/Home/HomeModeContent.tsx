@@ -225,7 +225,7 @@ const HomeModeContent = memo<HomeModeContentProps>(({ mode, onSuggestionSelect }
   const needsYouCount = useMemo(() => splitBriefs(briefs).needsYou.length, [briefs]);
   const topicRecents = recentsSWR.data ?? [];
 
-  if (mode === 'chat') {
+  if (mode === 'chat' || mode === 'agent') {
     const state = resolveHomeChatContentState({
       authLoaded: !!authLoaded,
       hasError: !!recentsSWR.error,

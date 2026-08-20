@@ -418,6 +418,34 @@ describe('Home InputArea useSend', () => {
     expect(messageErrorMock).toHaveBeenCalledWith('attachment.agentModeRequiredHome');
   });
 
+  it('sends Agent-only files through Agent chat without invoking the Agent Builder', async () => {
+    homeState.inputActiveMode = 'agent';
+    fileState.chatUploadFileList = [
+      { id: 'file-sheet', requiresAgentMode: true, status: 'success' },
+    ] as any;
+    const { result } = renderHook(() => useSend('agent'));
+
+    await act(async () => {
+      await result.current.send({
+        clearContent: vi.fn(),
+        editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+        getEditorData: () => undefined,
+        getMarkdownContent: () => 'analyze this workbook',
+      });
+    });
+
+    expect(homeState.sendAsAgent).not.toHaveBeenCalled();
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: { agentId: 'agt_inbox', isolatedTopic: true },
+        files: [expect.objectContaining({ id: 'file-sheet', requiresAgentMode: true })],
+        message: 'analyze this workbook',
+      }),
+    );
+    expect(routerMock.push).toHaveBeenCalledWith('/agent/agt_inbox');
+    expect(messageErrorMock).not.toHaveBeenCalled();
+  });
+
   it('captures the active workspace slug in default homepage sends', async () => {
     activeWorkspaceSlugMock.value = 'team';
     const { result } = renderHook(() => useSend());
