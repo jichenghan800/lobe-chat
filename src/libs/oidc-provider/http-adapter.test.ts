@@ -65,7 +65,7 @@ describe('OIDC HTTP adapter', () => {
 
       expect(nodeRequest).toMatchObject({
         method: 'POST',
-        url: '/oidc/token?client_id=test',
+        url: '/token?client_id=test',
       });
       expect(nodeRequest.socket.remoteAddress).toBe('203.0.113.10');
       expect(nodeRequest.readable).toBe(true);
@@ -94,7 +94,7 @@ describe('OIDC HTTP adapter', () => {
       const { urlencoded } = await import('oidc-provider/lib/shared/selective_body.js');
       const nodeRequest = await createNodeRequest(request);
       const ctx: SelectiveBodyContext = {
-        charset: 'utf-8',
+        charset: 'utf8',
         is: (contentType: string) => contentType === 'application/x-www-form-urlencoded',
         oidc: {},
         req: nodeRequest,
@@ -128,6 +128,22 @@ describe('OIDC HTTP adapter', () => {
       expect(arrayBuffer).not.toHaveBeenCalled();
       expect(nodeRequest.readable).toBe(true);
       await expect(readStream(nodeRequest as unknown as Readable)).resolves.toBe('');
+    });
+
+    it.each([
+      ['/oidc/.well-known/openid-configuration', '/.well-known/openid-configuration'],
+      ['/oidc/jwks', '/jwks'],
+      ['/oidc/token/introspection', '/token/introspection'],
+      ['/interaction/uid-1', '/interaction/uid-1'],
+    ])('maps %s to the provider-relative path %s', async (pathname, expectedPath) => {
+      const request = new Request(`https://example.com${pathname}`, {
+        method: 'GET',
+      }) as unknown as NextRequest;
+
+      const { createNodeRequest } = await import('./http-adapter');
+      const nodeRequest = await createNodeRequest(request);
+
+      expect(nodeRequest.url).toBe(expectedPath);
     });
   });
 });

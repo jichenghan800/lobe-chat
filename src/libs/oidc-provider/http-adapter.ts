@@ -31,8 +31,16 @@ export const createNodeRequest = async (req: NextRequest): Promise<IncomingMessa
   // Build URL object
   const url = new URL(req.url);
 
-  // Compute path relative to prefix
+  // Next.js mounts the provider below /oidc, while oidc-provider expects paths
+  // relative to its own application root (for example /token and /jwks).
   let providerPath = url.pathname;
+  const providerPrefix = '/oidc';
+
+  if (providerPath === providerPrefix) {
+    providerPath = '/';
+  } else if (providerPath.startsWith(`${providerPrefix}/`)) {
+    providerPath = providerPath.slice(providerPrefix.length);
+  }
 
   // Ensure path always starts with /
   if (!providerPath.startsWith('/')) {
