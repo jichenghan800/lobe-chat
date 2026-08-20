@@ -213,6 +213,12 @@ export function defineConfig() {
     // provider, carries its own code+state, so it must not be session-gated.
     '/oauth/connector/callback',
     '/oidc/handoff',
+    '/oidc/.well-known/(.*)',
+    '/oidc/jwks',
+    '/oidc/me',
+    '/oidc/token/introspection',
+    '/oidc/token/revocation',
+    '/oidc/session/end',
     '/oidc/device/auth',
     '/oidc/token',
     // Interaction details for the consent/login page — must be reachable

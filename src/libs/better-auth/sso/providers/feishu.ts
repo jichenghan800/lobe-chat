@@ -145,12 +145,13 @@ const createFeishuProvider = (
         // 1. Admin hasn't enabled "Allow OpenAPI to access email field" in Feishu admin console
         // 2. User hasn't bound an email in Feishu
         // 3. User's email changes later (which would cause account mismatch)
-        const email = profile.email || profile.enterprise_email || `${unionId}@${id}.sso`;
+        const verifiedEmail = profile.email || profile.enterprise_email;
+        const email = verifiedEmail || `${unionId}@${id}.sso`;
 
         return {
           ...profile,
           email,
-          emailVerified: false,
+          emailVerified: Boolean(verifiedEmail),
           id: unionId,
           image:
             profile.avatar_url ??

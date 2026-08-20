@@ -69,7 +69,8 @@ const InteractionContent = memo(() => {
   if (error) return renderError(error);
   if (isLoading || !data) return <InteractionDetailsSkeleton />;
 
-  if (data.prompt === 'login') return <Login clientMetadata={data.clientMetadata} uid={data.uid} />;
+  if (data.prompt === 'login')
+    return <Login clientId={data.clientId} clientMetadata={data.clientMetadata} uid={data.uid} />;
 
   return (
     <Consent

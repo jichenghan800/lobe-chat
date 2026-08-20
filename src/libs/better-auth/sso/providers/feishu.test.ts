@@ -89,6 +89,32 @@ describe('Feishu SSO providers', () => {
     });
 
     expect(feishuUser?.email).toBe('union-user@feishu.sso');
+    expect(feishuUser?.emailVerified).toBe(false);
     expect(feishuBlueUser?.email).toBe('union-user@feishu-blue.sso');
+    expect(feishuBlueUser?.emailVerified).toBe(false);
+  });
+
+  it('marks an email returned by Feishu as verified', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 0,
+          data: {
+            email: 'member@cotticoffee.com',
+            name: 'Feishu User',
+            union_id: 'union-user',
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    const feishuEnv = Feishu.checkEnvs();
+    if (!feishuEnv) throw new Error('Feishu test credentials are missing');
+
+    const user = await Feishu.build(feishuEnv).getUserInfo?.({ accessToken: 'feishu-token' });
+
+    expect(user?.email).toBe('member@cotticoffee.com');
+    expect(user?.emailVerified).toBe(true);
   });
 });

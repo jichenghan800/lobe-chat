@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import AuthCard from '@/features/AuthCard';
 import type { OidcClientMetadata } from '@/types/oidc';
 
+import { COTTI_OIDC_CLIENT_IDS } from '../cottiClients';
 import OAuthApplicationLogo from '../OAuthApplicationLogo';
 import ThirdPartyNotice from '../ThirdPartyNotice';
 import BuiltinConsent from './BuiltinConsent';
@@ -27,7 +28,12 @@ function getScopeDescription(scope: string, t: any): string {
   return t(`consent.scope.${scope.replace(':', '-')}`, scope);
 }
 
-const BUILTIN_CLIENTS = new Set(['lobehub-desktop', 'lobehub-mobile', 'lobehub-market']);
+const BUILTIN_CLIENTS = new Set([
+  'lobehub-desktop',
+  'lobehub-mobile',
+  'lobehub-market',
+  ...COTTI_OIDC_CLIENT_IDS,
+]);
 
 const ConsentClient = memo<ClientProps>(({ uid, clientId, scopes, clientMetadata }) => {
   const { t } = useTranslation('oauth');

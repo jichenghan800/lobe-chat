@@ -2,21 +2,23 @@
 
 import { Avatar, Block, Flexbox, Skeleton, Text } from '@lobehub/ui';
 import { Button } from '@lobehub/ui/base-ui';
-import React, { memo } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AuthCard from '@/features/AuthCard';
 import { useSession } from '@/libs/better-auth/auth-client';
 import type { OidcClientMetadata } from '@/types/oidc';
 
+import { isCottiOidcClient } from './cottiClients';
 import OAuthApplicationLogo from './OAuthApplicationLogo';
 
 interface LoginConfirmProps {
+  clientId: string;
   clientMetadata: OidcClientMetadata;
   uid: string;
 }
 
-const LoginConfirmClient = memo<LoginConfirmProps>(({ uid, clientMetadata }) => {
+const LoginConfirmClient = memo<LoginConfirmProps>(({ uid, clientId, clientMetadata }) => {
   const { t } = useTranslation('oauth'); // Assuming translations are in 'oauth'
 
   const clientDisplayName = clientMetadata?.clientName || 'the application';
@@ -27,6 +29,23 @@ const LoginConfirmClient = memo<LoginConfirmProps>(({ uid, clientMetadata }) => 
   const nickName = session?.user?.name || '';
 
   const [isLoading, setIsLoading] = React.useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (
+      !clientMetadata.isFirstParty ||
+      !isCottiOidcClient(clientId) ||
+      !isUserStateInit ||
+      isLoading
+    )
+      return;
+
+    const form = formRef.current;
+    if (!form) return;
+
+    setIsLoading(true);
+    form.submit();
+  }, [clientId, clientMetadata.isFirstParty, isLoading, isUserStateInit]);
 
   const titleText = t('login.title', { clientName: clientDisplayName });
   const descriptionText = t('login.description', { clientName: clientDisplayName });
@@ -46,6 +65,7 @@ const LoginConfirmClient = memo<LoginConfirmProps>(({ uid, clientMetadata }) => 
           <form
             action="/oidc/consent"
             method="post"
+            ref={formRef}
             style={{ width: '100%' }}
             onSubmit={() => setIsLoading(true)}
           >

@@ -18,6 +18,7 @@ import { useAgentModeAccessSync } from '@/features/ChatInput/hooks/useAgentModeA
 import { useChatInputResourceAccess } from '@/features/ChatInput/hooks/useChatInputResourceAccess';
 import { useEffectiveAgentMode } from '@/features/ChatInput/hooks/useEffectiveAgentMode';
 import { useToggleAgentMode } from '@/features/ChatInput/hooks/useToggleAgentMode';
+import { CHAT_INPUT_MODE_ORDER } from '@/features/ChatInput/modeOrder';
 import { usePermission } from '@/hooks/usePermission';
 
 const styles = createStaticStyles(({ css }) => ({
@@ -243,6 +244,7 @@ const AgentMode = memo(() => {
       aria-disabled={!canSelectAgentMode}
       aria-selected={currentMode === 'agent'}
       gap={12}
+      key="agent"
       role="option"
       tabIndex={0}
       className={cx(
@@ -271,6 +273,42 @@ const AgentMode = memo(() => {
     </Flexbox>
   );
 
+  const chatOption = (
+    <Flexbox
+      horizontal
+      align="center"
+      aria-selected={currentMode === 'chat'}
+      className={cx(styles.option, currentMode === 'chat' && styles.activeOption)}
+      gap={12}
+      key="chat"
+      role="option"
+      tabIndex={0}
+      onClick={() => handleSelect('chat')}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+
+        event.preventDefault();
+        void handleSelect('chat');
+      }}
+    >
+      <Flexbox align="center" className={styles.optionIcon} height={32} justify="center" width={32}>
+        <Icon icon={MessageCircleIcon} size={16} />
+      </Flexbox>
+      <Flexbox flex={1}>
+        <div className={styles.optionTitle}>{t('chatMode.chat')}</div>
+        <div className={styles.optionDesc}>{t('chatMode.chatDesc')}</div>
+      </Flexbox>
+    </Flexbox>
+  );
+
+  const visibleAgentOption = agentDisabledHint ? (
+    <Tooltip standalone key="agent" placement="right" title={agentDisabledHint}>
+      {agentOption}
+    </Tooltip>
+  ) : (
+    agentOption
+  );
+
   const popoverContent = (
     <Flexbox
       aria-label={t('chatMode.select')}
@@ -278,44 +316,7 @@ const AgentMode = memo(() => {
       role="listbox"
       style={{ maxWidth: 320, minWidth: 280 }}
     >
-      {agentDisabledHint ? (
-        <Tooltip standalone placement="right" title={agentDisabledHint}>
-          {agentOption}
-        </Tooltip>
-      ) : (
-        agentOption
-      )}
-
-      <Flexbox
-        horizontal
-        align="center"
-        aria-selected={currentMode === 'chat'}
-        className={cx(styles.option, currentMode === 'chat' && styles.activeOption)}
-        gap={12}
-        role="option"
-        tabIndex={0}
-        onClick={() => handleSelect('chat')}
-        onKeyDown={(event) => {
-          if (event.key !== 'Enter' && event.key !== ' ') return;
-
-          event.preventDefault();
-          void handleSelect('chat');
-        }}
-      >
-        <Flexbox
-          align="center"
-          className={styles.optionIcon}
-          height={32}
-          justify="center"
-          width={32}
-        >
-          <Icon icon={MessageCircleIcon} size={16} />
-        </Flexbox>
-        <Flexbox flex={1}>
-          <div className={styles.optionTitle}>{t('chatMode.chat')}</div>
-          <div className={styles.optionDesc}>{t('chatMode.chatDesc')}</div>
-        </Flexbox>
-      </Flexbox>
+      {CHAT_INPUT_MODE_ORDER.map((mode) => (mode === 'chat' ? chatOption : visibleAgentOption))}
     </Flexbox>
   );
 

@@ -225,7 +225,7 @@ export const createOIDCProvider = async (db: LobeChatDatabase): Promise<Provider
 
             if (scope.includes('email')) {
               claims.email = user.email;
-              claims.email_verified = !!user.emailVerifiedAt;
+              claims.email_verified = user.emailVerified || !!user.emailVerifiedAt;
             }
 
             logProvider('Returning claims: %O', claims);

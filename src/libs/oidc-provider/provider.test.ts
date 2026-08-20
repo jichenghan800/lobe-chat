@@ -12,6 +12,13 @@ vi.mock('@/envs/app', () => ({
   },
 }));
 
+vi.mock('@/envs/auth', () => ({
+  authEnv: {
+    COTTI_SSO_NANO_CLIENT_SECRET: 'nano-test-secret',
+    COTTI_SSO_PPT_CLIENT_SECRET: 'ppt-test-secret',
+  },
+}));
+
 vi.mock('@/config/db', () => ({
   serverDBEnv: {
     KEY_VAULTS_SECRET: 'test-secret-key',
@@ -54,6 +61,21 @@ describe('OIDC Provider - Market Client Integration', () => {
       expect(marketClient?.client_name).toBe('LobeHub Marketplace');
 
       vi.doUnmock('@/envs/app');
+    });
+  });
+
+  describe('Cotti first-party clients', () => {
+    it.each([
+      ['cotticoffee-nano', 'https://nano.cotticoffee.com/api/auth/callback/cotti-sso'],
+      ['cotticoffee-ppt', 'https://ppt.cotticoffee.com/api/auth/oauth2/callback/cotti-sso'],
+    ])('registers %s as a confidential authorization-code client', async (clientId, callback) => {
+      const { defaultClients } = await import('./config');
+      const client = defaultClients.find((item) => item.client_id === clientId);
+
+      expect(client).toBeDefined();
+      expect(client?.grant_types).toEqual(['authorization_code', 'refresh_token']);
+      expect(client?.token_endpoint_auth_method).toBe('client_secret_basic');
+      expect(client?.redirect_uris).toContain(callback);
     });
   });
 

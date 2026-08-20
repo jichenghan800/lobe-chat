@@ -2,8 +2,54 @@ import { type ClientMetadata } from 'oidc-provider';
 import urlJoin from 'url-join';
 
 import { appEnv } from '@/envs/app';
+import { authEnv } from '@/envs/auth';
 
 const marketBaseUrl = new URL(appEnv.MARKET_BASE_URL ?? 'https://market.lobehub.com').origin;
+
+const createCottiWebClient = ({
+  clientId,
+  clientName,
+  clientSecret,
+  origins,
+}: {
+  clientId: string;
+  clientName: string;
+  clientSecret?: string;
+  origins: string[];
+}): ClientMetadata | null => {
+  if (!clientSecret) return null;
+
+  return {
+    application_type: 'web',
+    client_id: clientId,
+    client_name: clientName,
+    client_secret: clientSecret,
+    grant_types: ['authorization_code', 'refresh_token'],
+    post_logout_redirect_uris: origins.map((origin) => `${origin}/`),
+    redirect_uris: origins.map((origin) =>
+      clientId === 'cotticoffee-nano'
+        ? `${origin}/api/auth/callback/cotti-sso`
+        : `${origin}/api/auth/oauth2/callback/cotti-sso`,
+    ),
+    response_types: ['code'],
+    token_endpoint_auth_method: 'client_secret_basic',
+  };
+};
+
+const cottiClients = [
+  createCottiWebClient({
+    clientId: 'cotticoffee-nano',
+    clientName: '灵境 AI',
+    clientSecret: authEnv.COTTI_SSO_NANO_CLIENT_SECRET,
+    origins: ['https://nano.cotticoffee.com', 'https://nanodev.cotticoffee.com'],
+  }),
+  createCottiWebClient({
+    clientId: 'cotticoffee-ppt',
+    clientName: '灵演 AI',
+    clientSecret: authEnv.COTTI_SSO_PPT_CLIENT_SECRET,
+    origins: ['https://ppt.cotticoffee.com', 'https://pptdev.cotticoffee.com'],
+  }),
+].filter((client): client is ClientMetadata => client !== null);
 
 /**
  * Default OIDC client configuration
@@ -79,6 +125,7 @@ export const defaultClients: ClientMetadata[] = [
     response_types: ['code'],
     token_endpoint_auth_method: 'none',
   },
+  ...cottiClients,
 ];
 
 /**
