@@ -37,6 +37,18 @@ export const oidcArtifactTTL = {
   Session: 30 * DAY_SECONDS,
 } satisfies NonNullable<Configuration['ttl']>;
 
+export const oidcRoutes = {
+  authorization: '/oidc/auth',
+  code_verification: '/oidc/device',
+  device_authorization: '/oidc/device/auth',
+  end_session: '/oidc/session/end',
+  introspection: '/oidc/token/introspection',
+  jwks: '/oidc/jwks',
+  revocation: '/oidc/token/revocation',
+  token: '/oidc/token',
+  userinfo: '/oidc/me',
+} satisfies NonNullable<Configuration['routes']>;
+
 /**
  * Create OIDC Provider instance
  * @param db - Database instance
@@ -298,6 +310,7 @@ export const createOIDCProvider = async (db: LobeChatDatabase): Promise<Provider
     // Added: enable refresh token rotation
     rotateRefreshToken: true,
 
+    routes: oidcRoutes,
     // 3. Scopes definition
     scopes: defaultScopes,
 

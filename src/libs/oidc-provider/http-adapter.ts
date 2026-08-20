@@ -31,15 +31,14 @@ export const createNodeRequest = async (req: NextRequest): Promise<IncomingMessa
   // Build URL object
   const url = new URL(req.url);
 
-  // Next.js mounts the provider below /oidc, while oidc-provider expects paths
-  // relative to its own application root (for example /token and /jwks).
+  // oidc-provider lets us configure normal endpoint paths with the /oidc mount
+  // prefix, but its well-known discovery route is fixed. Strip the prefix only
+  // for that namespace so discovery remains reachable through Next.js.
   let providerPath = url.pathname;
-  const providerPrefix = '/oidc';
+  const discoveryPrefix = '/oidc/.well-known/';
 
-  if (providerPath === providerPrefix) {
-    providerPath = '/';
-  } else if (providerPath.startsWith(`${providerPrefix}/`)) {
-    providerPath = providerPath.slice(providerPrefix.length);
+  if (providerPath.startsWith(discoveryPrefix)) {
+    providerPath = providerPath.slice('/oidc'.length);
   }
 
   // Ensure path always starts with /

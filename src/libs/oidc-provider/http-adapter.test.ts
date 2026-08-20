@@ -65,7 +65,7 @@ describe('OIDC HTTP adapter', () => {
 
       expect(nodeRequest).toMatchObject({
         method: 'POST',
-        url: '/token?client_id=test',
+        url: '/oidc/token?client_id=test',
       });
       expect(nodeRequest.socket.remoteAddress).toBe('203.0.113.10');
       expect(nodeRequest.readable).toBe(true);
@@ -132,8 +132,8 @@ describe('OIDC HTTP adapter', () => {
 
     it.each([
       ['/oidc/.well-known/openid-configuration', '/.well-known/openid-configuration'],
-      ['/oidc/jwks', '/jwks'],
-      ['/oidc/token/introspection', '/token/introspection'],
+      ['/oidc/jwks', '/oidc/jwks'],
+      ['/oidc/token/introspection', '/oidc/token/introspection'],
       ['/interaction/uid-1', '/interaction/uid-1'],
     ])('maps %s to the provider-relative path %s', async (pathname, expectedPath) => {
       const request = new Request(`https://example.com${pathname}`, {

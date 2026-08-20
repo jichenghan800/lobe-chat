@@ -126,6 +126,22 @@ describe('OIDC Provider - Market Client Integration', () => {
       vi.doUnmock('@/envs/app');
     }, 10000);
 
+    it('mounts every externally advertised protocol endpoint under /oidc', async () => {
+      const { oidcRoutes } = await import('./provider');
+
+      expect(oidcRoutes).toEqual({
+        authorization: '/oidc/auth',
+        code_verification: '/oidc/device',
+        device_authorization: '/oidc/device/auth',
+        end_session: '/oidc/session/end',
+        introspection: '/oidc/token/introspection',
+        jwks: '/oidc/jwks',
+        revocation: '/oidc/token/revocation',
+        token: '/oidc/token',
+        userinfo: '/oidc/me',
+      });
+    });
+
     it('should have createOIDCProvider function', async () => {
       vi.doMock('@/envs/app', () => ({
         appEnv: {
