@@ -32,7 +32,7 @@ vi.mock('@lobehub/ui', () => ({
   ),
 }));
 
-vi.mock('next/dynamic', () => ({
+vi.mock('@/libs/next/dynamic', () => ({
   default: () =>
     function DynamicComponent({ children }: { children?: ReactNode }) {
       return <div data-testid="share-popover">{children}</div>;
@@ -92,5 +92,13 @@ describe('Conversation ShareButton', () => {
     expect(getByTestId('share-button')).toBeDisabled();
     expect(getByTestId('share-button')).toHaveAttribute('title', 'requires member');
     expect(queryByTestId('share-popover')).toBeNull();
+  });
+
+  it('shows COTTI topic link sharing when upstream business features are disabled', () => {
+    mocks.enableBusinessFeatures = false;
+
+    const { getByTestId } = render(<ShareButton />);
+
+    expect(getByTestId('share-popover')).toContainElement(getByTestId('share-button'));
   });
 });
