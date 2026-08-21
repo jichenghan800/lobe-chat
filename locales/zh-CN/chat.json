@@ -947,6 +947,8 @@
   "shareModal.pdf": "PDF",
   "shareModal.pdfErrorDescription": "生成 PDF 时出错，请重试或联系支持",
   "shareModal.pdfGenerationError": "PDF 生成失败",
+  "shareModal.pdfPreviewError": "暂时无法预览 PDF",
+  "shareModal.pdfPreviewErrorDescription": "PDF 已生成，你可以直接下载或重新生成。",
   "shareModal.pdfReady": "PDF 已准备就绪",
   "shareModal.popover.export": "导出",
   "shareModal.popover.privacyWarning.confirm": "分享并复制链接",

@@ -947,6 +947,8 @@
   "shareModal.pdf": "PDF",
   "shareModal.pdfErrorDescription": "An error occurred while generating the PDF, please try again",
   "shareModal.pdfGenerationError": "PDF generation failed",
+  "shareModal.pdfPreviewError": "PDF preview unavailable",
+  "shareModal.pdfPreviewErrorDescription": "The PDF was generated. You can download it or generate it again.",
   "shareModal.pdfReady": "PDF is ready",
   "shareModal.popover.export": "Export",
   "shareModal.popover.privacyWarning.confirm": "Share & copy link",
