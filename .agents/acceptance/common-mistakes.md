@@ -230,6 +230,21 @@ and intermediate flex sizing can hide the intended inner scrollbars.
 independent scroll regions to navigation and detail, and verify scroll ownership with
 DOM measurements as well as visual evidence.
 
+### L-D7 — Exporting the empty shell of an Agent assistant group
+
+**Wrong approach:** build text, Markdown, or PDF exports from an
+`assistantGroup` message's top-level `content` field.
+
+**Why it fails:** `conversation-flow` intentionally stores the rendered Agent run as
+an empty virtual wrapper whose authored final answer lives in semantic child blocks.
+The conversation looks complete while the exported artifact contains only its title.
+
+**Correct approach:** resolve the group's authored final answer with the shared
+conversation-flow semantic helper before formatting the export. Cover both whole-topic
+and single-message exports with an empty-wrapper fixture whose child blocks contain a
+long final answer, and assert the resulting artifact payload rather than only the
+share UI state.
+
 ## Environment safety
 
 ### L-S1 — Publishing to an assumed server target

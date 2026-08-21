@@ -86,6 +86,7 @@ const SharePdf = memo((props: { message?: UIChatMessage }) => {
         messages: outerMessage ? [outerMessage] : displayMessages,
         systemRole,
         title,
+        withTitle: false,
       }).replaceAll('\n\n\n', '\n');
 
       if (currentMarkdownContent.trim()) {

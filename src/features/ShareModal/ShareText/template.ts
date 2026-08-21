@@ -1,3 +1,4 @@
+import { resolveAssistantGroupFinalContent } from '@lobechat/conversation-flow';
 import { type UIChatMessage } from '@lobechat/types';
 
 import { LOADING_FLAT } from '@/const/message';
@@ -8,6 +9,7 @@ interface MarkdownParams extends FieldType {
   messages: UIChatMessage[];
   systemRole: string;
   title: string;
+  withTitle?: boolean;
 }
 
 export const generateMarkdown = ({
@@ -17,9 +19,10 @@ export const generateMarkdown = ({
   includeUser,
   withSystemRole,
   withRole,
+  withTitle = true,
   systemRole,
 }: MarkdownParams): string => {
-  const parts: string[] = [`# ${title}`, ''];
+  const parts: string[] = withTitle ? [`# ${title}`, ''] : [];
 
   if (withSystemRole && systemRole) {
     parts.push('````md', systemRole, '````', '');
@@ -31,7 +34,9 @@ export const generateMarkdown = ({
     .filter((m) => (!includeTool ? m.role !== 'tool' : true))
     .map((message) => ({
       ...message,
-      content: normalizeThinkTags(processWithArtifact(message.content)),
+      content: normalizeThinkTags(
+        processWithArtifact(resolveAssistantGroupFinalContent(message) ?? message.content),
+      ),
     }));
 
   for (const chat of filteredMessages) {
@@ -40,7 +45,11 @@ export const generateMarkdown = ({
     if (withRole) {
       if (chat.role === 'user') {
         parts.push('##### User:', '');
-      } else if (chat.role === 'assistant') {
+      } else if (
+        chat.role === 'assistant' ||
+        chat.role === 'assistantGroup' ||
+        chat.role === 'supervisor'
+      ) {
         parts.push('##### Assistant:', '');
       } else if (chat.role === 'tool') {
         parts.push('##### Tools Calling:', '');
