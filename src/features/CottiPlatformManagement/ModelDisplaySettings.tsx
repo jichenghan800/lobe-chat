@@ -29,7 +29,7 @@ import {
   setModelDisplayItemEnabled,
   setModelDisplayName,
 } from './modelDisplayDraft';
-import ProfessionalModelChannel from './ProfessionalModelChannel';
+import { ProfessionalModelMatchField } from './ProfessionalModelMatchField';
 import { sharedStyles } from './sharedStyle';
 
 const styles = createStaticStyles(({ css }) => ({
@@ -76,6 +76,9 @@ const styles = createStaticStyles(({ css }) => ({
     ${responsive.md} {
       grid-column: 1 / -1;
     }
+  `,
+  fieldLabel: css`
+    color: ${cssVar.colorTextSecondary};
   `,
 }));
 
@@ -158,13 +161,6 @@ const ModelDisplaySettings = memo(() => {
 
   return (
     <Flexbox gap={16}>
-      <ProfessionalModelChannel
-        disabled={dirty || saving}
-        onSwitched={async (config) => {
-          setDraft(config);
-          await configSWR.mutate(config, { revalidate: false });
-        }}
-      />
       <Block className={sharedStyles.card} gap={16} padding={20} variant={'outlined'}>
         <Flexbox className={sharedStyles.sectionHeader} gap={4}>
           <Text className={sharedStyles.sectionTitle}>{t('platformManagement.models.title')}</Text>
@@ -230,16 +226,30 @@ const ModelDisplaySettings = memo(() => {
                       {item.provider}/{item.model}
                     </Text>
                   </Flexbox>
-                  <Input
-                    className={styles.displayName}
-                    disabled={isProfessionalChannel}
-                    maxLength={100}
-                    placeholder={t('platformManagement.models.displayName.placeholder')}
-                    value={item.displayName}
-                    onChange={(event) =>
-                      updateDraft(setModelDisplayName(draft, scope, item, event.target.value))
-                    }
-                  />
+                  {isProfessionalChannel ? (
+                    <ProfessionalModelMatchField
+                      className={styles.displayName}
+                      disabled={dirty || saving}
+                      onSwitched={async (config) => {
+                        setDraft(config);
+                        await configSWR.mutate(config, { revalidate: false });
+                      }}
+                    />
+                  ) : (
+                    <Flexbox className={styles.displayName} gap={6}>
+                      <Text className={styles.fieldLabel} fontSize={12}>
+                        {t('platformManagement.models.displayName.label')}
+                      </Text>
+                      <Input
+                        maxLength={100}
+                        placeholder={t('platformManagement.models.displayName.placeholder')}
+                        value={item.displayName}
+                        onChange={(event) =>
+                          updateDraft(setModelDisplayName(draft, scope, item, event.target.value))
+                        }
+                      />
+                    </Flexbox>
+                  )}
                   <Switch
                     checked={item.enabled}
                     disabled={isProfessionalChannel}
