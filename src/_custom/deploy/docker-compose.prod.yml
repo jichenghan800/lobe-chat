@@ -1,0 +1,126 @@
+name: lobechat-prod
+
+services:
+  app:
+    image: ${LOBECHAT_IMAGE:?Set LOBECHAT_IMAGE in .env}
+    container_name: lobechat-app
+    restart: unless-stopped
+    stop_grace_period: 60s
+    cpus: ${APP_CPUS:-2.0}
+    mem_limit: ${APP_MEM_LIMIT:-6g}
+    pids_limit: ${APP_PIDS_LIMIT:-512}
+    env_file:
+      - ${LOBECHAT_RUNTIME_ENV_FILE:-./.env}
+    environment:
+      APP_URL: https://chat.cotticoffee.com
+      AUTH_TRUSTED_ORIGINS: https://chat.cotticoffee.com,http://127.0.0.1:3210
+      DATABASE_URL: postgres://${POSTGRES_USER:-paradedb}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgresql:5432/${POSTGRES_DB:-lobehub}?sslmode=disable
+      INTERNAL_APP_URL: ${INTERNAL_APP_URL:-http://lobechat-app:3210}
+      LOBE_PORT: 3210
+      PORT: 3210
+      SEARXNG_URL: http://searxng:8080
+    ports:
+      - '${LOBECHAT_BIND:-0.0.0.0}:${LOBECHAT_PORT:-3210}:3210'
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      qstash:
+        condition: service_started
+      searxng:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "node -e \"fetch('http://127.0.0.1:3210/').then((res) => process.exit(res.status < 500 ? 0 : 1)).catch(() => process.exit(1))\""
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - runtime
+    logging:
+      driver: json-file
+      options:
+        max-size: ${LOG_MAX_SIZE:-50m}
+        max-file: ${LOG_MAX_FILE:-3}
+
+  qstash:
+    image: ${QSTASH_IMAGE:-node:22-alpine}
+    container_name: lobechat-qstash
+    restart: unless-stopped
+    cpus: ${QSTASH_CPUS:-0.5}
+    mem_limit: ${QSTASH_MEM_LIMIT:-512m}
+    pids_limit: ${QSTASH_PIDS_LIMIT:-256}
+    command:
+      - sh
+      - -lc
+      - npx -y @upstash/qstash-cli@latest dev -port 8080 -log-port 8081
+    ports:
+      - '${QSTASH_BIND:-127.0.0.1}:${QSTASH_PORT:-18088}:8080'
+      - '${QSTASH_BIND:-127.0.0.1}:${QSTASH_LOG_PORT:-18089}:8081'
+    networks:
+      - runtime
+    logging:
+      driver: json-file
+      options:
+        max-size: ${LOG_MAX_SIZE:-50m}
+        max-file: ${LOG_MAX_FILE:-3}
+
+  postgresql:
+    image: ${POSTGRES_IMAGE:-paradedb/paradedb:0.22.3-pg17}
+    container_name: lobechat-postgresql
+    restart: unless-stopped
+    cpus: ${POSTGRES_CPUS:-2.0}
+    mem_limit: ${POSTGRES_MEM_LIMIT:-4g}
+    pids_limit: ${POSTGRES_PIDS_LIMIT:-256}
+    shm_size: ${POSTGRES_SHM_SIZE:-1g}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lobehub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_USER: ${POSTGRES_USER:-paradedb}
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-paradedb} -d ${POSTGRES_DB:-lobehub}
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - runtime
+    logging:
+      driver: json-file
+      options:
+        max-size: ${LOG_MAX_SIZE:-50m}
+        max-file: ${LOG_MAX_FILE:-3}
+
+  searxng:
+    image: ${SEARXNG_IMAGE:-searxng/searxng:latest}
+    container_name: lobechat-searxng
+    restart: unless-stopped
+    cpus: ${SEARXNG_CPUS:-0.75}
+    mem_limit: ${SEARXNG_MEM_LIMIT:-768m}
+    pids_limit: ${SEARXNG_PIDS_LIMIT:-256}
+    environment:
+      BASE_URL: https://chat.cotticoffee.com
+      SEARXNG_SETTINGS_FILE: /etc/searxng/settings.yml
+    volumes:
+      - ./searxng-settings.yml:/etc/searxng/settings.yml:ro
+    networks:
+      - runtime
+    logging:
+      driver: json-file
+      options:
+        max-size: ${LOG_MAX_SIZE:-50m}
+        max-file: ${LOG_MAX_FILE:-3}
+
+networks:
+  runtime:
+    name: lobechat_prod
+    driver: bridge
+
+volumes:
+  postgresql-data:
+    name: lobechat_postgresql_data
