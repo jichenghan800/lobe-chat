@@ -29,6 +29,11 @@ import {
   setModelDisplayItemEnabled,
   setModelDisplayName,
 } from './modelDisplayDraft';
+import {
+  MODEL_DISPLAY_EDITOR_COLUMN_MIN_WIDTH,
+  MODEL_DISPLAY_IDENTITY_COLUMN_MAX_WIDTH,
+  MODEL_DISPLAY_IDENTITY_COLUMN_MIN_WIDTH,
+} from './modelDisplayLayout';
 import { ProfessionalModelMatchField } from './ProfessionalModelMatchField';
 import { sharedStyles } from './sharedStyle';
 
@@ -47,7 +52,12 @@ const styles = createStaticStyles(({ css }) => ({
   `,
   modelRow: css`
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.8fr) auto auto;
+    grid-template-columns:
+      minmax(
+        ${MODEL_DISPLAY_IDENTITY_COLUMN_MIN_WIDTH}px,
+        ${MODEL_DISPLAY_IDENTITY_COLUMN_MAX_WIDTH}px
+      )
+      minmax(${MODEL_DISPLAY_EDITOR_COLUMN_MIN_WIDTH}px, 1fr) auto auto;
     gap: 12px;
     align-items: center;
 

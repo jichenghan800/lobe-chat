@@ -1,4 +1,4 @@
-import { Flexbox, Icon } from '@lobehub/ui';
+import { Flexbox, Icon, Tooltip } from '@lobehub/ui';
 import { Button, Popover } from '@lobehub/ui/base-ui';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
 import {
@@ -16,7 +16,11 @@ import { usePermission } from '@/hooks/usePermission';
 
 import type { HomeMode } from '../types';
 import { isHomeModeDisabled, resolvePermittedHomeMode } from './modePermission';
-import { HOME_MODE_ORDER, homeModePresentation } from './modePresentation';
+import {
+  HOME_AGENT_ACCESS_HINT_KEY,
+  HOME_MODE_ORDER,
+  homeModePresentation,
+} from './modePresentation';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   activeOption: css`
@@ -161,17 +165,16 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
               : agentModeAccessError && !isAgentModeAccessResolved
                 ? tChat('chatMode.agentStatusError')
                 : !canEnableAgentMode
-                  ? tChat('chatMode.agentAdminRequired')
+                  ? tChat(HOME_AGENT_ACCESS_HINT_KEY)
                   : undefined;
 
-        return (
+        const option = (
           <Button
             aria-checked={key === value}
             className={cx(styles.option, key === value && styles.activeOption)}
             disabled={disabled}
             key={key}
             role={'menuitemradio'}
-            title={disabled ? disabledReason : undefined}
             type={'text'}
             onClick={() => handleSelect(key)}
           >
@@ -198,6 +201,14 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
               )}
             </Flexbox>
           </Button>
+        );
+
+        return disabledReason ? (
+          <Tooltip standalone key={key} placement={'right'} title={disabledReason}>
+            {option}
+          </Tooltip>
+        ) : (
+          option
         );
       })}
     </Flexbox>

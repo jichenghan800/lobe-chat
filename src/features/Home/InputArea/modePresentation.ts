@@ -2,6 +2,8 @@ import type { HomeMode } from '../types';
 
 export const HOME_MODE_ORDER = ['chat', 'agent', 'task'] as const satisfies readonly HomeMode[];
 
+export const HOME_AGENT_ACCESS_HINT_KEY = 'chatMode.agentAdminRequired';
+
 export const homeModePresentation = {
   chat: {
     descriptionKey: 'chatMode.chatDesc',
