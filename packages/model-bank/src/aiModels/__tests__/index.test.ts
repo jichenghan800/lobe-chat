@@ -123,6 +123,54 @@ describe('Moonshot models', () => {
   });
 });
 
+describe('Bailian GLM models', () => {
+  it('registers the marketplace-qualified GLM-5.3 model with official reasoning controls', () => {
+    const glm53 = LOBE_DEFAULT_MODEL_LIST.find(
+      (model) => model.providerId === ModelProvider.Qwen && model.id === 'ZHIPU/GLM-5.3',
+    );
+
+    expect(glm53).toEqual(
+      expect.objectContaining({
+        contextWindowTokens: 1_048_576,
+        maxOutput: 131_072,
+      }),
+    );
+    expect(glm53?.abilities).toEqual(
+      expect.objectContaining({ functionCall: true, reasoning: true, structuredOutput: true }),
+    );
+    expect(glm53?.settings?.extendParams).toEqual(['glm5_3ReasoningEffort']);
+  });
+});
+
+describe('Vertex AI Gemini models', () => {
+  it('registers Gemini 3.7 Flash alongside Gemini 3.6 Flash with official controls', () => {
+    const vertexModels = LOBE_DEFAULT_MODEL_LIST.filter(
+      (model) => model.providerId === ModelProvider.VertexAI,
+    );
+    const gemini36 = vertexModels.find((model) => model.id === 'gemini-3.6-flash');
+    const gemini37 = vertexModels.find((model) => model.id === 'gemini-3.7-flash');
+
+    expect(gemini36).toBeDefined();
+    expect(gemini37).toEqual(
+      expect.objectContaining({
+        contextWindowTokens: 1_114_112,
+        enabled: true,
+        knowledgeCutoff: '2026-03',
+        maxOutput: 65_536,
+      }),
+    );
+    expect(gemini37?.abilities).toEqual(
+      expect.objectContaining({ functionCall: true, reasoning: true, search: true, vision: true }),
+    );
+    expect(gemini37?.settings).toEqual(
+      expect.objectContaining({
+        disabledParams: ['temperature', 'top_p'],
+        extendParams: ['thinkingLevel3', 'urlContext'],
+      }),
+    );
+  });
+});
+
 describe('Google rolling model aliases', () => {
   it('tracks the current Flash and Flash-Lite model versions', () => {
     const googleModels = LOBE_DEFAULT_MODEL_LIST.filter((model) => model.providerId === 'google');

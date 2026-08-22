@@ -1,5 +1,5 @@
 import { useDebounce } from 'ahooks';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import { useClientDataSWR } from '@/libs/swr';
@@ -15,11 +15,29 @@ import {
 export const useCottiPlatformAudit = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const state = useMemo(() => parseCottiPlatformAuditState(searchParams), [searchParams]);
-  const debouncedQuery = useDebounce(state.q, { wait: 300 });
+  const [queryInput, setQueryInput] = useState(state.q);
+  const debouncedQuery = useDebounce(queryInput, { wait: 300 });
   const [activeMessageId, setActiveMessageId] = useState<string>();
   const [detailViewNonce, setDetailViewNonce] = useState(0);
   const [analysisLoadingId, setAnalysisLoadingId] = useState<string>();
   const query = toCottiPlatformAuditQuery({ ...state, q: debouncedQuery });
+
+  useEffect(() => {
+    setQueryInput(state.q);
+  }, [state.q]);
+
+  useEffect(() => {
+    if (debouncedQuery === state.q) return;
+
+    setSearchParams(
+      writeCottiPlatformAuditState(searchParams, {
+        ...state,
+        page: 1,
+        q: debouncedQuery,
+      }),
+      { replace: true },
+    );
+  }, [debouncedQuery, searchParams, setSearchParams, state]);
   const dashboardSWR = useClientDataSWR(
     [
       'cotti',
@@ -64,10 +82,14 @@ export const useCottiPlatformAudit = () => {
     closeDetail: () => setActiveMessageId(undefined),
     dashboardSWR,
     detailSWR,
-    resetFilters: () => updateState({ feature: 'all', page: 1, q: '', riskLevel: 'flagged' }, true),
+    queryInput,
+    resetFilters: () => {
+      setQueryInput('');
+      updateState({ feature: 'all', page: 1, q: '', riskLevel: 'flagged' }, true);
+    },
     setFeature: (feature: CottiPlatformAuditState['feature']) => updateState({ feature, page: 1 }),
     setPage: (page: number, pageSize: 20 | 50) => updateState({ page, pageSize }),
-    setQuery: (q: string) => updateState({ page: 1, q }, true),
+    setQuery: setQueryInput,
     setRange: (range: CottiPlatformAuditState['range']) => updateState({ page: 1, range }),
     setRiskLevel: (riskLevel: CottiPlatformAuditState['riskLevel']) =>
       updateState({ page: 1, riskLevel }),

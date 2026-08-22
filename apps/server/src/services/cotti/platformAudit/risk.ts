@@ -188,6 +188,28 @@ export const buildCottiPlatformAuditAnalysisFlags = (
   }));
 };
 
+export const buildCottiPlatformAuditReviewText = (
+  detail: Pick<CottiPlatformAuditDetail, 'attachments' | 'content' | 'contentPreview'>,
+  maxLength = 12_000,
+) => {
+  const attachmentText = detail.attachments
+    .map((attachment) => {
+      const metadata = `[附件：${attachment.name}；类型：${attachment.fileType}；大小：${attachment.size} 字节]`;
+
+      return attachment.extractedTextPreview
+        ? `${metadata}\n${attachment.extractedTextPreview}`
+        : `${metadata}\n[未提取到可审计文本]`;
+    })
+    .join('\n\n');
+  const prompt = detail.content || detail.contentPreview || '';
+  const promptBudget = attachmentText ? Math.floor(maxLength / 2) : maxLength;
+
+  return [`用户提问：\n${prompt.slice(0, promptBudget)}`, attachmentText]
+    .filter(Boolean)
+    .join('\n\n附件：\n')
+    .slice(0, maxLength);
+};
+
 const extractQuote = (text: string, pattern: RegExp) => {
   const match = pattern.exec(text);
   if (match?.index === undefined) return null;
@@ -201,7 +223,7 @@ const extractQuote = (text: string, pattern: RegExp) => {
 export const buildCottiPlatformAuditRuleAnalysis = (
   detail: CottiPlatformAuditDetail,
 ): CottiPlatformAuditRiskAnalysis => {
-  const content = detail.content || detail.contentPreview || '';
+  const content = buildCottiPlatformAuditReviewText(detail);
   const evidence: CottiPlatformAuditRiskEvidence[] = [];
 
   for (const definition of RISK_FLAG_DEFINITIONS) {
@@ -210,7 +232,16 @@ export const buildCottiPlatformAuditRuleAnalysis = (
   }
 
   if (detail.fileCount > 0) {
-    evidence.push({ label: '包含附件', quote: `该消息包含 ${detail.fileCount} 个附件` });
+    const attachmentNames = detail.attachments
+      .slice(0, 5)
+      .map((attachment) => attachment.name)
+      .join('、');
+    evidence.push({
+      label: '包含附件',
+      quote: attachmentNames
+        ? `该消息包含 ${detail.fileCount} 个附件：${attachmentNames}`
+        : `该消息包含 ${detail.fileCount} 个附件`,
+    });
   }
   if (detail.tool) {
     evidence.push({ label: '调用工具', quote: '该用户提问存在工具调用记录' });

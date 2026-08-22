@@ -44,12 +44,17 @@ const MODEL_THINKING_LEVEL_DEFAULTS: Partial<
 > = {
   'gemini-flash-latest': {
     thinkingLevel: 'medium',
+    thinkingLevel3: 'medium',
   },
   'gemini-flash-lite-latest': {
     thinkingLevel: 'minimal',
   },
   'gemini-3.6-flash': {
     thinkingLevel: 'medium',
+  },
+  'gemini-3.7-flash': {
+    thinkingLevel: 'medium',
+    thinkingLevel3: 'medium',
   },
   'gemini-3.5-flash': {
     thinkingLevel: 'medium',
@@ -82,7 +87,19 @@ const resolveEnableReasoningValue = (chatConfig: LobeAgentChatConfig): boolean |
 const resolveThinkingLevelDefault = (
   model: string,
   extendParam: ThinkingLevelExtendParam,
+  enableAgentMode?: boolean,
 ): ThinkingLevelValue => {
+  // COTTI keeps ordinary Chat responsive while retaining deeper reasoning for
+  // Agent runs. Undefined is Agent mode by design, so only an explicit false
+  // selects the Chat default. Explicit user values are resolved before this.
+  if (
+    model === 'gemini-3.7-flash' &&
+    extendParam === 'thinkingLevel3' &&
+    enableAgentMode === false
+  ) {
+    return 'low';
+  }
+
   return (
     MODEL_THINKING_LEVEL_DEFAULTS[model]?.[extendParam] ??
     DEFAULT_THINKING_LEVEL_BY_EXTEND_PARAM[extendParam]
@@ -93,11 +110,19 @@ const isThinkingLevelExtendParam = (
   extendParam: ExtendParamsType,
 ): extendParam is ThinkingLevelExtendParam => extendParam in DEFAULT_THINKING_LEVEL_BY_EXTEND_PARAM;
 
-export const resolveDefaultThinkingLevelForModel = (model?: string): ThinkingLevelValue => {
-  if (!model) return DEFAULT_THINKING_LEVEL_BY_EXTEND_PARAM.thinkingLevel;
+export function resolveDefaultThinkingLevelForModel<
+  T extends ThinkingLevelExtendParam = 'thinkingLevel',
+>(model?: string, extendParam?: T, enableAgentMode?: boolean): NonNullable<LobeAgentChatConfig[T]> {
+  const param = (extendParam ?? 'thinkingLevel') as T;
 
-  return resolveThinkingLevelDefault(model, 'thinkingLevel');
-};
+  if (!model) {
+    return DEFAULT_THINKING_LEVEL_BY_EXTEND_PARAM[param] as NonNullable<LobeAgentChatConfig[T]>;
+  }
+
+  return resolveThinkingLevelDefault(model, param, enableAgentMode) as NonNullable<
+    LobeAgentChatConfig[T]
+  >;
+}
 
 /**
  * Returns `true` for models that ship adaptive thinking on, `undefined` when the model has
@@ -253,6 +278,10 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     extendParams.reasoning_effort = chatConfig.glm5_2ReasoningEffort;
   }
 
+  if (modelExtendParams.includes('glm5_3ReasoningEffort') && chatConfig.glm5_3ReasoningEffort) {
+    extendParams.reasoning_effort = chatConfig.glm5_3ReasoningEffort;
+  }
+
   if (modelExtendParams.includes('grok4_20ReasoningEffort') && chatConfig.grok4_20ReasoningEffort) {
     extendParams.reasoning_effort = chatConfig.grok4_20ReasoningEffort;
   }
@@ -324,6 +353,13 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     extendParams.thinking = { type: chatConfig.thinking };
   }
 
+  if (modelExtendParams.includes('glm5_3ReasoningEffort')) {
+    // GLM-5.3 rejects thinking.type=disabled. Keep this after the generic
+    // `thinking` block so a custom card that also lists `thinking` cannot
+    // emit the forbidden payload.
+    extendParams.thinking = { type: 'enabled' };
+  }
+
   if (modelExtendParams.includes('thinkingBudget') && chatConfig.thinkingBudget !== undefined) {
     extendParams.thinkingBudget = chatConfig.thinkingBudget;
   }
@@ -343,6 +379,7 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     extendParams.thinkingLevel = resolveThinkingLevelDefault(
       model,
       supportedThinkingLevelParams[0],
+      chatConfig.enableAgentMode,
     );
   }
 

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ModelDisplayConfig } from '@/types/modelDisplay';
+
 import {
   applyModelDisplayConfig,
+  getCottiProfessionalModel,
   getModelDisplayDefault,
   resolveModelDisplayTargetModel,
+  switchCottiProfessionalModelInConfig,
 } from './modelDisplayConfig';
 
 describe('applyModelDisplayConfig', () => {
@@ -120,5 +124,81 @@ describe('applyModelDisplayConfig', () => {
         targetScope: 'agent',
       }),
     ).toBeUndefined();
+  });
+});
+
+const professionalConfig: ModelDisplayConfig = {
+  agent: [
+    { displayName: 'Other', enabled: true, model: 'other-agent', provider: 'test' },
+    {
+      displayName: 'COTTI-专业',
+      enabled: true,
+      model: 'gemini-3.6-flash',
+      provider: 'vertexai',
+    },
+  ],
+  chat: [
+    { displayName: 'COTTI-快速', enabled: true, model: 'fast', provider: 'vertexai' },
+    {
+      displayName: 'COTTI-专业',
+      enabled: true,
+      model: 'gemini-3.6-flash',
+      provider: 'vertexai',
+    },
+  ],
+  defaults: {
+    agent: { model: 'gemini-3.6-flash', provider: 'vertexai' },
+    chat: { model: 'fast', provider: 'vertexai' },
+  },
+};
+
+describe('COTTI professional model channel', () => {
+  it('resolves the model backing the professional channel', () => {
+    expect(getCottiProfessionalModel(professionalConfig)).toEqual({
+      model: 'gemini-3.6-flash',
+      provider: 'vertexai',
+    });
+  });
+
+  it('switches Chat and Agent mappings while preserving their positions and defaults', () => {
+    const next = switchCottiProfessionalModelInConfig(professionalConfig, 'gemini-3.7-flash');
+
+    expect(next.agent.map(({ model }) => model)).toEqual(['other-agent', 'gemini-3.7-flash']);
+    expect(next.chat.map(({ model }) => model)).toEqual(['fast', 'gemini-3.7-flash']);
+    expect(next.agent[1]).toMatchObject({
+      displayName: 'COTTI-专业',
+      enabled: true,
+      provider: 'vertexai',
+    });
+    expect(next.defaults).toEqual({
+      agent: { model: 'gemini-3.7-flash', provider: 'vertexai' },
+      chat: { model: 'fast', provider: 'vertexai' },
+    });
+  });
+
+  it('collapses stale 3.6 and 3.7 rows into one visible professional channel', () => {
+    const next = switchCottiProfessionalModelInConfig(
+      {
+        ...professionalConfig,
+        agent: [
+          ...professionalConfig.agent,
+          { enabled: true, model: 'gemini-3.7-flash', provider: 'vertexai' },
+        ],
+      },
+      'gemini-3.7-flash',
+    );
+
+    expect(
+      next.agent.filter(
+        ({ model }) => model === 'gemini-3.6-flash' || model === 'gemini-3.7-flash',
+      ),
+    ).toEqual([
+      {
+        displayName: 'COTTI-专业',
+        enabled: true,
+        model: 'gemini-3.7-flash',
+        provider: 'vertexai',
+      },
+    ]);
   });
 });

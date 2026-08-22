@@ -27,6 +27,7 @@ const FEATURES = new Set<CottiPlatformAuditState['feature']>([
   'all',
   'agent',
   'chat',
+  'task',
   'search',
   'tool',
 ]);

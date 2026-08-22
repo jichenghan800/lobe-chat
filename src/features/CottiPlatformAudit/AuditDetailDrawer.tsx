@@ -2,7 +2,7 @@
 
 import { Alert, Drawer, Flexbox, Skeleton, Tag, Text } from '@lobehub/ui';
 import { Button } from '@lobehub/ui/base-ui';
-import { ScanSearchIcon } from 'lucide-react';
+import { FileTextIcon, PaperclipIcon, ScanSearchIcon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +21,12 @@ interface AuditDetailDrawerProps {
   onRetry: () => void;
   open: boolean;
 }
+
+const formatAttachmentSize = (size: number) => {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
+};
 
 export const AuditDetailDrawer = memo<AuditDetailDrawerProps>(
   ({ analysisLoading, data, error, onAnalyze, onClose, onRetry, open }) => {
@@ -70,6 +76,10 @@ export const AuditDetailDrawer = memo<AuditDetailDrawerProps>(
                 <Text>{data.sessionTitle || data.sessionId || '-'}</Text>
               </Flexbox>
               <Flexbox gap={4}>
+                <Text type={'secondary'}>{t('platformManagement.audit.columns.mode')}</Text>
+                <Text>{t(`platformManagement.audit.type.${data.mode}`)}</Text>
+              </Flexbox>
+              <Flexbox gap={4}>
                 <Text type={'secondary'}>{t('platformManagement.audit.columns.model')}</Text>
                 <Text>{[data.provider, data.model].filter(Boolean).join('/') || '-'}</Text>
               </Flexbox>
@@ -83,6 +93,44 @@ export const AuditDetailDrawer = memo<AuditDetailDrawerProps>(
               <div className={styles.content}>
                 {data.content || t('platformManagement.audit.detail.noContent')}
               </div>
+            </Flexbox>
+            <Flexbox gap={8}>
+              <Text type={'secondary'}>{t('platformManagement.audit.detail.attachments')}</Text>
+              {data.attachments.length === 0 ? (
+                <Text type={'secondary'}>{t('platformManagement.audit.detail.noAttachments')}</Text>
+              ) : (
+                data.attachments.map((attachment) => (
+                  <div className={styles.attachment} key={attachment.id}>
+                    <Flexbox horizontal align={'center'} gap={8} justify={'space-between'}>
+                      <Flexbox horizontal align={'center'} gap={8} style={{ minWidth: 0 }}>
+                        <PaperclipIcon size={16} />
+                        <Text ellipsis weight={500}>
+                          {attachment.name}
+                        </Text>
+                      </Flexbox>
+                      <Text fontSize={12} type={'secondary'}>
+                        {formatAttachmentSize(attachment.size)}
+                      </Text>
+                    </Flexbox>
+                    <Text fontSize={12} type={'secondary'}>
+                      {attachment.fileType}
+                    </Text>
+                    {attachment.extractedTextPreview ? (
+                      <details className={styles.attachmentDetails}>
+                        <summary>
+                          <FileTextIcon size={14} />
+                          {t('platformManagement.audit.detail.showExtractedText')}
+                        </summary>
+                        <div className={styles.content}>{attachment.extractedTextPreview}</div>
+                      </details>
+                    ) : (
+                      <Text fontSize={12} type={'secondary'}>
+                        {t('platformManagement.audit.detail.noExtractedText')}
+                      </Text>
+                    )}
+                  </div>
+                ))
+              )}
             </Flexbox>
             <Flexbox gap={10}>
               <Flexbox horizontal align={'center'} justify={'space-between'} wrap={'wrap'}>

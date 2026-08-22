@@ -89,6 +89,7 @@ export const params = {
           : isThinkingForcedQwenModel(model)
             ? {
                 enable_thinking: true,
+                ...(reasoning_effort && { reasoning_effort }),
                 // A disabled preference carries budget_tokens: 0 — sending it alongside
                 // a forced-on thinking flag would zero out the reasoning budget.
                 ...(!thinkingExplicitlyDisabled && {

@@ -1,5 +1,11 @@
+import type { CottiProfessionalModelId } from '@/_custom/registry/modelDisplayConfig';
 import { lambdaClient } from '@/libs/trpc/client';
-import type { ModelDisplayConfig, ModelDisplayOption } from '@/types/modelDisplay';
+import type {
+  CottiProfessionalModelStatus,
+  CottiProfessionalModelSwitchResult,
+  ModelDisplayConfig,
+  ModelDisplayOption,
+} from '@/types/modelDisplay';
 
 class CottiModelDisplayService {
   getConfig = async (): Promise<ModelDisplayConfig> => {
@@ -10,6 +16,22 @@ class CottiModelDisplayService {
 
   getOptions = async (): Promise<ModelDisplayOption[]> => {
     const response = await lambdaClient.cotti.modelDisplay.options.query();
+
+    return response.data;
+  };
+
+  getProfessionalModelStatus = async (): Promise<CottiProfessionalModelStatus> => {
+    const response = await lambdaClient.cotti.modelDisplay.professionalModel.query();
+
+    return response.data;
+  };
+
+  switchProfessionalModel = async (
+    model: CottiProfessionalModelId,
+  ): Promise<CottiProfessionalModelSwitchResult> => {
+    const response = await lambdaClient.cotti.modelDisplay.switchProfessionalModel.mutate({
+      model,
+    });
 
     return response.data;
   };

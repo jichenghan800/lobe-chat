@@ -35,6 +35,12 @@ describe('COTTI platform audit URL state', () => {
     });
   });
 
+  it('restores the task-mode filter', () => {
+    expect(parseCottiPlatformAuditState(new URLSearchParams('auditFeature=task')).feature).toBe(
+      'task',
+    );
+  });
+
   it('preserves unrelated platform-management state while writing audit filters', () => {
     const next = writeCottiPlatformAuditState(new URLSearchParams('section=audit&range=90'), {
       feature: 'tool',

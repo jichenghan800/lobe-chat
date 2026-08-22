@@ -1,4 +1,5 @@
-export type CottiPlatformAuditFeature = 'agent' | 'chat' | 'search' | 'tool';
+export type CottiPlatformAuditFeature = 'agent' | 'chat' | 'search' | 'task' | 'tool';
+export type CottiPlatformAuditMode = 'agent' | 'chat' | 'task';
 export type CottiPlatformAuditRange = 1 | 7 | 30 | 90;
 export type CottiPlatformAuditRiskFilter = 'all' | 'flagged' | CottiPlatformAuditRiskLevel;
 export type CottiPlatformAuditRiskLevel = 'high' | 'low' | 'medium' | 'none';
@@ -39,12 +40,23 @@ export interface CottiPlatformAuditRiskAnalysis {
   updatedAt?: null | string;
 }
 
+export interface CottiPlatformAuditAttachment {
+  documentId?: null | string;
+  documentTitle?: null | string;
+  extractedTextPreview?: null | string;
+  fileType: string;
+  id: string;
+  name: string;
+  size: number;
+}
+
 export interface CottiPlatformAuditItem {
   agentId?: null | string;
   analysis?: CottiPlatformAuditRiskAnalysis | null;
   createdAt: string;
   fileCount: number;
   id: string;
+  mode: CottiPlatformAuditMode;
   model?: null | string;
   provider?: null | string;
   riskFlags: CottiPlatformAuditRiskFlag[];
@@ -59,6 +71,7 @@ export interface CottiPlatformAuditItem {
 }
 
 export interface CottiPlatformAuditDetail extends CottiPlatformAuditItem {
+  attachments: CottiPlatformAuditAttachment[];
   content?: null | string;
   contentPreview?: null | string;
 }
@@ -68,8 +81,10 @@ export interface CottiPlatformAuditDashboard {
   overview: {
     agentMessages: number;
     attachmentMessages: number;
+    chatMessages: number;
     highRiskMessages: number;
     searchMessages: number;
+    taskMessages: number;
     toolMessages: number;
     totalMessages: number;
   };

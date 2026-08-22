@@ -5,6 +5,7 @@ import type { CottiPlatformAuditDetail } from '@/types/cotti/platformAudit';
 
 import {
   buildCottiPlatformAuditAnalysisFlags,
+  buildCottiPlatformAuditReviewText,
   buildCottiPlatformAuditRuleAnalysis,
   buildCottiPlatformAuditRuleFlags,
   detectCottiPlatformAuditRiskFlags,
@@ -80,10 +81,20 @@ describe('COTTI platform audit risk helpers', () => {
 
   it('provides a local review fallback when no risk model is configured', () => {
     const detail: CottiPlatformAuditDetail = {
+      attachments: [
+        {
+          extractedTextPreview: '附件中包含身份证信息',
+          fileType: 'application/pdf',
+          id: 'file-1',
+          name: '员工资料.pdf',
+          size: 2048,
+        },
+      ],
       content: '这里包含手机号和一个附件',
       createdAt: new Date().toISOString(),
       fileCount: 1,
       id: 'message-1',
+      mode: 'chat',
       riskFlags: [
         { key: 'personal', label: '疑似个人信息', level: 'medium' },
         { key: 'attachment', label: '包含附件', level: 'low' },
@@ -100,5 +111,27 @@ describe('COTTI platform audit risk helpers', () => {
       riskLevel: 'medium',
       status: 'completed',
     });
+  });
+
+  it('reserves review context for extracted attachment text and keeps file metadata', () => {
+    const text = buildCottiPlatformAuditReviewText(
+      {
+        attachments: [
+          {
+            extractedTextPreview: '附件中的敏感内容',
+            fileType: 'application/pdf',
+            id: 'file-1',
+            name: '内部资料.pdf',
+            size: 4096,
+          },
+        ],
+        content: 'A'.repeat(100),
+      },
+      180,
+    );
+
+    expect(text).toContain('内部资料.pdf');
+    expect(text).toContain('附件中的敏感内容');
+    expect(text.length).toBeLessThanOrEqual(180);
   });
 });

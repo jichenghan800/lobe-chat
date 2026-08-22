@@ -49,6 +49,11 @@ export const parseQwenModelId = (model: string): ParsedQwenModelId | undefined =
  * See https://help.aliyun.com/zh/model-studio/deep-thinking
  */
 export const isThinkingForcedQwenModel = (model: string): boolean => {
+  // Bailian exposes GLM-5.3 under its marketplace-qualified id. The model
+  // rejects `enable_thinking: false`, so keep this exact exception explicit
+  // until Zhipu publishes another thinking-only model through DashScope.
+  if (model.trim().toLowerCase() === 'zhipu/glm-5.3') return true;
+
   const parsed = parseQwenModelId(model);
   if (!parsed || parsed.family !== 'max' || parsed.majorVersion === undefined) return false;
 

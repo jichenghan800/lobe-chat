@@ -9,6 +9,9 @@ import {
   DownloadIcon,
   EyeIcon,
   FileWarningIcon,
+  ListTodoIcon,
+  MessageCircleIcon,
+  PaperclipIcon,
   RefreshCwIcon,
   ShieldAlertIcon,
 } from 'lucide-react';
@@ -61,6 +64,7 @@ const CottiPlatformAudit = memo(() => {
     closeDetail,
     dashboardSWR,
     detailSWR,
+    queryInput,
     resetFilters,
     setFeature,
     setPage,
@@ -74,7 +78,7 @@ const CottiPlatformAudit = memo(() => {
 
   const featureOptions = useMemo(
     () =>
-      (['all', 'chat', 'agent', 'tool', 'search'] as const).map((value) => ({
+      (['all', 'chat', 'agent', 'task', 'tool', 'search'] as const).map((value) => ({
         label: t(`platformManagement.audit.feature.${value}`),
         value,
       })),
@@ -120,6 +124,7 @@ const CottiPlatformAudit = memo(() => {
         t('platformManagement.audit.columns.time'),
         t('platformManagement.audit.columns.user'),
         t('platformManagement.audit.columns.session'),
+        t('platformManagement.audit.columns.mode'),
         t('platformManagement.audit.columns.model'),
         t('platformManagement.audit.columns.risk'),
         t('platformManagement.audit.columns.flags'),
@@ -129,6 +134,7 @@ const CottiPlatformAudit = memo(() => {
         dateTimeFormatter.format(new Date(item.createdAt)),
         item.userName || item.userEmail || item.userId,
         item.sessionTitle || item.sessionId || '',
+        t(`platformManagement.audit.type.${item.mode}`),
         [item.provider, item.model].filter(Boolean).join('/'),
         t(`platformManagement.audit.risk.${item.riskLevel}`),
         item.riskFlags
@@ -172,7 +178,9 @@ const CottiPlatformAudit = memo(() => {
           <Flexbox gap={4}>
             <Text ellipsis>{record.sessionTitle || record.sessionId || '-'}</Text>
             <Flexbox horizontal gap={4} wrap={'wrap'}>
-              {record.agentId && <Tag color={'processing'}>Agent</Tag>}
+              <Tag color={record.mode === 'agent' ? 'processing' : undefined}>
+                {t(`platformManagement.audit.type.${record.mode}`)}
+              </Tag>
               {record.tool && <Tag color={'blue'}>{t('platformManagement.audit.type.tool')}</Tag>}
               {record.search && (
                 <Tag color={'cyan'}>{t('platformManagement.audit.type.search')}</Tag>
@@ -185,6 +193,11 @@ const CottiPlatformAudit = memo(() => {
         ),
         title: t('platformManagement.audit.columns.session'),
         width: 220,
+      },
+      {
+        render: (_, record) => [record.provider, record.model].filter(Boolean).join('/') || '-',
+        title: t('platformManagement.audit.columns.model'),
+        width: 210,
       },
       {
         render: (_, record) => <RiskTags flags={record.riskFlags} level={record.riskLevel} />,
@@ -231,7 +244,7 @@ const CottiPlatformAudit = memo(() => {
   );
 
   const hasFilters =
-    !!state.q || state.feature !== 'all' || state.riskLevel !== 'flagged' || state.page > 1;
+    !!queryInput || state.feature !== 'all' || state.riskLevel !== 'flagged' || state.page > 1;
   const initialError = !dashboard && dashboardSWR.error;
 
   return (
@@ -249,7 +262,7 @@ const CottiPlatformAudit = memo(() => {
             allowClear
             maxLength={100}
             placeholder={t('platformManagement.audit.searchPlaceholder')}
-            value={state.q}
+            value={queryInput}
             variant={'filled'}
             onInputChange={setQuery}
           />
@@ -328,12 +341,22 @@ const CottiPlatformAudit = memo(() => {
               value={dashboard.overview.highRiskMessages}
             />
             <MetricCard
+              icon={MessageCircleIcon}
+              title={t('platformManagement.audit.metric.chat')}
+              value={dashboard.overview.chatMessages}
+            />
+            <MetricCard
               icon={BotIcon}
               title={t('platformManagement.audit.metric.agent')}
               value={dashboard.overview.agentMessages}
             />
             <MetricCard
-              icon={DownloadIcon}
+              icon={ListTodoIcon}
+              title={t('platformManagement.audit.metric.task')}
+              value={dashboard.overview.taskMessages}
+            />
+            <MetricCard
+              icon={PaperclipIcon}
               title={t('platformManagement.audit.metric.attachments')}
               value={dashboard.overview.attachmentMessages}
             />
@@ -371,7 +394,7 @@ const CottiPlatformAudit = memo(() => {
                 columns={columns}
                 dataSource={dashboard.items}
                 rowKey={'id'}
-                scroll={{ x: 1100 }}
+                scroll={{ x: 1310 }}
                 size={'small'}
                 tableLayout={'fixed'}
                 pagination={{

@@ -73,6 +73,36 @@ describe('applyModelExtendParams', () => {
     expect(result.thinkingLevel).toBe('low');
   });
 
+  it('defaults Gemini 3.7 Flash thinkingLevel3 to medium in Agent mode', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({ enableAgentMode: true }),
+      extendParams: ['thinkingLevel3'],
+      model: 'gemini-3.7-flash',
+    });
+
+    expect(result.thinkingLevel).toBe('medium');
+  });
+
+  it('defaults Gemini 3.7 Flash thinkingLevel3 to low in Chat mode', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({ enableAgentMode: false }),
+      extendParams: ['thinkingLevel3'],
+      model: 'gemini-3.7-flash',
+    });
+
+    expect(result.thinkingLevel).toBe('low');
+  });
+
+  it('honors an explicit Gemini 3.7 Flash thinkingLevel3 value', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({ enableAgentMode: false, thinkingLevel3: 'high' }),
+      extendParams: ['thinkingLevel3'],
+      model: 'gemini-3.7-flash',
+    });
+
+    expect(result.thinkingLevel).toBe('high');
+  });
+
   it('defaults Gemini 3.5 Flash-Lite thinkingLevel to minimal', () => {
     const result = applyModelExtendParams({
       chatConfig: chatConfig({}),
@@ -187,6 +217,28 @@ describe('applyModelExtendParams', () => {
     expect(result.reasoning_effort).toBe('max');
   });
 
+  it('forces thinking enabled and resolves GLM-5.3 reasoning effort', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({ enableReasoning: false, glm5_3ReasoningEffort: 'low' }),
+      extendParams: ['glm5_3ReasoningEffort'],
+      model: 'ZHIPU/GLM-5.3',
+    });
+
+    expect(result.thinking).toEqual({ type: 'enabled' });
+    expect(result.reasoning_effort).toBe('low');
+  });
+
+  it('keeps GLM-5.3 thinking enabled when a custom card also lists thinking=disabled', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({ glm5_3ReasoningEffort: 'max', thinking: 'disabled' }),
+      extendParams: ['glm5_3ReasoningEffort', 'thinking'],
+      model: 'ZHIPU/GLM-5.3',
+    });
+
+    expect(result.thinking).toEqual({ type: 'enabled' });
+    expect(result.reasoning_effort).toBe('max');
+  });
+
   it('preserves thinking budget when deepseekV4ReasoningEffort is set', () => {
     const result = applyModelExtendParams({
       chatConfig: chatConfig({
@@ -257,6 +309,15 @@ describe('resolveDefaultThinkingLevelForModel', () => {
     expect(resolveDefaultThinkingLevelForModel('gemini-flash-latest')).toBe('medium');
     expect(resolveDefaultThinkingLevelForModel('gemini-flash-lite-latest')).toBe('minimal');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.6-flash')).toBe('medium');
+    expect(resolveDefaultThinkingLevelForModel('gemini-3.7-flash', 'thinkingLevel3')).toBe(
+      'medium',
+    );
+    expect(resolveDefaultThinkingLevelForModel('gemini-3.7-flash', 'thinkingLevel3', false)).toBe(
+      'low',
+    );
+    expect(resolveDefaultThinkingLevelForModel('gemini-3.7-flash', 'thinkingLevel3', true)).toBe(
+      'medium',
+    );
     expect(resolveDefaultThinkingLevelForModel('gemini-3.5-flash')).toBe('medium');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.5-flash-lite')).toBe('minimal');
     expect(resolveDefaultThinkingLevelForModel('gemini-3.1-flash-lite')).toBe('minimal');

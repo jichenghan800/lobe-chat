@@ -46,8 +46,10 @@ describe('cotti.platformAudit router', () => {
       overview: {
         agentMessages: 0,
         attachmentMessages: 0,
+        chatMessages: 0,
         highRiskMessages: 0,
         searchMessages: 0,
+        taskMessages: 0,
         toolMessages: 0,
         totalMessages: 0,
       },
@@ -87,10 +89,12 @@ describe('cotti.platformAudit router', () => {
 
   it('records the administrator identity whenever original prompt detail is returned', async () => {
     const detail = {
+      attachments: [],
       content: 'sensitive prompt',
       createdAt: new Date().toISOString(),
       fileCount: 0,
       id: 'message-1',
+      mode: 'chat' as const,
       riskFlags: [],
       riskLevel: 'none' as const,
       search: false,

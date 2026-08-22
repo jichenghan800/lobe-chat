@@ -1,6 +1,30 @@
 import { createStaticStyles, cssVar, responsive } from 'antd-style';
 
 export const styles = createStaticStyles(({ css }) => ({
+  attachment: css`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    padding: 12px;
+    border: 1px solid ${cssVar.colorBorderSecondary};
+    border-radius: ${cssVar.borderRadiusLG};
+  `,
+  attachmentDetails: css`
+    summary {
+      cursor: pointer;
+
+      display: flex;
+      gap: 6px;
+      align-items: center;
+
+      color: ${cssVar.colorTextSecondary};
+    }
+
+    &[open] summary {
+      margin-block-end: 8px;
+    }
+  `,
   content: css`
     overflow: auto;
 
@@ -40,7 +64,7 @@ export const styles = createStaticStyles(({ css }) => ({
   `,
   metricGrid: css`
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
 
     ${responsive.md} {

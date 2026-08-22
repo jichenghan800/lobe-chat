@@ -52,6 +52,13 @@ describe('parseQwenModelId', () => {
 });
 
 describe('isThinkingForcedQwenModel', () => {
+  it('should force thinking for the Bailian-qualified GLM-5.3 model', () => {
+    expect(isThinkingForcedQwenModel('ZHIPU/GLM-5.3')).toBe(true);
+    expect(isThinkingForcedQwenModel(' zhipu/glm-5.3 ')).toBe(true);
+    expect(isThinkingForcedQwenModel('glm-5.3')).toBe(false);
+    expect(isThinkingForcedQwenModel('ZHIPU/GLM-5.2')).toBe(false);
+  });
+
   it('should force thinking for qwen-max from 3.8 onwards', () => {
     expect(isThinkingForcedQwenModel('qwen3.8-max')).toBe(true);
     expect(isThinkingForcedQwenModel('qwen3.8-max-preview')).toBe(true);
