@@ -52,7 +52,7 @@ docker build \
 echo "Verifying final image contents..."
 docker run --rm --entrypoint /bin/sh "$TARGET_IMAGE" -lc '
   test ! -e /app/.env
-  asset="$(find /app/public/_spa/assets -maxdepth 1 -type f -name "platformManagement-*.js" | head -n 1)"
+  asset="$(find /app/public/_spa/assets -maxdepth 1 -type f -name "platform-analytics-*.js" | head -n 1)"
   test -n "$asset"
   ! grep -q "NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS" "$asset"
   test -f /app/docker.cjs

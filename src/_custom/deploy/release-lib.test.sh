@@ -4,6 +4,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 TEST_DIR="$(mktemp -d /tmp/lobechat-release-lib-test.XXXXXX)"
 
+grep -Fq 'platform-analytics-*.js' "$ROOT_DIR/src/_custom/deploy/build-production-image.sh"
+if grep -Fq 'platformManagement-*.js' "$ROOT_DIR/src/_custom/deploy/build-production-image.sh"; then
+  echo 'production build still checks the obsolete platform asset name' >&2
+  exit 1
+fi
+
 printf 'POSTGRES_USER=test\nPOSTGRES_DB=test\n' > "$TEST_DIR/.env"
 printf 'users\t2\nmessages\t5\n' > "$TEST_DIR/history.tsv"
 
