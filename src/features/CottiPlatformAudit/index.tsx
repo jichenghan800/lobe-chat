@@ -29,6 +29,7 @@ import type {
 
 import { AuditDetailDrawer } from './AuditDetailDrawer';
 import { downloadCottiPlatformAuditCsv } from './csv';
+import { AUDIT_TABLE_COLUMN_WIDTHS, AUDIT_TABLE_MIN_WIDTH } from './layout';
 import { RiskTags } from './RiskTags';
 import { styles } from './style';
 import { useCottiPlatformAudit } from './useCottiPlatformAudit';
@@ -155,7 +156,7 @@ const CottiPlatformAudit = memo(() => {
         dataIndex: 'createdAt',
         render: (value: string) => dateTimeFormatter.format(new Date(value)),
         title: t('platformManagement.audit.columns.time'),
-        width: 150,
+        width: AUDIT_TABLE_COLUMN_WIDTHS.time,
       },
       {
         render: (_, record) => (
@@ -171,7 +172,7 @@ const CottiPlatformAudit = memo(() => {
           </Flexbox>
         ),
         title: t('platformManagement.audit.columns.user'),
-        width: 190,
+        width: AUDIT_TABLE_COLUMN_WIDTHS.user,
       },
       {
         render: (_, record) => (
@@ -192,17 +193,17 @@ const CottiPlatformAudit = memo(() => {
           </Flexbox>
         ),
         title: t('platformManagement.audit.columns.session'),
-        width: 220,
+        width: AUDIT_TABLE_COLUMN_WIDTHS.session,
       },
       {
         render: (_, record) => [record.provider, record.model].filter(Boolean).join('/') || '-',
         title: t('platformManagement.audit.columns.model'),
-        width: 210,
+        width: AUDIT_TABLE_COLUMN_WIDTHS.model,
       },
       {
         render: (_, record) => <RiskTags flags={record.riskFlags} level={record.riskLevel} />,
         title: t('platformManagement.audit.columns.risk'),
-        width: 220,
+        width: AUDIT_TABLE_COLUMN_WIDTHS.risk,
       },
       {
         render: (_, record) => {
@@ -228,7 +229,7 @@ const CottiPlatformAudit = memo(() => {
           );
         },
         title: t('platformManagement.audit.columns.analysis'),
-        width: 230,
+        width: AUDIT_TABLE_COLUMN_WIDTHS.analysis,
       },
       {
         render: (_, record) => (
@@ -237,7 +238,7 @@ const CottiPlatformAudit = memo(() => {
           </Button>
         ),
         title: t('platformManagement.audit.columns.actions'),
-        width: 96,
+        width: AUDIT_TABLE_COLUMN_WIDTHS.actions,
       },
     ],
     [dateTimeFormatter, showDetail, t],
@@ -394,7 +395,7 @@ const CottiPlatformAudit = memo(() => {
                 columns={columns}
                 dataSource={dashboard.items}
                 rowKey={'id'}
-                scroll={{ x: 1310 }}
+                scroll={{ x: AUDIT_TABLE_MIN_WIDTH }}
                 size={'small'}
                 tableLayout={'fixed'}
                 pagination={{
