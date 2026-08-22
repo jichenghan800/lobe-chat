@@ -205,13 +205,19 @@ assert_history_not_decreased() {
   local baseline_file="$1"
   [[ -s "$baseline_file" ]] || fail "history fingerprint is missing or empty: $baseline_file"
 
-  local table baseline current
-  while IFS=$'\t' read -r table baseline; do
+  # Read the fingerprint before issuing docker compose exec calls. Even with
+  # `-T`, docker may consume the loop's stdin and silently skip later rows.
+  local -a fingerprint_rows
+  mapfile -t fingerprint_rows < "$baseline_file"
+
+  local row table baseline current
+  for row in "${fingerprint_rows[@]}"; do
+    IFS=$'\t' read -r table baseline <<< "$row"
     [[ -n "$table" && "$baseline" =~ ^[0-9]+$ ]] || fail "invalid fingerprint row for $table"
     current="$(db_scalar "SELECT count(*) FROM public.\"${table}\";")"
     printf '%s baseline=%s current=%s\n' "$table" "$baseline" "$current"
     (( current >= baseline )) || fail "historical row count decreased for $table"
-  done < "$baseline_file"
+  done
 }
 
 assert_no_recent_active_runs() {
