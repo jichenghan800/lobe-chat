@@ -78,6 +78,8 @@ export default {
   'dashboard.placeholder.task': 'Describe a task to start right away',
   'dashboard.rail.hide': 'Hide activity',
   'dashboard.rail.show': 'Show activity',
+  'dashboard.support.feishu.action': 'Contact the administrator on Feishu',
+  'dashboard.support.feishu.tooltip': 'Contact the administrator on Feishu',
   'dashboard.submitFailed': 'Could not submit. Your draft has been kept.',
   'dashboard.task.empty': 'No tasks yet',
   'dashboard.task.title': 'Tasks',

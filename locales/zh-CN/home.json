@@ -73,6 +73,8 @@
   "dashboard.rail.hide": "隐藏动态",
   "dashboard.rail.show": "显示动态",
   "dashboard.submitFailed": "提交失败，草稿已保留。",
+  "dashboard.support.feishu.action": "通过飞书联系管理员",
+  "dashboard.support.feishu.tooltip": "通过飞书联系管理员",
   "dashboard.task.empty": "暂无任务",
   "dashboard.task.title": "任务",
   "dashboard.task.unsupportedContext": "任务模式暂不支持附件或已选上下文。请移除它们或切换到 Chat 模式；草稿已保留。",

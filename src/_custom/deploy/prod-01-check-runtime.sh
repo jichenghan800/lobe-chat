@@ -53,7 +53,8 @@ done
 echo
 echo "== 4. Non-secret release configuration =="
 for key in \
-  NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS NEXT_PUBLIC_MODEL_VISIBLE_ALLOW \
+  NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS NEXT_PUBLIC_COTTI_FEISHU_SUPPORT_URL \
+  NEXT_PUBLIC_MODEL_VISIBLE_ALLOW \
   NEXT_PUBLIC_MODEL_DISPLAY_NAMES VERTEXAI_MODEL_LIST AZURE_MODEL_LIST \
   VOLCENGINE_MODEL_LIST QWEN_MODEL_LIST COTTI_AGENT_ACCESS_MODE AUTH_SSO_PROVIDERS; do
   value="$(awk -F= -v key="$key" '$1 == key { value=substr($0,index($0,"=")+1) } END { print value }' "$RELEASE_CONFIG_FILE")"
@@ -62,6 +63,9 @@ for key in \
 done
 [[ "$(awk -F= '$1 == "NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS" { value=$2 } END { print value }' "$RELEASE_CONFIG_FILE")" == "1" ]] \
   || fail "platform management must be enabled in release-config.env"
+FEISHU_SUPPORT_URL="$(awk -F= '$1 == "NEXT_PUBLIC_COTTI_FEISHU_SUPPORT_URL" { value=substr($0,index($0,"=")+1) } END { print value }' "$RELEASE_CONFIG_FILE")"
+[[ "$FEISHU_SUPPORT_URL" =~ ^https://applink\.feishu\.cn/client/chat/open\?openId=ou_[A-Za-z0-9_-]+$ ]] \
+  || fail "Feishu administrator contact AppLink is invalid"
 RELEASE_SSO_PROVIDERS="$(awk -F= '$1 == "AUTH_SSO_PROVIDERS" { value=substr($0,index($0,"=")+1) } END { print value }' "$RELEASE_CONFIG_FILE")"
 grep -Eq '(^|,)feishu(,|$)' <<<"$RELEASE_SSO_PROVIDERS" || fail "release must retain Feishu SSO"
 grep -Eq '(^|,)feishu-blue(,|$)' <<<"$RELEASE_SSO_PROVIDERS" || fail "release must enable Feishu Blue SSO"

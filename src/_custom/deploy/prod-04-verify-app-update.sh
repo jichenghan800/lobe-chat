@@ -66,6 +66,7 @@ echo "== 5. Platform, connectors, and unified login runtime =="
 docker exec "$APP_CONTAINER" /bin/node -e "
 const required = [
   'NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS',
+  'NEXT_PUBLIC_COTTI_FEISHU_SUPPORT_URL',
   'COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS',
   'COTTI_SSO_NANO_CLIENT_SECRET',
   'COTTI_SSO_PPT_CLIENT_SECRET',
