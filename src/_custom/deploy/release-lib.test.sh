@@ -32,4 +32,32 @@ output="$(<"$TEST_DIR/output.log")"
 grep -Fq 'users baseline=2 current=2' <<< "$output"
 grep -Fq 'messages baseline=5 current=5' <<< "$output"
 
-echo 'release-lib history fingerprint regression test passed'
+docker_mode=valid
+docker() {
+  if [[ "$*" == *'find /app/public/_spa/assets'* ]]; then
+    [[ "$docker_mode" != missing ]] && printf '/app/public/_spa/assets/platform-analytics-test.js\n'
+    return 0
+  fi
+  if [[ "$*" == *'NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS'* ]]; then
+    [[ "$docker_mode" == raw_marker ]]
+    return
+  fi
+  return 1
+}
+
+output="$(verify_platform_management_asset)"
+grep -Fq 'platform_management_asset=platform-analytics-test.js' <<< "$output"
+
+docker_mode=missing
+if (verify_platform_management_asset >/dev/null 2>&1); then
+  echo 'missing platform asset was not rejected' >&2
+  exit 1
+fi
+
+docker_mode=raw_marker
+if (verify_platform_management_asset >/dev/null 2>&1); then
+  echo 'raw platform build flag was not rejected' >&2
+  exit 1
+fi
+
+echo 'release-lib regression tests passed'

@@ -89,11 +89,7 @@ if (!providers.includes('feishu') || !providers.includes('feishu-blue')) missing
 if (missing.length) process.exit(2);
 " || fail "v2.2.13 runtime configuration is incomplete"
 
-docker exec "$APP_CONTAINER" /bin/sh -lc '
-asset="$(find /app/public/_spa/assets -maxdepth 1 -type f -name "platformManagement-*.js" | head -n 1)"
-test -n "$asset"
-! grep -q "NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS" "$asset"
-' || fail "platform management was not compiled into the SPA"
+verify_platform_management_asset
 
 echo
 echo "== 6. QStash authenticated health =="

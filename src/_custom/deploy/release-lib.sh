@@ -136,6 +136,22 @@ verify_local_image_digest() {
   echo "Verified local image digest: $TARGET_DIGEST"
 }
 
+verify_platform_management_asset() {
+  local asset
+  asset="$(
+    docker exec "$APP_CONTAINER" /bin/sh -lc \
+      'set -eu; find /app/public/_spa/assets -maxdepth 1 -type f -name "platform-analytics-*.js" -print -quit'
+  )"
+  [[ -n "$asset" ]] || fail "platform management SPA asset is missing"
+
+  if docker exec "$APP_CONTAINER" grep -Fq \
+    'NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS' "$asset"; then
+    fail "platform management build flag was not compiled into the SPA"
+  fi
+
+  echo "platform_management_asset=$(basename "$asset")"
+}
+
 required_service_gate() {
   local required_services=(app postgresql qstash searxng)
   local services
