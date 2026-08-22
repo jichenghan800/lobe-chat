@@ -1,8 +1,10 @@
 /**
  * @vitest-environment happy-dom
  */
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { taskService } from '@/services/task';
 
 import { useActiveTaskDetail } from './useActiveTaskDetail';
 
@@ -26,6 +28,10 @@ vi.mock('@/store/task', () => ({
 
 vi.mock('@/store/agent', () => ({
   useAgentStore: (selector: any) => selector(mocks.agentState),
+}));
+
+vi.mock('@/services/task', () => ({
+  taskService: { acknowledgeResults: vi.fn().mockResolvedValue({ success: true }) },
 }));
 
 const buildTaskState = (
@@ -75,6 +81,22 @@ describe('useActiveTaskDetail', () => {
 
     expect(result.current.isInitialLoading).toBe(false);
     expect(result.current.isNotFound).toBe(false);
+  });
+
+  it('acknowledges automation results when the detail surface opens', async () => {
+    renderHook(() => useActiveTaskDetail('T-194'));
+
+    await waitFor(() => {
+      expect(taskService.acknowledgeResults).toHaveBeenCalledWith('T-194');
+    });
+  });
+
+  it('does not acknowledge while the task detail is still unresolved', () => {
+    mocks.taskState = buildTaskState({ detail: false });
+
+    renderHook(() => useActiveTaskDetail('T-194'));
+
+    expect(taskService.acknowledgeResults).not.toHaveBeenCalled();
   });
 
   it('keeps the skeleton up while the assignee config fetch is genuinely in-flight', () => {

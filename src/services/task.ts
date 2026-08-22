@@ -50,6 +50,8 @@ class TaskService {
 
   // ── Mutations ──
 
+  acknowledgeResults = async (id: string) => lambdaClient.task.acknowledgeResults.mutate({ id });
+
   create = async (params: {
     assigneeAgentId?: string;
     assigneeUserId?: string;

@@ -319,6 +319,38 @@ describe('TaskTopicModel', () => {
     });
   });
 
+  describe('countConsecutiveCompletedAutomationRuns', () => {
+    it('counts only the latest uninterrupted automation success streak', async () => {
+      const taskModel = new TaskModel(serverDB, userId);
+      const topicModel = new TaskTopicModel(serverDB, userId);
+      const task = await taskModel.create({ instruction: 'Test' });
+
+      for (const id of [
+        'tpc_auto_1',
+        'tpc_manual',
+        'tpc_auto_failed',
+        'tpc_auto_2',
+        'tpc_auto_3',
+      ]) {
+        await createTopic(id);
+      }
+      await topicModel.add(task.id, 'tpc_auto_1', { seq: 1, trigger: 'schedule' });
+      await topicModel.updateStatus(task.id, 'tpc_auto_1', 'completed');
+      await topicModel.add(task.id, 'tpc_manual', { seq: 2, trigger: 'manual' });
+      await topicModel.updateStatus(task.id, 'tpc_manual', 'completed');
+      await topicModel.add(task.id, 'tpc_auto_failed', { seq: 3, trigger: 'heartbeat' });
+      await topicModel.updateStatus(task.id, 'tpc_auto_failed', 'failed');
+      await topicModel.add(task.id, 'tpc_auto_2', { seq: 4, trigger: 'schedule' });
+      await topicModel.updateStatus(task.id, 'tpc_auto_2', 'completed');
+      await topicModel.add(task.id, 'tpc_auto_3', { seq: 5, trigger: 'heartbeat' });
+      await topicModel.updateStatus(task.id, 'tpc_auto_3', 'completed');
+
+      expect(await topicModel.countConsecutiveCompletedAutomationRuns(task.id, { limit: 3 })).toBe(
+        2,
+      );
+    });
+  });
+
   describe('findWithHandoff', () => {
     it('should return completedAt joined from topics', async () => {
       const taskModel = new TaskModel(serverDB, userId);

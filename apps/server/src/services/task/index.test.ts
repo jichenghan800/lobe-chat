@@ -1348,7 +1348,10 @@ describe('TaskService', () => {
 
       expect(mockTaskModel.updateContext).toHaveBeenCalledTimes(1);
       expect(mockTaskModel.updateContext).toHaveBeenCalledWith('task-1', {
-        scheduler: { scheduleStartedAt: expect.any(String) },
+        scheduler: {
+          lastResultAcknowledgedAt: expect.any(String),
+          scheduleStartedAt: expect.any(String),
+        },
       });
       const stamped = (mockTaskModel.updateContext.mock.calls[0]![1] as any).scheduler
         .scheduleStartedAt as string;
@@ -1372,7 +1375,7 @@ describe('TaskService', () => {
       expect(mockTaskModel.updateContext).not.toHaveBeenCalled();
     });
 
-    it('does NOT stamp for heartbeat-mode tasks', async () => {
+    it('acknowledges results without stamping a schedule window for heartbeat tasks', async () => {
       const prev = baseTask({ status: 'backlog', automationMode: 'heartbeat' });
       const next = baseTask({ status: 'scheduled', automationMode: 'heartbeat' });
       mockTaskModel.resolve.mockResolvedValue(prev);
@@ -1381,7 +1384,9 @@ describe('TaskService', () => {
       const service = new TaskService(db, userId);
       await service.updateStatus({ id: 'T-1', status: 'scheduled' as any });
 
-      expect(mockTaskModel.updateContext).not.toHaveBeenCalled();
+      expect(mockTaskModel.updateContext).toHaveBeenCalledWith('task-1', {
+        scheduler: { lastResultAcknowledgedAt: expect.any(String) },
+      });
     });
 
     it('does NOT stamp when the new status is not scheduled', async () => {

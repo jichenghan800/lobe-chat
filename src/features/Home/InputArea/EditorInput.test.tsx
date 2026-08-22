@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   providerProps: undefined as Record<string, unknown> | undefined,
   requestedAgentModeEnabled: true,
   send: vi.fn(),
+  switchModelDisplayScope: vi.fn().mockResolvedValue(true),
   toggleAgentMode: vi.fn().mockResolvedValue(true),
 }));
 
@@ -26,6 +27,10 @@ vi.mock('@/features/ChatInput/hooks/useEffectiveAgentMode', () => ({
   }),
 }));
 
+vi.mock('@/features/ChatInput/hooks/useSwitchModelDisplayScope', () => ({
+  useSwitchModelDisplayScope: () => mocks.switchModelDisplayScope,
+}));
+
 vi.mock('@/features/ChatInput/hooks/useToggleAgentMode', () => ({
   useToggleAgentMode: () => mocks.toggleAgentMode,
 }));
@@ -39,6 +44,7 @@ describe('HomeEditorInput', () => {
     vi.clearAllMocks();
     mocks.providerProps = undefined;
     mocks.requestedAgentModeEnabled = true;
+    mocks.switchModelDisplayScope.mockResolvedValue(true);
     mocks.toggleAgentMode.mockResolvedValue(true);
   });
 
@@ -128,6 +134,84 @@ describe('HomeEditorInput', () => {
       params: Record<string, unknown>,
     ) => Promise<void>;
     await act(async () => providerSend({ message: 'analyze' }));
+
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+
+  it('uses the Agent model pool for Task and resolves it before sending', async () => {
+    const props = {
+      agentId: 'agent-1',
+      initialValue: '',
+      isAgentConfigLoading: false,
+      loading: false,
+      mode: 'task' as const,
+      onModeChange: vi.fn(),
+      onValueChange: vi.fn(),
+      send: mocks.send,
+    } satisfies ComponentProps<typeof HomeEditorInput>;
+
+    render(<HomeEditorInput {...props} />);
+
+    expect(mocks.providerProps).toMatchObject({
+      modelDisplayScope: 'agent',
+      topicModelScope: false,
+    });
+    await waitFor(() => expect(mocks.switchModelDisplayScope).toHaveBeenCalledWith('agent'));
+
+    mocks.switchModelDisplayScope.mockClear();
+    const providerSend = mocks.providerProps?.onSend as (
+      params: Record<string, unknown>,
+    ) => Promise<void>;
+    await act(async () => providerSend({ message: 'run task' }));
+
+    expect(mocks.switchModelDisplayScope).toHaveBeenCalledWith('agent');
+    expect(mocks.toggleAgentMode).not.toHaveBeenCalled();
+    expect(mocks.send).toHaveBeenCalledWith({ message: 'run task' });
+    expect(mocks.switchModelDisplayScope.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.send.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('restores the Chat model pool after leaving Task', async () => {
+    mocks.requestedAgentModeEnabled = false;
+    const props = {
+      agentId: 'agent-1',
+      initialValue: '',
+      isAgentConfigLoading: false,
+      loading: false,
+      mode: 'task' as const,
+      onModeChange: vi.fn(),
+      onValueChange: vi.fn(),
+      send: mocks.send,
+    } satisfies ComponentProps<typeof HomeEditorInput>;
+    const { rerender } = render(<HomeEditorInput {...props} />);
+    await waitFor(() => expect(mocks.switchModelDisplayScope).toHaveBeenCalledWith('agent'));
+
+    mocks.switchModelDisplayScope.mockClear();
+    rerender(<HomeEditorInput {...props} mode={'chat'} />);
+
+    await waitFor(() => expect(mocks.switchModelDisplayScope).toHaveBeenCalledWith('chat'));
+    expect(mocks.providerProps).toMatchObject({ modelDisplayScope: 'chat' });
+  });
+
+  it('keeps the Task draft when the Agent model pool cannot be applied', async () => {
+    mocks.switchModelDisplayScope.mockResolvedValue(false);
+    const props = {
+      agentId: 'agent-1',
+      initialValue: '',
+      isAgentConfigLoading: false,
+      loading: false,
+      mode: 'task' as const,
+      onModeChange: vi.fn(),
+      onValueChange: vi.fn(),
+      send: mocks.send,
+    } satisfies ComponentProps<typeof HomeEditorInput>;
+
+    render(<HomeEditorInput {...props} />);
+    const providerSend = mocks.providerProps?.onSend as (
+      params: Record<string, unknown>,
+    ) => Promise<void>;
+    await act(async () => providerSend({ message: 'run task' }));
 
     expect(mocks.send).not.toHaveBeenCalled();
   });

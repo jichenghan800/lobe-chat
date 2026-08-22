@@ -1261,6 +1261,7 @@
   "taskSchedule.unit.minute_other": "{{count}} 分钟",
   "taskSchedule.unit.second_one": "{{count}} 秒",
   "taskSchedule.unit.second_other": "{{count}} 秒",
+  "taskSchedule.unviewedResultPauseNotice": "连续 {{count}} 次执行结果未查看，任务将在下次运行前自动暂停。查看结果会清零计数；已暂停任务需手动恢复。",
   "taskSchedule.weekday": "星期",
   "taskSchedule.weekdays.fri": "五",
   "taskSchedule.weekdays.mon": "一",

@@ -1228,6 +1228,8 @@ export default {
   'taskSchedule.timezoneSearchEmpty': 'No matching timezone',
   'taskSchedule.timezoneSearchPlaceholder': 'Search timezone',
   'taskSchedule.title': 'Schedule',
+  'taskSchedule.unviewedResultPauseNotice':
+    'The task pauses before its next run after {{count}} consecutive results go unviewed. Viewing a result resets the count; a paused task must be resumed manually.',
   'taskSchedule.unit.hour_one': '{{count}} hr',
   'taskSchedule.unit.hour_other': '{{count}} hrs',
   'taskSchedule.unit.minute_one': '{{count}} min',

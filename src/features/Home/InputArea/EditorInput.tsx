@@ -18,6 +18,7 @@ import {
 } from '@/features/ChatInput';
 import ActionBar from '@/features/ChatInput/ActionBar';
 import { useEffectiveAgentMode } from '@/features/ChatInput/hooks/useEffectiveAgentMode';
+import { useSwitchModelDisplayScope } from '@/features/ChatInput/hooks/useSwitchModelDisplayScope';
 import { useToggleAgentMode } from '@/features/ChatInput/hooks/useToggleAgentMode';
 import { useChatStore } from '@/store/chat';
 
@@ -60,20 +61,35 @@ const HomeEditorContent = memo<HomeEditorContentProps>(
     sendHandlerRef,
   }) => {
     const toggleAgentMode = useToggleAgentMode();
+    const switchModelDisplayScope = useSwitchModelDisplayScope();
     const modeSyncAgentRef = useRef<string | undefined>(undefined);
+    const previousModeRef = useRef<HomeMode | undefined>(undefined);
     const { isPreferenceLoading, requestedAgentModeEnabled } = useEffectiveAgentMode(agentId ?? '');
     const desiredAgentMode = mode === 'agent';
     const isConversationMode = mode === 'chat' || mode === 'agent';
+    const modelDisplayScope = mode === 'chat' ? 'chat' : 'agent';
 
     const handleSend = useCallback<SendButtonHandler>(
       async (params) => {
+        if (mode === 'task') {
+          const modelApplied = await switchModelDisplayScope('agent');
+          if (!modelApplied) return;
+        }
         if (isConversationMode && requestedAgentModeEnabled !== desiredAgentMode) {
           const applied = await toggleAgentMode(desiredAgentMode);
           if (!applied) return;
         }
         await send(params);
       },
-      [desiredAgentMode, isConversationMode, requestedAgentModeEnabled, send, toggleAgentMode],
+      [
+        desiredAgentMode,
+        isConversationMode,
+        mode,
+        requestedAgentModeEnabled,
+        send,
+        switchModelDisplayScope,
+        toggleAgentMode,
+      ],
     );
 
     sendHandlerRef.current = handleSend;
@@ -110,6 +126,21 @@ const HomeEditorContent = memo<HomeEditorContentProps>(
       requestedAgentModeEnabled,
       toggleAgentMode,
     ]);
+
+    // Task is an autonomous Agent-runtime surface but does not toggle the
+    // user's Agent-mode preference. Resolve its model against the Agent pool,
+    // then restore the Chat pool when returning to Chat. The send guard above
+    // repeats the Task check so a fast submit cannot snapshot the old model.
+    useEffect(() => {
+      const previousMode = previousModeRef.current;
+      previousModeRef.current = mode;
+      const shouldSyncScope = mode === 'task' || (previousMode === 'task' && mode === 'chat');
+      if (!shouldSyncScope || !agentId || isAgentConfigLoading) return;
+
+      void switchModelDisplayScope(modelDisplayScope).catch((error) => {
+        console.error('[HomeEditorInput] Failed to switch the model display scope', error);
+      });
+    }, [agentId, isAgentConfigLoading, mode, modelDisplayScope, switchModelDisplayScope]);
 
     const inputContainerProps = useMemo(
       () => ({
@@ -165,7 +196,7 @@ const HomeEditorInput = memo<HomeEditorInputProps>((props) => {
       agentId={props.agentId}
       allowExpand={false}
       leftActions={leftActions}
-      modelDisplayScope={props.mode === 'agent' ? 'agent' : 'chat'}
+      modelDisplayScope={props.mode === 'chat' ? 'chat' : 'agent'}
       rightActions={rightActions}
       slashPlacement="bottom"
       topicModelScope={false}
