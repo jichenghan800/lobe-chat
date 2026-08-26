@@ -22,6 +22,7 @@ import type { CottiTopicOverviewMode } from '@/types/cotti/topicOverview';
 
 import { useCottiTopicOverviewList } from './hooks';
 import { styles } from './style';
+import { TopicModeTag } from './TopicModeTag';
 
 const modeIcons = {
   agent: BotIcon,
@@ -105,13 +106,19 @@ export const TopicListPanel = memo(() => {
                     icon={modeIcons[item.mode]}
                     title={title}
                     description={
-                      <Text
-                        ellipsis={{ tooltipWhenOverflow: true }}
-                        fontSize={12}
-                        type={'secondary'}
-                      >
-                        {description || t(`overview.mode.${item.mode}`)}
-                      </Text>
+                      <Flexbox horizontal align={'center'} gap={4} style={{ minWidth: 0 }}>
+                        <TopicModeTag mode={item.mode} />
+                        {description && (
+                          <Text
+                            ellipsis={{ tooltipWhenOverflow: true }}
+                            fontSize={12}
+                            style={{ flex: 1, minWidth: 0 }}
+                            type={'secondary'}
+                          >
+                            {description}
+                          </Text>
+                        )}
+                      </Flexbox>
                     }
                     extra={
                       <Text fontSize={11} type={'secondary'}>

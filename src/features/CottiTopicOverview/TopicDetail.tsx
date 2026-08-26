@@ -13,6 +13,7 @@ import BackButton from '@/features/NavPanel/components/BackButton';
 import { useCottiTopicOverviewDetail } from './hooks';
 import { ReadOnlyConversation } from './ReadOnlyConversation';
 import { styles } from './style';
+import { TopicModeTag } from './TopicModeTag';
 
 export const TopicDetail = memo(() => {
   const { i18n, t } = useTranslation('topic');
@@ -43,11 +44,14 @@ export const TopicDetail = memo(() => {
               </div>
             </Flexbox>
             <Flexbox horizontal align={'center'} gap={8} wrap={'wrap'}>
-              <Text fontSize={12} type={'secondary'}>
-                {[detail.userName || detail.userEmail, detail.targetTitle]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Text>
+              <TopicModeTag mode={detail.mode} />
+              {(detail.userName || detail.userEmail || detail.targetTitle) && (
+                <Text fontSize={12} type={'secondary'}>
+                  {[detail.userName || detail.userEmail, detail.targetTitle]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Text>
+              )}
               <Tag icon={<Icon icon={MessageCircleIcon} />}>
                 {t('overview.messageCount', { count: detail.messageCount })}
               </Tag>
