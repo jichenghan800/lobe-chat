@@ -20,6 +20,7 @@ import {
 import { agentDocumentRouteMeta } from '@/features/AgentDocumentPage/routeMeta';
 import { taskRouteMeta, tasksRouteMeta } from '@/features/AgentTasks/routeMeta';
 import { agentsRouteMeta } from '@/features/AgentViewAll/routeMeta';
+import { cottiTopicOverviewRouteMeta } from '@/features/CottiTopicOverview/routeMeta';
 import { pageRouteMeta } from '@/features/Pages/routeMeta';
 import {
   acceptanceRouteMeta,
@@ -756,6 +757,33 @@ export const sharedMainAreaChildren: RouteObject[] = [
       'Desktop > Task Workspace > Layout',
       { preloadId: 'tasks' },
     ),
+  },
+
+  // Platform-wide, admin-only topic overview
+  {
+    children: [
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/overview'),
+          'Desktop > Topic Overview',
+        ),
+        index: true,
+      },
+      {
+        element: dynamicElement(
+          () => import('@/routes/(main)/overview/[topicId]'),
+          'Desktop > Topic Overview > Detail',
+        ),
+        path: ':topicId',
+      },
+    ],
+    element: dynamicLayout(
+      () => import('@/routes/(main)/overview/_layout'),
+      'Desktop > Topic Overview > Layout',
+    ),
+    errorElement: <ErrorBoundary />,
+    handle: { meta: cottiTopicOverviewRouteMeta },
+    path: 'overview',
   },
 
   // Pages routes

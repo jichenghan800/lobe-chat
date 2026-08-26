@@ -1,4 +1,5 @@
 import { consumeStreamUntilDone } from '@lobechat/model-runtime';
+import type { SQL } from 'drizzle-orm';
 import { eq, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -108,6 +109,49 @@ export const parseCottiPlatformAuditExcludedEmails = (
     .flatMap((raw) => (raw || '').split(/[,;\n]/))
     .map((email) => email.trim().toLowerCase())
     .filter((email, index, values) => email.includes('@') && values.indexOf(email) === index);
+
+/**
+ * Keep every platform-wide content surface on the same audited-user scope.
+ * The surrounding query must expose the subject account as the `users` table.
+ */
+export const buildCottiPlatformAuditedUserCondition = (subjectUserId: SQL) => {
+  const environmentEmails = parseCottiPlatformAuditExcludedEmails();
+  const environmentEmailCondition =
+    environmentEmails.length > 0
+      ? sql`LOWER(COALESCE(NULLIF(users.normalized_email, ''), NULLIF(users.email, ''), '')) IN (${sql.join(
+          environmentEmails.map((email) => sql`${email}`),
+          sql`, `,
+        )})`
+      : sql`FALSE`;
+
+  return sql`NOT (
+    ${environmentEmailCondition}
+    OR COALESCE(users.role, '') = 'admin'
+    OR EXISTS (
+      SELECT 1
+      FROM cotti_platform_admin_assignments admin_assignment
+      WHERE admin_assignment.user_id = ${subjectUserId}
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM rbac_user_roles user_role
+      INNER JOIN rbac_roles role ON role.id = user_role.role_id
+      WHERE user_role.user_id = ${subjectUserId}
+        AND user_role.workspace_id IS NULL
+        AND role.workspace_id IS NULL
+        AND role.name = 'super_admin'
+        AND role.is_active = TRUE
+        AND (user_role.expires_at IS NULL OR user_role.expires_at > NOW())
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM cotti_login_access_rules login_rule
+      WHERE login_rule.enabled = TRUE
+        AND login_rule.type = 'email'
+        AND login_rule.value = LOWER(COALESCE(NULLIF(users.normalized_email, ''), NULLIF(users.email, ''), ''))
+    )
+  )`;
+};
 
 const normalizeAttachments = (
   value: CottiPlatformAuditAttachment[] | null | string | undefined,
@@ -431,7 +475,7 @@ export class CottiPlatformAuditService {
         ON risk_analysis.message_id = messages.id
       WHERE messages.id = ${messageId}
         AND messages.role = 'user'
-        AND ${this.buildAuditedUserCondition()}
+        AND ${buildCottiPlatformAuditedUserCondition(sql`messages.user_id`)}
       LIMIT 1
     `);
 
@@ -559,45 +603,6 @@ export class CottiPlatformAuditService {
     return parseCottiPlatformAuditModelAnalysis(content, auditRiskModel, auditRiskModelProvider);
   };
 
-  private buildAuditedUserCondition = () => {
-    const environmentEmails = parseCottiPlatformAuditExcludedEmails();
-    const environmentEmailCondition =
-      environmentEmails.length > 0
-        ? sql`LOWER(COALESCE(NULLIF(users.normalized_email, ''), NULLIF(users.email, ''), '')) IN (${sql.join(
-            environmentEmails.map((email) => sql`${email}`),
-            sql`, `,
-          )})`
-        : sql`FALSE`;
-
-    return sql`NOT (
-      ${environmentEmailCondition}
-      OR COALESCE(users.role, '') = 'admin'
-      OR EXISTS (
-        SELECT 1
-        FROM cotti_platform_admin_assignments admin_assignment
-        WHERE admin_assignment.user_id = messages.user_id
-      )
-      OR EXISTS (
-        SELECT 1
-        FROM rbac_user_roles user_role
-        INNER JOIN rbac_roles role ON role.id = user_role.role_id
-        WHERE user_role.user_id = messages.user_id
-          AND user_role.workspace_id IS NULL
-          AND role.workspace_id IS NULL
-          AND role.name = 'super_admin'
-          AND role.is_active = TRUE
-          AND (user_role.expires_at IS NULL OR user_role.expires_at > NOW())
-      )
-      OR EXISTS (
-        SELECT 1
-        FROM cotti_login_access_rules login_rule
-        WHERE login_rule.enabled = TRUE
-          AND login_rule.type = 'email'
-          AND login_rule.value = LOWER(COALESCE(NULLIF(users.normalized_email, ''), NULLIF(users.email, ''), ''))
-      )
-    )`;
-  };
-
   private buildFilteredMessagesQuery = ({
     endAt,
     q,
@@ -687,7 +692,7 @@ export class CottiPlatformAuditService {
       WHERE messages.created_at >= ${startAt}
         AND messages.created_at <= ${endAt}
         AND messages.role = 'user'
-        AND ${this.buildAuditedUserCondition()}
+        AND ${buildCottiPlatformAuditedUserCondition(sql`messages.user_id`)}
         AND (
           ${q || null}::text IS NULL
           OR LOWER(CONCAT_WS(

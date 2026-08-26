@@ -585,6 +585,7 @@ export default {
   'tab.marketplace': 'Marketplace',
   'tab.me': 'Me',
   'tab.memory': 'Memory',
+  'tab.overview': 'Overview',
   'tab.pages': 'Pages',
   'tab.resource': 'Resources',
   'tab.search': 'Search',

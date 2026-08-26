@@ -7,7 +7,17 @@ interface GlobalStateMock {
 
 const mocks = vi.hoisted(() => ({
   activeWorkspaceSlug: null as string | null,
+  isPlatformAdmin: false,
+  platformManagementEnabled: true,
   showMarket: true,
+}));
+
+vi.mock('@/_custom/registry/platformManagement', () => ({
+  isCottiPlatformManagementEnabled: () => mocks.platformManagementEnabled,
+}));
+
+vi.mock('@/features/CottiPlatformAnalytics/hooks', () => ({
+  useCottiPlatformAdminAccess: () => ({ swr: { data: { isAdmin: mocks.isPlatformAdmin } } }),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -40,6 +50,8 @@ vi.mock('@/business/client/hooks/useActiveWorkspaceSlug', () => ({
 describe('useNavLayout', () => {
   beforeEach(() => {
     mocks.activeWorkspaceSlug = null;
+    mocks.isPlatformAdmin = false;
+    mocks.platformManagementEnabled = true;
     mocks.showMarket = true;
   });
 
@@ -61,5 +73,21 @@ describe('useNavLayout', () => {
     const memoryItem = result.current.bottomMenuItems.find((item) => item.key === 'memory');
 
     expect(memoryItem?.hidden).toBe(true);
+  });
+
+  it('shows Overview only to platform administrators', async () => {
+    const { useNavLayout } = await import('./useNavLayout');
+    const initial = renderHook(() => useNavLayout());
+
+    expect(initial.result.current.topNavItems.find((item) => item.key === 'overview')?.hidden).toBe(
+      true,
+    );
+
+    mocks.isPlatformAdmin = true;
+    initial.rerender();
+
+    expect(initial.result.current.topNavItems.find((item) => item.key === 'overview')?.hidden).toBe(
+      false,
+    );
   });
 });

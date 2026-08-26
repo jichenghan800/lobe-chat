@@ -20,6 +20,7 @@ import {
 import { agentDocumentRouteMeta } from '@/features/AgentDocumentPage/routeMeta';
 import { taskRouteMeta, tasksRouteMeta } from '@/features/AgentTasks/routeMeta';
 import { agentsRouteMeta } from '@/features/AgentViewAll/routeMeta';
+import { cottiTopicOverviewRouteMeta } from '@/features/CottiTopicOverview/routeMeta';
 import { pageRouteMeta } from '@/features/Pages/routeMeta';
 import {
   acceptanceRouteMeta,
@@ -131,6 +132,9 @@ import MemoryContextsPage from '@/routes/(main)/memory/contexts';
 import MemoryExperiencesPage from '@/routes/(main)/memory/experiences';
 import MemoryIdentitiesPage from '@/routes/(main)/memory/identities';
 import MemoryPreferencesPage from '@/routes/(main)/memory/preferences';
+import TopicOverviewIndexPage from '@/routes/(main)/overview';
+import TopicOverviewLayout from '@/routes/(main)/overview/_layout';
+import TopicOverviewDetailPage from '@/routes/(main)/overview/[topicId]';
 import PageIndexPage from '@/routes/(main)/page';
 import DesktopPageLayout from '@/routes/(main)/page/_layout';
 import PageDetailPage from '@/routes/(main)/page/[id]';
@@ -635,6 +639,24 @@ export const sharedMainAreaChildren: RouteObject[] = [
       },
     ],
     element: <TaskWorkspaceLayout />,
+  },
+
+  // Platform-wide, admin-only topic overview
+  {
+    children: [
+      {
+        element: <TopicOverviewIndexPage />,
+        index: true,
+      },
+      {
+        element: <TopicOverviewDetailPage />,
+        path: ':topicId',
+      },
+    ],
+    element: <TopicOverviewLayout />,
+    errorElement: <ErrorBoundary />,
+    handle: { meta: cottiTopicOverviewRouteMeta },
+    path: 'overview',
   },
 
   // Pages routes

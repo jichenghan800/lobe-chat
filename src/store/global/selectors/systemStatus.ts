@@ -178,6 +178,7 @@ export const DEFAULT_SIDEBAR_ITEMS: string[] = [
   'recents',
   'private',
   'agent',
+  'overview',
   SIDEBAR_SPACER_ID,
   'image',
   'community',
@@ -190,6 +191,9 @@ export const DEFAULT_SIDEBAR_ITEMS: string[] = [
  * first, with the workspace-shared agents right below. */
 export const SIDEBAR_ACCORDION_KEYS = new Set(['recents', 'private', 'agent']);
 
+/** Fixed entries rendered immediately after the accordion block and above the spacer. */
+const SIDEBAR_TOP_TRAILING_KEYS = new Set(['overview']);
+
 const DEFAULT_BOTTOM_KEYS = new Set(
   DEFAULT_SIDEBAR_ITEMS.slice(DEFAULT_SIDEBAR_ITEMS.indexOf(SIDEBAR_SPACER_ID) + 1),
 );
@@ -201,12 +205,14 @@ const arraysEqual = (a: string[], b: string[]): boolean => {
   return true;
 };
 
-// Invariant: spacer always sits immediately after the recents+agent block. Any
-// stored position is ignored — the spacer is re-anchored on every read so legacy
-// states (e.g. from the move-up/down dropdown that used to leave the spacer
-// floating above the accordion) self-heal.
+// Invariant: fixed trailing entries sit immediately after the accordion block,
+// then the spacer. Stored positions are ignored so legacy/customized states
+// self-heal when a new fixed entry is introduced.
 const normalizeSpacerPosition = (order: string[]): string[] => {
-  const withoutSpacer = order.filter((k) => k !== SIDEBAR_SPACER_ID);
+  const trailingKeys = order.filter((key) => SIDEBAR_TOP_TRAILING_KEYS.has(key));
+  const withoutSpacer = order.filter(
+    (key) => key !== SIDEBAR_SPACER_ID && !SIDEBAR_TOP_TRAILING_KEYS.has(key),
+  );
 
   let insertAt = -1;
   for (let i = withoutSpacer.length - 1; i >= 0; i--) {
@@ -220,7 +226,12 @@ const normalizeSpacerPosition = (order: string[]): string[] => {
     insertAt = bottomIdx === -1 ? withoutSpacer.length : bottomIdx;
   }
 
-  return [...withoutSpacer.slice(0, insertAt), SIDEBAR_SPACER_ID, ...withoutSpacer.slice(insertAt)];
+  return [
+    ...withoutSpacer.slice(0, insertAt),
+    ...trailingKeys,
+    SIDEBAR_SPACER_ID,
+    ...withoutSpacer.slice(insertAt),
+  ];
 };
 
 // Backfill missing default keys into their canonical group — top-group defaults
@@ -231,14 +242,19 @@ const normalizeSpacerPosition = (order: string[]): string[] => {
 const withAllKnownKeys = (order: string[]): string[] => {
   const present = new Set(order);
   const missingTop: string[] = [];
+  const missingTopTrailing: string[] = [];
   const missingBottom: string[] = [];
   for (const k of DEFAULT_SIDEBAR_ITEMS) {
     if (k === SIDEBAR_SPACER_ID || present.has(k)) continue;
-    (DEFAULT_BOTTOM_KEYS.has(k) ? missingBottom : missingTop).push(k);
+    if (DEFAULT_BOTTOM_KEYS.has(k)) missingBottom.push(k);
+    else if (SIDEBAR_TOP_TRAILING_KEYS.has(k)) missingTopTrailing.push(k);
+    else missingTop.push(k);
   }
 
   const withSpacer = normalizeSpacerPosition(order);
-  if (missingTop.length === 0 && missingBottom.length === 0) return withSpacer;
+  if (missingTop.length === 0 && missingTopTrailing.length === 0 && missingBottom.length === 0) {
+    return withSpacer;
+  }
 
   const spacerIdx = withSpacer.indexOf(SIDEBAR_SPACER_ID);
   let accordionStartIdx = spacerIdx;
@@ -252,7 +268,9 @@ const withAllKnownKeys = (order: string[]): string[] => {
   return [
     ...withSpacer.slice(0, accordionStartIdx),
     ...missingTop,
-    ...withSpacer.slice(accordionStartIdx, spacerIdx + 1),
+    ...withSpacer.slice(accordionStartIdx, spacerIdx),
+    ...missingTopTrailing,
+    SIDEBAR_SPACER_ID,
     ...missingBottom,
     ...withSpacer.slice(spacerIdx + 1),
   ];

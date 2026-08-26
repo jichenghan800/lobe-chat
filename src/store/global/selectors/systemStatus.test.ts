@@ -201,6 +201,7 @@ describe('systemStatusSelectors', () => {
         'private',
         'agent',
         'recents',
+        'overview',
         SIDEBAR_SPACER_ID,
         'pages',
         'tasks',
@@ -217,6 +218,7 @@ describe('systemStatusSelectors', () => {
         'recents',
         'private',
         'agent',
+        'overview',
         SIDEBAR_SPACER_ID,
         'image',
         'tasks',
@@ -228,6 +230,30 @@ describe('systemStatusSelectors', () => {
         status: { sidebarItems: stored },
       });
       expect(systemStatusSelectors.sidebarItems(null)(s)).toEqual(stored);
+    });
+
+    it('should keep overview immediately below the accordion block', () => {
+      const s: GlobalState = merge(initialState, {
+        status: {
+          sidebarItems: [
+            'overview',
+            'tasks',
+            'recents',
+            'private',
+            'agent',
+            SIDEBAR_SPACER_ID,
+            'image',
+            'community',
+            'resource',
+            'memory',
+          ],
+        },
+      });
+      const items = systemStatusSelectors.sidebarItems(null)(s);
+      const spacerIndex = items.indexOf(SIDEBAR_SPACER_ID);
+
+      expect(items[spacerIndex - 2]).toBe('agent');
+      expect(items[spacerIndex - 1]).toBe('overview');
     });
 
     it('should re-anchor the spacer when stored above the accordion', () => {
@@ -254,6 +280,7 @@ describe('systemStatusSelectors', () => {
         'recents',
         'private',
         'agent',
+        'overview',
         SIDEBAR_SPACER_ID,
         'image',
         'community',
@@ -274,12 +301,13 @@ describe('systemStatusSelectors', () => {
       expect(items).toContain('community');
       expect(items).toContain('resource');
       expect(items).toContain('memory');
-      // accordion block is flush against the spacer, in stored order
-      expect(items[spacerIdx - 2]).toBe('agent');
-      expect(items[spacerIdx - 1]).toBe('recents');
+      // overview is fixed immediately after the accordion block and before the spacer
+      expect(items[spacerIdx - 3]).toBe('agent');
+      expect(items[spacerIdx - 2]).toBe('recents');
+      expect(items[spacerIdx - 1]).toBe('overview');
       // missing top-group defaults slot in just before the accordion
-      expect(items.indexOf('tasks')).toBeLessThan(spacerIdx - 2);
-      expect(items.indexOf('pages')).toBeLessThan(spacerIdx - 2);
+      expect(items.indexOf('tasks')).toBeLessThan(spacerIdx - 3);
+      expect(items.indexOf('pages')).toBeLessThan(spacerIdx - 3);
       // missing bottom-group defaults sit after the spacer
       expect(items.indexOf('image')).toBeGreaterThan(spacerIdx);
     });
@@ -297,6 +325,7 @@ describe('systemStatusSelectors', () => {
         'private',
         'agent',
         'recents',
+        'overview',
         SIDEBAR_SPACER_ID,
         'image',
         'community',
@@ -318,6 +347,7 @@ describe('systemStatusSelectors', () => {
         'private',
         'recents',
         'agent',
+        'overview',
         SIDEBAR_SPACER_ID,
         'image',
         'community',

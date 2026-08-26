@@ -12,6 +12,7 @@ export default {
   'navigation.groupChat': 'Group Chat',
   'navigation.groupProfile': 'Group Profile',
   'navigation.home': 'Home',
+  'navigation.overview': 'Overview',
   'navigation.image': 'Image',
   'navigation.knowledgeBase': 'Knowledge Base',
   'navigation.lobehub': 'LobeHub',

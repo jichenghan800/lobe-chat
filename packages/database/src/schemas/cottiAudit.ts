@@ -6,7 +6,7 @@ import { sessions } from './session';
 import { users } from './user';
 
 export type CottiAuditRiskAnalysisStatus = 'completed' | 'failed' | 'pending' | 'running';
-export type CottiAuditViewTargetType = 'message' | 'session';
+export type CottiAuditViewTargetType = 'message' | 'session' | 'topic';
 
 export interface CottiAuditRiskEvidence {
   label: string;

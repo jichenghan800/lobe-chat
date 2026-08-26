@@ -13,6 +13,7 @@ import { ConversationProvider } from './ConversationProvider';
 import { dataSelectors, useConversationStore } from './store';
 
 const chatListMocks = vi.hoisted(() => ({
+  isLogin: false,
   isStreaming: false,
   refreshError: {
     error: undefined as unknown,
@@ -122,8 +123,14 @@ vi.mock('@/store/serverConfig', () => ({
   useServerConfigStore: () => ({ enableAgentSelfIteration: false }),
 }));
 
-vi.mock('@/store/user', () => ({ useUserStore: () => false }));
-vi.mock('@/store/user/selectors', () => ({ authSelectors: {}, settingsSelectors: {} }));
+vi.mock('@/store/user', () => ({
+  useUserStore: (selector: (state: { isLogin: boolean }) => unknown) =>
+    selector({ isLogin: chatListMocks.isLogin }),
+}));
+vi.mock('@/store/user/selectors', () => ({
+  authSelectors: { isLogin: (state: { isLogin: boolean }) => state.isLogin },
+  settingsSelectors: { memoryEnabled: () => false },
+}));
 
 const oldContext = {
   agentId: 'agt_old',
@@ -192,6 +199,7 @@ const renderChatList = (messages?: UIChatMessage[]) =>
 describe('ConversationProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    chatListMocks.isLogin = false;
     chatListMocks.isStreaming = false;
     chatListMocks.refreshError.error = undefined;
     chatListMocks.refreshError.isRetrying = false;
@@ -268,5 +276,18 @@ describe('ConversationProvider', () => {
     renderChatList(oldMessages);
 
     expect(screen.getByTestId('virtualized-list')).toHaveTextContent('msg_old');
+  });
+
+  it('does not fetch an owner-only agent config for a signed-in read-only share context', () => {
+    chatListMocks.isLogin = true;
+    const shareContext = { ...oldContext, topicShareId: 'admin-overview-topic-1' };
+
+    render(
+      <ConversationProvider hasInitMessages skipFetch context={shareContext} messages={oldMessages}>
+        <ChatList />
+      </ConversationProvider>,
+    );
+
+    expect(chatListMocks.useFetchAgentConfig).toHaveBeenCalledWith(false, 'agt_old');
   });
 });

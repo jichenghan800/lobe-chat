@@ -7,6 +7,7 @@ import { cottiModelDisplayRouter } from './modelDisplay';
 import { cottiPeopleManagementRouter } from './peopleManagement';
 import { cottiPlatformAnalyticsRouter } from './platformAnalytics';
 import { cottiPlatformAuditRouter } from './platformAudit';
+import { cottiTopicOverviewRouter } from './topicOverview';
 
 export const cottiRouter = router({
   admin: cottiAdminRouter,
@@ -16,4 +17,5 @@ export const cottiRouter = router({
   platformAnalytics: cottiPlatformAnalyticsRouter,
   platformAudit: cottiPlatformAuditRouter,
   peopleManagement: cottiPeopleManagementRouter,
+  topicOverview: cottiTopicOverviewRouter,
 });

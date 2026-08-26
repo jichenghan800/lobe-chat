@@ -1,9 +1,11 @@
-import { HomeIcon, SearchIcon } from 'lucide-react';
+import { GalleryVerticalEndIcon, HomeIcon, SearchIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isCottiPlatformManagementEnabled } from '@/_custom/registry/platformManagement';
 import { useActiveWorkspaceSlug } from '@/business/client/hooks/useActiveWorkspaceSlug';
 import { getRouteById } from '@/config/routes';
+import { useCottiPlatformAdminAccess } from '@/features/CottiPlatformAnalytics/hooks';
 import { useGlobalStore } from '@/store/global';
 import { SidebarTabKey } from '@/store/global/initialState';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
@@ -38,6 +40,8 @@ export const useNavLayout = (): NavLayout => {
   const toggleCommandMenu = useGlobalStore((s) => s.toggleCommandMenu);
   const { showMarket, hideGitHub } = useServerConfigStore(featureFlagsSelectors);
   const activeWorkspaceSlug = useActiveWorkspaceSlug();
+  const platformManagementEnabled = isCottiPlatformManagementEnabled();
+  const { swr: platformAdminAccessSWR } = useCottiPlatformAdminAccess();
 
   const topNavItems = useMemo(
     () =>
@@ -66,8 +70,15 @@ export const useNavLayout = (): NavLayout => {
           title: t('tab.pages'),
           url: '/page',
         },
+        {
+          hidden: !platformManagementEnabled || platformAdminAccessSWR.data?.isAdmin !== true,
+          icon: GalleryVerticalEndIcon,
+          key: SidebarTabKey.Overview,
+          title: t('tab.overview'),
+          url: '/overview',
+        },
       ] as NavItem[],
-    [t, toggleCommandMenu],
+    [platformAdminAccessSWR.data?.isAdmin, platformManagementEnabled, t, toggleCommandMenu],
   );
 
   const bottomMenuItems = useMemo(

@@ -131,7 +131,7 @@ const ChatList = memo<ChatListProps>(
     // and is gated on isLogin (no fetch for anonymous share viewers).
     const isLogin = useUserStore(authSelectors.isLogin);
     const useFetchAgentConfig = useAgentStore((s) => s.useFetchAgentConfig);
-    useFetchAgentConfig(isLogin, context.agentId);
+    useFetchAgentConfig(isLogin && !isSharePage, context.agentId);
 
     // Fetch conversation context data when a conversation is visible (skip for share pages).
     // NOTE: the agent-document list is intentionally NOT pre-warmed here — this
