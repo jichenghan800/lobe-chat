@@ -107,4 +107,17 @@ export const styles = createStaticStyles(({ css }) => ({
 
     background: ${cssVar.colorWarningBg};
   `,
+  turnTime: css`
+    padding-block-start: 16px;
+
+    font-size: ${cssVar.fontSizeSM};
+    font-variant-numeric: tabular-nums;
+    line-height: ${cssVar.lineHeightSM};
+    color: ${cssVar.colorTextTertiary};
+    white-space: nowrap;
+  `,
+  turnTimeLine: css`
+    flex: 1;
+    border-block-start: 1px solid ${cssVar.colorBorderSecondary};
+  `,
 }));

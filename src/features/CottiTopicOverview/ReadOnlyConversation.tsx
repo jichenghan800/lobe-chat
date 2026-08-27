@@ -7,12 +7,15 @@ import { useTranslation } from 'react-i18next';
 import { ChatList, ConversationProvider, MessageItem } from '@/features/Conversation';
 import type { CottiTopicOverviewDetail } from '@/types/cotti/topicOverview';
 
+import { styles } from './style';
+import { buildOverviewTurnTimeMap } from './turnTime';
+
 interface ReadOnlyConversationProps {
   detail: CottiTopicOverviewDetail;
 }
 
 export const ReadOnlyConversation = memo<ReadOnlyConversationProps>(({ detail }) => {
-  const { t } = useTranslation('topic');
+  const { i18n, t } = useTranslation('topic');
   const context = useMemo(
     () => ({
       agentId: detail.agentId ?? `overview-${detail.id}`,
@@ -22,9 +25,30 @@ export const ReadOnlyConversation = memo<ReadOnlyConversationProps>(({ detail })
     }),
     [detail.agentId, detail.groupId, detail.id],
   );
+  const turnTimeMap = useMemo(
+    () => buildOverviewTurnTimeMap(detail.messages, i18n.language),
+    [detail.messages, i18n.language],
+  );
   const itemContent = useCallback(
-    (index: number, id: string) => <MessageItem disableEditing id={id} index={index} key={id} />,
-    [],
+    (index: number, id: string) => {
+      const turnTime = turnTimeMap.get(id);
+
+      return (
+        <Flexbox key={id}>
+          {turnTime && (
+            <Flexbox horizontal align={'center'} className={styles.turnTime} gap={12}>
+              <span aria-hidden className={styles.turnTimeLine} />
+              <time dateTime={turnTime.dateTime}>
+                {t('overview.questionTime', { time: turnTime.label })}
+              </time>
+              <span aria-hidden className={styles.turnTimeLine} />
+            </Flexbox>
+          )}
+          <MessageItem disableEditing id={id} index={index} />
+        </Flexbox>
+      );
+    },
+    [t, turnTimeMap],
   );
 
   return (

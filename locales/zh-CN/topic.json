@@ -257,6 +257,7 @@
   "overview.noMessagesTitle": "暂无消息",
   "overview.page": "第 {{page}} / {{pages}} 页",
   "overview.previousPage": "上一页",
+  "overview.questionTime": "提问时间：{{time}}",
   "overview.searchEmptyDesc": "请尝试其他话题名称、用户或助理名称。",
   "overview.searchEmptyTitle": "没有匹配的话题",
   "overview.searchPlaceholder": "搜索话题或用户…",

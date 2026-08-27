@@ -292,6 +292,7 @@ export default {
   'overview.nextPage': 'Next page',
   'overview.page': 'Page {{page}} of {{pages}}',
   'overview.previousPage': 'Previous page',
+  'overview.questionTime': 'Asked at {{time}}',
   'overview.searchEmptyDesc': 'Try another topic title, user, or assistant name.',
   'overview.searchEmptyTitle': 'No matching topics',
   'overview.searchPlaceholder': 'Search topics or users…',
