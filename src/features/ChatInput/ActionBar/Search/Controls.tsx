@@ -106,10 +106,16 @@ const Controls = memo(() => {
   const { allowed: canCreate } = usePermission('create_content');
 
   const { model, provider } = useEffectiveModel(agentId);
-  const [useModelBuiltinSearch, searchMode] = useAgentStore((s) => [
-    chatConfigByIdSelectors.getUseModelBuiltinSearchById(agentId)(s),
-    chatConfigByIdSelectors.getChatConfigById(agentId)(s).searchMode,
-  ]);
+  const [useModelBuiltinSearch, searchMode] = useAgentStore((s) => {
+    const chatConfig = chatConfigByIdSelectors.getChatConfigById(agentId)(s);
+    const preferModelSearch =
+      chatConfig.searchRoute === 'model' ||
+      (chatConfig.searchRoute !== 'application' &&
+        ((chatConfig.searchMode ?? 'auto') === 'auto' ||
+          chatConfig.useModelBuiltinSearch === true));
+
+    return [preferModelSearch, chatConfig.searchMode];
+  });
 
   const supportFC = useAiInfraStore(aiModelSelectors.isModelSupportToolUse(model, provider));
   const isProviderHasBuiltinSearchConfig = useAiInfraStore(

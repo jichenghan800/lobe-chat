@@ -23,6 +23,7 @@ const Qwen: ModelProviderCard = {
     sdkType: 'openai',
     showDeployName: true,
     showModelFetcher: true,
+    supportResponsesApi: true,
   },
   url: 'https://www.aliyun.com/product/bailian',
 };

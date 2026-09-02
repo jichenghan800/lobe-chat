@@ -975,11 +975,12 @@ export default {
   'search.grounding.imageSearchQueries': 'Image Search Keywords',
   'search.grounding.imageTitle': 'Found {{count}} images',
   'chatMode.agent': 'Agent',
-  'plus.search.appSearch': 'Smart Search',
+  'plus.search.appSearch': 'Platform Search',
   'plus.search.appSearchDesc':
-    'LobeHub optimized search service, delivering best retrieval results.',
-  'plus.search.modelSearch': 'Provider Search',
-  'plus.search.modelSearchDesc': 'May cause unexpected behavior when enabled, not recommended.',
+    'Use the platform search service as a fallback or manual alternative.',
+  'plus.search.modelSearch': 'Model Search',
+  'plus.search.modelSearchDesc':
+    "Use the model provider's native web search. Preferred when available.",
   'plus.search.off': 'Off',
   'plus.search.offDesc': '',
   'plus.addAttachments': 'Attachments',

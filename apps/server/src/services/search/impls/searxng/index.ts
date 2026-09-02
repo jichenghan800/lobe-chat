@@ -35,6 +35,15 @@ export class SearXNGImpl implements SearchServiceImpl {
       });
       costTime = Date.now() - startAt;
 
+      if (data.results.length === 0 && data.unresponsive_engines.length > 0) {
+        const unavailableEngines = data.unresponsive_engines
+          .map((item) => (Array.isArray(item) ? item.join(': ') : String(item)))
+          .filter(Boolean)
+          .join(', ');
+
+        throw new Error(`SearXNG search engines unavailable: ${unavailableEngines}`);
+      }
+
       return {
         costTime,
         query,

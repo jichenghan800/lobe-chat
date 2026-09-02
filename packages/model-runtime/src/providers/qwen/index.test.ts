@@ -37,6 +37,47 @@ beforeEach(() => {
 });
 
 describe('LobeQwenAI - custom features', () => {
+  describe('Qwen3.8 Max Responses API', () => {
+    it('uses Chat Completions native search with the Max strategy by default', () => {
+      const result = params.chatCompletion!.handlePayload!({
+        enabledSearch: true,
+        messages: [{ content: 'What is new today?', role: 'user' }],
+        model: 'qwen3.8-max-0902',
+        thinking: { type: 'disabled' },
+      } as any);
+
+      expect(result).toMatchObject({
+        enable_search: true,
+        enable_thinking: true,
+        search_options: { search_strategy: 'max' },
+      });
+      expect(result.apiMode).toBeUndefined();
+    });
+
+    it('maps the search switch to the Responses web_search tool and enables thinking', () => {
+      const result = params.responses!.handlePayload!({
+        enabledSearch: true,
+        messages: [{ content: 'What is new today?', role: 'user' }],
+        model: 'qwen3.8-max-0902',
+        thinking: { type: 'disabled' },
+        tools: [
+          {
+            function: { description: 'Get weather', name: 'get_weather', parameters: {} },
+            type: 'function',
+          },
+        ],
+      } as any);
+
+      expect(result).toMatchObject({
+        enable_thinking: true,
+        model: 'qwen3.8-max-0902',
+        tools: [expect.objectContaining({ type: 'function' }), { type: 'web_search' }],
+      });
+      expect(result.enabledSearch).toBeUndefined();
+      expect(result.thinking).toBeUndefined();
+    });
+  });
+
   describe('prompt_cache_key', () => {
     it('should not inject Moonshot prompt_cache_key for Kimi model ids', async () => {
       await instance.chat(

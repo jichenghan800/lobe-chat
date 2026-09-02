@@ -49,6 +49,7 @@ const Token = memo(() => {
     systemRole,
     enableAgentMode,
     searchMode,
+    searchRoute,
     useModelBuiltinSearch,
     skillActivateMode,
     agentMemoryEnabled,
@@ -62,6 +63,7 @@ const Token = memo(() => {
       agentByIdSelectors.getAgentSystemRoleById(agentId)(s),
       chatConfig.enableAgentMode,
       chatConfig.searchMode,
+      chatConfig.searchRoute,
       chatConfig.useModelBuiltinSearch,
       chatConfigByIdSelectors.getSkillActivateModeById(agentId)(s),
       chatConfig.memory?.enabled,
@@ -89,6 +91,7 @@ const Token = memo(() => {
     memoryEnabled: effectiveMemoryEnabled,
     runtimeMode,
     searchMode,
+    searchRoute,
     skillActivateMode,
     useModelBuiltinSearch,
   });

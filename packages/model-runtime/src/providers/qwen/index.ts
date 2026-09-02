@@ -4,6 +4,7 @@ import type { OpenAICompatibleFactoryOptions } from '../../core/openaiCompatible
 import { createOpenAICompatibleRuntime } from '../../core/openaiCompatibleFactory';
 import { resolveParameters } from '../../core/parameterResolver';
 import { QwenAIStream } from '../../core/streams';
+import type { ChatStreamPayload } from '../../types';
 import { processMultiProviderModelList } from '../../utils/modelParse';
 import { createQwenImage } from './createImage';
 import { createQwenVideo } from './createVideo';
@@ -123,7 +124,9 @@ export const params = {
         ...(enabledSearch && {
           enable_search: enabledSearch,
           search_options: {
-            search_strategy: process.env.QWEN_SEARCH_STRATEGY || 'standard', // standard or pro
+            search_strategy:
+              process.env.QWEN_SEARCH_STRATEGY ||
+              (model.toLowerCase().startsWith('qwen3.8-max') ? 'max' : 'standard'),
           },
         }),
         ...(payload.tools && {
@@ -154,6 +157,26 @@ export const params = {
     return processMultiProviderModelList(modelList, 'qwen');
   },
   provider: ModelProvider.Qwen,
+  responses: {
+    handlePayload: (payload) => {
+      const { enabledSearch, model, thinking, tools, ...rest } = payload;
+      const responseTools = enabledSearch
+        ? [...(tools || []), { type: 'web_search' } as any]
+        : tools;
+      const thinkingEnabled = isThinkingForcedQwenModel(model)
+        ? true
+        : thinking?.type
+          ? thinking.type === 'enabled'
+          : undefined;
+
+      return {
+        ...rest,
+        ...(thinkingEnabled !== undefined && { enable_thinking: thinkingEnabled }),
+        model,
+        tools: responseTools,
+      } as ChatStreamPayload;
+    },
+  },
 } satisfies OpenAICompatibleFactoryOptions;
 
 export const LobeQwenAI = createOpenAICompatibleRuntime(params);

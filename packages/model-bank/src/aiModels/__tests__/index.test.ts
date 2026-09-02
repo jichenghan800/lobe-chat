@@ -113,6 +113,28 @@ describe('ChatGPT subscription models', () => {
   });
 });
 
+describe('Azure OpenAI models', () => {
+  it('advertises native search for the GPT-5.6 family', () => {
+    const models = LOBE_DEFAULT_MODEL_LIST.filter(
+      (model) => model.providerId === ModelProvider.Azure && model.id.startsWith('gpt-5.6-'),
+    );
+
+    expect(models.map((model) => model.id)).toEqual([
+      'gpt-5.6-sol',
+      'gpt-5.6-terra',
+      'gpt-5.6-luna',
+    ]);
+    expect(
+      models.every(
+        (model) =>
+          model.abilities?.search === true &&
+          model.settings?.searchImpl === 'params' &&
+          model.config?.deploymentName === model.id,
+      ),
+    ).toBe(true);
+  });
+});
+
 describe('Moonshot models', () => {
   it('advertises Kimi K3 reasoning effort controls', () => {
     const kimiK3 = LOBE_DEFAULT_MODEL_LIST.find(
@@ -139,6 +161,33 @@ describe('Bailian GLM models', () => {
       expect.objectContaining({ functionCall: true, reasoning: true, structuredOutput: true }),
     );
     expect(glm53?.settings?.extendParams).toEqual(['glm5_3ReasoningEffort']);
+  });
+});
+
+describe('Bailian Qwen models', () => {
+  it('registers Qwen3.8 Max with native Responses web search metadata', () => {
+    const qwen38Max = LOBE_DEFAULT_MODEL_LIST.find(
+      (model) => model.providerId === ModelProvider.Qwen && model.id === 'qwen3.8-max-0902',
+    );
+
+    expect(qwen38Max).toEqual(
+      expect.objectContaining({
+        contextWindowTokens: 1_000_000,
+        enabled: true,
+        maxOutput: 131_072,
+      }),
+    );
+    expect(qwen38Max?.abilities).toEqual(
+      expect.objectContaining({
+        functionCall: true,
+        reasoning: true,
+        search: true,
+        structuredOutput: true,
+        video: true,
+        vision: true,
+      }),
+    );
+    expect(qwen38Max?.settings).toEqual(expect.objectContaining({ searchImpl: 'params' }));
   });
 });
 

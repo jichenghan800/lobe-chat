@@ -27,7 +27,7 @@ export interface SearXNGSearchResponse {
   query: string;
   results: SearXNGSearchResult[];
   suggestions: string[];
-  unresponsive_engines: any[];
+  unresponsive_engines: unknown[];
 }
 
 export class SearXNGClient {

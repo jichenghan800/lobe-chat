@@ -14,6 +14,7 @@ vi.mock('@/envs/app', () => ({
 
 vi.mock('@/envs/auth', () => ({
   authEnv: {
+    COTTI_SSO_COMFYUI_CLIENT_SECRET: 'comfyui-test-secret',
     COTTI_SSO_NANO_CLIENT_SECRET: 'nano-test-secret',
     COTTI_SSO_PPT_CLIENT_SECRET: 'ppt-test-secret',
   },
@@ -68,6 +69,7 @@ describe('OIDC Provider - Market Client Integration', () => {
     it.each([
       ['cotticoffee-nano', 'https://nano.cotticoffee.com/api/auth/callback/cotti-sso'],
       ['cotticoffee-ppt', 'https://ppt.cotticoffee.com/api/auth/oauth2/callback/cotti-sso'],
+      ['cotticoffee-comfyui', 'https://comfy.cotticoffee.com/oauth2/callback'],
     ])('registers %s as a confidential authorization-code client', async (clientId, callback) => {
       const { defaultClients } = await import('./config');
       const client = defaultClients.find((item) => item.client_id === clientId);

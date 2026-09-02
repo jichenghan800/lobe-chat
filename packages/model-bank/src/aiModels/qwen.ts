@@ -2237,6 +2237,43 @@ const qwenChatModels: AIChatModelCard[] = [
       functionCall: true,
       reasoning: true,
       search: true,
+      structuredOutput: true,
+      video: true,
+      vision: true,
+    },
+    config: {
+      deploymentName: 'qwen3.8-max-0902',
+    },
+    contextWindowTokens: 1_000_000,
+    description:
+      'Qwen3.8 Max is a 2.4-trillion-parameter MoE flagship model for complex professional and long-horizon agent tasks. It supports native vision, long documents, long videos, function calling, structured output, and web search.',
+    displayName: 'Qwen3.8 Max 0902',
+    enabled: true,
+    family: 'qwen',
+    generation: 'qwen3.8',
+    id: 'qwen3.8-max-0902',
+    maxOutput: 131_072,
+    organization: 'Qwen',
+    pricing: {
+      currency: 'CNY',
+      units: [
+        { name: 'textInput_cacheRead', rate: 1.874, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput', rate: 14.988, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 44.965, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    releasedAt: '2026-09-02',
+    settings: {
+      extendParams: ['reasoningEffort'],
+      searchImpl: 'params',
+    },
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      reasoning: true,
+      search: true,
     },
     config: {
       deploymentName: 'qwen3.7-max', // Supports context caching

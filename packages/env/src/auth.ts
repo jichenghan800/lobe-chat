@@ -85,6 +85,7 @@ declare global {
       AUTH_ZITADEL_ISSUER?: string;
       AUTH_ZITADEL_SECRET?: string;
 
+      COTTI_SSO_COMFYUI_CLIENT_SECRET?: string;
       COTTI_SSO_NANO_CLIENT_SECRET?: string;
       COTTI_SSO_PPT_CLIENT_SECRET?: string;
 
@@ -194,6 +195,7 @@ export const getAuthConfig = () => {
 
       COTTI_SSO_NANO_CLIENT_SECRET: z.string().optional(),
       COTTI_SSO_PPT_CLIENT_SECRET: z.string().optional(),
+      COTTI_SSO_COMFYUI_CLIENT_SECRET: z.string().optional(),
 
       LOGTO_WEBHOOK_SIGNING_KEY: z.string().optional(),
 
@@ -292,6 +294,7 @@ export const getAuthConfig = () => {
 
       COTTI_SSO_NANO_CLIENT_SECRET: process.env.COTTI_SSO_NANO_CLIENT_SECRET,
       COTTI_SSO_PPT_CLIENT_SECRET: process.env.COTTI_SSO_PPT_CLIENT_SECRET,
+      COTTI_SSO_COMFYUI_CLIENT_SECRET: process.env.COTTI_SSO_COMFYUI_CLIENT_SECRET,
 
       // LOGTO
       LOGTO_WEBHOOK_SIGNING_KEY: process.env.LOGTO_WEBHOOK_SIGNING_KEY,

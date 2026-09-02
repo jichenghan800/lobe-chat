@@ -10,11 +10,13 @@ const createCottiWebClient = ({
   clientId,
   clientName,
   clientSecret,
+  callbackPath,
   origins,
 }: {
   clientId: string;
   clientName: string;
   clientSecret?: string;
+  callbackPath: string;
   origins: string[];
 }): ClientMetadata | null => {
   if (!clientSecret) return null;
@@ -26,11 +28,7 @@ const createCottiWebClient = ({
     client_secret: clientSecret,
     grant_types: ['authorization_code', 'refresh_token'],
     post_logout_redirect_uris: origins.map((origin) => `${origin}/`),
-    redirect_uris: origins.map((origin) =>
-      clientId === 'cotticoffee-nano'
-        ? `${origin}/api/auth/callback/cotti-sso`
-        : `${origin}/api/auth/oauth2/callback/cotti-sso`,
-    ),
+    redirect_uris: origins.map((origin) => `${origin}${callbackPath}`),
     response_types: ['code'],
     token_endpoint_auth_method: 'client_secret_basic',
   };
@@ -41,13 +39,22 @@ const cottiClients = [
     clientId: 'cotticoffee-nano',
     clientName: '灵境 AI',
     clientSecret: authEnv.COTTI_SSO_NANO_CLIENT_SECRET,
+    callbackPath: '/api/auth/callback/cotti-sso',
     origins: ['https://nano.cotticoffee.com', 'https://nanodev.cotticoffee.com'],
   }),
   createCottiWebClient({
     clientId: 'cotticoffee-ppt',
     clientName: '灵演 AI',
     clientSecret: authEnv.COTTI_SSO_PPT_CLIENT_SECRET,
+    callbackPath: '/api/auth/oauth2/callback/cotti-sso',
     origins: ['https://ppt.cotticoffee.com', 'https://pptdev.cotticoffee.com'],
+  }),
+  createCottiWebClient({
+    clientId: 'cotticoffee-comfyui',
+    clientName: 'ComfyUI',
+    clientSecret: authEnv.COTTI_SSO_COMFYUI_CLIENT_SECRET,
+    callbackPath: '/oauth2/callback',
+    origins: ['https://comfy.cotticoffee.com'],
   }),
 ].filter((client): client is ClientMetadata => client !== null);
 

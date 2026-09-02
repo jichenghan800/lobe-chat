@@ -322,11 +322,18 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
   const skillActivateMode = useAgentStore((s) =>
     chatConfigByIdSelectors.getSkillActivateModeById(agentId)(s),
   );
-  const [searchMode, useModelBuiltinSearch, disableGatewayMode] = useAgentStore((s) => [
-    chatConfigByIdSelectors.getSearchModeById(agentId)(s),
-    chatConfigByIdSelectors.getUseModelBuiltinSearchById(agentId)(s),
-    chatConfigByIdSelectors.getChatConfigById(agentId)(s).disableGatewayMode,
-  ]);
+  const [searchMode, searchRoute, useModelBuiltinSearch, disableGatewayMode] = useAgentStore(
+    (s) => {
+      const chatConfig = chatConfigByIdSelectors.getChatConfigById(agentId)(s);
+
+      return [
+        chatConfig.searchMode ?? 'auto',
+        chatConfig.searchRoute,
+        chatConfig.useModelBuiltinSearch,
+        chatConfig.disableGatewayMode,
+      ];
+    },
+  );
   const isGatewayModeEnabled = (disableGatewayMode ?? defaultDisableGatewayMode) !== true;
 
   const isMemoryEnabled = useMemoryEnabled(agentId);
@@ -373,8 +380,11 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
     !isModelBuiltinSearchInternal && (isModelHasBuiltinSearch || isProviderHasBuiltinSearch);
 
   // Derived active search option
+  const preferProviderSearch =
+    searchRoute === 'model' ||
+    (searchRoute !== 'application' && (searchMode === 'auto' || useModelBuiltinSearch === true));
   const activeSearchOption: 'off' | 'app' | 'provider' =
-    searchMode === 'off' ? 'off' : useModelBuiltinSearch ? 'provider' : 'app';
+    searchMode === 'off' ? 'off' : preferProviderSearch ? 'provider' : 'app';
 
   const handleToggleMemory = useCallback(
     async (enabled: boolean) => {
@@ -386,11 +396,19 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
   const handleSelectSearch = useCallback(
     async (option: 'off' | 'app' | 'provider') => {
       if (option === 'off') {
-        await updateAgentChatConfig({ searchMode: 'off', useModelBuiltinSearch: false });
+        await updateAgentChatConfig({ searchMode: 'off' });
       } else if (option === 'app') {
-        await updateAgentChatConfig({ searchMode: 'auto', useModelBuiltinSearch: false });
+        await updateAgentChatConfig({
+          searchMode: 'auto',
+          searchRoute: 'application',
+          useModelBuiltinSearch: false,
+        });
       } else {
-        await updateAgentChatConfig({ searchMode: 'auto', useModelBuiltinSearch: true });
+        await updateAgentChatConfig({
+          searchMode: 'auto',
+          searchRoute: 'model',
+          useModelBuiltinSearch: true,
+        });
       }
     },
     [updateAgentChatConfig],
@@ -596,20 +614,6 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
                       onClick: () => handleSelectSearch('off'),
                     },
                     {
-                      key: 'search-app',
-                      label: renderSearchOption(
-                        <Icon
-                          color={activeSearchOption === 'app' ? cssVar.colorInfo : undefined}
-                          icon={SearchCheck}
-                          size={18}
-                        />,
-                        t('plus.search.appSearch'),
-                        t('plus.search.appSearchDesc'),
-                        activeSearchOption === 'app',
-                      ),
-                      onClick: () => handleSelectSearch('app'),
-                    },
-                    {
                       key: 'search-provider',
                       label: renderSearchOption(
                         <Icon
@@ -622,6 +626,20 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
                         activeSearchOption === 'provider',
                       ),
                       onClick: () => handleSelectSearch('provider'),
+                    },
+                    {
+                      key: 'search-app',
+                      label: renderSearchOption(
+                        <Icon
+                          color={activeSearchOption === 'app' ? cssVar.colorInfo : undefined}
+                          icon={SearchCheck}
+                          size={18}
+                        />,
+                        t('plus.search.appSearch'),
+                        t('plus.search.appSearchDesc'),
+                        activeSearchOption === 'app',
+                      ),
+                      onClick: () => handleSelectSearch('app'),
                     },
                   ],
                   extra: <Icon className="lobe-submenu-chevron" icon={ChevronRight} size={16} />,
@@ -641,7 +659,9 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
                   key: 'search-toggle',
                   label: t('search.title'),
                   onCheckedChange: (checked: boolean) =>
-                    handleSelectSearch(checked ? 'app' : 'off'),
+                    checked
+                      ? updateAgentChatConfig({ searchMode: 'auto' })
+                      : handleSelectSearch('off'),
                   type: 'switch',
                 } as ActionDropdownMenuItems[number],
               ]),
@@ -798,6 +818,7 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
     skillItems,
     skillMarketFooter,
     skillMarketHeader,
+    updateAgentChatConfig,
     upload,
     close,
   ]);

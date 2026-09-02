@@ -22,5 +22,27 @@ describe('SearXNGImpl', () => {
       // Assert
       expect(results.results.length).toEqual(43);
     });
+
+    it('reports unavailable engines instead of a successful empty result', async () => {
+      vi.spyOn(SearXNGClient.prototype, 'search').mockResolvedValueOnce({
+        answers: [],
+        corrections: [],
+        infoboxes: [],
+        number_of_results: 0,
+        query: '古茗 2026 半年报',
+        results: [],
+        suggestions: [],
+        unresponsive_engines: [
+          ['google', 'CAPTCHA'],
+          ['duckduckgo', 'timeout'],
+        ],
+      });
+
+      const searchImpl = new SearXNGImpl();
+
+      await expect(searchImpl.query('古茗 2026 半年报')).rejects.toMatchObject({
+        message: 'SearXNG search engines unavailable: google: CAPTCHA, duckduckgo: timeout',
+      });
+    });
   });
 });

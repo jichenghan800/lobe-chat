@@ -1,6 +1,17 @@
 import type { AIChatModelCard, AIImageModelCard } from '../types/aiModel';
+import { openaiChatModels } from './openai';
+
+const AZURE_GPT_5_6_MODEL_IDS = new Set(['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna']);
+
+const azureGpt56Models: AIChatModelCard[] = openaiChatModels
+  .filter((model) => AZURE_GPT_5_6_MODEL_IDS.has(model.id))
+  .map((model) => ({
+    ...model,
+    config: { ...model.config, deploymentName: model.id },
+  }));
 
 const azureChatModels: AIChatModelCard[] = [
+  ...azureGpt56Models,
   {
     abilities: {
       functionCall: true,

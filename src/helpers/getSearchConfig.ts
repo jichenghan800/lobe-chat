@@ -38,6 +38,7 @@ export const getSearchConfig = (
     modelSearchImpl,
     providerSearchMode,
     searchMode: chatConfig.searchMode,
+    searchRoute: chatConfig.searchRoute,
     useModelBuiltinSearch: chatConfig.useModelBuiltinSearch,
   });
 };

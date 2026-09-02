@@ -71,6 +71,17 @@ describe('CottiModelDisplayModel', () => {
     }
   });
 
+  it('shows Qwen3.8 Max in the default Chat and Agent lists', () => {
+    for (const scope of ['chat', 'agent'] as const) {
+      expect(DEFAULT_COTTI_MODEL_DISPLAY_CONFIG[scope]).toContainEqual({
+        displayName: '千问3.8-Max',
+        enabled: true,
+        model: 'qwen3.8-max-0902',
+        provider: 'qwen',
+      });
+    }
+  });
+
   it('stores and normalizes the singleton model display config', async () => {
     const settings = await model.updateConfig(
       {
