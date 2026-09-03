@@ -10,7 +10,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCottiModelDisplayConfig } from '@/_custom/hooks/useCottiModelDisplayConfig';
-import { isCottiProfessionalModel } from '@/_custom/registry/modelDisplayConfig';
+import { isCottiProfessionalChannel } from '@/_custom/registry/modelDisplayConfig';
 import AsyncError from '@/components/AsyncError';
 import { useClientDataSWR } from '@/libs/swr';
 import { cottiModelDisplayService } from '@/services/cottiModelDisplay';
@@ -127,7 +127,7 @@ const ModelDisplaySettings = memo(() => {
   const availableOptions = useMemo(
     () =>
       [...optionMap.entries()]
-        .filter(([key, option]) => !configuredKeys.has(key) && !isCottiProfessionalModel(option))
+        .filter(([key]) => !configuredKeys.has(key))
         .map(([value, option]) => ({ label: option.label, value })),
     [configuredKeys, optionMap],
   );
@@ -217,7 +217,7 @@ const ModelDisplaySettings = memo(() => {
           <div className={styles.modelList}>
             {draft[scope].map((item, index) => {
               const isDefault = isModelDisplayDefault(draft, scope, item);
-              const isProfessionalChannel = isCottiProfessionalModel(item);
+              const isProfessionalChannel = isCottiProfessionalChannel(item);
 
               return (
                 <div className={styles.modelRow} key={getModelDisplayKey(item)}>

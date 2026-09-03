@@ -16,6 +16,53 @@ const vertexaiChatModels: AIChatModelCard[] = [
     },
     contextWindowTokens: 1_048_576 + 65_536,
     description:
+      "Google's most intelligent Flash model, engineered for long-horizon software engineering, autonomous agents, and complex enterprise workflows.",
+    displayName: 'Gemini 3.8 Flash',
+    enabled: true,
+    family: 'gemini',
+    generation: 'gemini-3.8',
+    id: 'gemini-3.8-flash',
+    knowledgeCutoff: '2026-03',
+    maxOutput: 65_536,
+    // Global-region introductory pricing through 2026-12-31; standard rates apply from 2027-01-01.
+    // https://cloud.google.com/vertex-ai/generative-ai/pricing
+    pricing: {
+      units: [
+        { name: 'textInput_cacheRead', rate: 0.075, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput', rate: 0.75, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 0.75, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'videoInput', rate: 0.75, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'audioInput', rate: 0.75, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 3.75, strategy: 'fixed', unit: 'millionTokens' },
+        {
+          lookup: { prices: { '1h': 0.5 }, pricingParams: ['ttl'] },
+          name: 'textInput_cacheWrite',
+          strategy: 'lookup',
+          unit: 'millionTokens',
+        },
+      ],
+    },
+    releasedAt: '2026-09-02',
+    settings: {
+      disabledParams: ['frequency_penalty', 'presence_penalty', 'temperature', 'top_p'],
+      extendParams: ['thinkingLevel3', 'urlContext'],
+      searchImpl: 'params',
+      searchProvider: 'google',
+    },
+    type: 'chat',
+  },
+  {
+    abilities: {
+      audio: true,
+      functionCall: true,
+      reasoning: true,
+      search: true,
+      structuredOutput: true,
+      video: true,
+      vision: true,
+    },
+    contextWindowTokens: 1_048_576 + 65_536,
+    description:
       'Gemini 3.7 Flash is the next iteration of the Gemini Flash family, with improved reasoning, agentic coding, computer use, and file search capabilities.',
     displayName: 'Gemini 3.7 Flash',
     enabled: true,

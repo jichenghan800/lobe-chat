@@ -180,6 +180,13 @@ describe('CottiModelDisplayModel', () => {
         userId: 'professional-model-user',
       },
       {
+        chatConfig: { thinkingLevel3: 'medium', urlContext: true },
+        id: 'independent-38',
+        model: 'gemini-3.8-flash',
+        provider: 'vertexai',
+        userId: 'professional-model-user',
+      },
+      {
         id: 'unrelated-agent',
         model: 'gemini-3.5-flash-lite',
         provider: 'vertexai',
@@ -189,7 +196,7 @@ describe('CottiModelDisplayModel', () => {
 
     const switchedTo37 = await model.switchProfessionalModel('gemini-3.7-flash', 'admin-1');
 
-    expect(switchedTo37.affectedAgentCount).toBe(2);
+    expect(switchedTo37.affectedAgentCount).toBe(1);
     expect(switchedTo37.previousModel).toEqual({
       model: 'gemini-3.6-flash',
       provider: 'vertexai',
@@ -217,6 +224,10 @@ describe('CottiModelDisplayModel', () => {
       model: 'gemini-3.7-flash',
     });
     expect(after37.find(({ id }) => id === 'unrelated-agent')?.model).toBe('gemini-3.5-flash-lite');
+    expect(after37.find(({ id }) => id === 'independent-38')).toMatchObject({
+      chatConfig: { thinkingLevel3: 'medium', urlContext: true },
+      model: 'gemini-3.8-flash',
+    });
 
     const switchedTo36 = await model.switchProfessionalModel('gemini-3.6-flash', 'admin-2');
     const after36 = await serverDB.select().from(agents);
@@ -247,11 +258,41 @@ describe('CottiModelDisplayModel', () => {
         provider: 'vertexai',
         userId: 'professional-status-user',
       },
+      {
+        id: 'professional-status-38',
+        model: 'gemini-3.8-flash',
+        provider: 'vertexai',
+        userId: 'professional-status-user',
+      },
     ]);
 
     await expect(model.getProfessionalModelStatus()).resolves.toEqual({
-      affectedAgentCount: 2,
+      affectedAgentCount: 1,
       currentModel: { model: 'gemini-3.6-flash', provider: 'vertexai' },
+    });
+  });
+
+  it('switches the professional channel to Gemini 3.8 with thinkingLevel3', async () => {
+    await serverDB.insert(users).values({ id: 'professional-38-user' });
+    await serverDB.insert(agents).values({
+      chatConfig: { thinkingLevel: 'minimal', urlContext: true },
+      id: 'professional-38-agent',
+      model: 'gemini-3.6-flash',
+      provider: 'vertexai',
+      userId: 'professional-38-user',
+    });
+
+    const result = await model.switchProfessionalModel('gemini-3.8-flash', 'admin-38');
+    const [agent] = await serverDB.select().from(agents);
+
+    expect(result.targetModel).toEqual({ model: 'gemini-3.8-flash', provider: 'vertexai' });
+    expect(result.config.agent[0]).toMatchObject({
+      displayName: 'COTTI-专业',
+      model: 'gemini-3.8-flash',
+    });
+    expect(agent).toMatchObject({
+      chatConfig: { thinkingLevel3: 'low', urlContext: true },
+      model: 'gemini-3.8-flash',
     });
   });
 });

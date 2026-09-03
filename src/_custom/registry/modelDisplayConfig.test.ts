@@ -6,6 +6,7 @@ import {
   applyModelDisplayConfig,
   getCottiProfessionalModel,
   getModelDisplayDefault,
+  isCottiProfessionalChannel,
   resolveModelDisplayTargetModel,
   switchCottiProfessionalModelInConfig,
 } from './modelDisplayConfig';
@@ -153,6 +154,25 @@ const professionalConfig: ModelDisplayConfig = {
 };
 
 describe('COTTI professional model channel', () => {
+  it('distinguishes a branded professional channel from an independently displayed model', () => {
+    expect(
+      isCottiProfessionalChannel({
+        displayName: 'COTTI-专业',
+        enabled: true,
+        model: 'gemini-3.8-flash',
+        provider: 'vertexai',
+      }),
+    ).toBe(true);
+    expect(
+      isCottiProfessionalChannel({
+        displayName: 'Gemini 3.8 Flash',
+        enabled: true,
+        model: 'gemini-3.8-flash',
+        provider: 'vertexai',
+      }),
+    ).toBe(false);
+  });
+
   it('resolves the model backing the professional channel', () => {
     expect(getCottiProfessionalModel(professionalConfig)).toEqual({
       model: 'gemini-3.6-flash',
@@ -176,27 +196,61 @@ describe('COTTI professional model channel', () => {
     });
   });
 
-  it('collapses stale 3.6 and 3.7 rows into one visible professional channel', () => {
+  it('switches the branded channel without removing independently displayed candidates', () => {
     const next = switchCottiProfessionalModelInConfig(
       {
         ...professionalConfig,
         agent: [
           ...professionalConfig.agent,
-          { enabled: true, model: 'gemini-3.7-flash', provider: 'vertexai' },
+          {
+            displayName: 'Gemini 3.8 Flash',
+            enabled: true,
+            model: 'gemini-3.8-flash',
+            provider: 'vertexai',
+          },
         ],
       },
       'gemini-3.7-flash',
     );
 
-    expect(
-      next.agent.filter(
-        ({ model }) => model === 'gemini-3.6-flash' || model === 'gemini-3.7-flash',
-      ),
-    ).toEqual([
+    expect(next.agent.filter(({ provider }) => provider === 'vertexai')).toEqual([
       {
         displayName: 'COTTI-专业',
         enabled: true,
         model: 'gemini-3.7-flash',
+        provider: 'vertexai',
+      },
+      {
+        displayName: 'Gemini 3.8 Flash',
+        enabled: true,
+        model: 'gemini-3.8-flash',
+        provider: 'vertexai',
+      },
+    ]);
+  });
+
+  it('promotes an independent target row into the professional channel without duplicates', () => {
+    const next = switchCottiProfessionalModelInConfig(
+      {
+        ...professionalConfig,
+        chat: [
+          ...professionalConfig.chat,
+          {
+            displayName: 'Gemini 3.8 Flash',
+            enabled: true,
+            model: 'gemini-3.8-flash',
+            provider: 'vertexai',
+          },
+        ],
+      },
+      'gemini-3.8-flash',
+    );
+
+    expect(next.chat.filter(({ model }) => model === 'gemini-3.8-flash')).toEqual([
+      {
+        displayName: 'COTTI-专业',
+        enabled: true,
+        model: 'gemini-3.8-flash',
         provider: 'vertexai',
       },
     ]);

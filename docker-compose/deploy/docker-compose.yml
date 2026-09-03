@@ -122,17 +122,22 @@ services:
       - lobe-network
 
   searxng:
-    image: searxng/searxng
+    # SearXNG 2026.9.1-18af21159. Keep the digest pinned so a container restart
+    # cannot silently introduce an incompatible engine/configuration change.
+    image: docker.io/searxng/searxng:2026.9.1-18af21159@sha256:c7cc75852051bf6254afda6ed1b920dd1677d8efe4ab141bf558f02e582f4371
     container_name: lobe-searxng
     volumes:
-      - './searxng-settings.yml:/etc/searxng/settings.yml'
-    environment:
-      - 'SEARXNG_SETTINGS_FILE=/etc/searxng/settings.yml'
-    restart: always
+      - './searxng-settings.yml:/etc/searxng/settings.yml:ro'
+      - 'searxng-cache:/var/cache/searxng'
+    healthcheck:
+      test: ['CMD-SHELL', 'nc -w 2 127.0.0.1 8080 </dev/null >/dev/null 2>&1 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
     networks:
       - lobe-network
-    env_file:
-      - .env
 
 networks:
   lobe-network:
@@ -142,4 +147,6 @@ volumes:
   redis_data:
     driver: local
   rustfs-data:
+    driver: local
+  searxng-cache:
     driver: local

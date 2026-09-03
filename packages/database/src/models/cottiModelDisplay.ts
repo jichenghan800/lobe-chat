@@ -1,8 +1,7 @@
-import { and, count, eq, inArray, sql } from 'drizzle-orm';
+import { and, count, eq, sql } from 'drizzle-orm';
 
 import {
   COTTI_MODEL_DISPLAY_DEFAULTS,
-  COTTI_PROFESSIONAL_MODEL_IDS,
   type CottiProfessionalModelId,
   getCottiProfessionalModel,
   getModelDisplayDefault,
@@ -131,22 +130,16 @@ export class CottiModelDisplayModel {
   };
 
   getProfessionalModelStatus = async () => {
-    const [config, [agentCount]] = await Promise.all([
-      this.getConfig(),
-      this.db
-        .select({ value: count() })
-        .from(agents)
-        .where(
-          and(
-            eq(agents.provider, 'vertexai'),
-            inArray(agents.model, [...COTTI_PROFESSIONAL_MODEL_IDS]),
-          ),
-        ),
-    ]);
+    const config = await this.getConfig();
+    const currentModel = getCottiProfessionalModel(config);
+    const [agentCount] = await this.db
+      .select({ value: count() })
+      .from(agents)
+      .where(and(eq(agents.provider, currentModel.provider), eq(agents.model, currentModel.model)));
 
     return {
       affectedAgentCount: agentCount.value,
-      currentModel: getCottiProfessionalModel(config),
+      currentModel,
     };
   };
 
@@ -183,9 +176,10 @@ export class CottiModelDisplayModel {
         })
         .returning();
 
-      const chatConfig =
-        targetModel === 'gemini-3.7-flash'
-          ? sql`CASE
+      const usesThinkingLevel3 =
+        targetModel === 'gemini-3.7-flash' || targetModel === 'gemini-3.8-flash';
+      const chatConfig = usesThinkingLevel3
+        ? sql`CASE
               WHEN ${agents.chatConfig} IS NULL THEN NULL
               WHEN ${agents.chatConfig} ? 'thinkingLevel3'
                 THEN ${agents.chatConfig} - 'thinkingLevel'
@@ -202,7 +196,7 @@ export class CottiModelDisplayModel {
                 )
               ELSE ${agents.chatConfig}
             END`
-          : sql`CASE
+        : sql`CASE
               WHEN ${agents.chatConfig} IS NULL THEN NULL
               WHEN ${agents.chatConfig} ? 'thinkingLevel'
                 THEN ${agents.chatConfig} - 'thinkingLevel3'
@@ -216,10 +210,7 @@ export class CottiModelDisplayModel {
         .update(agents)
         .set({ chatConfig, model: targetModel, updatedAt: now })
         .where(
-          and(
-            eq(agents.provider, 'vertexai'),
-            inArray(agents.model, [...COTTI_PROFESSIONAL_MODEL_IDS]),
-          ),
+          and(eq(agents.provider, previousModel.provider), eq(agents.model, previousModel.model)),
         )
         .returning({ id: agents.id });
 

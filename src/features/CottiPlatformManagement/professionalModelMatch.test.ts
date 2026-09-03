@@ -16,11 +16,17 @@ describe('professional model match field', () => {
           model: 'gemini-3.7-flash',
           provider: 'vertexai',
         },
+        {
+          label: 'Gemini 3.8 Flash',
+          model: 'gemini-3.8-flash',
+          provider: 'vertexai',
+        },
         { label: 'GLM 5.3', model: 'ZHIPU/GLM-5.3', provider: 'qwen' },
       ]),
     ).toEqual([
       { label: 'Gemini 3.6 Flash', value: 'gemini-3.6-flash' },
       { label: 'Gemini 3.7 Flash', value: 'gemini-3.7-flash' },
+      { label: 'Gemini 3.8 Flash', value: 'gemini-3.8-flash' },
     ]);
   });
 });

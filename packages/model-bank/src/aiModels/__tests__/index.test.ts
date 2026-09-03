@@ -100,6 +100,36 @@ describe('knowledgeCutoff backfill', () => {
   });
 });
 
+describe('Gemini 3.8 Flash', () => {
+  it.each([ModelProvider.Google, ModelProvider.VertexAI])(
+    'registers the independent model for %s',
+    (providerId) => {
+      const model = LOBE_DEFAULT_MODEL_LIST.find(
+        (item) => item.providerId === providerId && item.id === 'gemini-3.8-flash',
+      );
+
+      expect(model).toMatchObject({
+        abilities: {
+          functionCall: true,
+          reasoning: true,
+          search: true,
+          vision: true,
+        },
+        contextWindowTokens: 1_114_112,
+        generation: 'gemini-3.8',
+        knowledgeCutoff: '2026-03',
+        maxOutput: 65_536,
+        settings: {
+          disabledParams: ['frequency_penalty', 'presence_penalty', 'temperature', 'top_p'],
+          extendParams: ['thinkingLevel3', 'urlContext'],
+          searchImpl: 'params',
+          searchProvider: 'google',
+        },
+      });
+    },
+  );
+});
+
 describe('ChatGPT subscription models', () => {
   it('advertises reasoning replay support', () => {
     const models = LOBE_DEFAULT_MODEL_LIST.filter(

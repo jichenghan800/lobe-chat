@@ -157,6 +157,7 @@ describe('cotti.modelDisplay router', () => {
           serverModelLists: [
             { displayName: 'Gemini 3.6 Flash', id: 'gemini-3.6-flash', type: 'chat' },
             { displayName: 'Gemini 3.7 Flash', id: 'gemini-3.7-flash', type: 'chat' },
+            { displayName: 'Gemini 3.8 Flash', id: 'gemini-3.8-flash', type: 'chat' },
             { displayName: 'Fast', id: 'gemini-3.5-flash-lite', type: 'chat' },
           ],
         },
@@ -179,6 +180,12 @@ describe('cotti.modelDisplay router', () => {
             displayName: 'Gemini 3.7 Flash',
             label: 'Gemini 3.7 Flash (vertexai/gemini-3.7-flash)',
             model: 'gemini-3.7-flash',
+            provider: 'vertexai',
+          },
+          {
+            displayName: 'Gemini 3.8 Flash',
+            label: 'Gemini 3.8 Flash (vertexai/gemini-3.8-flash)',
+            model: 'gemini-3.8-flash',
             provider: 'vertexai',
           },
         ],

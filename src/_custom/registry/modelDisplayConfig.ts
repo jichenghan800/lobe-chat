@@ -21,7 +21,11 @@ const normalizeModelKey = (provider: string, model: string) =>
 
 export const COTTI_PROFESSIONAL_DISPLAY_NAME = 'COTTI-专业';
 
-export const COTTI_PROFESSIONAL_MODEL_IDS = ['gemini-3.6-flash', 'gemini-3.7-flash'] as const;
+export const COTTI_PROFESSIONAL_MODEL_IDS = [
+  'gemini-3.6-flash',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash',
+] as const;
 
 export type CottiProfessionalModelId = (typeof COTTI_PROFESSIONAL_MODEL_IDS)[number];
 
@@ -63,19 +67,22 @@ export const isCottiProfessionalModel = (
   modelRef.provider.trim().toLowerCase() === 'vertexai' &&
   (COTTI_PROFESSIONAL_MODEL_IDS as readonly string[]).includes(modelRef.model.trim().toLowerCase());
 
-export const getCottiProfessionalModel = (config: ModelDisplayConfig): ModelDisplayModelRef => {
-  const defaultAgent = normalizeModelDisplayRef(config.defaults?.agent);
-  if (defaultAgent && isCottiProfessionalModel(defaultAgent)) return defaultAgent;
+export const isCottiProfessionalChannel = (
+  item: ModelDisplayItem,
+): item is ModelDisplayItem & { model: CottiProfessionalModelId } =>
+  item.displayName?.trim() === COTTI_PROFESSIONAL_DISPLAY_NAME && isCottiProfessionalModel(item);
 
+export const getCottiProfessionalModel = (config: ModelDisplayConfig): ModelDisplayModelRef => {
   for (const scope of ['agent', 'chat'] as const satisfies ModelDisplayScope[]) {
     const brandedItem = config[scope].find(
-      (item) =>
-        item.enabled &&
-        item.displayName?.trim() === COTTI_PROFESSIONAL_DISPLAY_NAME &&
-        isCottiProfessionalModel(item),
+      (item) => item.enabled && isCottiProfessionalChannel(item),
     );
     if (brandedItem) return { model: brandedItem.model, provider: brandedItem.provider };
   }
+
+  // Historical configurations may predate the stable COTTI display name.
+  const defaultAgent = normalizeModelDisplayRef(config.defaults?.agent);
+  if (defaultAgent && isCottiProfessionalModel(defaultAgent)) return defaultAgent;
 
   return COTTI_MODEL_DISPLAY_DEFAULTS.agent;
 };
@@ -94,10 +101,15 @@ export const switchCottiProfessionalModelInConfig = (
 
   for (const scope of ['agent', 'chat'] as const satisfies ModelDisplayScope[]) {
     const items = config[scope];
-    const firstCandidateIndex = items.findIndex(isCottiProfessionalModel);
-    const withoutCandidates = items.filter((item) => !isCottiProfessionalModel(item));
-    const insertIndex = firstCandidateIndex < 0 ? withoutCandidates.length : firstCandidateIndex;
-    const nextItems = [...withoutCandidates];
+    const channelIndex = items.findIndex(isCottiProfessionalChannel);
+    const shouldKeepItem = (item: ModelDisplayItem) =>
+      !isCottiProfessionalChannel(item) && !isSameModelDisplayRef(item, target);
+    const withoutChannelOrTarget = items.filter(shouldKeepItem);
+    const insertIndex =
+      channelIndex < 0
+        ? withoutChannelOrTarget.length
+        : items.slice(0, channelIndex).filter(shouldKeepItem).length;
+    const nextItems = [...withoutChannelOrTarget];
 
     nextItems.splice(insertIndex, 0, {
       displayName: COTTI_PROFESSIONAL_DISPLAY_NAME,
