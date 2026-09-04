@@ -53,14 +53,17 @@ done
 [[ -z "$(read_env COTTI_AI_ACCESS_MANAGEMENT_ENABLED)" ]] \
   || fail "COTTI_AI_ACCESS_MANAGEMENT_ENABLED must remain unset in production"
 [[ "$(read_env REDIS_URL)" =~ ^rediss?:// ]] || fail "REDIS_URL must include redis:// or rediss://"
+for key in NEXT_PUBLIC_MODEL_DISPLAY_NAMES VERTEXAI_MODEL_LIST AZURE_MODEL_LIST \
+  VOLCENGINE_MODEL_LIST QWEN_MODEL_LIST; do
+  require_env_value "$key" "existing production model configuration"
+  printf '%s=%s\n' "$key" "$(read_env "$key")"
+done
 
 echo
 echo "== 4. Non-secret release configuration =="
 for key in \
   NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS NEXT_PUBLIC_COTTI_FEISHU_SUPPORT_URL \
-  NEXT_PUBLIC_MODEL_VISIBLE_ALLOW \
-  NEXT_PUBLIC_MODEL_DISPLAY_NAMES VERTEXAI_MODEL_LIST AZURE_MODEL_LIST \
-  VOLCENGINE_MODEL_LIST QWEN_MODEL_LIST COTTI_AGENT_ACCESS_MODE AUTH_SSO_PROVIDERS; do
+  NEXT_PUBLIC_MODEL_VISIBLE_ALLOW COTTI_AGENT_ACCESS_MODE AUTH_SSO_PROVIDERS; do
   value="$(awk -F= -v key="$key" '$1 == key { value=substr($0,index($0,"=")+1) } END { print value }' "$RELEASE_CONFIG_FILE")"
   [[ -n "$value" ]] || fail "release-config.env is missing $key"
   printf '%s=%s\n' "$key" "$value"

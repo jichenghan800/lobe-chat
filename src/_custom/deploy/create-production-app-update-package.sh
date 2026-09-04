@@ -85,7 +85,7 @@ EOF
 # Only non-secret product/runtime settings are staged. Production credentials
 # remain in /opt/lobechat-main/.env and are checked, never copied from dev.
 awk -F= '
-  /^NEXT_PUBLIC_[A-Z0-9_]+=/ ||
+  (/^NEXT_PUBLIC_[A-Z0-9_]+=/ && $1 != "NEXT_PUBLIC_MODEL_DISPLAY_NAMES") ||
   /^AI_IMAGE_DEFAULT_IMAGE_NUM=/ ||
   /^COTTI_AGENT_ACCESS_MODE=/ ||
   /^COTTI_AUDIT_RISK_MODEL(_PROVIDER)?=/ ||
@@ -93,7 +93,6 @@ awk -F= '
   /^COMPOSIO_AUTH_CONFIG_IDS=/ ||
   /^AUTH_SSO_PROVIDERS=/ ||
   /^ENABLED_[A-Z0-9_]+=/ ||
-  /^[A-Z0-9_]+_MODEL_LIST=/ ||
   /^DEFAULT_AGENT_CONFIG=/ ||
   /^SYSTEM_AGENT=/ {
     print

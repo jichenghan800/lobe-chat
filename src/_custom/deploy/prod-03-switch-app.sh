@@ -78,6 +78,25 @@ while IFS='=' read -r key value; do
   set_env "$ENV_FILE" "$key" "$value"
 done < "$RELEASE_CONFIG_FILE"
 
+# Model lists are server-owned configuration. Preserve every production entry
+# and add only the models delivered by this release.
+append_env_csv_entry \
+  QWEN_MODEL_LIST \
+  qwen3.8-max-0902 \
+  '+qwen3.8-max-0902=千问3.8-Max<1000000:reasoning:vision:fc:video:search>'
+append_env_csv_entry \
+  VERTEXAI_MODEL_LIST \
+  gemini-3.8-flash \
+  'gemini-3.8-flash=Gemini 3.8 Flash<1114112:reasoning:vision:fc:video:search>'
+append_env_csv_entry \
+  NEXT_PUBLIC_MODEL_DISPLAY_NAMES \
+  qwen/qwen3.8-max-0902 \
+  'qwen/qwen3.8-max-0902=千问3.8-Max'
+append_env_csv_entry \
+  NEXT_PUBLIC_MODEL_DISPLAY_NAMES \
+  vertexai/gemini-3.8-flash \
+  'vertexai/gemini-3.8-flash=Gemini 3.8 Flash'
+
 set_env "$ENV_FILE" LOBECHAT_IMAGE "$TARGET_IMAGE"
 set_env "$ENV_FILE" LOBECHAT_IMAGE_DIGEST "$TARGET_DIGEST"
 set_env "$ENV_FILE" SEARXNG_IMAGE "$SEARXNG_IMAGE"

@@ -75,6 +75,31 @@ set_env() {
   mv "$tmp" "$file"
 }
 
+append_env_csv_entry() {
+  local key="$1"
+  local identity="$2"
+  local entry="$3"
+  local current item normalized
+  local -a items=()
+
+  current="$(read_env "$key")"
+  IFS=',' read -r -a items <<< "$current"
+  for item in "${items[@]}"; do
+    normalized="${item#+}"
+    normalized="${normalized#-}"
+    normalized="${normalized%%=*}"
+    if [[ "$normalized" == "$identity" ]]; then
+      return
+    fi
+  done
+
+  if [[ -n "$current" ]]; then
+    set_env "$ENV_FILE" "$key" "$current,$entry"
+  else
+    set_env "$ENV_FILE" "$key" "$entry"
+  fi
+}
+
 mask_value() {
   local value="$1"
   if [[ -z "$value" ]]; then

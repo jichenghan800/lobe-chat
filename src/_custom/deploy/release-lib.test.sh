@@ -40,6 +40,19 @@ RELEASE_CONFIG_FILE="$TEST_DIR/missing-release-config.env"
 # shellcheck source=release-lib.sh
 source "$ROOT_DIR/src/_custom/deploy/release-lib.sh"
 
+set_env "$ENV_FILE" QWEN_MODEL_LIST '-all,+qwen3.7-plus=千问3.7-Plus<262144:reasoning:search>'
+append_env_csv_entry \
+  QWEN_MODEL_LIST \
+  qwen3.8-max-0902 \
+  '+qwen3.8-max-0902=千问3.8-Max<1000000:reasoning:vision:fc:video:search>'
+append_env_csv_entry \
+  QWEN_MODEL_LIST \
+  qwen3.8-max-0902 \
+  '+qwen3.8-max-0902=千问3.8-Max<1000000:reasoning:vision:fc:video:search>'
+model_list="$(read_env QWEN_MODEL_LIST)"
+grep -Fq '+qwen3.7-plus=千问3.7-Plus' <<< "$model_list"
+[[ "$(grep -o 'qwen3.8-max-0902' <<< "$model_list" | wc -l)" == "1" ]]
+
 db_scalar() {
   # Simulate docker compose exec attempting to consume its inherited stdin.
   local ignored
