@@ -31,6 +31,8 @@ if grep -Fq '172.21.0.1' "$MARKET_WARP_ROUTER"; then
   echo 'Market WARP router still hard-codes the development Docker gateway' >&2
   exit 1
 fi
+grep -Fq -- '--comment "LobeHub Market redsocks" -j ACCEPT' "$MARKET_WARP_ROUTER"
+grep -Fq 'remove_input_hooks' "$MARKET_WARP_ROUTER"
 grep -Fq 'wait_for_searxng_health' "$SWITCH_SCRIPT"
 grep -Fq 'verify_searxng_search' "$SWITCH_SCRIPT"
 

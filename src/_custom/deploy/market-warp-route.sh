@@ -54,11 +54,24 @@ remove_prerouting_hooks() {
   done
 }
 
+remove_input_hooks() {
+  local rule_number
+  while true; do
+    rule_number="$(
+      iptables -L INPUT --line-numbers -n 2>/dev/null \
+        | awk '/LobeHub Market redsocks/ { print $1; exit }'
+    )"
+    [[ -z "$rule_number" ]] && break
+    iptables -D INPUT "$rule_number"
+  done
+}
+
 install_rules() {
-  local details bridge subnet
+  local details bridge subnet gateway
   mapfile -t details < <(docker_network_details)
   bridge="${details[0]}"
   subnet="${details[1]}"
+  gateway="${details[2]}"
 
   iptables -t nat -N "$IPTABLES_CHAIN" 2>/dev/null || true
   iptables -t nat -F "$IPTABLES_CHAIN"
@@ -69,11 +82,16 @@ install_rules() {
   remove_prerouting_hooks
   iptables -t nat -I PREROUTING 1 -i "$bridge" -s "$subnet" \
     -m comment --comment "LobeHub Market containers" -j "$IPTABLES_CHAIN"
+  remove_input_hooks
+  iptables -I INPUT 1 -i "$bridge" -s "$subnet" -d "$gateway" \
+    -p tcp --dport "$REDSOCKS_PORT" \
+    -m comment --comment "LobeHub Market redsocks" -j ACCEPT
   log "Installed HTTPS routing on $bridge ($subnet)"
 }
 
 stop_routing() {
   remove_prerouting_hooks
+  remove_input_hooks
   iptables -t nat -F "$IPTABLES_CHAIN" 2>/dev/null || true
   iptables -t nat -X "$IPTABLES_CHAIN" 2>/dev/null || true
   ipset destroy "$IPSET_NAME" 2>/dev/null || true
@@ -93,6 +111,7 @@ case "${1:-refresh}" in
     systemctl is-active redsocks
     ipset list "$IPSET_NAME"
     iptables -t nat -S "$IPTABLES_CHAIN"
+    iptables -S INPUT | grep -F 'LobeHub Market redsocks'
     ;;
   *)
     echo "Usage: $0 {start|refresh|stop|status}" >&2
