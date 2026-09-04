@@ -148,6 +148,28 @@ WantedBy=timers.target
 EOF
 
 systemctl daemon-reload
+warp-cli disconnect
+
+# Full-tunnel WARP owns 127.0.2.2/127.0.2.3. Release those listeners before
+# systemd-resolved starts, otherwise Docker keeps forwarding to dead endpoints
+# after WARP enters proxy mode.
+rm -f /etc/resolv.conf
+ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+DIRECT_DNS_READY=0
+for _ in $(seq 1 15); do
+  systemctl restart systemd-resolved
+  if ss -lunp | grep -F '127.0.2.2:53' | grep -Fq 'systemd-resolve' \
+    && ss -lunp | grep -F '127.0.2.3:53' | grep -Fq 'systemd-resolve'; then
+    DIRECT_DNS_READY=1
+    break
+  fi
+  sleep 2
+done
+[[ "$DIRECT_DNS_READY" == "1" ]] \
+  || fail "systemd-resolved could not take over Docker-compatible DNS listeners"
+getent ahostsv4 market.lobehub.com >/dev/null
+getent ahostsv4 login.microsoftonline.com >/dev/null
+
 warp-cli proxy port "$WARP_PROXY_PORT"
 warp-cli mode proxy
 warp-cli connect
@@ -161,19 +183,10 @@ for _ in $(seq 1 30); do
   sleep 2
 done
 [[ "$WARP_READY" == "1" ]] || fail "WARP SOCKS5 proxy did not become ready"
-
-# WARP owns 127.0.2.2/127.0.2.3 in full-tunnel mode. Restart resolved only
-# after proxy mode releases those addresses so Docker's cached upstream DNS
-# endpoints can be rebound by DNSStubListenerExtra.
-rm -f /etc/resolv.conf
-ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-systemctl restart systemd-resolved
 for listener in 127.0.2.2 127.0.2.3; do
-  ss -lun | grep -Fq "${listener}:53" \
+  ss -lunp | grep -F "${listener}:53" | grep -Fq 'systemd-resolve' \
     || fail "systemd-resolved did not bind Docker-compatible DNS listener $listener"
 done
-getent ahostsv4 market.lobehub.com >/dev/null
-getent ahostsv4 login.microsoftonline.com >/dev/null
 
 WARP_MARKET_READY=0
 for _ in $(seq 1 10); do

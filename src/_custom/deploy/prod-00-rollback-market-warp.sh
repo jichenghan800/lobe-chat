@@ -17,6 +17,7 @@ fi
 /usr/local/sbin/lobehub-market-warp stop >/dev/null 2>&1 || true
 systemctl disable --now lobehub-market-warp-refresh.timer lobehub-market-warp.service >/dev/null 2>&1 || true
 systemctl disable --now redsocks >/dev/null 2>&1 || true
+warp-cli disconnect >/dev/null 2>&1 || true
 
 MANAGED_PATHS=(
   /etc/default/lobehub-market-warp

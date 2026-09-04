@@ -25,7 +25,8 @@ grep -Fq 'MARKET_WARP_DOCKER_NETWORK:-lobechat_prod' "$MARKET_WARP_INSTALLER"
 grep -Fq 'WARP SOCKS5 proxy cannot reach LobeHub Market' "$MARKET_WARP_INSTALLER"
 grep -Fq 'production app cannot reach LobeHub Market through WARP' "$MARKET_WARP_INSTALLER"
 grep -Fq 'trap rollback_on_exit EXIT' "$MARKET_WARP_INSTALLER"
-grep -Fq 'after proxy mode releases those addresses' "$MARKET_WARP_INSTALLER"
+grep -Fq 'Release those listeners before' "$MARKET_WARP_INSTALLER"
+grep -Fq 'systemd-resolved could not take over Docker-compatible DNS listeners' "$MARKET_WARP_INSTALLER"
 if grep -Fq '172.21.0.1' "$MARKET_WARP_ROUTER"; then
   echo 'Market WARP router still hard-codes the development Docker gateway' >&2
   exit 1
