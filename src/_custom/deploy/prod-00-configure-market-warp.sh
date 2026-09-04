@@ -57,11 +57,15 @@ write_release_state_value MARKET_WARP_BACKUP_DIR "$BACKUP_DIR"
 write_release_state_value MARKET_WARP_PREVIOUS_MODE "$PREVIOUS_WARP_MODE"
 write_release_state_value MARKET_WARP_UPDATED 0
 
-rollback_on_error() {
-  echo "Market WARP setup failed; restoring the previous host network mode." >&2
-  AUTO_APPROVE=1 bash "$SCRIPT_DIR/prod-00-rollback-market-warp.sh" || true
+SETUP_COMPLETE=0
+rollback_on_exit() {
+  local status="$?"
+  if [[ "$status" != "0" && "$SETUP_COMPLETE" != "1" ]]; then
+    echo "Market WARP setup failed; restoring the previous host network mode." >&2
+    AUTO_APPROVE=1 bash "$SCRIPT_DIR/prod-00-rollback-market-warp.sh" || true
+  fi
 }
-trap rollback_on_error ERR
+trap rollback_on_exit EXIT
 
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y ipset redsocks
@@ -143,10 +147,7 @@ Unit=lobehub-market-warp-refresh.service
 WantedBy=timers.target
 EOF
 
-rm -f /etc/resolv.conf
-ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 systemctl daemon-reload
-systemctl restart systemd-resolved
 warp-cli proxy port "$WARP_PROXY_PORT"
 warp-cli mode proxy
 warp-cli connect
@@ -160,6 +161,19 @@ for _ in $(seq 1 30); do
   sleep 2
 done
 [[ "$WARP_READY" == "1" ]] || fail "WARP SOCKS5 proxy did not become ready"
+
+# WARP owns 127.0.2.2/127.0.2.3 in full-tunnel mode. Restart resolved only
+# after proxy mode releases those addresses so Docker's cached upstream DNS
+# endpoints can be rebound by DNSStubListenerExtra.
+rm -f /etc/resolv.conf
+ln -s /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+systemctl restart systemd-resolved
+for listener in 127.0.2.2 127.0.2.3; do
+  ss -lun | grep -Fq "${listener}:53" \
+    || fail "systemd-resolved did not bind Docker-compatible DNS listener $listener"
+done
+getent ahostsv4 market.lobehub.com >/dev/null
+getent ahostsv4 login.microsoftonline.com >/dev/null
 
 WARP_MARKET_READY=0
 for _ in $(seq 1 10); do
@@ -181,8 +195,6 @@ echo "warp_market_http=$WARP_MARKET_STATUS"
 systemctl enable --now redsocks
 systemctl enable --now lobehub-market-warp.service lobehub-market-warp-refresh.timer
 
-getent ahostsv4 market.lobehub.com >/dev/null
-getent ahostsv4 login.microsoftonline.com >/dev/null
 /usr/local/sbin/lobehub-market-warp status >/dev/null
 APP_MARKET_READY=0
 for attempt in $(seq 1 6); do
@@ -211,7 +223,8 @@ if [[ "$APP_MARKET_READY" != "1" ]]; then
   fail "production app cannot reach LobeHub Market through WARP"
 fi
 write_release_state_value MARKET_WARP_UPDATED 1
-trap - ERR
+SETUP_COMPLETE=1
+trap - EXIT
 
 echo "Market-only WARP routing enabled on $DOCKER_NETWORK ($NETWORK_SUBNET, gateway $NETWORK_GATEWAY)."
 echo "Backup: $BACKUP_DIR"
