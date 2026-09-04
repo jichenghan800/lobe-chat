@@ -14,6 +14,10 @@ const provider: GenericProviderDefinition<{
       clientSecret: env.AUTH_GENERIC_OIDC_SECRET,
       issuer: env.AUTH_GENERIC_OIDC_ISSUER,
       overrides: {
+        // Cotti AI Portal registers confidential clients with client_secret_basic.
+        // Better Auth otherwise defaults to client_secret_post and the token endpoint
+        // rejects the authorization code exchange as an invalid client.
+        authentication: 'basic',
         /**
          * Mirror NextAuth's fallback that prefers name -> username -> email so Better Auth never
          * fails with name_is_missing when upstream profiles only expose username/email fields.

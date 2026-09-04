@@ -1,6 +1,7 @@
 import { TRPCError } from '@trpc/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CottiAiIdentityConflictError } from '@/database/models/cottiAiAccess';
 import type { LobeChatDatabase } from '@/database/type';
 import * as betterAuthConfig from '@/libs/better-auth/utils/config';
 import * as oidcAccessControl from '@/libs/oidc-provider/access-control';
@@ -142,5 +143,130 @@ describe('COTTI registered-user login control', () => {
     expect(deleteSecondarySession).toHaveBeenCalledWith('token-2');
     expect(deleteSecondarySession).toHaveBeenCalledWith('active-sessions-target-user');
     expect(revokeOIDC).toHaveBeenCalledWith(db, 'target-user');
+  });
+});
+
+describe('COTTI AI access management environment isolation', () => {
+  it('does not query the development identity schema when the flag is absent', async () => {
+    vi.stubEnv('AUTH_ALLOWED_EMAILS', '');
+    vi.stubEnv('COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS', '');
+    vi.stubEnv('COTTI_AI_ACCESS_MANAGEMENT_ENABLED', '');
+    const assertSchemaReady = vi.fn();
+    const list = vi.fn();
+    const service = new CottiPeopleManagementService({} as LobeChatDatabase, 'admin-user', {
+      cottiAiAccessModel: { assertSchemaReady, list } as never,
+      loginAccessModel: {
+        getSettings: vi.fn().mockResolvedValue(undefined),
+        listRules: vi.fn().mockResolvedValue([]),
+      } as never,
+      platformAdminModel: { list: vi.fn().mockResolvedValue([]) } as never,
+      userLoginControlModel: { listDisabled: vi.fn().mockResolvedValue([]) } as never,
+    });
+
+    await expect(service.getDetail()).resolves.toMatchObject({
+      cottiAiAccessManagementEnabled: false,
+      cottiAiAccessMembers: [],
+    });
+    expect(assertSchemaReady).not.toHaveBeenCalled();
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it('validates the identity schema before loading development members', async () => {
+    vi.stubEnv('AUTH_ALLOWED_EMAILS', '');
+    vi.stubEnv('COTTI_PLATFORM_ANALYTICS_ADMIN_EMAILS', '');
+    vi.stubEnv('COTTI_AI_ACCESS_MANAGEMENT_ENABLED', '1');
+    const members = [{ id: 'cai_member_123' }];
+    const assertSchemaReady = vi.fn().mockResolvedValue(undefined);
+    const list = vi.fn().mockResolvedValue(members);
+    const service = new CottiPeopleManagementService({} as LobeChatDatabase, 'admin-user', {
+      cottiAiAccessModel: { assertSchemaReady, list } as never,
+      loginAccessModel: {
+        getSettings: vi.fn().mockResolvedValue(undefined),
+        listRules: vi.fn().mockResolvedValue([]),
+      } as never,
+      platformAdminModel: { list: vi.fn().mockResolvedValue([]) } as never,
+      userLoginControlModel: { listDisabled: vi.fn().mockResolvedValue([]) } as never,
+    });
+
+    await expect(service.getDetail()).resolves.toMatchObject({
+      cottiAiAccessManagementEnabled: true,
+      cottiAiAccessMembers: members,
+    });
+    expect(assertSchemaReady).toHaveBeenCalledOnce();
+    expect(list).toHaveBeenCalledOnce();
+    expect(assertSchemaReady.mock.invocationCallOrder[0]).toBeLessThan(
+      list.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('rejects development-only mutations when the flag is absent', async () => {
+    vi.stubEnv('COTTI_AI_ACCESS_MANAGEMENT_ENABLED', '');
+    const upsert = vi.fn();
+    const service = new CottiPeopleManagementService({} as LobeChatDatabase, 'admin-user', {
+      cottiAiAccessModel: { upsert } as never,
+      loginAccessModel: {} as never,
+      platformAdminModel: {} as never,
+    });
+
+    await expect(
+      service.upsertCottiAiAccessMember({
+        displayName: 'Development member',
+        email: 'member@example.com',
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe('COTTI AI access member editing', () => {
+  beforeEach(() => {
+    vi.stubEnv('COTTI_AI_ACCESS_MANAGEMENT_ENABLED', '1');
+  });
+
+  it('updates both login identities on the same member', async () => {
+    const updated = {
+      authUserId: 'cai_user_123',
+      displayName: 'Updated Member',
+      email: 'updated@example.com',
+      id: 'cai_member_123',
+      phoneE164: '+8613900139000',
+    };
+    const update = vi.fn().mockResolvedValue(updated);
+    const service = new CottiPeopleManagementService({} as LobeChatDatabase, 'admin-user', {
+      cottiAiAccessModel: { update } as never,
+      loginAccessModel: {} as never,
+      platformAdminModel: {} as never,
+    });
+
+    await expect(
+      service.updateCottiAiAccessMember('cai_member_123', {
+        displayName: 'Updated Member',
+        email: 'updated@example.com',
+        phone: '13900139000',
+      }),
+    ).resolves.toEqual(updated);
+    expect(update).toHaveBeenCalledWith('cai_member_123', {
+      displayName: 'Updated Member',
+      email: 'updated@example.com',
+      phone: '13900139000',
+    });
+  });
+
+  it('reports an identity collision without merging accounts', async () => {
+    const update = vi
+      .fn()
+      .mockRejectedValue(new CottiAiIdentityConflictError('Email is already in use'));
+    const service = new CottiPeopleManagementService({} as LobeChatDatabase, 'admin-user', {
+      cottiAiAccessModel: { update } as never,
+      loginAccessModel: {} as never,
+      platformAdminModel: {} as never,
+    });
+
+    await expect(
+      service.updateCottiAiAccessMember('cai_member_123', {
+        displayName: 'Member',
+        email: 'duplicate@example.com',
+      }),
+    ).rejects.toMatchObject({ code: 'CONFLICT', message: 'Email is already in use' });
   });
 });

@@ -27,6 +27,19 @@ export interface CottiDisabledLoginUser extends CottiLoginAccessUser {
   updatedAt: Date | string;
 }
 
+export interface CottiAiAccessMember {
+  authUserId: null | string;
+  createdAt: Date | string;
+  createdBy: null | string;
+  displayName: string;
+  email: null | string;
+  enabled: boolean;
+  id: string;
+  note: null | string;
+  phoneE164: null | string;
+  updatedAt: Date | string;
+}
+
 export interface CottiPlatformAdministrator {
   createdAt: Date | string | null;
   editable: boolean;
@@ -40,6 +53,8 @@ export interface CottiPlatformAdministrator {
 
 export interface CottiPeopleManagementDetail {
   administrators: CottiPlatformAdministrator[];
+  cottiAiAccessManagementEnabled: boolean;
+  cottiAiAccessMembers: CottiAiAccessMember[];
   disabledLoginUsers: CottiDisabledLoginUser[];
   loginAccess: {
     mode: CottiLoginAccessMode;

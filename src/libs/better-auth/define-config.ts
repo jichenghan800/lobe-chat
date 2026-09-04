@@ -195,6 +195,7 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
         enabled: true,
         maxAge: 2 * 60, // Cache duration in seconds
       },
+      expiresIn: 60 * 60 * 24 * 7,
       // Keep a DB-backed fallback when Redis secondary storage entries are unexpectedly missing.
       storeSessionInDatabase: true,
     },

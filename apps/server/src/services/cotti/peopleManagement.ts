@@ -1,6 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { eq, inArray, or } from 'drizzle-orm';
 
+import { CottiAiAccessModel, CottiAiIdentityConflictError } from '@/database/models/cottiAiAccess';
 import {
   CottiLoginAccessModel,
   normalizeCottiLoginAccessValue,
@@ -25,6 +26,13 @@ interface UpsertLoginRuleParams {
   note?: string;
   type: CottiLoginAccessRuleType;
   value: string;
+}
+
+interface UpsertCottiAiAccessMemberParams {
+  displayName: string;
+  email?: string;
+  note?: string;
+  phone?: string;
 }
 
 const parseRegistrationEnvironment = (raw = process.env.AUTH_ALLOWED_EMAILS) => {
@@ -54,7 +62,11 @@ export const isRegistrationAllowedByEnvironment = (
   );
 };
 
+export const isCottiAiAccessManagementEnabled = () =>
+  process.env.COTTI_AI_ACCESS_MANAGEMENT_ENABLED === '1';
+
 export class CottiPeopleManagementService {
+  private cottiAiAccessModel: CottiAiAccessModel;
   private loginAccessModel: CottiLoginAccessModel;
   private platformAdminModel: CottiPlatformAdminModel;
 
@@ -62,11 +74,13 @@ export class CottiPeopleManagementService {
     private db: LobeChatDatabase,
     private userId?: string,
     models?: {
+      cottiAiAccessModel?: CottiAiAccessModel;
       loginAccessModel?: CottiLoginAccessModel;
       platformAdminModel?: CottiPlatformAdminModel;
       userLoginControlModel?: CottiUserLoginControlModel;
     },
   ) {
+    this.cottiAiAccessModel = models?.cottiAiAccessModel ?? new CottiAiAccessModel(db);
     this.loginAccessModel = models?.loginAccessModel ?? new CottiLoginAccessModel(db);
     this.platformAdminModel = models?.platformAdminModel ?? new CottiPlatformAdminModel(db);
     this.userLoginControlModel =
@@ -89,14 +103,26 @@ export class CottiPeopleManagementService {
   }
 
   async getDetail(): Promise<CottiPeopleManagementDetail> {
-    const [settings, databaseRules, databaseAdministrators, disabledLoginUsers] = await Promise.all(
-      [
-        this.loginAccessModel.getSettings(),
-        this.loginAccessModel.listRules(),
-        this.platformAdminModel.list(),
-        this.userLoginControlModel.listDisabled(),
-      ],
-    );
+    const cottiAiAccessManagementEnabled = isCottiAiAccessManagementEnabled();
+    const loadCottiAiAccessMembers = async () => {
+      if (!cottiAiAccessManagementEnabled) return [];
+
+      await this.cottiAiAccessModel.assertSchemaReady();
+      return this.cottiAiAccessModel.list();
+    };
+    const [
+      settings,
+      databaseRules,
+      databaseAdministrators,
+      disabledLoginUsers,
+      cottiAiAccessMembers,
+    ] = await Promise.all([
+      this.loginAccessModel.getSettings(),
+      this.loginAccessModel.listRules(),
+      this.platformAdminModel.list(),
+      this.userLoginControlModel.listDisabled(),
+      loadCottiAiAccessMembers(),
+    ]);
     const loginSource = settings ? 'database' : 'environment';
     const environmentRules = parseRegistrationEnvironment();
     const environmentAdminEmails = [...parseCottiPlatformAdminEmails()].filter(
@@ -167,6 +193,8 @@ export class CottiPeopleManagementService {
 
     return {
       administrators,
+      cottiAiAccessManagementEnabled,
+      cottiAiAccessMembers,
       disabledLoginUsers,
       loginAccess: {
         mode: settings?.mode ?? (environmentRules.length === 0 ? 'open' : 'allowlist'),
@@ -174,6 +202,39 @@ export class CottiPeopleManagementService {
         source: loginSource,
       },
     };
+  }
+
+  async removeCottiAiAccessMember(id: string) {
+    this.requireCottiAiAccessManagement();
+    await this.cottiAiAccessModel.remove(id);
+  }
+
+  async setCottiAiAccessMemberEnabled(id: string, enabled: boolean) {
+    this.requireCottiAiAccessManagement();
+    const member = await this.cottiAiAccessModel.setEnabled(id, enabled);
+    if (!member) throw new TRPCError({ code: 'NOT_FOUND', message: 'COTTI AI member not found' });
+    return member;
+  }
+
+  async upsertCottiAiAccessMember(params: UpsertCottiAiAccessMemberParams) {
+    this.requireCottiAiAccessManagement();
+    return this.cottiAiAccessModel.upsert({ ...params, createdBy: this.userId });
+  }
+
+  async updateCottiAiAccessMember(id: string, params: UpsertCottiAiAccessMemberParams) {
+    this.requireCottiAiAccessManagement();
+    try {
+      const member = await this.cottiAiAccessModel.update(id, params);
+      if (!member) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'COTTI AI member not found' });
+      }
+      return member;
+    } catch (error) {
+      if (error instanceof CottiAiIdentityConflictError) {
+        throw new TRPCError({ code: 'CONFLICT', message: error.message });
+      }
+      throw error;
+    }
   }
 
   async isRegistrationAllowed(email: string) {
@@ -300,6 +361,15 @@ export class CottiPeopleManagementService {
       })
       .from(users)
       .where(or(inArray(users.email, emails), inArray(users.normalizedEmail, emails)));
+  }
+
+  private requireCottiAiAccessManagement() {
+    if (!isCottiAiAccessManagementEnabled()) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'COTTI AI access management is not enabled in this environment',
+      });
+    }
   }
 
   private parseEnvironmentLoginRuleId(

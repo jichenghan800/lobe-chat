@@ -14,6 +14,7 @@ export * from './betterAuth';
 export * from './chatGroup';
 export * from './connector';
 export * from './cottiAgentAccess';
+export * from './cottiAiAuth';
 export * from './cottiAudit';
 export * from './cottiHomeNotification';
 export * from './cottiModelDisplay';

@@ -21,6 +21,8 @@ const run = async (url: string) => {
   return res?.headers.get('x-middleware-rewrite');
 };
 
+const runResponse = async (url: string) => middleware(new NextRequest(url));
+
 describe('defineConfig locale path-traversal hardening', () => {
   it('rewrites a normal locale into /spa-auth/<locale>', async () => {
     const rewrite = await run('http://localhost:3010/signin?hl=ja-JP');
@@ -67,5 +69,18 @@ describe('defineConfig OIDC protocol routes', () => {
 
     expect(rewrite).toBeNull();
     expect(getSession).not.toHaveBeenCalled();
+  });
+});
+
+describe('defineConfig Cotti AI direct SSO entry', () => {
+  it('sends an anonymous protected request directly to the server-side entry', async () => {
+    getSession.mockResolvedValueOnce(null);
+
+    const response = await runResponse('https://chat.cotti.ai/settings?tab=profile');
+    const location = new URL(response!.headers.get('location')!);
+
+    expect(location.origin).toBe('https://chat.cotti.ai');
+    expect(location.pathname).toBe('/auth/cotti-ai-entry');
+    expect(location.searchParams.get('returnTo')).toBe('/settings?tab=profile');
   });
 });

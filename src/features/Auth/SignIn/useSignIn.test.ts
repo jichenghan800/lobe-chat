@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSignIn } from './useSignIn';
@@ -66,6 +66,7 @@ vi.mock('@/business/client/hooks/useBusinessSignin', () => ({
 
 let mockEnableBusinessFeatures = false;
 let mockEnableMagicLink = false;
+let mockOAuthSSOProviders = ['google', 'github'];
 vi.mock('@/features/AuthShell', () => ({
   useAuthServerConfigStore: (selector: (s: any) => any) =>
     selector({
@@ -73,7 +74,7 @@ vi.mock('@/features/AuthShell', () => ({
         disableEmailPassword: false,
         enableBusinessFeatures: mockEnableBusinessFeatures,
         enableMagicLink: mockEnableMagicLink,
-        oAuthSSOProviders: ['google', 'github'],
+        oAuthSSOProviders: mockOAuthSSOProviders,
       },
       serverConfigInit: true,
     }),
@@ -118,6 +119,7 @@ describe('useSignIn', () => {
     mockSearchParamsGet.mockReturnValue(null);
     mockEnableBusinessFeatures = false;
     mockEnableMagicLink = false;
+    mockOAuthSSOProviders = ['google', 'github'];
     mockBusinessSignin.ssoProviders = [];
     mockBusinessSignin.getAdditionalData.mockResolvedValue({});
     mockBusinessSignin.preSocialSigninCheck.mockResolvedValue(true);
@@ -353,6 +355,55 @@ describe('useSignIn', () => {
   });
 
   describe('handleSocialSignIn', () => {
+    it('should automatically start Cotti AI SSO and discard a legacy cross-domain callback', async () => {
+      mockOAuthSSOProviders = ['generic-oidc'];
+      mockSearchParamsGet.mockImplementation((key: string) =>
+        key === 'callbackUrl' ? 'https://chatdev.cotticoffee.com/' : null,
+      );
+      mockSignInOauth2.mockResolvedValue({ url: 'https://auth.cotti.ai/oauth2/authorize' });
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, hostname: 'chat.cotti.ai', href: '' },
+        writable: true,
+      });
+
+      renderHook(() => useSignIn());
+
+      await waitFor(() => expect(mockSignInOauth2).toHaveBeenCalledTimes(1));
+      expect(mockSignInOauth2).toHaveBeenCalledWith(
+        expect.objectContaining({ callbackURL: '/', providerId: 'generic-oidc' }),
+      );
+    });
+
+    it('should not automatically start Cotti AI SSO on the legacy host', async () => {
+      mockOAuthSSOProviders = ['generic-oidc'];
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, hostname: 'chatdev.cotticoffee.com', href: '' },
+        writable: true,
+      });
+
+      renderHook(() => useSignIn());
+
+      await waitFor(() => expect(mockSignInOauth2).not.toHaveBeenCalled());
+    });
+
+    it('should keep the Cotti AI recovery page visible when OAuth reports an error', async () => {
+      mockOAuthSSOProviders = ['generic-oidc'];
+      mockSearchParamsGet.mockImplementation((key: string) =>
+        key === 'error' ? 'invalid_code' : null,
+      );
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, hostname: 'chat.cotti.ai', href: '' },
+        writable: true,
+      });
+
+      renderHook(() => useSignIn());
+
+      await waitFor(() => expect(mockSignInOauth2).not.toHaveBeenCalled());
+    });
+
     it('should call signIn.social for builtin providers', async () => {
       mockSignInSocial.mockResolvedValue({ url: 'https://google.com/auth' });
 

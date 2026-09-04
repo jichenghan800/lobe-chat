@@ -93,6 +93,11 @@ RUN rm -rf src/app/desktop "src/app/(backend)/trpc/desktop"
 # run build standalone for docker version
 RUN npm run build:docker
 
+# Next.js standalone output may copy the build-time dotenv file. Runtime
+# secrets are injected by the container environment and must never be baked
+# into the final image.
+RUN rm -f .next/standalone/.env .next/standalone/.env.*
+
 # Next.js 16.3.1 can omit the ESM half of @swc/helpers from standalone output even
 # though the server runtime imports it. Copy the matching package content and fail
 # the image build early if the runtime helper is still absent.

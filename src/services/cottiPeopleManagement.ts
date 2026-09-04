@@ -17,12 +17,23 @@ class CottiPeopleManagementClientService {
     return lambdaClient.cotti.peopleManagement.removeAdministrator.mutate({ id });
   };
 
+  removeCottiAiAccessMember = async (id: string) => {
+    return lambdaClient.cotti.peopleManagement.removeCottiAiAccessMember.mutate({ id });
+  };
+
   removeLoginRule = async (id: string) => {
     return lambdaClient.cotti.peopleManagement.removeLoginRule.mutate({ id });
   };
 
   setLoginMode = async (mode: CottiLoginAccessMode) => {
     return lambdaClient.cotti.peopleManagement.setLoginMode.mutate({ mode });
+  };
+
+  setCottiAiAccessMemberEnabled = async (id: string, enabled: boolean) => {
+    return lambdaClient.cotti.peopleManagement.setCottiAiAccessMemberEnabled.mutate({
+      enabled,
+      id,
+    });
   };
 
   setLoginRuleEnabled = async (id: string, enabled: boolean) => {
@@ -43,6 +54,27 @@ class CottiPeopleManagementClientService {
     value: string;
   }) => {
     return lambdaClient.cotti.peopleManagement.upsertLoginRule.mutate(params);
+  };
+
+  upsertCottiAiAccessMember = async (params: {
+    displayName: string;
+    email?: string;
+    note?: string;
+    phone?: string;
+  }) => {
+    return lambdaClient.cotti.peopleManagement.upsertCottiAiAccessMember.mutate(params);
+  };
+
+  updateCottiAiAccessMember = async (
+    id: string,
+    params: {
+      displayName: string;
+      email?: string;
+      note?: string;
+      phone?: string;
+    },
+  ) => {
+    return lambdaClient.cotti.peopleManagement.updateCottiAiAccessMember.mutate({ id, ...params });
   };
 }
 

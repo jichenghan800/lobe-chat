@@ -37,6 +37,26 @@ const loginRuleSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
+const cottiAiPhoneSchema = z
+  .string()
+  .trim()
+  .max(30)
+  .refine((value) => {
+    const digits = value.replaceAll(/\D/g, '');
+    return /^1[3-9]\d{9}$/.test(digits) || /^861[3-9]\d{9}$/.test(digits);
+  }, 'Invalid Chinese mobile phone number');
+const cottiAiMemberSchema = z
+  .object({
+    displayName: z.string().trim().min(1).max(100),
+    email: loginEmailSchema.optional(),
+    note: z.string().trim().max(200).optional(),
+    phone: cottiAiPhoneSchema.optional(),
+  })
+  .refine((input) => input.email || input.phone, {
+    message: 'Email or phone is required',
+    path: ['email'],
+  });
+
 const environmentLoginRuleIdSchema = z
   .string()
   .max(350)
@@ -84,6 +104,16 @@ export const cottiPeopleManagementRouter = router({
         wrapMutationError('removeAdministrator', 'Failed to remove platform administrator', error);
       }
     }),
+  removeCottiAiAccessMember: cottiPeopleManagementProcedure
+    .input(z.object({ id: z.string().min(1).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await ctx.peopleManagementService.removeCottiAiAccessMember(input.id);
+        return { message: 'COTTI AI access member removed', success: true };
+      } catch (error) {
+        wrapMutationError('removeCottiAiAccessMember', 'Failed to remove COTTI AI member', error);
+      }
+    }),
   removeLoginRule: cottiPeopleManagementProcedure
     .input(z.object({ id: loginRuleIdSchema }))
     .mutation(async ({ ctx, input }) => {
@@ -102,6 +132,23 @@ export const cottiPeopleManagementRouter = router({
         return { data, message: 'Login access mode updated', success: true };
       } catch (error) {
         wrapMutationError('setLoginMode', 'Failed to update login access mode', error);
+      }
+    }),
+  setCottiAiAccessMemberEnabled: cottiPeopleManagementProcedure
+    .input(z.object({ enabled: z.boolean(), id: z.string().min(1).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const data = await ctx.peopleManagementService.setCottiAiAccessMemberEnabled(
+          input.id,
+          input.enabled,
+        );
+        return { data, message: 'COTTI AI member updated', success: true };
+      } catch (error) {
+        wrapMutationError(
+          'setCottiAiAccessMemberEnabled',
+          'Failed to update COTTI AI member',
+          error,
+        );
       }
     }),
   setLoginRuleEnabled: cottiPeopleManagementProcedure
@@ -146,6 +193,27 @@ export const cottiPeopleManagementRouter = router({
         return { data, message: 'Login access rule saved', success: true };
       } catch (error) {
         wrapMutationError('upsertLoginRule', 'Failed to save login access rule', error);
+      }
+    }),
+  upsertCottiAiAccessMember: cottiPeopleManagementProcedure
+    .input(cottiAiMemberSchema)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const data = await ctx.peopleManagementService.upsertCottiAiAccessMember(input);
+        return { data, message: 'COTTI AI access member saved', success: true };
+      } catch (error) {
+        wrapMutationError('upsertCottiAiAccessMember', 'Failed to save COTTI AI member', error);
+      }
+    }),
+  updateCottiAiAccessMember: cottiPeopleManagementProcedure
+    .input(cottiAiMemberSchema.extend({ id: z.string().min(1).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const { id, ...member } = input;
+        const data = await ctx.peopleManagementService.updateCottiAiAccessMember(id, member);
+        return { data, message: 'COTTI AI access member updated', success: true };
+      } catch (error) {
+        wrapMutationError('updateCottiAiAccessMember', 'Failed to update COTTI AI member', error);
       }
     }),
 });

@@ -15,6 +15,9 @@ vi.mock('antd-style', () => ({
     actionText: 'actionText',
     container: 'container',
     description: 'description',
+    header: 'header',
+    modelId: 'modelId',
+    modelName: 'modelName',
     originalPriceText: 'originalPriceText',
     priceValue: 'priceValue',
     radarClickable: 'radarClickable',
@@ -22,6 +25,12 @@ vi.mock('antd-style', () => ({
     titleText: 'titleText',
   }),
   cssVar: new Proxy({}, { get: (_, token) => `var(--${String(token)})` }),
+}));
+
+vi.mock('@lobehub/icons', () => ({
+  ModelIcon: ({ model }: { model: string }) => (
+    <span data-model={model} data-testid={'model-icon'} />
+  ),
 }));
 
 // recharts needs a measured container — stub the chart with its data flattened to text nodes
@@ -201,6 +210,25 @@ const createEnabledList = (
 ];
 
 describe('ModelDetailPanel pricing', () => {
+  it('renders the model identity before its description and metadata', () => {
+    const { container } = render(
+      <ModelDetailPanel
+        model="gemini-3.8-flash"
+        provider="vertexai"
+        enabledList={createEnabledList('vertexai', textPricing, {
+          description: "Google's most intelligent Flash model.",
+          displayName: 'Gemini 3.8 Flash',
+          id: 'gemini-3.8-flash',
+        })}
+      />,
+    );
+
+    expect(container.querySelector('.modelName')).toHaveTextContent('Gemini 3.8 Flash');
+    expect(container.querySelector('.modelId')).toHaveTextContent('gemini-3.8-flash');
+    expect(screen.getByTestId('model-icon')).toHaveAttribute('data-model', 'gemini-3.8-flash');
+    expect(container.querySelector('.header')?.nextElementSibling).toHaveClass('description');
+  });
+
   it('renders the localized model description when provided', () => {
     const { container } = render(
       <ModelDetailPanel

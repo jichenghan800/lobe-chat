@@ -1,5 +1,5 @@
 import { Form } from 'antd';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 
@@ -16,6 +16,10 @@ import { buildOnboardingRedirectUrl, sanitizeRedirectPath } from '@/utils/onboar
 import { EMAIL_REGEX, USERNAME_REGEX } from './SignInEmailStep';
 
 const LAST_AUTH_PROVIDER_KEY = 'lobehub:auth:last-provider:v1';
+const COTTI_AI_CHAT_HOST = 'chat.cotti.ai';
+
+export const resolveSignInCallbackUrl = (requestedUrl: string | null, hostname: string) =>
+  hostname === COTTI_AI_CHAT_HOST ? '/' : requestedUrl || '/';
 
 type Step = 'email' | 'password' | 'emailSent';
 
@@ -57,6 +61,7 @@ export const useSignIn = () => {
   const [email, setEmail] = useState('');
   const [sentInfo, setSentInfo] = useState<SentEmailInfo | null>(null);
   const [isSocialOnly, setIsSocialOnly] = useState(false);
+  const autoCottiAiSsoStartedRef = useRef(false);
   const [lastAuthProvider] = useState(() => {
     try {
       return localStorage.getItem(LAST_AUTH_PROVIDER_KEY);
@@ -243,55 +248,61 @@ export const useSignIn = () => {
     }
   };
 
-  const handleSocialSignIn = async (provider: string) => {
-    setSocialLoading(provider);
-    const normalizedProvider = normalizeProviderId(provider);
-    await trackLoginOrSignupClicked({
-      provider: normalizedProvider,
-      spm: 'signin.social.click',
-    });
-
-    try {
-      if (enableBusinessFeatures && !(await preSocialSigninCheck())) {
-        setSocialLoading(null);
-        return;
-      }
+  const handleSocialSignIn = useCallback(
+    async (provider: string) => {
+      setSocialLoading(provider);
+      const normalizedProvider = normalizeProviderId(provider);
+      await trackLoginOrSignupClicked({
+        provider: normalizedProvider,
+        spm: 'signin.social.click',
+      });
 
       try {
-        localStorage.setItem(LAST_AUTH_PROVIDER_KEY, provider);
-      } catch {
-        // Ignore localStorage errors (e.g., quota exceeded, private mode)
+        if (enableBusinessFeatures && !(await preSocialSigninCheck())) {
+          setSocialLoading(null);
+          return;
+        }
+
+        try {
+          localStorage.setItem(LAST_AUTH_PROVIDER_KEY, provider);
+        } catch {
+          // Ignore localStorage errors (e.g., quota exceeded, private mode)
+        }
+
+        const callbackUrl = resolveSignInCallbackUrl(
+          searchParams.get('callbackUrl'),
+          window.location.hostname,
+        );
+        // First-time OAuth users are signups — land them on onboarding first
+        const newUserCallbackURL = buildOnboardingRedirectUrl(callbackUrl);
+        const additionalData = await getAdditionalData();
+        const signInWithAdditionalData = async () =>
+          isBuiltinProvider(normalizedProvider)
+            ? await signIn.social({
+                additionalData,
+                callbackURL: callbackUrl,
+                newUserCallbackURL,
+                provider: normalizedProvider,
+              })
+            : await signIn.oauth2({
+                additionalData,
+                callbackURL: callbackUrl,
+                newUserCallbackURL,
+                providerId: normalizedProvider,
+              });
+
+        const result = await signInWithAdditionalData();
+
+        if (result && 'error' in result && result.error) throw result.error;
+      } catch (error) {
+        console.error(`${normalizedProvider} sign in error:`, error);
+        message.error(t('betterAuth.signin.socialError'));
+      } finally {
+        setSocialLoading(null);
       }
-
-      const callbackUrl = searchParams.get('callbackUrl') || '/';
-      // First-time OAuth users are signups — land them on onboarding first
-      const newUserCallbackURL = buildOnboardingRedirectUrl(callbackUrl);
-      const additionalData = await getAdditionalData();
-      const signInWithAdditionalData = async () =>
-        isBuiltinProvider(normalizedProvider)
-          ? await signIn.social({
-              additionalData,
-              callbackURL: callbackUrl,
-              newUserCallbackURL,
-              provider: normalizedProvider,
-            })
-          : await signIn.oauth2({
-              additionalData,
-              callbackURL: callbackUrl,
-              newUserCallbackURL,
-              providerId: normalizedProvider,
-            });
-
-      const result = await signInWithAdditionalData();
-
-      if (result && 'error' in result && result.error) throw result.error;
-    } catch (error) {
-      console.error(`${normalizedProvider} sign in error:`, error);
-      message.error(t('betterAuth.signin.socialError'));
-    } finally {
-      setSocialLoading(null);
-    }
-  };
+    },
+    [enableBusinessFeatures, getAdditionalData, preSocialSigninCheck, searchParams, t],
+  );
 
   const handleBackToEmail = () => {
     setStep('email');
@@ -369,6 +380,26 @@ export const useSignIn = () => {
         return 0;
       })
     : resolvedProviders;
+
+  useEffect(() => {
+    const effectiveServerConfigInit = enableBusinessFeatures ? true : serverConfigInit;
+    const shouldAutoStart =
+      effectiveServerConfigInit &&
+      window.location.hostname === COTTI_AI_CHAT_HOST &&
+      !searchParams.get('error') &&
+      resolvedProviders.includes('generic-oidc');
+
+    if (!shouldAutoStart || autoCottiAiSsoStartedRef.current) return;
+
+    autoCottiAiSsoStartedRef.current = true;
+    void handleSocialSignIn('generic-oidc');
+  }, [
+    enableBusinessFeatures,
+    handleSocialSignIn,
+    resolvedProviders,
+    searchParams,
+    serverConfigInit,
+  ]);
 
   return {
     disableEmailPassword,
