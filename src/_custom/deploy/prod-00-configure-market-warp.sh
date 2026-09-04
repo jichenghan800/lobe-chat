@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/release-lib.sh"
 
 [[ "$EUID" == "0" ]] || fail "Market WARP setup must run as root"
-for command in apt-get docker getent ip iptables ss systemctl tar warp-cli; do
+for command in apt-get curl docker getent ip iptables journalctl ss systemctl tar warp-cli; do
   require_command "$command"
 done
 
@@ -161,23 +161,55 @@ for _ in $(seq 1 30); do
 done
 [[ "$WARP_READY" == "1" ]] || fail "WARP SOCKS5 proxy did not become ready"
 
+WARP_MARKET_READY=0
+for _ in $(seq 1 10); do
+  WARP_MARKET_STATUS="$(
+    curl --socks5-hostname "127.0.0.1:${WARP_PROXY_PORT}" \
+      -sS -o /dev/null --connect-timeout 5 --max-time 20 -w '%{http_code}' \
+      https://market.lobehub.com || true
+  )"
+  if [[ "$WARP_MARKET_STATUS" =~ ^[1-4][0-9][0-9]$ ]]; then
+    WARP_MARKET_READY=1
+    break
+  fi
+  sleep 3
+done
+[[ "$WARP_MARKET_READY" == "1" ]] \
+  || fail "WARP SOCKS5 proxy cannot reach LobeHub Market"
+echo "warp_market_http=$WARP_MARKET_STATUS"
+
 systemctl enable --now redsocks
 systemctl enable --now lobehub-market-warp.service lobehub-market-warp-refresh.timer
 
 getent ahostsv4 market.lobehub.com >/dev/null
 getent ahostsv4 login.microsoftonline.com >/dev/null
 /usr/local/sbin/lobehub-market-warp status >/dev/null
-docker exec "$APP_CONTAINER" /bin/node -e "
-fetch('https://market.lobehub.com', { redirect: 'manual', signal: AbortSignal.timeout(20000) })
-  .then((response) => {
-    console.log('market_http=' + response.status);
-    if (response.status >= 500) process.exit(2);
-  })
-  .catch((error) => {
-    console.error(error.message);
-    process.exit(1);
-  });
-"
+APP_MARKET_READY=0
+for attempt in $(seq 1 6); do
+  if docker exec "$APP_CONTAINER" /bin/node -e "
+  fetch('https://market.lobehub.com', { redirect: 'manual', signal: AbortSignal.timeout(20000) })
+    .then((response) => {
+      console.log('market_http=' + response.status);
+      if (response.status >= 500) process.exit(2);
+    })
+    .catch((error) => {
+      console.error(error.stack || error);
+      if (error.cause) console.error('cause=' + (error.cause.stack || error.cause));
+      process.exit(1);
+    });
+  "; then
+    APP_MARKET_READY=1
+    break
+  fi
+  echo "Market check from app failed (attempt ${attempt}/6); retrying." >&2
+  sleep 5
+done
+if [[ "$APP_MARKET_READY" != "1" ]]; then
+  /usr/local/sbin/lobehub-market-warp status || true
+  iptables -t nat -L "$IPTABLES_CHAIN" -n -v || true
+  journalctl -u redsocks --since '-5 minutes' --no-pager -n 80 || true
+  fail "production app cannot reach LobeHub Market through WARP"
+fi
 write_release_state_value MARKET_WARP_UPDATED 1
 trap - ERR
 
