@@ -1,0 +1,55 @@
+# Keep this file intentionally small. SearXNG merges these overrides with the
+# defaults shipped by the pinned image, which avoids stale engine definitions
+# when the container is upgraded. SEARXNG_SECRET is injected by Compose.
+use_default_settings:
+  engines:
+    keep_only:
+      - arxiv
+      - github
+      - seznam
+      - yandex
+
+general:
+  debug: false
+  instance_name: 'LobeChat Search'
+  enable_metrics: true
+
+search:
+  safe_search: 0
+  autocomplete: ''
+  formats:
+    - html
+    - json
+
+server:
+  bind_address: '0.0.0.0'
+  port: 8080
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  http_protocol_version: '1.0'
+
+outgoing:
+  request_timeout: 8.0
+  max_request_timeout: 15.0
+  pool_connections: 20
+  pool_maxsize: 10
+  enable_http2: false
+  retries: 1
+
+engines:
+  - name: github
+    disabled: false
+    timeout: 8.0
+
+  - name: arxiv
+    disabled: false
+    timeout: 8.0
+
+  - name: seznam
+    disabled: false
+    timeout: 8.0
+
+  - name: yandex
+    disabled: false
+    timeout: 8.0

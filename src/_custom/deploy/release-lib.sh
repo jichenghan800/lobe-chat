@@ -10,6 +10,7 @@ RELEASE_ENV_FILE="${RELEASE_ENV_FILE:-$RELEASE_ASSET_DIR/release.env}"
 RELEASE_CONFIG_FILE="${RELEASE_CONFIG_FILE:-$RELEASE_ASSET_DIR/release-config.env}"
 RELEASE_STATE_FILE="${RELEASE_STATE_FILE:-$RELEASE_ASSET_DIR/release-state.env}"
 APP_CONTAINER="${APP_CONTAINER:-lobechat-app}"
+SEARXNG_CONTAINER="${SEARXNG_CONTAINER:-lobechat-searxng}"
 
 cd "$DEPLOY_DIR"
 
@@ -192,6 +193,44 @@ wait_for_app_health() {
 
   docker logs --tail 160 "$APP_CONTAINER" >&2 || true
   return 1
+}
+
+wait_for_searxng_health() {
+  local status health
+  for _ in $(seq 1 60); do
+    status="$(docker inspect "$SEARXNG_CONTAINER" --format '{{.State.Status}}' 2>/dev/null || true)"
+    health="$(docker inspect "$SEARXNG_CONTAINER" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' 2>/dev/null || true)"
+    if [[ "$status" == "running" && "$health" == "healthy" ]]; then
+      echo "$SEARXNG_CONTAINER is running and healthy"
+      return 0
+    fi
+    if [[ "$status" == "exited" || "$status" == "dead" ]]; then
+      docker logs --tail 160 "$SEARXNG_CONTAINER" >&2 || true
+      return 1
+    fi
+    sleep 2
+  done
+
+  docker logs --tail 160 "$SEARXNG_CONTAINER" >&2 || true
+  return 1
+}
+
+verify_searxng_search() {
+  docker exec "$APP_CONTAINER" /bin/node -e "
+const url = 'http://searxng:8080/search?q=LobeHub&format=json&categories=general';
+fetch(url, { signal: AbortSignal.timeout(20000) })
+  .then(async (response) => {
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const payload = await response.json();
+    const count = Array.isArray(payload.results) ? payload.results.length : 0;
+    console.log('searxng_results=' + count);
+    if (count < 1) process.exit(2);
+  })
+  .catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  });
+"
 }
 
 write_history_fingerprint() {

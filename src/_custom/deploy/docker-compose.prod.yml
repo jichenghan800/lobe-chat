@@ -27,7 +27,7 @@ services:
       qstash:
         condition: service_started
       searxng:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test:
         - CMD-SHELL
@@ -97,17 +97,25 @@ services:
         max-file: ${LOG_MAX_FILE:-3}
 
   searxng:
-    image: ${SEARXNG_IMAGE:-searxng/searxng:latest}
+    image: ${SEARXNG_IMAGE:-docker.io/searxng/searxng:2026.9.1-18af21159@sha256:c7cc75852051bf6254afda6ed1b920dd1677d8efe4ab141bf558f02e582f4371}
     container_name: lobechat-searxng
     restart: unless-stopped
     cpus: ${SEARXNG_CPUS:-0.75}
     mem_limit: ${SEARXNG_MEM_LIMIT:-768m}
     pids_limit: ${SEARXNG_PIDS_LIMIT:-256}
     environment:
-      BASE_URL: https://chat.cotticoffee.com
-      SEARXNG_SETTINGS_FILE: /etc/searxng/settings.yml
+      SEARXNG_BASE_URL: https://chat.cotticoffee.com
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?Set SEARXNG_SECRET in .env}
+      SEARXNG_SETTINGS_PATH: /etc/searxng/settings.yml
     volumes:
       - ./searxng-settings.yml:/etc/searxng/settings.yml:ro
+      - searxng-cache:/var/cache/searxng
+    healthcheck:
+      test: ['CMD-SHELL', 'nc -w 2 127.0.0.1 8080 </dev/null >/dev/null 2>&1 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
     networks:
       - runtime
     logging:
@@ -124,3 +132,5 @@ networks:
 volumes:
   postgresql-data:
     name: lobechat_postgresql_data
+  searxng-cache:
+    name: lobechat_searxng_cache

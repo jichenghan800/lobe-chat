@@ -7,12 +7,14 @@ source "$SCRIPT_DIR/release-lib.sh"
 
 require_command docker
 require_command curl
+require_command openssl
 require_command sha256sum
 require_file "$ENV_FILE"
 require_file "$COMPOSE_FILE"
 require_file "$RELEASE_ENV_FILE"
 require_file "$RELEASE_CONFIG_FILE"
 require_file searxng-settings.yml
+[[ -f "$RELEASE_ASSET_DIR/searxng-settings.yml" ]] || fail "release SearXNG settings are missing"
 require_digest
 
 echo "== 1. Host and Docker runtime =="
@@ -48,6 +50,8 @@ done
 [[ "$(read_env DATABASE_DRIVER)" == "node" ]] || fail "DATABASE_DRIVER must be node"
 [[ "$(read_env AGENT_RUNTIME_MODE)" == "queue" ]] || fail "AGENT_RUNTIME_MODE must be queue"
 [[ "$(read_env APP_URL)" == "https://chat.cotticoffee.com" ]] || fail "APP_URL must be production domain"
+[[ -z "$(read_env COTTI_AI_ACCESS_MANAGEMENT_ENABLED)" ]] \
+  || fail "COTTI_AI_ACCESS_MANAGEMENT_ENABLED must remain unset in production"
 [[ "$(read_env REDIS_URL)" =~ ^rediss?:// ]] || fail "REDIS_URL must include redis:// or rediss://"
 
 echo
@@ -69,6 +73,11 @@ FEISHU_SUPPORT_URL="$(awk -F= '$1 == "NEXT_PUBLIC_COTTI_FEISHU_SUPPORT_URL" { va
 RELEASE_SSO_PROVIDERS="$(awk -F= '$1 == "AUTH_SSO_PROVIDERS" { value=substr($0,index($0,"=")+1) } END { print value }' "$RELEASE_CONFIG_FILE")"
 grep -Eq '(^|,)feishu(,|$)' <<<"$RELEASE_SSO_PROVIDERS" || fail "release must retain Feishu SSO"
 grep -Eq '(^|,)feishu-blue(,|$)' <<<"$RELEASE_SSO_PROVIDERS" || fail "release must enable Feishu Blue SSO"
+RELEASE_QWEN_PROXY_URL="$(awk -F= '$1 == "QWEN_PROXY_URL" { value=substr($0,index($0,"=")+1) } END { print value }' "$RELEASE_CONFIG_FILE")"
+[[ "$RELEASE_QWEN_PROXY_URL" == "https://llm-gvbqtqm25t1leudh.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1" ]] \
+  || fail "QWEN_PROXY_URL must use the approved Singapore endpoint"
+grep -Fq 'qwen3.8-max-0902' "$RELEASE_CONFIG_FILE" || fail "Qwen 3.8 is missing from release configuration"
+grep -Fq 'gemini-3.8-flash' "$RELEASE_CONFIG_FILE" || fail "Gemini 3.8 is missing from release configuration"
 
 NANO_CLIENT_SECRET="$(read_env COTTI_SSO_NANO_CLIENT_SECRET)"
 PPT_CLIENT_SECRET="$(read_env COTTI_SSO_PPT_CLIENT_SECRET)"
@@ -93,8 +102,10 @@ awk '
   in_formats && /^[^[:space:]-]/ { in_formats = 0 }
   in_formats && $0 ~ /^[[:space:]]*-[[:space:]]*json[[:space:]]*$/ { found = 1 }
   END { exit found ? 0 : 1 }
-' searxng-settings.yml || fail "SearXNG JSON format is not enabled"
+' "$RELEASE_ASSET_DIR/searxng-settings.yml" || fail "release SearXNG JSON format is not enabled"
 echo "SearXNG JSON format enabled."
+grep -Fqx "SEARXNG_IMAGE=${SEARXNG_IMAGE:-}" "$RELEASE_ENV_FILE" \
+  || fail "release.env does not pin the expected SearXNG image"
 
 echo
 echo "== 8. Database readiness and capacity =="

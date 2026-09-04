@@ -8,10 +8,10 @@
 - Source release: immutable commit and ACR digest recorded in `release.env`
 - Required services: `app`, `postgresql`, `qstash`, `searxng`
 
-This is an expand-first database release. PostgreSQL, QStash, and SearXNG are
-never recreated. The existing app remains online while backup, historical-data
-backfill, and migrations run. Only the app service is switched after all data
-gates pass.
+This release keeps PostgreSQL and QStash in place. The existing app remains
+online while backup and database gates run. SearXNG is then upgraded independently
+with a pinned image and functional search gate before the app service is switched.
+Market-only WARP routing is a host-network step and does not modify Compose.
 
 ## Local release preparation
 
@@ -23,15 +23,15 @@ gates pass.
 4. Generate the release package with that digest.
 
 ```bash
-export TARGET_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.13-cotti-prod-20260822-73990ddca4
+export TARGET_IMAGE=sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/lobehub:v2.2.13-cotti-prod-YYYYMMDD-<commit>
 
-SOURCE_COMMIT=73990ddca4 \
+SOURCE_COMMIT=<commit> \
   src/_custom/deploy/build-production-image.sh
 
 docker push "$TARGET_IMAGE"
 
 TARGET_DIGEST=sha256:... \
-  APP_SOURCE_COMMIT=73990ddca4 \
+  APP_SOURCE_COMMIT=<commit> \
   TARGET_IMAGE="$TARGET_IMAGE" \
   src/_custom/deploy/create-production-app-update-package.sh
 ```
@@ -49,7 +49,7 @@ sha256sum -c <release>.tar.gz.sha256
 tar -xzf /tmp/<release>.tar.gz -C /opt/lobechat-main/releases/<release>
 cd /opt/lobechat-main/releases/<release>
 
-bash prod-00-configure-warp-exclusions.sh
+bash prod-00-configure-market-warp.sh
 bash prod-01-check-runtime.sh
 bash prod-02-backup-and-migrate.sh
 bash prod-03-switch-app.sh
@@ -90,7 +90,7 @@ fingerprint remain under `/opt/lobechat-main/backups/`.
 6. Recheck migration lineage, required tables, device visibility, and history
    fingerprints.
 
-## App rollback
+## Runtime rollback
 
 Use the release directory that performed the deployment:
 
@@ -98,9 +98,17 @@ Use the release directory that performed the deployment:
 bash prod-05-rollback-app.sh
 ```
 
-This restores the previous `.env`, Compose definition, and app image only. It
-does not restore PostgreSQL. The v2.2.13 schema is expand-compatible with the
-previous app and is intentionally retained during ordinary rollback.
+This restores the previous `.env`, Compose definition, SearXNG settings, app
+image, and search container. It does not restore PostgreSQL. The v2.2.13 schema
+is expand-compatible with the previous app and is intentionally retained during
+ordinary rollback.
+
+WARP and DNS are intentionally independent from the application rollback. To
+restore the previous full-tunnel mode and host resolver configuration:
+
+```bash
+bash prod-00-rollback-market-warp.sh
+```
 
 Database restoration is an incident action, not a release-script action. It
 must be approved separately because restoring the pre-release dump overwrites

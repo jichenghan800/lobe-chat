@@ -32,7 +32,16 @@ echo "image_revision=$REVISION"
 verify_local_image_digest
 
 echo
-echo "== 3. Database lineage and schema =="
+echo "== 3. SearXNG image, health, and functional search =="
+SEARXNG_RUNNING_IMAGE="$(docker inspect "$SEARXNG_CONTAINER" --format '{{.Config.Image}}')"
+echo "expected_searxng_image=$SEARXNG_IMAGE"
+echo "running_searxng_image=$SEARXNG_RUNNING_IMAGE"
+[[ "$SEARXNG_RUNNING_IMAGE" == "$SEARXNG_IMAGE" ]] || fail "running SearXNG image does not match target"
+wait_for_searxng_health || fail "SearXNG is not healthy"
+verify_searxng_search || fail "SearXNG functional search failed"
+
+echo
+echo "== 4. Database lineage and schema =="
 LATEST_MIGRATION="$(db_scalar 'SELECT created_at FROM drizzle.__drizzle_migrations ORDER BY created_at DESC LIMIT 1;')"
 echo "latest_migration=$LATEST_MIGRATION"
 [[ "$LATEST_MIGRATION" == "${EXPECTED_FINAL_MIGRATION:-1786088099399}" ]] \
@@ -57,12 +66,12 @@ PERMISSION_COUNT="$(db_scalar "SELECT count(*) FROM rbac_permissions WHERE code 
 [[ "$PERMISSION_COUNT" == "8" ]] || fail "Topic Comment RBAC permissions are incomplete"
 
 echo
-echo "== 4. Historical data preservation =="
+echo "== 5. Historical data preservation =="
 sha256sum -c "$DB_BACKUP_SHA"
 assert_history_not_decreased "$HISTORY_FINGERPRINT_FILE"
 
 echo
-echo "== 5. Platform, connectors, and unified login runtime =="
+echo "== 6. Platform, connectors, unified login, and environment isolation =="
 docker exec "$APP_CONTAINER" /bin/node -e "
 const required = [
   'NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS',
@@ -85,15 +94,30 @@ for (const key of required) {
   if (!set) missing.push(key);
 }
 if (process.env.NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS !== '1') missing.push('platform-flag=1');
+if (process.env.COTTI_AI_ACCESS_MANAGEMENT_ENABLED) missing.push('cotti-ai-access-must-be-disabled');
+if (process.env.QWEN_PROXY_URL !== 'https://llm-gvbqtqm25t1leudh.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1') missing.push('qwen-singapore-endpoint');
+if (!(process.env.QWEN_MODEL_LIST || '').includes('qwen3.8-max-0902')) missing.push('qwen3.8-model-list');
+if (!(process.env.VERTEXAI_MODEL_LIST || '').includes('gemini-3.8-flash')) missing.push('gemini3.8-model-list');
 const providers = (process.env.AUTH_SSO_PROVIDERS || '').split(',').map((item) => item.trim());
 if (!providers.includes('feishu') || !providers.includes('feishu-blue')) missing.push('feishu-sso-providers');
 if (missing.length) process.exit(2);
 " || fail "v2.2.13 runtime configuration is incomplete"
 
+MODEL_DISPLAY_COUNT="$(db_scalar "
+  SELECT count(*)
+  FROM cotti_model_display_settings settings,
+       LATERAL jsonb_array_elements(settings.config->'chat') chat,
+       LATERAL jsonb_array_elements(settings.config->'agent') agent
+  WHERE settings.id='default'
+    AND chat->>'model' IN ('qwen3.8-max-0902', 'gemini-3.8-flash')
+    AND agent->>'model' IN ('qwen3.8-max-0902', 'gemini-3.8-flash');
+")"
+[[ "$MODEL_DISPLAY_COUNT" == "4" ]] || fail "new model display configuration is incomplete"
+
 verify_platform_management_asset
 
 echo
-echo "== 6. QStash authenticated health =="
+echo "== 7. QStash authenticated health =="
 QSTASH_PORT_VALUE="$(read_env_default QSTASH_PORT 18088)"
 QSTASH_STATUS="$(
   curl -sS -o /dev/null --connect-timeout 3 --max-time 10 -w '%{http_code}' \
@@ -104,7 +128,7 @@ QSTASH_STATUS="$(
 echo "qstash_http=200"
 
 echo
-echo "== 7. Application and public OIDC endpoints =="
+echo "== 8. Application and public OIDC endpoints =="
 PORT="$(read_env_default LOBECHAT_PORT 3210)"
 APP_HTTP="$(curl -sS -o /dev/null --max-time 20 -w '%{http_code}' "http://127.0.0.1:${PORT}/")"
 [[ "$APP_HTTP" =~ ^(200|302|307)$ ]] || fail "local app health returned HTTP $APP_HTTP"
@@ -118,7 +142,7 @@ grep -Fq '"keys"' <<<"$JWKS" || fail "OIDC JWKS is not JSON"
 echo "oidc_discovery=ok jwks=ok"
 
 echo
-echo "== 8. Startup logs =="
+echo "== 9. Startup logs =="
 STARTED_AT="$(docker inspect "$APP_CONTAINER" --format '{{.State.StartedAt}}')"
 STARTUP_LOGS="$(docker logs --since "$STARTED_AT" "$APP_CONTAINER" 2>&1)"
 grep -Fq 'database migration pass' <<<"$STARTUP_LOGS" || fail "database migration startup log missing"

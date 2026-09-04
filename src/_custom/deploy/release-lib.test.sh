@@ -10,6 +10,25 @@ if grep -Fq 'platformManagement-*.js' "$ROOT_DIR/src/_custom/deploy/build-produc
   exit 1
 fi
 
+COMPOSE_FILE="$ROOT_DIR/src/_custom/deploy/docker-compose.prod.yml"
+PACKAGE_BUILDER="$ROOT_DIR/src/_custom/deploy/create-production-app-update-package.sh"
+MARKET_WARP_INSTALLER="$ROOT_DIR/src/_custom/deploy/prod-00-configure-market-warp.sh"
+MARKET_WARP_ROUTER="$ROOT_DIR/src/_custom/deploy/market-warp-route.sh"
+SWITCH_SCRIPT="$ROOT_DIR/src/_custom/deploy/prod-03-switch-app.sh"
+
+grep -Fq 'searxng/searxng:2026.9.1-18af21159@sha256:c7cc75852051bf6254afda6ed1b920dd1677d8efe4ab141bf558f02e582f4371' "$COMPOSE_FILE"
+grep -Fq 'SEARXNG_SECRET: ${SEARXNG_SECRET:?Set SEARXNG_SECRET in .env}' "$COMPOSE_FILE"
+grep -Fq 'condition: service_healthy' "$COMPOSE_FILE"
+grep -Fq 'searxng-settings.yml' "$PACKAGE_BUILDER"
+grep -Fq 'prod-00-configure-market-warp.sh' "$PACKAGE_BUILDER"
+grep -Fq 'MARKET_WARP_DOCKER_NETWORK:-lobechat_prod' "$MARKET_WARP_INSTALLER"
+if grep -Fq '172.21.0.1' "$MARKET_WARP_ROUTER"; then
+  echo 'Market WARP router still hard-codes the development Docker gateway' >&2
+  exit 1
+fi
+grep -Fq 'wait_for_searxng_health' "$SWITCH_SCRIPT"
+grep -Fq 'verify_searxng_search' "$SWITCH_SCRIPT"
+
 printf 'POSTGRES_USER=test\nPOSTGRES_DB=test\n' > "$TEST_DIR/.env"
 printf 'users\t2\nmessages\t5\n' > "$TEST_DIR/history.tsv"
 

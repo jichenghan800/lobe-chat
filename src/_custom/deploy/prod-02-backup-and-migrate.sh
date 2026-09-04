@@ -19,7 +19,8 @@ fi
 
 echo "== v2.2.13 backup and database migration =="
 echo "The existing app stays online during backup and schema expansion."
-echo "PostgreSQL, QStash, and SearXNG containers will not be recreated."
+echo "PostgreSQL and QStash containers will not be recreated."
+echo "SearXNG is only backed up here; its controlled switch happens with the app."
 echo "No app switch occurs in this script."
 echo
 echo "Planned data-safety gates:"
@@ -118,6 +119,7 @@ echo "Full restore validation passed."
 
 write_release_state_value RELEASE_STAMP "$STAMP"
 write_release_state_value OLD_APP_IMAGE "$(docker inspect "$APP_CONTAINER" --format '{{.Config.Image}}')"
+write_release_state_value OLD_SEARXNG_IMAGE "$(docker inspect "$SEARXNG_CONTAINER" --format '{{.Config.Image}}')"
 write_release_state_value ENV_BACKUP_FILE "$ENV_BACKUP_FILE"
 write_release_state_value COMPOSE_BACKUP_FILE "$COMPOSE_BACKUP_FILE"
 write_release_state_value SEARXNG_BACKUP_FILE "$SEARXNG_BACKUP_FILE"
