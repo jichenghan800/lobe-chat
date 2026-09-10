@@ -221,12 +221,16 @@
       "id": "DEV-009",
       "name": "会话总览",
       "implementation": "[src/hooks/useNavLayout.ts](<../../hooks/useNavLayout.ts#L84>)",
-      "boundary": "桌面shared/mobile均注册/overview，cotti.topicOverview后端注册",
+      "boundary": "管理员全览覆盖全部用户的未删除话题，含登录白名单和管理员本人；标题/描述/话题ID/用户/Agent检索，服务端分页后统计当前页消息与图片；保留管理员鉴权、详情查看审计，合规审计排除规则独立",
       "firstImplemented": "2026-09-07",
       "sourceReferences": [
         {
           "path": "src/hooks/useNavLayout.ts",
           "line": 84
+        },
+        {
+          "path": "apps/server/src/services/cotti/topicOverview/index.ts",
+          "line": 110
         }
       ]
     },

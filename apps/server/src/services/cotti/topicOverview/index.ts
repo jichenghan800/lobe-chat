@@ -1,4 +1,5 @@
 import type { UIChatMessage } from '@lobechat/types';
+import type { SQL } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -13,8 +14,6 @@ import type {
   CottiTopicOverviewMode,
   CottiTopicOverviewQuery,
 } from '@/types/cotti/topicOverview';
-
-import { buildCottiPlatformAuditedUserCondition } from '../platformAudit';
 
 const MAX_TOPIC_MESSAGES = 5000;
 
@@ -84,9 +83,7 @@ export class CottiTopicOverviewService {
   async getDetail(topicId: string): Promise<CottiTopicOverviewDetail | undefined> {
     const result = await this.db.execute(sql`
       ${this.buildTopicRowsQuery({ topicId })}
-      SELECT *
-      FROM filtered_topics
-      LIMIT 1
+      ${this.buildPageRowsQuery(sql`SELECT * FROM filtered_topics LIMIT 1`)}
     `);
     const row = result.rows[0] as unknown as TopicOverviewRow | undefined;
     if (!row) return;
@@ -122,11 +119,14 @@ export class CottiTopicOverviewService {
     const offset = (query.page - 1) * query.pageSize;
     const result = await this.db.execute(sql`
       ${this.buildTopicRowsQuery({ q: query.q })}
-      SELECT *, COUNT(*) OVER() AS total
-      FROM filtered_topics
+      ${this.buildPageRowsQuery(sql`
+        SELECT *, COUNT(*) OVER() AS total
+        FROM filtered_topics
+        ORDER BY "updatedAt" DESC, id DESC
+        LIMIT ${query.pageSize}
+        OFFSET ${offset}
+      `)}
       ORDER BY "updatedAt" DESC, id DESC
-      LIMIT ${query.pageSize}
-      OFFSET ${offset}
     `);
     const rows = result.rows as unknown as TopicOverviewRow[];
     // An empty out-of-range page has no window-count row; preserve the real total.
@@ -169,7 +169,10 @@ export class CottiTopicOverviewService {
   }
 
   private buildTopicRowsQuery = ({ q, topicId }: { q?: string; topicId?: string }) => {
-    const normalizedQuery = q?.trim().toLowerCase();
+    const normalizedQuery = q
+      ?.trim()
+      .toLowerCase()
+      .replaceAll(/[\\%_]/g, '\\$&');
 
     return sql`
       WITH filtered_topics AS MATERIALIZED (
@@ -190,45 +193,20 @@ export class CottiTopicOverviewService {
             NULLIF(CONCAT_WS(' ', users.first_name, users.last_name), '')
           ) AS "userName",
           COALESCE(NULLIF(chat_groups.title, ''), NULLIF(agents.title, ''), NULLIF(sessions.title, ''))
-            AS "targetTitle",
-          CASE
-            WHEN operation.has_task THEN 'task'
-            WHEN operation.has_operation THEN 'agent'
-            ELSE 'chat'
-          END AS mode,
-          COALESCE(message_stats.message_count, 0) AS "messageCount",
-          COALESCE(message_stats.image_count, 0) AS "imageCount"
+            AS "targetTitle"
         FROM topics
         INNER JOIN users ON users.id = topics.user_id
         LEFT JOIN sessions ON sessions.id = topics.session_id
         LEFT JOIN agents ON agents.id = topics.agent_id
         LEFT JOIN chat_groups ON chat_groups.id = topics.group_id
-        LEFT JOIN LATERAL (
-          SELECT
-            COUNT(DISTINCT messages.id) AS message_count,
-            COUNT(*) FILTER (WHERE files.file_type LIKE 'image/%') AS image_count
-          FROM messages
-          LEFT JOIN messages_files ON messages_files.message_id = messages.id
-          LEFT JOIN files ON files.id = messages_files.file_id
-          WHERE messages.topic_id = topics.id
-        ) message_stats ON TRUE
-        LEFT JOIN LATERAL (
-          SELECT
-            BOOL_OR(agent_operations.task_id IS NOT NULL OR agent_operations.trigger = 'task')
-              AS has_task,
-            COUNT(*) > 0 AS has_operation
-          FROM agent_operations
-          WHERE agent_operations.topic_id = topics.id
-            AND agent_operations.parent_operation_id IS NULL
-        ) operation ON TRUE
         WHERE COALESCE(topics.is_deleted, FALSE) = FALSE
-          AND ${buildCottiPlatformAuditedUserCondition(sql`topics.user_id`)}
           AND (${topicId ?? null}::text IS NULL OR topics.id = ${topicId ?? null})
           AND (
             ${normalizedQuery ?? null}::text IS NULL
             OR LOWER(CONCAT_WS(
               ' ',
               topics.title,
+              topics.description,
               topics.id,
               users.email,
               users.normalized_email,
@@ -242,6 +220,37 @@ export class CottiTopicOverviewService {
       )
     `;
   };
+
+  /** Aggregate messages and operations only for the requested page, never every matching topic. */
+  private buildPageRowsQuery = (page: SQL) => sql`
+    SELECT page.*,
+      CASE
+        WHEN operation.has_task THEN 'task'
+        WHEN operation.has_operation THEN 'agent'
+        ELSE 'chat'
+      END AS mode,
+      COALESCE(message_stats.message_count, 0) AS "messageCount",
+      COALESCE(message_stats.image_count, 0) AS "imageCount"
+    FROM (${page}) page
+        LEFT JOIN LATERAL (
+          SELECT
+            COUNT(DISTINCT messages.id) AS message_count,
+            COUNT(*) FILTER (WHERE files.file_type LIKE 'image/%') AS image_count
+          FROM messages
+          LEFT JOIN messages_files ON messages_files.message_id = messages.id
+          LEFT JOIN files ON files.id = messages_files.file_id
+          WHERE messages.topic_id = page.id
+        ) message_stats ON TRUE
+        LEFT JOIN LATERAL (
+          SELECT
+            BOOL_OR(agent_operations.task_id IS NOT NULL OR agent_operations.trigger = 'task')
+              AS has_task,
+            COUNT(*) > 0 AS has_operation
+          FROM agent_operations
+          WHERE agent_operations.topic_id = page.id
+            AND agent_operations.parent_operation_id IS NULL
+        ) operation ON TRUE
+  `;
 
   private mapTopicRow = (row: TopicOverviewRow): CottiTopicOverviewItem => ({
     agentId: row.agentId,
