@@ -41,6 +41,12 @@ type UpdateTopicMetadataInput = Omit<Partial<ChatTopicMetadata>, 'onboardingSess
 };
 
 export class TopicService {
+  checkTopicSwitch = (topicId: string, message: string, signal?: AbortSignal) =>
+    lambdaClient.topic.checkTopicSwitch.mutate(
+      { topicId, message: message.slice(0, 1000) },
+      { signal },
+    );
+
   getCostFreeze = (topicId: string) => lambdaClient.topic.getCostFreeze.query({ topicId });
 
   summarizeContinuationFragment = (

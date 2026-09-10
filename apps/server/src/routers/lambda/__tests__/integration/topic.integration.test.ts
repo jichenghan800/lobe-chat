@@ -65,6 +65,27 @@ describe('Topic Router Integration Tests', () => {
     if (otherUserId) await cleanupTestUser(serverDB, otherUserId);
   });
 
+  it('persists the description through the actual update router', async () => {
+    const caller = topicRouter.createCaller(createTestContext(userId));
+    const id = await caller.createTopic({ agentId: testAgentId, title: '模型价格对比' });
+    await caller.updateTopic({ id, value: { description: '比较模型输入输出和缓存价格。' } });
+    const [saved] = await serverDB.select().from(topics).where(eq(topics.id, id));
+    expect(saved.description).toBe('比较模型输入输出和缓存价格。');
+    await expect(
+      caller.updateTopic({ id, value: { description: 'x'.repeat(101) } }),
+    ).rejects.toThrow();
+  });
+
+  it('rejects relevance checks for another user before calling a model', async () => {
+    const caller = topicRouter.createCaller(createTestContext(userId));
+    const id = await caller.createTopic({ agentId: testAgentId, title: 'private' });
+    otherUserId = await createTestUser(serverDB);
+    const otherCaller = topicRouter.createCaller(createTestContext(otherUserId));
+    await expect(
+      otherCaller.checkTopicSwitch({ topicId: id, message: 'weather' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
   describe('createTopic', () => {
     it('should create topic with sessionId', async () => {
       const caller = topicRouter.createCaller(createTestContext(userId));

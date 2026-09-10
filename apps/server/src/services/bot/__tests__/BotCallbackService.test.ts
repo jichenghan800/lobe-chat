@@ -1042,6 +1042,7 @@ describe('BotCallbackService', () => {
 
       await vi.waitFor(() => {
         expect(mockGenerateTopicTitle).toHaveBeenCalledWith({
+          topicId: 'topic-1',
           lastAssistantContent: 'Here is the answer.',
           userPrompt: 'What is the meaning of life?',
         });

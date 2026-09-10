@@ -1,7 +1,17 @@
 export default {
-  'longTopic.frozen':
-    'This topic is frozen to protect context costs. You can view its history, start a new question, or continue with a summary.',
+  'topicChoice.title': 'Start a new topic?',
+  'topicChoice.body': 'This looks like a new question. A new topic avoids unrelated history.',
+  'topicChoice.newSend': 'New topic and send',
+  'topicChoice.current': 'Send in this topic',
+  'topicChoice.frozenTitle': 'This topic is too long',
+  'topicChoice.frozenBody': 'Start a new topic, or keep a summary to continue.',
+  'topicChoice.new': 'New topic',
+  'topicChoice.carry': 'Keep summary and continue',
+  'topicChoice.frozenAction': 'Continue in a new topic',
+  'topicChoice.failed': 'Could not create the topic. Your draft is kept.',
 
+  'longTopic.frozen':
+    'This topic is frozen. You can still read its history. Continue in a new topic.',
   'longTopic.switchSuggestion':
     'Changing subjects? Use “New question” to leave this topic’s history behind. Your draft will carry over.',
   'longTopic.dismissSuggestion': 'Dismiss',

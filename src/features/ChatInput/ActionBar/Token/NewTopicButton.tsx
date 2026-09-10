@@ -11,8 +11,8 @@ import { displayMessageSelectors } from '@/store/chat/selectors';
 import { useAgentId } from '../../hooks/useAgentId';
 import { useChatInputResourceAccess } from '../../hooks/useChatInputResourceAccess';
 import { useChatInputStore } from '../../store';
+import { chooseTopic } from './topicChoiceModal';
 import { useTopicContinuation } from './useTopicContinuation';
-import { useTopicSwitchSuggestion } from './useTopicSwitchSuggestion';
 
 export const NewTopicButton = () => {
   const { t } = useTranslation('chat');
@@ -31,11 +31,12 @@ export const NewTopicButton = () => {
     s.activeThreadId,
     s.activeGroupId,
   ]);
-  const suggestion = useTopicSwitchSuggestion(topicId);
+
   const { busy, cancel, open, progress } = useTopicContinuation(agentId, (path) =>
     router.push(path),
   );
   if (
+    !frozen ||
     !topicId ||
     (!hasHistory && !frozen) ||
     threadId ||
@@ -58,20 +59,16 @@ export const NewTopicButton = () => {
   return (
     <Flexbox gap={4} style={{ minWidth: 0, maxWidth: '100%' }}>
       {frozen && <Text role="status">{t('longTopic.frozen')}</Text>}
-      {suggestion.visible && !frozen && !busy && !generating && (
-        <Flexbox horizontal align="center" gap={4} role="status" wrap="wrap">
-          <Text style={{ fontSize: 12 }}>{t('longTopic.switchSuggestion')}</Text>
-          <Button size="small" onClick={suggestion.dismiss}>
-            {t('longTopic.dismissSuggestion')}
-          </Button>
-        </Flexbox>
-      )}
       <Flexbox horizontal gap={4} wrap="wrap">
-        <Button disabled={generating || busy} size="small" onClick={() => start(false)}>
-          {t('longTopic.newQuestion')}
-        </Button>
-        <Button disabled={generating || busy} size="small" onClick={() => start(true)}>
-          {t('longTopic.continueProgress')}
+        <Button
+          disabled={generating || busy}
+          size="small"
+          onClick={async () => {
+            const choice = await chooseTopic(true);
+            if (choice !== 'cancel') await start(choice === 'current');
+          }}
+        >
+          {t('topicChoice.frozenAction')}
         </Button>
         {busy && (
           <Button size="small" onClick={cancel}>

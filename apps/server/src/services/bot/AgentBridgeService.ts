@@ -1467,6 +1467,7 @@ export class AgentBridgeService {
                             this.workspaceId,
                           );
                           const title = await systemAgent.generateTopicTitle({
+                            topicId: resolvedTopicId,
                             lastAssistantContent,
                             userPrompt: prompt,
                           });

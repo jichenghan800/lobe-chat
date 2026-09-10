@@ -22,7 +22,7 @@
     {
       "id": "CFG-004",
       "name": "模型连接与目录",
-      "currentBehavior": "沿用已授权模型连接、平台可见列表和默认值",
+      "currentBehavior": "沿用模型连接、可见列表和默认值；SYSTEM_AGENT 的 topic 单项设为 vertexai/gemini-3.5-flash-lite，自动命名及换题判断共用；其他辅助配置不变",
       "firstImplemented": "2026-09-07"
     },
     {
@@ -770,8 +770,8 @@
     {
       "id": "DEV-051",
       "name": "上下文成本保护与摘要续聊",
-      "implementation": "成本阈值限制原生压缩触发点，ModelRuntime请求前守卫；新问题与分段摘要续聊入口；明确换题意图的本地轻提示，可关闭，不阻止发送",
-      "boundary": "超预算停止本次调用，不删除历史；换题提示仅识别明确开场语，不做任意语义相似度分类；未包含跨档放行、自动任务按天续接和管理员成本明细",
+      "implementation": "成本阈值限制原生压缩触发点，ModelRuntime请求前守卫；自动命名同次生成标题和100字符内描述；移除两个常驻按钮，直接发送前识别换题并弹框，默认新建话题并发送；冻结状态提供单入口弹框选择空话题或摘要续接",
+      "boundary": "概览优先使用description，旧话题回退title，不批量补描述；判断最多200字符概览和1000字符新输入，不读取历史；复用命名模型，明确续接免调用、相同草稿复用判断；失败放行，成本守卫独立兜底。仅普通话题的空闲文本提交，不拦截自动任务、工具循环、群聊或线程。冻结与压缩同阈值冲突仍待独立修复。",
       "firstImplemented": "2026-09-10",
       "sourceReferences": [
         {
@@ -795,7 +795,19 @@
           "line": 1
         },
         {
-          "path": "src/features/ChatInput/ActionBar/Token/useTopicSwitchSuggestion.ts",
+          "path": "packages/prompts/src/chains/summaryTitle.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/systemAgent/index.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/Conversation/ChatInput/topicSwitchCheck.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/topicChoiceModal.tsx",
           "line": 1
         }
       ]

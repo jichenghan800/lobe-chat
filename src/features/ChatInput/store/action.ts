@@ -114,6 +114,8 @@ export const store: CreateStore = (publicState) => (set, get) => ({
     }
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        // A send preflight may have opened a dialog; preserve its default action focus.
+        if (document.querySelector('[role="dialog"]')) return;
         editor.focus();
       });
     });

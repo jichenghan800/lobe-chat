@@ -31,6 +31,38 @@ describe('ChatInput store actions', () => {
     vi.restoreAllMocks();
   });
 
+  it('keeps focus on the new-topic choice when sending opens a dialog', () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    const primary = document.createElement('button');
+    primary.textContent = 'New topic and send';
+    dialog.append(primary);
+    const editor = {
+      getDocument: vi.fn(() => 'New question'),
+      focus: vi.fn(),
+    } as unknown as IEditor;
+    const store = createStore({
+      editor,
+      onSend: () => {
+        document.body.append(dialog);
+        primary.focus();
+      },
+    });
+    try {
+      store.getState().handleSendButton();
+      while (frames.length) frames.shift()!(0);
+      expect(document.activeElement).toBe(primary);
+      expect(editor.focus).not.toHaveBeenCalled();
+    } finally {
+      dialog.remove();
+    }
+  });
+
   it('keeps action lists usable when a host omits them', () => {
     const store = createStore({ leftActions: undefined, rightActions: undefined });
 

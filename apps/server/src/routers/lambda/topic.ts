@@ -37,6 +37,7 @@ import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { summarizeContinuationFragment } from '@/server/services/cotti/topicContinuation';
 import { FileService } from '@/server/services/file';
 import { createFtsSearchRepo } from '@/server/services/ftsSearch';
+import { SystemAgentService } from '@/server/services/systemAgent';
 import { after } from '@/server/utils/scheduleAfterResponse';
 import { type BatchTaskResult } from '@/types/service';
 
@@ -251,6 +252,24 @@ const recordTopicShareAudit = async (
 };
 
 export const topicRouter = router({
+  checkTopicSwitch: topicProcedure
+    .use(withScopedPermission('message:create'))
+    .input(z.object({ topicId: z.string(), message: z.string().min(1).max(1000) }))
+    .mutation(async ({ input, ctx, signal }) => {
+      const topic = await ctx.topicModel.findOwnTopicById(input.topicId);
+      if (!topic) throw new TRPCError({ code: 'NOT_FOUND' });
+      const description = topic.description || topic.title;
+      if (!description) return false;
+      return new SystemAgentService(
+        ctx.serverDB,
+        ctx.userId,
+        ctx.workspaceId ?? undefined,
+      ).checkTopicSwitch(
+        description,
+        input.message,
+        AbortSignal.any([signal ?? new AbortController().signal, AbortSignal.timeout(4000)]),
+      );
+    }),
   getCostFreeze: topicProcedure
     .input(z.object({ topicId: z.string() }))
     .query(({ input, ctx }) => ctx.topicCostFreezeModel.get(input.topicId)),
@@ -1053,6 +1072,7 @@ export const topicRouter = router({
         value: z.object({
           agentId: z.string().optional(),
           completedAt: z.date().nullish(),
+          description: z.string().max(100).nullish(),
           favorite: z.boolean().optional(),
           historySummary: z.string().optional(),
           messages: z.array(z.string()).optional(),

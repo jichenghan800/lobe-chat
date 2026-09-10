@@ -2078,7 +2078,7 @@ export class ConversationLifecycleActionImpl {
         runId: operationId,
         runScope: sendRunScope,
         runtimeType,
-        topicId: data.topicId,
+        topicId: data.topicId ?? operationContext.topicId,
       })
       .catch(console.error);
 

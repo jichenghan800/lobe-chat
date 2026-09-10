@@ -5531,62 +5531,65 @@ describe('ConversationLifecycle actions', () => {
       expect(summaryTopicTitleSpy).toHaveBeenCalledWith(newTopicId, expect.any(Array));
     });
 
-    it('CLIENT existing-topic with EMPTY title: summaryTopicTitle IS invoked', async () => {
-      const { result } = renderHook(() => useChatStore());
-      const agentId = TEST_IDS.SESSION_ID;
-      const topicId = TEST_IDS.TOPIC_ID;
-      const key = messageMapKey({ agentId, topicId });
+    it.each([true, false])(
+      'CLIENT existing-topic with EMPTY title: summarize when response topic id exists=%s',
+      async (includesTopicId) => {
+        const { result } = renderHook(() => useChatStore());
+        const agentId = TEST_IDS.SESSION_ID;
+        const topicId = TEST_IDS.TOPIC_ID;
+        const key = messageMapKey({ agentId, topicId });
 
-      const summaryTopicTitleSpy = vi.fn().mockResolvedValue(undefined);
+        const summaryTopicTitleSpy = vi.fn().mockResolvedValue(undefined);
 
-      // Seed an existing topic whose title is empty — this is the second gate branch.
-      // currentTopicData() keys on activeAgentId, which resetTestEnvironment set to SESSION_ID.
-      act(() => {
-        useChatStore.setState({
-          summaryTopicTitle: summaryTopicTitleSpy,
-          topicDataMap: {
-            [topicMapKey({ agentId })]: {
-              items: [{ id: topicId, title: '' }],
-              total: 1,
-            },
-          } as any,
+        // Seed an existing topic whose title is empty — this is the second gate branch.
+        // currentTopicData() keys on activeAgentId, which resetTestEnvironment set to SESSION_ID.
+        act(() => {
+          useChatStore.setState({
+            summaryTopicTitle: summaryTopicTitleSpy,
+            topicDataMap: {
+              [topicMapKey({ agentId })]: {
+                items: [{ id: topicId, title: '' }],
+                total: 1,
+              },
+            } as any,
+          });
         });
-      });
 
-      const persistedMessages = [
-        createMockMessage({ id: TEST_IDS.USER_MESSAGE_ID, role: 'user', topicId }),
-        createMockMessage({
-          id: TEST_IDS.ASSISTANT_MESSAGE_ID,
-          parentId: TEST_IDS.USER_MESSAGE_ID,
-          role: 'assistant',
-          topicId,
-        }),
-      ];
+        const persistedMessages = [
+          createMockMessage({ id: TEST_IDS.USER_MESSAGE_ID, role: 'user', topicId }),
+          createMockMessage({
+            id: TEST_IDS.ASSISTANT_MESSAGE_ID,
+            parentId: TEST_IDS.USER_MESSAGE_ID,
+            role: 'assistant',
+            topicId,
+          }),
+        ];
 
-      vi.spyOn(aiChatService, 'sendMessageInServer').mockResolvedValue({
-        assistantMessageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
-        isCreateNewTopic: false,
-        messages: persistedMessages,
-        topicId,
-        topics: undefined,
-        userMessageId: TEST_IDS.USER_MESSAGE_ID,
-      } as any);
+        vi.spyOn(aiChatService, 'sendMessageInServer').mockResolvedValue({
+          assistantMessageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          isCreateNewTopic: false,
+          messages: persistedMessages,
+          topicId: includesTopicId ? topicId : undefined,
+          topics: undefined,
+          userMessageId: TEST_IDS.USER_MESSAGE_ID,
+        } as any);
 
-      await act(async () => {
-        await result.current.sendMessage({
-          context: { agentId, threadId: null, topicId },
-          message: TEST_CONTENT.USER_MESSAGE,
+        await act(async () => {
+          await result.current.sendMessage({
+            context: { agentId, threadId: null, topicId },
+            message: TEST_CONTENT.USER_MESSAGE,
+          });
         });
-      });
 
-      // empty-title gate → summarize the existing topic.
-      expect(summaryTopicTitleSpy).toHaveBeenCalledTimes(1);
-      // First arg is the existing topic id; messages come from the display selector
-      // for the topic's message key (assistant message id filtered out).
-      expect(summaryTopicTitleSpy.mock.calls[0][0]).toBe(topicId);
-      // sanity: the message key exists so the selector path is real
-      expect(key).toBe(messageMapKey({ agentId, topicId }));
-    });
+        // empty-title gate → summarize the existing topic.
+        expect(summaryTopicTitleSpy).toHaveBeenCalledTimes(1);
+        // First arg is the existing topic id; messages come from the display selector
+        // for the topic's message key (assistant message id filtered out).
+        expect(summaryTopicTitleSpy.mock.calls[0][0]).toBe(topicId);
+        // sanity: the message key exists so the selector path is real
+        expect(key).toBe(messageMapKey({ agentId, topicId }));
+      },
+    );
 
     it('CLIENT existing-topic that ALREADY has a title: summaryTopicTitle is NOT invoked (gate not met)', async () => {
       const { result } = renderHook(() => useChatStore());
