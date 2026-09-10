@@ -1141,6 +1141,113 @@ table user_installed_plugins {
   }
 }
 
+table cotti_audit_risk_analyses {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  message_id text [not null]
+  session_id text
+  target_user_id text
+  target_user_email text
+  status text [not null, default: 'pending']
+  summary text
+  reason text
+  confidence text
+  evidence jsonb [default: `[]`]
+  risk_level text
+  risk_labels jsonb [default: `[]`]
+  model text
+  provider text
+  error text
+  requested_by_user_id text
+  requested_by_email text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    message_id [name: 'cotti_audit_risk_analyses_message_id_unique', unique]
+    status [name: 'cotti_audit_risk_analyses_status_idx']
+    created_at [name: 'cotti_audit_risk_analyses_created_at_idx']
+  }
+}
+
+table cotti_audit_view_logs {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  admin_user_id text
+  admin_email text
+  target_type text [not null]
+  target_id text [not null]
+  message_id text
+  session_id text
+  target_user_id text
+  target_user_email text
+  metadata jsonb [default: `{}`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    admin_user_id [name: 'cotti_audit_view_logs_admin_user_id_idx']
+    (target_type, target_id) [name: 'cotti_audit_view_logs_target_idx']
+    created_at [name: 'cotti_audit_view_logs_created_at_idx']
+  }
+}
+
+table cotti_home_notification_settings {
+  content text [not null]
+  enabled boolean [not null, default: false]
+  id varchar(32) [pk, not null, default: 'default']
+  updated_by text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+}
+
+table cotti_model_display_settings {
+  config jsonb [not null]
+  id varchar(32) [pk, not null, default: 'default']
+  updated_by text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+}
+
+table cotti_login_access_rules {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  type varchar(32) [not null]
+  value text [not null]
+  enabled boolean [not null, default: true]
+  note text
+  created_by text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    (type, value) [name: 'cotti_login_access_rules_type_value_unique', unique]
+  }
+}
+
+table cotti_login_access_settings {
+  id varchar(32) [pk, not null, default: 'default']
+  mode varchar(32) [not null, default: 'allowlist']
+  updated_by text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+}
+
+table cotti_platform_admin_assignments {
+  id uuid [pk, not null, default: `gen_random_uuid()`]
+  user_id text [not null]
+  note text
+  created_by text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'cotti_platform_admin_assignments_user_id_unique', unique]
+  }
+}
+
 table devices {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   user_id text [not null]
@@ -3458,6 +3565,18 @@ table topic_comments {
   }
 }
 
+table topic_cost_freezes {
+  topic_id text [pk, not null]
+  reason text [not null, default: 'context']
+  spent_cny numeric
+  limit_fen integer
+  model text [not null]
+  provider text [not null]
+  estimated_input_tokens integer [not null]
+  input_token_limit integer [not null]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+}
+
 table trash_items {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   resource_type text [not null]
@@ -4165,110 +4284,11 @@ table workspaces {
   }
 }
 
-table cotti_login_access_rules {
-  id uuid [pk, not null, default: `gen_random_uuid()`]
-  type varchar(32) [not null]
-  value text [not null]
+table cotti_topic_budget_settings {
+  id text [pk, not null]
   enabled boolean [not null, default: true]
-  note text
-  created_by text
-  accessed_at "timestamp with time zone" [not null, default: `now()`]
-  created_at "timestamp with time zone" [not null, default: `now()`]
-  updated_at "timestamp with time zone" [not null, default: `now()`]
-
-  indexes {
-    (type, value) [name: 'cotti_login_access_rules_type_value_unique', unique]
-  }
-}
-
-table cotti_login_access_settings {
-  id varchar(32) [pk, not null, default: 'default']
-  mode varchar(32) [not null, default: 'allowlist']
+  limit_fen integer [not null, default: 1000]
   updated_by text
-  accessed_at "timestamp with time zone" [not null, default: `now()`]
-  created_at "timestamp with time zone" [not null, default: `now()`]
-  updated_at "timestamp with time zone" [not null, default: `now()`]
-}
-
-table cotti_platform_admin_assignments {
-  id uuid [pk, not null, default: `gen_random_uuid()`]
-  user_id text [not null]
-  note text
-  created_by text
-  accessed_at "timestamp with time zone" [not null, default: `now()`]
-  created_at "timestamp with time zone" [not null, default: `now()`]
-  updated_at "timestamp with time zone" [not null, default: `now()`]
-
-  indexes {
-    user_id [name: 'cotti_platform_admin_assignments_user_id_unique', unique]
-  }
-}
-
-table cotti_model_display_settings {
-  config jsonb [not null]
-  id varchar(32) [pk, not null, default: 'default']
-  updated_by text
-  accessed_at "timestamp with time zone" [not null, default: `now()`]
-  created_at "timestamp with time zone" [not null, default: `now()`]
-  updated_at "timestamp with time zone" [not null, default: `now()`]
-}
-
-table cotti_audit_risk_analyses {
-  id uuid [pk, not null, default: `gen_random_uuid()`]
-  message_id text [not null]
-  session_id text
-  target_user_id text
-  target_user_email text
-  status text [not null, default: 'pending']
-  summary text
-  reason text
-  confidence text
-  evidence jsonb [default: `[]`]
-  risk_level text
-  risk_labels jsonb [default: `[]`]
-  model text
-  provider text
-  error text
-  requested_by_user_id text
-  requested_by_email text
-  accessed_at "timestamp with time zone" [not null, default: `now()`]
-  created_at "timestamp with time zone" [not null, default: `now()`]
-  updated_at "timestamp with time zone" [not null, default: `now()`]
-
-  indexes {
-    message_id [name: 'cotti_audit_risk_analyses_message_id_unique', unique]
-    status [name: 'cotti_audit_risk_analyses_status_idx']
-    created_at [name: 'cotti_audit_risk_analyses_created_at_idx']
-  }
-}
-
-table cotti_audit_view_logs {
-  id uuid [pk, not null, default: `gen_random_uuid()`]
-  admin_user_id text
-  admin_email text
-  target_type text [not null]
-  target_id text [not null]
-  message_id text
-  session_id text
-  target_user_id text
-  target_user_email text
-  metadata jsonb [default: `{}`]
-  created_at "timestamp with time zone" [not null, default: `now()`]
-
-  indexes {
-    admin_user_id [name: 'cotti_audit_view_logs_admin_user_id_idx']
-    (target_type, target_id) [name: 'cotti_audit_view_logs_target_idx']
-    created_at [name: 'cotti_audit_view_logs_created_at_idx']
-  }
-}
-
-table cotti_home_notification_settings {
-  content text [not null]
-  enabled boolean [not null, default: false]
-  id varchar(32) [pk, not null, default: 'default']
-  updated_by text
-  accessed_at "timestamp with time zone" [not null, default: `now()`]
-  created_at "timestamp with time zone" [not null, default: `now()`]
   updated_at "timestamp with time zone" [not null, default: `now()`]
 }
 

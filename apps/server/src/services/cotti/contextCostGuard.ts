@@ -8,14 +8,14 @@ import { ChatErrorType, type UIChatMessage } from '@lobechat/types';
 import type { Pricing } from 'model-bank';
 
 import { getContextCostPolicy } from '@/_custom/registry/contextCostPolicy';
+import { CottiTopicBudgetModel } from '@/database/models/cottiTopicBudget';
 import { TopicCostFreezeModel } from '@/database/models/topicCostFreeze';
 import type { LobeChatDatabase } from '@/database/type';
 
 export const topicFrozenError = () =>
   AgentRuntimeError.createError(ChatErrorType.BadRequest, {
     code: 'TOPIC_COST_FROZEN',
-    message:
-      '此话题已因上下文成本保护冻结，不能继续发送或执行任务。历史仍可查看，请使用“新问题”或“带着进展继续”。',
+    message: '此话题已达到成本保护限额并冻结，不能继续发送或执行任务。历史仍可查看，请新建话题。',
   });
 
 export const assertTopicNotCostFrozen = async (
@@ -23,8 +23,11 @@ export const assertTopicNotCostFrozen = async (
   userId: string,
   topicId?: string,
 ) => {
-  if (topicId && (await new TopicCostFreezeModel(db, userId).get(topicId)))
-    throw topicFrozenError();
+  if (!topicId) return;
+  const freezes = new TopicCostFreezeModel(db, userId);
+  if (await freezes.get(topicId)) throw topicFrozenError();
+  await new CottiTopicBudgetModel(db).freezeIfExceeded(userId, topicId);
+  if (await freezes.get(topicId)) throw topicFrozenError();
 };
 
 /** Last check after context engineering. Never exempt cache hits or compression requests. */
@@ -47,19 +50,19 @@ export const createContextCostGuard = (
         provider,
       ),
     ]);
-    const policy = getContextCostPolicy(pricing, capacity);
+    const policy = getContextCostPolicy(pricing, capacity, { id: payload.model, provider });
     // Accounting reads content/tool fields shared by the wire and UI message shapes;
     // it does not require database timestamps or ownership fields.
     const tokens = countContextTokens({
       messages: payload.messages as unknown as UIChatMessage[],
       tools: payload.tools,
     });
-    if (scope && scopedTopicId && tokens.adjustedTotal >= policy.compressionTokenLimit) {
+    if (scope && scopedTopicId && tokens.adjustedTotal >= policy.freezeTokenLimit) {
       await new TopicCostFreezeModel(scope.db, scope.userId).freeze(scopedTopicId, {
         model: payload.model,
         provider,
         estimatedInputTokens: tokens.rawTotal,
-        inputTokenLimit: policy.compressionTokenLimit,
+        inputTokenLimit: policy.freezeTokenLimit,
       });
       throw topicFrozenError();
     }

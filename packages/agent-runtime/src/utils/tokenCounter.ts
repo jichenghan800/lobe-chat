@@ -10,8 +10,6 @@ export interface TokenCountOptions {
    * Default {@link DEFAULT_DRIFT_MULTIPLIER} (1.25).
    */
   driftMultiplier?: number;
-  /** Absolute cost-oriented ceiling, independent of the model window. */
-  maxThresholdTokens?: number;
   /** Model's max context window token count */
   maxWindowToken?: number;
   /** Threshold ratio for triggering compression, default 0.5 */
@@ -37,7 +35,7 @@ export const DEFAULT_THRESHOLD_RATIO = 0.5;
 export function getCompressionThreshold(options: TokenCountOptions = {}): number {
   const maxContext = options.maxWindowToken ?? DEFAULT_MAX_CONTEXT;
   const ratio = options.thresholdRatio ?? DEFAULT_THRESHOLD_RATIO;
-  return Math.floor(Math.min(maxContext * ratio, options.maxThresholdTokens ?? Infinity));
+  return Math.floor(maxContext * ratio);
 }
 
 /**

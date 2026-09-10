@@ -20,6 +20,7 @@ export * from './cottiAudit';
 export * from './cottiHomeNotification';
 export * from './cottiModelDisplay';
 export * from './cottiPeople';
+export * from './cottiTopicBudget';
 export * from './device';
 export * from './documentComment';
 export * from './documentHistory';

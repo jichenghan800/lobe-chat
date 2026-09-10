@@ -19,16 +19,6 @@ const mkMsg = (m: Partial<UIChatMessage> & { role: UIChatMessage['role'] }): UIC
   }) as UIChatMessage;
 
 describe('tokenCounter', () => {
-  it('keeps cost compression below the pricing boundary after earlier compression', () => {
-    expect(
-      getCompressionThreshold({
-        maxWindowToken: 1_050_000,
-        thresholdRatio: 0.65,
-        maxThresholdTokens: 190_400,
-      }),
-    ).toBe(190_400);
-  });
-
   describe('getCompressionThreshold', () => {
     it('should use default values', () => {
       const threshold = getCompressionThreshold();

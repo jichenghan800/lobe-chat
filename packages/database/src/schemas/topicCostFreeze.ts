@@ -1,4 +1,4 @@
-import { integer, pgTable, text } from 'drizzle-orm/pg-core';
+import { integer, numeric, pgTable, text } from 'drizzle-orm/pg-core';
 
 import { createdAt } from './_helpers';
 import { topics } from './topic';
@@ -8,6 +8,9 @@ export const topicCostFreezes = pgTable('topic_cost_freezes', {
   topicId: text('topic_id')
     .primaryKey()
     .references(() => topics.id, { onDelete: 'cascade' }),
+  reason: text('reason').$type<'context' | 'budget'>().notNull().default('context'),
+  spentCny: numeric('spent_cny'),
+  limitFen: integer('limit_fen'),
   model: text('model').notNull(),
   provider: text('provider').notNull(),
   estimatedInputTokens: integer('estimated_input_tokens').notNull(),

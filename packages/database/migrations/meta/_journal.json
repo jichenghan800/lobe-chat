@@ -1141,6 +1141,13 @@
       "when": 1789019688900,
       "tag": "0162_topic_cost_freeze",
       "breakpoints": true
+    },
+    {
+      "idx": 163,
+      "version": "7",
+      "when": 1789041662122,
+      "tag": "0163_cotti_topic_budget",
+      "breakpoints": true
     }
   ],
   "version": "6"

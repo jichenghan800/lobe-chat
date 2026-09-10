@@ -1,4 +1,16 @@
 export default {
+  'platformManagement.topicBudget.title': 'Topic spending limit',
+  'platformManagement.topicBudget.desc':
+    'Each topic accumulates its own costs and freezes at the limit. Switching models does not reset spending.',
+  'platformManagement.topicBudget.amount': 'Limit per topic (CNY)',
+  'platformManagement.topicBudget.note':
+    'Uses recorded model costs, including history, at a fixed USD/CNY rate of 7.12. The last call may exceed the limit; already-sent concurrent requests may still incur charges. Raising or disabling the limit does not unfreeze existing topics.',
+  'platformManagement.topicBudget.save': 'Save',
+  'platformManagement.topicBudget.saved': 'Spending limit saved',
+  'platformManagement.topicBudget.failed': 'Failed to save',
+  'platformManagement.topicBudget.invalid':
+    'Enter CNY 0.01 to 1,000,000 with up to two decimal places.',
+
   'platformManagement.models.migration.alreadyRetired':
     'This model is globally retired and cannot be re-enabled using the list switch.',
   'platformManagement.models.migration.title': 'Globally retire a model and migrate references',

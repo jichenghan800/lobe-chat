@@ -32,6 +32,7 @@ import {
   writeCottiPlatformManagementSection,
 } from './section';
 import { styles } from './style';
+import { TopicBudgetSettings } from './TopicBudgetSettings';
 
 const CottiPlatformManagement = memo(() => {
   const { t } = useTranslation('setting');
@@ -103,7 +104,10 @@ const CottiPlatformManagement = memo(() => {
         {section === 'overview' ? (
           <CottiPlatformAnalytics embedded />
         ) : section === 'models' ? (
-          <ModelDisplaySettings />
+          <Flexbox gap={24}>
+            <TopicBudgetSettings />
+            <ModelDisplaySettings />
+          </Flexbox>
         ) : section === 'audit' ? (
           <CottiPlatformAudit />
         ) : section === 'agent-access' ? (

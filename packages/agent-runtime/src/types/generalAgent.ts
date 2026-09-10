@@ -90,8 +90,6 @@ export interface GeneralAgentConfig {
   compressionConfig?: {
     /** Whether context compression is enabled (default: true) */
     enabled?: boolean;
-    /** Cost-oriented compression ceiling, including after prior compression. */
-    maxThresholdTokens?: number;
     /** Model's max context window token count (default: 128k) */
     maxWindowToken?: number;
     /** Explicit threshold after a compression summary exists; default 0.65 reserves prompt headroom. */

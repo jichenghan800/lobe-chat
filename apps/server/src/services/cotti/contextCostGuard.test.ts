@@ -6,6 +6,13 @@ import type { LobeChatDatabase } from '@/database/type';
 
 import { createContextCostGuard } from './contextCostGuard';
 
+const budgetCheck = vi.hoisted(() => vi.fn());
+vi.mock('@/database/models/cottiTopicBudget', () => ({
+  CottiTopicBudgetModel: class {
+    freezeIfExceeded = budgetCheck;
+  },
+}));
+
 vi.mock('@lobechat/context-engine', () => ({ countContextTokens: vi.fn() }));
 vi.mock('@lobechat/model-runtime', () => ({
   getModelPropertyWithFallback: vi.fn(),
@@ -31,6 +38,7 @@ describe('final context cost guard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     freezeStore.frozen = false;
+    budgetCheck.mockReset();
     vi.mocked(getModelPropertyWithFallback).mockImplementation(async (_model, field) =>
       field === 'contextWindowTokens'
         ? 1_050_000
@@ -81,6 +89,45 @@ describe('final context cost guard', () => {
         { tracing: { topicId: 'topic' } },
       ),
     ).rejects.toThrow('冻结');
+  });
+  it('allows Gemini below one million adjusted tokens and freezes at the boundary', async () => {
+    const guard = createContextCostGuard('vertexai', {
+      db: {} as LobeChatDatabase,
+      userId: 'owner',
+    });
+    const options = { metadata: { topicId: 'topic' } };
+    vi.mocked(countContextTokens).mockReturnValue({
+      rawTotal: 799_999,
+      adjustedTotal: 999_999,
+    } as ReturnType<typeof countContextTokens>);
+    await expect(
+      guard.beforeChat!({ model: 'gemini-3.8-flash', messages: [] }, options),
+    ).resolves.toBeUndefined();
+    expect(freezeStore.freeze).not.toHaveBeenCalled();
+    vi.mocked(countContextTokens).mockReturnValue({
+      rawTotal: 800_000,
+      adjustedTotal: 1_000_000,
+    } as ReturnType<typeof countContextTokens>);
+    await expect(
+      guard.beforeChat!({ model: 'gemini-3.8-flash', messages: [] }, options),
+    ).rejects.toThrow('冻结');
+    expect(freezeStore.freeze).toHaveBeenCalledWith(
+      'topic',
+      expect.objectContaining({ inputTokenLimit: 1_000_000 }),
+    );
+  });
+  it('blocks short requests once recorded spending reaches the limit', async () => {
+    budgetCheck.mockImplementation(async () => {
+      freezeStore.frozen = true;
+    });
+    await expect(
+      createContextCostGuard('vertexai', { db: {} as LobeChatDatabase, userId: 'owner' })
+        .beforeChat!(
+        { model: 'gemini-3.8-flash', messages: [] },
+        { metadata: { topicId: 'topic' } },
+      ),
+    ).rejects.toThrow('冻结');
+    expect(countContextTokens).not.toHaveBeenCalled();
   });
   it('retains the per-request guard for unscoped operations', async () => {
     vi.mocked(countContextTokens).mockReturnValue({

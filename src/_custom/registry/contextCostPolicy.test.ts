@@ -17,16 +17,29 @@ const pricing: Pricing = {
   ],
 };
 describe('context cost policy', () => {
-  it('compresses before the price tier even for a million-token model', () => {
+  it('uses the approved Gemini 3.8 request ceiling without requiring catalog capacity', () => {
+    expect(
+      getContextCostPolicy(undefined, undefined, { id: 'gemini-3.8-flash', provider: 'vertexai' }),
+    ).toMatchObject({ freezeTokenLimit: 1_000_000, inputTokenLimit: 1_000_000 });
+    expect(
+      getContextCostPolicy(undefined, undefined, { id: 'gemini-3.5-flash', provider: 'vertexai' })
+        .freezeTokenLimit,
+    ).toBe(64_000);
+    expect(
+      getContextCostPolicy(undefined, undefined, { id: 'gemini-3.8-flash', provider: 'google' })
+        .freezeTokenLimit,
+    ).toBe(64_000);
+  });
+  it('keeps the independent freeze budget below the price tier', () => {
     expect(getContextCostPolicy(pricing, 1_050_000)).toMatchObject({
-      compressionTokenLimit: 190_400,
+      freezeTokenLimit: 190_400,
       inputTokenLimit: 231_200,
       pricingBoundary: 272_000,
     });
   });
   it('honors smaller model capacity and does not invent a price tier', () => {
     expect(getContextCostPolicy(undefined, 32_000)).toMatchObject({
-      compressionTokenLimit: 16_000,
+      freezeTokenLimit: 16_000,
       inputTokenLimit: 27_200,
       pricingBoundary: undefined,
     });

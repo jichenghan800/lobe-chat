@@ -4,6 +4,7 @@ import { topics } from '../schemas';
 import type { Transaction } from '../type';
 import { NOT_COPIED_TRANSCRIPT_SQL } from '../utils/copiedTranscript';
 import { buildWorkspaceWhere } from '../utils/workspace';
+import { CottiTopicBudgetModel } from './cottiTopicBudget';
 
 interface ToolUsageEntry {
   calls: number;
@@ -376,4 +377,5 @@ export const recomputeTopicUsage = async (
       usage,
     })
     .where(and(eq(topics.id, topicId), buildWorkspaceWhere({ userId, workspaceId }, topics)));
+  await new CottiTopicBudgetModel(trx).freezeIfExceeded(userId, topicId);
 };

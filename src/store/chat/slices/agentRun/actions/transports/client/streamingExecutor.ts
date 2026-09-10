@@ -34,7 +34,6 @@ import {
 } from '@lobechat/types';
 import debug from 'debug';
 
-import { getContextCostPolicy } from '@/_custom/registry/contextCostPolicy';
 import { resolveRetiredModel } from '@/_custom/registry/modelRetirement';
 import { createAgentToolsEngine } from '@/helpers/toolEngineering';
 import { aiAgentService } from '@/services/aiAgent';
@@ -738,10 +737,6 @@ export class StreamingExecutorActionImpl {
     const agent = new GeneralChatAgent({
       agentConfig: { maxSteps: 1000 },
       compressionConfig: {
-        maxThresholdTokens: getContextCostPolicy(
-          aiModelSelectors.getModelCard(model, provider!)(getAiInfraStoreState())?.pricing,
-          contextWindowTokens ?? undefined,
-        ).compressionTokenLimit,
         enabled: agentConfigData.chatConfig?.enableContextCompression ?? true, // Default to enabled
         maxWindowToken: contextWindowTokens ?? undefined,
       },
