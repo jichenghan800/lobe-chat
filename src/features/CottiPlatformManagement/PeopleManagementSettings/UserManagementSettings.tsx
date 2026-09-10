@@ -176,8 +176,6 @@ export const UserManagementSettings = () => {
   ];
   return (
     <Block className={sharedStyles.card} gap={16} padding={20} variant={'outlined'}>
-      <Text className={sharedStyles.sectionTitle}>{t('platformManagement.users.title')}</Text>
-      <Text className={sharedStyles.copy}>{t('platformManagement.users.inlineDesc')}</Text>
       <Flexbox horizontal gap={12} wrap={'wrap'}>
         <Input
           allowClear

@@ -2,12 +2,23 @@
 
 import { Flexbox } from '@lobehub/ui';
 import { Tabs } from '@lobehub/ui/base-ui';
+import { createStaticStyles, cssVar } from 'antd-style';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import LoginAccessSettings from './LoginAccessSettings';
 import PlatformAdminSettings from './PlatformAdminSettings';
 import { UserManagementSettings } from './UserManagementSettings';
+
+const styles = createStaticStyles(({ css }) => ({
+  tab: css`
+    &&[aria-selected='true'] {
+      font-weight: 600;
+      color: ${cssVar.colorBgContainer};
+      background: ${cssVar.colorText};
+    }
+  `,
+}));
 
 export default function PeopleManagementSettings() {
   const { t } = useTranslation('setting');
@@ -16,6 +27,7 @@ export default function PeopleManagementSettings() {
     <Flexbox gap={16}>
       <Tabs
         activeKey={section}
+        classNames={{ tab: styles.tab }}
         items={[
           { key: 'users', label: t('platformManagement.users.title') },
           { key: 'administrators', label: t('platformManagement.people.sections.administrators') },

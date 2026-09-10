@@ -4,16 +4,6 @@ export const styles = createStaticStyles(({ css }) => ({
   content: css`
     overflow: hidden auto;
   `,
-  header: css`
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: flex-start;
-    justify-content: space-between;
-  `,
-  headerCopy: css`
-    min-width: 240px;
-  `,
   nav: css`
     position: sticky;
     z-index: 2;

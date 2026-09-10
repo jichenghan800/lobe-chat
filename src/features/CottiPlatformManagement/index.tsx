@@ -57,14 +57,6 @@ const CottiPlatformManagement = memo(() => {
     <Skeleton height={240} />
   ) : (
     <Flexbox gap={20}>
-      <div className={styles.header}>
-        <Flexbox className={styles.headerCopy} gap={4}>
-          <Text fontSize={24} weight={600}>
-            {t('platformManagement.heading')}
-          </Text>
-          <Text type={'secondary'}>{t('platformManagement.desc')}</Text>
-        </Flexbox>
-      </div>
       <div className={styles.nav}>
         <Tabs
           activeKey={section}
@@ -124,12 +116,14 @@ const CottiPlatformManagement = memo(() => {
       <SideBar />
       <Flexbox height={'100%'} width={'100%'}>
         <NavHeader>
-          <Text weight={500}>{t('platformManagement.title')}</Text>
+          <Text fontSize={16} weight={600}>
+            {t('platformManagement.title')}
+          </Text>
         </NavHeader>
         <SettingContainer
           className={styles.content}
           maxWidth={1280}
-          paddingBlock={'24px 128px'}
+          paddingBlock={24}
           paddingInline={24}
           variant={'secondary'}
         >
