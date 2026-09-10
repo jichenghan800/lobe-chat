@@ -40,6 +40,7 @@ import { AiProviderModel } from '@/database/models/aiProvider';
 import { type LobeChatDatabase } from '@/database/type';
 import { getLLMConfig } from '@/envs/llm';
 import { getServerGlobalConfig } from '@/server/globalConfig';
+import { createContextCostGuard } from '@/server/services/cotti/contextCostGuard';
 import {
   createModelRetirementGuard,
   withModelRetirement,
@@ -431,6 +432,7 @@ export const initModelRuntimeWithUserPayload = (
   hooks?: ModelRuntimeHooks,
 ) => {
   const runtimeProvider = payload.runtimeProvider ?? provider;
+  hooks = mergeModelRuntimeHooks(createContextCostGuard(provider), hooks);
 
   /**
    * User-configured endpoints can come from older clients or persisted rows that predate

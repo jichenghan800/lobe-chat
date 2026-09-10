@@ -72,9 +72,18 @@ export const useChatInputDraft = () => {
       const draft = getDraftEntry(draftKey);
       loadedDraftRef.current = { draftKey, updatedAt: draft?.updatedAt };
 
-      if (!editor.isEmpty) return;
+      if (editor.isEmpty && draft) editor.setDocument('json', draft.json);
 
-      if (draft) editor.setDocument('json', draft.json);
+      // setDocument is not a user edit. Publish after Lexical commits, including
+      // when two topics carry identical draft text: the new Conversation store
+      // still needs its own input mirror to enable the send button.
+      queueMicrotask(() => {
+        const state = storeApi.getState();
+        if (state.draftKey !== draftKey || state.editor !== editor) return;
+        const content = state.getMarkdownContent();
+        state.onMarkdownContentChange?.(content);
+        storeApi.setState({ markdownContent: content, isContentEmpty: editor.isEmpty });
+      });
     },
     [storeApi],
   );

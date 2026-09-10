@@ -570,6 +570,7 @@ export class GeneralChatAgent implements Agent {
     // so they must not count against the compression budget either — otherwise
     // we'd burn an extra summarization pass on tool tokens that won't be sent.
     const compressionOptions = {
+      maxThresholdTokens: this.config.compressionConfig?.maxThresholdTokens,
       maxWindowToken: this.config.compressionConfig?.maxWindowToken,
       thresholdRatio: this.getCompressionThresholdRatio(payloadWithAllowedToolNames.messages),
       tools: state.forceFinish ? undefined : payloadWithAllowedToolNames.tools,
@@ -641,6 +642,7 @@ export class GeneralChatAgent implements Agent {
         // Mirror RuntimeExecutors.callLlm: force-finish steps ship without tools,
         // so they must not count against the compression budget here either.
         const compressionOptions = {
+          maxThresholdTokens: this.config.compressionConfig?.maxThresholdTokens,
           maxWindowToken: this.config.compressionConfig?.maxWindowToken,
           thresholdRatio: this.getCompressionThresholdRatio(state.messages),
           tools: state.forceFinish ? undefined : this.getTools(state),

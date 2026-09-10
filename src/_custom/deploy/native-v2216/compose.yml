@@ -2,7 +2,7 @@ name: cotti-v2216-native
 
 services:
   app:
-    image: &cotti_app_image lobehub:cotti-v2216-email-otp-reuse-20260909
+    image: &cotti_app_image lobehub:lingshu-v2216-topic-cost-20260910-r4
     ports:
       - '127.0.0.1:3230:3210'
     env_file:

@@ -11,7 +11,7 @@ docker compose -f src/_custom/deploy/native-v2216/compose.yml config --quiet
 docker compose -f src/_custom/deploy/native-v2216/compose.yml up -d --no-deps app app-cotti
 ```
 
-当前镜像：`lobehub:cotti-v2216-email-otp-reuse-20260909`。通用构建脚本见[build.sh](build.sh)，以独立标签构建，不覆盖现有镜像标签：
+当前镜像：`lobehub:lingshu-v2216-topic-cost-20260910-r4`。通用构建脚本见[build.sh](build.sh)，以独立标签构建，不覆盖现有镜像标签：
 
 ```bash
 COTTI_IMAGE_TAG=lobehub:your-new-release-tag bash src/_custom/deploy/native-v2216/build.sh
@@ -35,4 +35,4 @@ QStash只有一个正式调度。不要随应用发布重建或重启qstash-loca
 
 整理前完整二开目录备份：`/opt/lobechat-v2.2.16/.records/native-v2216/custom-docs-backup-20260909-181420`；包含可浏览副本、压缩包和SHA-256清单。私有运行环境和用户数据不放入公开文档。
 
-当前源码差异快照保存在`.records/native-v2216/current-source-otp-baseline/`，包含基于官方提交`906b10e03029648655e0257bda4f785a9e0973f0`的补丁、当前变更文件压缩包和SHA-256清单。它记录本次整理后的源码，不代表重新构建或发布了运行镜像；当前工作区和Git暂存区保持原状。
+当前源码差异快照保存在`.records/native-v2216/current-source-otp-baseline/`，包含基于官方提交`906b10e03029648655e0257bda4f785a9e0973f0`的补丁、当前变更文件压缩包和SHA-256清单。它记录本次整理后的源码，不代表重新构建或发布了运行镜像；当前二开基线已提交并打Tag：`0f6aa492ff` / `v2.2.16-lingshu-customization-complete-20260910`；后续功能独立提交。

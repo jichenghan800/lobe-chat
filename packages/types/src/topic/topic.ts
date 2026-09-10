@@ -664,6 +664,8 @@ export interface RecentTopic {
 }
 
 export interface CreateTopicParams {
+  /** Agent context; sessionId is reserved for a persisted legacy session. */
+  agentId?: string;
   favorite?: boolean;
   groupId?: string | null;
   messages?: string[];

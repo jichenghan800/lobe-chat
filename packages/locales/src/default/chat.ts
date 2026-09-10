@@ -1,4 +1,13 @@
 export default {
+  'longTopic.newQuestion': 'New question',
+  'longTopic.continueProgress': 'Continue with a summary',
+  'longTopic.summarizing': 'Preparing a handoff · {{current}}/{{total}}',
+  'longTopic.preparing': 'Preparing your new topic…',
+  'longTopic.cancel': 'Cancel',
+  'longTopic.continuedTitle': 'Continued · {{title}}',
+  'longTopic.handoff':
+    'Continue the work below. This is an automatically generated handoff; verify important facts against the [original topic]({{source}}).\n\n{{summary}}',
+
   'longTopic.label': 'Long context',
   'longTopic.description':
     'This conversation has a large estimated context. Later turns may resend its history and increase token usage. Start a new topic when changing subjects; the old conversation stays available. To continue the same task, copy only the key conclusions and next steps. This estimate is not a bill.',

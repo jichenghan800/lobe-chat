@@ -44,8 +44,10 @@ import {
 import { RequestTrigger } from '@lobechat/types';
 import { isRecord } from '@lobechat/utils/object';
 import debug from 'debug';
+import type { Pricing } from 'model-bank';
 import urlJoin from 'url-join';
 
+import { getContextCostPolicy } from '@/_custom/registry/contextCostPolicy';
 import {
   deriveAgentInterventionQueueDeduplicationId,
   matchesAgentInterventionContinuationProvenance,
@@ -3691,10 +3693,20 @@ export class AgentRuntimeService {
           )
         : undefined;
 
+    const costPricing = metadata?.modelRuntimeConfig?.model
+      ? await getModelPropertyWithFallback<Pricing | undefined>(
+          metadata.modelRuntimeConfig.model,
+          'pricing',
+          metadata.modelRuntimeConfig.provider,
+        )
+      : undefined;
+
     // Create Agent instance — use custom factory if provided, otherwise default to GeneralChatAgent
     const generalConfig = {
       agentConfig: metadata?.agentConfig,
       compressionConfig: {
+        maxThresholdTokens: getContextCostPolicy(costPricing, contextWindowTokens)
+          .compressionTokenLimit,
         enabled: metadata?.agentConfig?.chatConfig?.enableContextCompression ?? true,
         maxWindowToken: contextWindowTokens ?? undefined,
       },

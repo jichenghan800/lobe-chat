@@ -51,10 +51,10 @@ const Token = memo(() => {
 
   // Keep the composer quiet for regular users until context pressure is real;
   // dev mode always shows the tag for inspection.
-  if (!isDevMode && !longTopic) return null;
+  if (!isDevMode && !longTopic) return <NewTopicButton />;
 
   return (
-    <Flexbox horizontal align="center" gap={4}>
+    <Flexbox horizontal align="center" gap={4} wrap="wrap">
       <ActionPopover content={content}>
         <Flexbox horizontal align="center" gap={4}>
           {longTopic && <Text style={{ color: cssVar.colorWarning }}>{t('longTopic.label')}</Text>}

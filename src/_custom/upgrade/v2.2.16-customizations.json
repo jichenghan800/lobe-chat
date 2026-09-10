@@ -1,7 +1,7 @@
 {
   "version": "v2.2.16",
-  "reviewDate": "2026-09-09",
-  "sourceCount": 50,
+  "reviewDate": "2026-09-10",
+  "sourceCount": 51,
   "configurationCount": 18,
   "sourceCustomizations": [
     {
@@ -655,6 +655,31 @@
         {
           "path": "src/features/Auth/SignIn/SignInEmailStep.tsx",
           "line": 173
+        }
+      ]
+    },
+    {
+      "id": "DEV-051",
+      "name": "上下文成本保护与摘要续聊",
+      "implementation": "成本阈值限制原生压缩触发点，ModelRuntime请求前守卫；新问题与分段摘要续聊入口",
+      "boundary": "双入口已发布；超预算停止本次调用，不删除历史；未包含语义分流、跨档放行、自动任务按天续接和管理员成本明细",
+      "firstImplemented": "2026-09-10",
+      "sourceReferences": [
+        {
+          "path": "src/_custom/registry/contextCostPolicy.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/contextCostGuard.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/useTopicContinuation.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/hooks/useChatInputDraft.ts",
+          "line": 1
         }
       ]
     }

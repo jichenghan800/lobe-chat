@@ -41,6 +41,9 @@ type UpdateTopicMetadataInput = Omit<Partial<ChatTopicMetadata>, 'onboardingSess
 };
 
 export class TopicService {
+  getTopicTranscript = (topicId: string, offset = 0) =>
+    lambdaClient.topic.getTopicTranscript.query({ topicId, offset, limit: 500 });
+
   createTopic = (params: CreateTopicParams): Promise<string> => {
     return lambdaClient.topic.createTopic.mutate({
       ...params,

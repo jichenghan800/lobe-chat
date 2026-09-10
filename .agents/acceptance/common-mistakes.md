@@ -1069,3 +1069,11 @@ A clean round prints `plan: N item(s)` with nothing after it.
 `lh acceptance run delete`: deleting the round to hide a bookkeeping error also
 destroys the real results and evidence it carried, and rounds are immutable
 snapshots.
+
+### L-S20 — Treating Agent IDs as legacy Session IDs
+
+**Wrong approach:** Satisfy an older client type by passing an `agt_…` identifier as `sessionId`, and verify topic creation only against a mocked service.
+
+**Why it fails:** Agent and legacy Session are separate persisted identities. The router accepts `agentId` and resolves its context; an arbitrary Agent ID in `sessionId` can fail the database foreign key even when unit tests pass.
+
+**Correct approach:** Follow the server procedure's identity contract, update stale shared types, and verify creation with the real authenticated API and persisted topic. Preserve the source topic and unsent draft on creation failure.
