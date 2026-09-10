@@ -47,6 +47,9 @@ it('validates whole-fen limits and records the administrator', async () => {
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
     });
+  await expect(caller.update({ userId: 'target' })).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  await caller.update({ userId: 'target', vip: true });
+  expect(mocks.update).toHaveBeenLastCalledWith('target', { vip: true }, 'admin');
   await caller.update({ userId: 'target', vip: true, agentEnabled: true, topicLimitFen: 1000 });
   expect(mocks.update).toHaveBeenCalledWith(
     'target',

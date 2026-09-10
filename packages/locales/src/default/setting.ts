@@ -1,4 +1,13 @@
 export default {
+  'platformManagement.users.inlineDesc':
+    'Switches save immediately. Press Enter or leave the amount field to save; leave blank to inherit the platform limit.',
+  'platformManagement.users.limitHint':
+    'Enter or blur to save; Escape to cancel. Empty inherits the platform limit.',
+  'platformManagement.users.email': 'Email',
+  'platformManagement.users.phone': 'Phone',
+  'platformManagement.users.contact': 'Contact details',
+  'platformManagement.users.refreshFailed': 'Saved. Refresh the list to see the latest data.',
+
   'platformManagement.users.title': 'Users',
   'platformManagement.users.desc':
     'Manage model access, Agent access and per-topic spending limits for all users.',

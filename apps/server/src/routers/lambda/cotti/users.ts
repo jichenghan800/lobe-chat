@@ -29,12 +29,20 @@ export const cottiUsersRouter = router({
   mine: member.query(({ ctx }) => ctx.userPolicyModel.get(ctx.userId)),
   update: admin
     .input(
-      z.object({
-        userId: z.string().min(1),
-        vip: z.boolean(),
-        agentEnabled: z.boolean(),
-        topicLimitFen: z.number().int().min(1).max(100_000_000).nullable(),
-      }),
+      z
+        .object({
+          userId: z.string().min(1),
+          vip: z.boolean().optional(),
+          agentEnabled: z.boolean().optional(),
+          topicLimitFen: z.number().int().min(1).max(100_000_000).nullable().optional(),
+        })
+        .refine(
+          (value) =>
+            value.vip !== undefined ||
+            value.agentEnabled !== undefined ||
+            value.topicLimitFen !== undefined,
+          { message: 'At least one policy field is required' },
+        ),
     )
     .mutation(({ ctx, input: { userId, ...policy } }) =>
       ctx.userPolicyModel.update(userId, policy, ctx.platformAdmin.userId),

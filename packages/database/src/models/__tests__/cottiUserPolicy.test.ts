@@ -42,6 +42,23 @@ describe('administrator-owned user policy', () => {
       model.update('missing-user', { agentEnabled: true, vip: true, topicLimitFen: 1 }, 'admin'),
     ).rejects.toThrow('User not found');
   });
+  it('patches only the edited field and preserves independent concurrent changes', async () => {
+    await model.update(ids[0], { agentEnabled: true, vip: false, topicLimitFen: 700 }, 'admin');
+    await Promise.all([
+      model.update(ids[0], { vip: true }, 'admin-a'),
+      model.update(ids[0], { topicLimitFen: 1200 }, 'admin-b'),
+    ]);
+    expect(await model.get(ids[0])).toEqual({ agentEnabled: true, vip: true, topicLimitFen: 1200 });
+    await model.update(ids[0], { topicLimitFen: null }, 'admin');
+    expect(await model.get(ids[0])).toEqual({ agentEnabled: true, vip: true, topicLimitFen: null });
+    await model.update(ids[1], { vip: true }, 'admin');
+    expect(await model.get(ids[1])).toEqual({
+      agentEnabled: false,
+      vip: true,
+      topicLimitFen: null,
+    });
+  });
+
   it('includes users without policy rows in total, filters and pagination', async () => {
     await model.update(ids[0], { agentEnabled: true, vip: true, topicLimitFen: null }, 'admin');
     const page = await model.list({ page: 1, pageSize: 2, query: 'policy-' });

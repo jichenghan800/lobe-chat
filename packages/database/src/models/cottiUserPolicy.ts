@@ -87,7 +87,7 @@ export class CottiUserPolicyModel {
     };
   }
 
-  async update(userId: string, policy: CottiUserPolicyInput, updatedBy: string) {
+  async update(userId: string, policy: Partial<CottiUserPolicyInput>, updatedBy: string) {
     const [user] = await this.db
       .select({ id: users.id })
       .from(users)

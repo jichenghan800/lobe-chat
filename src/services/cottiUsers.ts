@@ -11,8 +11,8 @@ export const cottiUsersService = {
   mine: () => lambdaClient.cotti.users.mine.query(),
   update: (input: {
     userId: string;
-    vip: boolean;
-    agentEnabled: boolean;
-    topicLimitFen: number | null;
+    vip?: boolean;
+    agentEnabled?: boolean;
+    topicLimitFen?: number | null;
   }) => lambdaClient.cotti.users.update.mutate(input),
 };
