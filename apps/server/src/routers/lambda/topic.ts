@@ -294,7 +294,7 @@ export const topicRouter = router({
     .query(async ({ input, ctx }) => {
       const topic = await ctx.topicModel.findOwnTopicById(input.id);
       if (!topic) return null;
-      return topic;
+      return { ...topic, modelCost: await ctx.topicModel.getRecordedModelCost(input.id) };
     }),
 
   getTopicTranscript: topicProcedure

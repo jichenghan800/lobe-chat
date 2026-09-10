@@ -609,6 +609,8 @@ export interface ChatTopic extends Omit<BaseDataModel, 'meta'> {
    * `metadata.model` (measured dominant model from the usage roll-up).
    */
   model?: string | null;
+  /** Recorded model-only estimates in USD; missing calls are not zero-cost calls. */
+  modelCost?: { calls: number; pricedCalls: number; totalUSD: number | null };
   provider?: string | null;
   sessionId?: string;
   /**

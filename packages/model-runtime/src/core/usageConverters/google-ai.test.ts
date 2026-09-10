@@ -1,8 +1,10 @@
 import type { GenerateContentResponseUsageMetadata } from '@google/genai';
 import { MediaModality } from '@google/genai';
 import type { Pricing } from 'model-bank';
+import vertexModels from 'model-bank/vertexai';
 import { describe, expect, it } from 'vitest';
 
+import { cottiGemini38Pricing } from '../../utils/cottiGeminiPricing';
 import { convertGoogleAIUsage } from './google-ai';
 
 describe('convertGoogleAIUsage', () => {
@@ -174,4 +176,35 @@ describe('convertGoogleAIUsage', () => {
     expect(result.inputToolTokens).toBeUndefined();
     expect(result.totalInputTokens).toBe(7646);
   });
+});
+
+describe('Gemini recorded price verification', () => {
+  it.each([
+    ['gemini-3.5-flash-lite', 0.3, 0.03, 2.5],
+    ['gemini-3.5-flash', 1.5, 0.15, 9],
+    ['gemini-3.6-flash', 1.5, 0.15, 7.5],
+    ['gemini-3.7-flash', 1.5, 0.15, 7.5],
+    ['gemini-3.8-flash', 1.5, 0.15, 7.5],
+  ] as const)(
+    '%s discounts cache hits and bills reasoning output once',
+    (id, input, cache, output) => {
+      const pricing =
+        id === 'gemini-3.8-flash'
+          ? cottiGemini38Pricing
+          : vertexModels.find((m) => m.id === id)?.pricing;
+      expect(pricing).toBeDefined();
+      const usage = convertGoogleAIUsage(
+        {
+          promptTokenCount: 100000,
+          cachedContentTokenCount: 80000,
+          candidatesTokenCount: 1000,
+          thoughtsTokenCount: 2000,
+          totalTokenCount: 103000,
+        },
+        pricing,
+      );
+      expect(usage.cost).toBeCloseTo((20000 * input + 80000 * cache + 3000 * output) / 1000000, 6);
+      expect(usage.totalOutputTokens).toBe(3000);
+    },
+  );
 });

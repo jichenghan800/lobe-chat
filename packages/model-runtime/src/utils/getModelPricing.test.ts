@@ -30,7 +30,9 @@ describe('getModelPricing', () => {
   });
 
   it('skips unpriced same-ID entries when falling back to another provider', async () => {
-    const pricing = { units: [{ name: 'textInput', rate: 4, strategy: 'fixed', unit: 'millionTokens' }] };
+    const pricing = {
+      units: [{ name: 'textInput', rate: 4, strategy: 'fixed', unit: 'millionTokens' }],
+    };
     loadModelsMock.mockResolvedValue([
       { id: 'shared-model', providerId: 'azure' },
       { id: 'shared-model', providerId: 'other' },
@@ -87,4 +89,14 @@ describe('getModelPricing', () => {
       pricingContext: { plan: 'premium', scope: 'personal' },
     });
   });
+});
+
+it('prices Vertex Gemini 3.8 generation but lets a native catalog entry take precedence', async () => {
+  loadModelsMock.mockResolvedValue([]);
+  expect((await getModelPricing('gemini-3.8-flash', 'vertexai'))?.units).toHaveLength(6);
+  expect(await getModelPricing('unknown', 'vertexai')).toBeUndefined();
+  expect(await getModelPricing('gemini-3.8-flash', 'google')).toBeUndefined();
+  const pricing = { units: [] };
+  loadModelsMock.mockResolvedValue([{ id: 'gemini-3.8-flash', providerId: 'vertexai', pricing }]);
+  expect(await getModelPricing('gemini-3.8-flash', 'vertexai')).toBe(pricing);
 });

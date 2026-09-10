@@ -1,3 +1,4 @@
+import { USD_TO_CNY } from '@lobechat/const/currency';
 import type { ChatTopic } from '@lobechat/types';
 import { isRecord } from '@lobechat/utils/object';
 
@@ -52,4 +53,15 @@ export const getMessageTokenTotal = (message: { metadata?: unknown; usage?: unkn
     if (total !== undefined) return total;
   }
   return undefined;
+};
+
+/** Keep small nonzero estimates visible; use the platform's fixed display exchange rate. */
+export const formatTopicModelCost = (summary: ChatTopic['modelCost']) => {
+  const amount = summary?.totalUSD;
+  if (amount == null || !Number.isFinite(amount) || amount < 0 || !summary?.pricedCalls)
+    return undefined;
+  const cny = amount * USD_TO_CNY;
+  return cny > 0 && cny < 0.0001
+    ? '<¥0.0001'
+    : `¥${cny.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 };

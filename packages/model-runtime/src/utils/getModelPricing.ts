@@ -1,6 +1,7 @@
 import type { LobeDefaultAiModelListItem, Pricing } from 'model-bank';
 
 import type { ModelPricingContext } from '../types';
+import { cottiGemini38Pricing } from './cottiGeminiPricing';
 
 interface BusinessModelConfigModule {
   loadModels: (options?: {
@@ -39,6 +40,8 @@ export async function getModelPricing(
   if (fallbackMatch?.pricing) {
     return fallbackMatch.pricing;
   }
+
+  if (provider === 'vertexai' && model === 'gemini-3.8-flash') return cottiGemini38Pricing;
 
   // 3. Return undefined if no pricing information is found
   return undefined;

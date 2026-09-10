@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getMessageTokenTotal, getTopicTokenTotal, readSettledTopicUsage } from './topicTokenUsage';
+import {
+  formatTopicModelCost,
+  getMessageTokenTotal,
+  getTopicTokenTotal,
+  readSettledTopicUsage,
+} from './topicTokenUsage';
 
 describe('native topic token rollup display', () => {
   it('uses the persisted total rather than adding input/output to it again', () => {
@@ -80,5 +85,17 @@ describe('live and persisted message usage', () => {
     ).toBe(50);
     expect(getMessageTokenTotal({ metadata: { totalTokens: '50' } })).toBeUndefined();
     expect(getMessageTokenTotal({})).toBeUndefined();
+  });
+});
+
+describe('recorded model cost display', () => {
+  it('converts recorded USD with the fixed display rate and retains small amounts', () => {
+    expect(formatTopicModelCost({ totalUSD: 1, calls: 1, pricedCalls: 1 })).toBe('¥7.12');
+    expect(formatTopicModelCost({ totalUSD: 0.000001, calls: 1, pricedCalls: 1 })).toBe('<¥0.0001');
+  });
+  it('does not turn missing prices into free calls', () => {
+    expect(formatTopicModelCost({ totalUSD: null, calls: 2, pricedCalls: 0 })).toBeUndefined();
+    expect(formatTopicModelCost({ totalUSD: 0, calls: 1, pricedCalls: 1 })).toBe('¥0.00');
+    expect(formatTopicModelCost(undefined)).toBeUndefined();
   });
 });

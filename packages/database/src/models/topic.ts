@@ -47,7 +47,7 @@ import {
 } from '../schemas';
 import type { LobeChatDatabase } from '../type';
 import { sanitizeBm25Query } from '../utils/bm25';
-import { COPIED_TOPIC_USAGE_RESET } from '../utils/copiedTranscript';
+import { COPIED_TOPIC_USAGE_RESET, notCopiedTranscript } from '../utils/copiedTranscript';
 import { markCopiedMessageMetadata } from '../utils/copyMessagesInDatabase';
 import { genEndDateWhere, genRangeWhere, genStartDateWhere, genWhere } from '../utils/genWhere';
 import { idGenerator } from '../utils/idGenerator';
@@ -801,6 +801,30 @@ export class TopicModel {
    */
   findOwnTopicById = async (id: string) => {
     return this.findById(id);
+  };
+
+  /** Sum already-recorded model costs, without repricing history or reading message bodies. */
+  getRecordedModelCost = async (id: string) => {
+    const rawCost = sql`coalesce(${messages.usage}->>'cost', ${messages.metadata}->'usage'->>'cost', ${messages.metadata}->>'cost')`;
+    const validCost = sql`case when ${rawCost} ~ '^[0-9]+([.][0-9]+)?$' then (${rawCost})::numeric end`;
+    const [summary] = await this.db
+      .select({
+        calls: count(),
+        pricedCalls: sql<number>`count(${validCost})`.mapWith(Number),
+        totalUSD: sql<number | null>`sum(${validCost})`.mapWith(Number),
+      })
+      .from(messages)
+      .innerJoin(topics, eq(messages.topicId, topics.id))
+      .where(
+        and(
+          eq(topics.id, id),
+          this.ownership(),
+          buildWorkspaceWhere({ userId: this.userId, workspaceId: this.workspaceId }, messages),
+          eq(messages.role, 'assistant'),
+          notCopiedTranscript(),
+        ),
+      );
+    return summary;
   };
 
   /**

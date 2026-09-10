@@ -2867,4 +2867,9 @@ export default {
   'internalLink.preview.verifyStatus.unverified': 'Unverified',
   'internalLink.preview.verifyStatus.verifying': 'Verifying',
   'you': 'You',
+  'messages.topicTokens.cost': 'Estimated model cost {{value}}',
+  'messages.topicTokens.costPartial': 'Estimated model cost {{value}} (incomplete)',
+  'messages.topicTokens.costUnavailable': 'Model cost unavailable',
+  'messages.topicTokens.costHint':
+    'Recorded cost for {{priced}} of {{calls}} model replies; missing costs are excluded. Uses recorded per-call prices including cache reads/writes and reasoning output. CNY display uses a fixed rate of 1 USD = {{rate}} CNY, not a live exchange rate. Excludes separate search/tool/storage charges, tax and account rebates; provider billing is authoritative.',
 };

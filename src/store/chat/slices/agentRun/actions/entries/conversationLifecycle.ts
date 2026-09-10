@@ -1824,9 +1824,14 @@ export class ConversationLifecycleActionImpl {
 
     try {
       throwIfSendAborted(signal);
-      const { model, provider } = agentSelectors.getAgentConfigById(agentId)(getAgentStoreState());
-
       const topicId = operationContext.topicId;
+      // Match the streaming executor: a topic's selected model takes precedence
+      // over the agent default, including the persisted assistant attribution.
+      const topicModel = topicId
+        ? topicSelectors.getTopicModelById(topicId)(this.#get())
+        : undefined;
+      const { model, provider } =
+        topicModel ?? agentSelectors.getAgentConfigById(agentId)(getAgentStoreState());
 
       // Persist selected skill/tool context into user message content so it survives across turns.
       // Deduplicate: skip skills/tools already @mentioned in earlier messages (via editorData).

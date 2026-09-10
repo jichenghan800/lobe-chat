@@ -182,12 +182,16 @@
       "id": "DEV-006",
       "name": "成本修复",
       "implementation": "[apps/server/src/services/usage/cost.ts](<../../../apps/server/src/services/usage/cost.ts#L48>)",
-      "boundary": "usage服务引用；本轮未重新手算全部价表",
+      "boundary": "usage服务引用；本轮未重新手算全部价表；2026-09-10校验Terra长短档位及Gemini缓存/推理，Vertex Gemini3.8缺失价表仅在原生查价无结果时回退标准global价格，原生新增价格优先；普通客户端回复创建时优先话题所选模型，与流式执行一致，修正切换Gemini后消息仍标Terra的归属问题；历史归属不按当前模型盲目回填",
       "firstImplemented": "2026-09-07",
       "sourceReferences": [
         {
           "path": "apps/server/src/services/usage/cost.ts",
           "line": 48
+        },
+        {
+          "path": "src/store/chat/slices/agentRun/actions/entries/conversationLifecycle.ts",
+          "line": 1828
         }
       ]
     },
@@ -775,7 +779,7 @@
       "id": "DEV-051",
       "name": "上下文成本保护与摘要续聊",
       "implementation": "成本阈值限制原生压缩触发点，ModelRuntime请求前守卫；自动命名同次生成标题和100字符内描述；移除两个常驻按钮，直接发送前识别换题并弹框，默认新建话题并发送；冻结状态提供单入口弹框选择空话题或摘要续接",
-      "boundary": "概览优先使用description，旧话题回退title，不批量补描述；判断最多200字符概览和1000字符新输入，不读取历史；复用命名模型，明确续接免调用、相同草稿复用判断；失败放行，成本守卫独立兜底。仅普通话题的空闲文本提交，不拦截自动任务、工具循环、群聊或线程。冻结与压缩同阈值冲突仍待独立修复。；最新回答结束后在普通模式显示原生Topic累计Token，含输入输出明细提示；复用getTopicDetail与total_tokens，不重复计入缓存，不写入模型上下文，分享/审计/子线程视图不额外读取私人话题",
+      "boundary": "概览优先使用description，旧话题回退title，不批量补描述；判断最多200字符概览和1000字符新输入，不读取历史；复用命名模型，明确续接免调用、相同草稿复用判断；失败放行，成本守卫独立兜底。仅普通话题的空闲文本提交，不拦截自动任务、工具循环、群聊或线程。冻结与压缩同阈值冲突仍待独立修复。；最新回答结束后在普通模式显示原生Topic累计Token，含输入输出明细提示；复用getTopicDetail与total_tokens，不重复计入缓存，不写入模型上下文，分享/审计/子线程视图不额外读取私人话题；累计模型预估费用汇总原生已保存cost，标明缺失覆盖率，固定7.12汇率显示人民币；不重算历史、不包含另计工具/存储/返还，私人查询沿用用户/工作区隔离",
       "firstImplemented": "2026-09-10",
       "sourceReferences": [
         {
@@ -817,6 +821,14 @@
         {
           "path": "src/features/Conversation/Messages/components/Extras/Usage/TopicTokenUsage.tsx",
           "line": 14
+        },
+        {
+          "path": "packages/database/src/models/topic.ts",
+          "line": 807
+        },
+        {
+          "path": "packages/model-runtime/src/utils/cottiGeminiPricing.ts",
+          "line": 1
         }
       ]
     },

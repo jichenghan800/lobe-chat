@@ -12,6 +12,7 @@ import { messageService } from '@/services/message';
 import * as agentGroupStore from '@/store/agentGroup';
 import { setPendingTopicRepos } from '@/store/chat/pendingTopicRepos';
 import { operationSelectors } from '@/store/chat/slices/operation/selectors';
+import { topicSelectors } from '@/store/chat/slices/topic/selectors';
 import type {
   VoiceMessageSend,
   VoiceMessageSendOptions,
@@ -155,6 +156,38 @@ describe('ConversationLifecycle actions', () => {
     });
 
     describe('message creation', () => {
+      it('persists the selected topic model instead of the previous agent default', async () => {
+        const { result } = renderHook(() => useChatStore());
+        const topicId = TEST_IDS.TOPIC_ID;
+        const topicModel = vi.spyOn(topicSelectors, 'getTopicModelById').mockReturnValue(() => ({
+          model: 'gemini-3.8-flash',
+          provider: 'vertexai',
+        }));
+        const send = vi.spyOn(aiChatService, 'sendMessageInServer').mockResolvedValue({
+          isCreateNewTopic: false,
+          assistantMessageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          userMessageId: TEST_IDS.USER_MESSAGE_ID,
+          topicId,
+          messages: [
+            createMockMessage({ id: TEST_IDS.ASSISTANT_MESSAGE_ID, role: 'assistant', topicId }),
+          ],
+        });
+        try {
+          await act(async () => {
+            await result.current.sendMessage({
+              context: { agentId: TEST_IDS.SESSION_ID, threadId: null, topicId },
+              message: TEST_CONTENT.USER_MESSAGE,
+            });
+          });
+          expect(send.mock.calls[0][0].newAssistantMessage).toMatchObject({
+            model: 'gemini-3.8-flash',
+            provider: 'vertexai',
+          });
+        } finally {
+          topicModel.mockRestore();
+        }
+      });
+
       it('continues from the active conversational tail after a recovered task callback', async () => {
         const { result } = renderHook(() => useChatStore());
         const agentId = TEST_IDS.SESSION_ID;

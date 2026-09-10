@@ -1,3 +1,4 @@
+import { USD_TO_CNY } from '@lobechat/const/currency';
 import { Tooltip } from '@lobehub/ui';
 import { Text } from '@lobehub/ui/base-ui';
 import { memo } from 'react';
@@ -8,7 +9,12 @@ import { topicService } from '@/services/topic';
 import { formatNumber } from '@/utils/format';
 
 import { useConversationStore } from '../../../../store';
-import { getMessageTokenTotal, getTopicTokenTotal, readSettledTopicUsage } from './topicTokenUsage';
+import {
+  formatTopicModelCost,
+  getMessageTokenTotal,
+  getTopicTokenTotal,
+  readSettledTopicUsage,
+} from './topicTokenUsage';
 
 /** Mount data subscriptions only for the latest completed answer, not every historical row. */
 const TopicTokenUsage = memo<{ messageId: string }>(({ messageId }) => {
@@ -50,6 +56,8 @@ const TopicTokenTotal = memo<{ topicId: string }>(({ topicId }) => {
           notation: 'compact',
           maximumFractionDigits: 2,
         }).format(total);
+  const costText = formatTopicModelCost(data?.modelCost);
+  const partial = !!data?.modelCost && data.modelCost.pricedCalls < data.modelCost.calls;
   const title =
     total === undefined
       ? t('messages.topicTokens.unavailableHint')
@@ -59,7 +67,14 @@ const TopicTokenTotal = memo<{ topicId: string }>(({ topicId }) => {
           output: data?.totalOutputTokens == null ? '—' : formatNumber(data.totalOutputTokens),
         });
   return (
-    <Tooltip title={title}>
+    <Tooltip
+      title={`${title}
+${t('messages.topicTokens.costHint', {
+  rate: USD_TO_CNY,
+  priced: data?.modelCost?.pricedCalls ?? 0,
+  calls: data?.modelCost?.calls ?? 0,
+})}`}
+    >
       <Text
         data-testid={'topic-token-total'}
         fontSize={12}
@@ -71,6 +86,17 @@ const TopicTokenTotal = memo<{ topicId: string }>(({ topicId }) => {
           : error || total === undefined
             ? t('messages.topicTokens.unavailable')
             : t('messages.topicTokens.total', { value: formatted })}
+        {!isLoading && !error && (
+          <>
+            {' '}
+            ·{' '}
+            {costText
+              ? t(partial ? 'messages.topicTokens.costPartial' : 'messages.topicTokens.cost', {
+                  value: costText,
+                })
+              : t('messages.topicTokens.costUnavailable')}
+          </>
+        )}
       </Text>
     </Tooltip>
   );
