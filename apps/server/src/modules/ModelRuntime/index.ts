@@ -430,9 +430,10 @@ export const initModelRuntimeWithUserPayload = (
   payload: ClientSecretPayload,
   params: any = {},
   hooks?: ModelRuntimeHooks,
+  costScope?: { db: LobeChatDatabase; userId: string },
 ) => {
   const runtimeProvider = payload.runtimeProvider ?? provider;
-  hooks = mergeModelRuntimeHooks(createContextCostGuard(provider), hooks);
+  hooks = mergeModelRuntimeHooks(createContextCostGuard(provider, costScope), hooks);
 
   /**
    * User-configured endpoints can come from older clients or persisted rows that predate
@@ -542,6 +543,7 @@ export const initModelRuntimeFromDB = async (
     payload,
     { userId, workspaceId },
     hooks,
+    { db, userId },
   );
   return withModelRetirement(runtime, provider, db, (targetProvider) =>
     initModelRuntimeFromDB(db, userId, targetProvider, workspaceId),

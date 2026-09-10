@@ -16,6 +16,10 @@ export * from './asyncTask';
 export * from './betterAuth';
 export * from './chatGroup';
 export * from './connector';
+export * from './cottiAudit';
+export * from './cottiHomeNotification';
+export * from './cottiModelDisplay';
+export * from './cottiPeople';
 export * from './device';
 export * from './documentComment';
 export * from './documentHistory';
@@ -50,16 +54,10 @@ export * from './systemBotProvider';
 export * from './task';
 export * from './topic';
 export * from './topicComment';
+export * from './topicCostFreeze';
 export * from './trash';
 export * from './user';
 export * from './userMemories';
 export * from './verify';
 export * from './work';
 export * from './workspace';
-
-export * from './cottiPeople';
-export * from './cottiModelDisplay';
-
-export * from './cottiAudit';
-
-export * from './cottiHomeNotification';

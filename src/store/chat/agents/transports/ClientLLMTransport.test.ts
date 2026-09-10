@@ -1,6 +1,8 @@
 import { ModelEmptyError } from '@lobechat/model-runtime';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { chatService } from '@/services/chat';
+
 import type { ChatStore } from '../../store';
 import { ClientLLMTransport } from './ClientLLMTransport';
 
@@ -244,5 +246,16 @@ describe('ClientLLMTransport.retryPolicy.onError · terminal operation teardown'
 
     expect(store.failOperation).toHaveBeenCalled();
     expect(store.updateTopicStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe('compression topic cost identity', () => {
+  it('keeps the source topic on auxiliary streaming calls so compression cannot bypass freezing', async () => {
+    const { transport } = createTransport();
+    await transport.stream({ model: 'terra', provider: 'azure', messages: [] });
+    expect(chatService.getChatCompletion).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ trace: { topicId: 'topic-1' } }),
+    );
   });
 });

@@ -378,6 +378,10 @@ export class ClientLLMTransport implements LLMTransport {
     let streamError: unknown;
 
     await chatService.getChatCompletion(payload as any, {
+      trace: {
+        topicId:
+          this.context.get().operations[this.context.operationId]?.context.topicId ?? undefined,
+      },
       onErrorHandle: (error) => {
         streamError = createStreamExecutionError(error);
         handlers?.onError?.(streamError);

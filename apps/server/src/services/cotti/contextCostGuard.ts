@@ -8,10 +8,37 @@ import { ChatErrorType, type UIChatMessage } from '@lobechat/types';
 import type { Pricing } from 'model-bank';
 
 import { getContextCostPolicy } from '@/_custom/registry/contextCostPolicy';
+import { TopicCostFreezeModel } from '@/database/models/topicCostFreeze';
+import type { LobeChatDatabase } from '@/database/type';
+
+export const topicFrozenError = () =>
+  AgentRuntimeError.createError(ChatErrorType.BadRequest, {
+    code: 'TOPIC_COST_FROZEN',
+    message:
+      '此话题已因上下文成本保护冻结，不能继续发送或执行任务。历史仍可查看，请使用“新问题”或“带着进展继续”。',
+  });
+
+export const assertTopicNotCostFrozen = async (
+  db: LobeChatDatabase,
+  userId: string,
+  topicId?: string,
+) => {
+  if (topicId && (await new TopicCostFreezeModel(db, userId).get(topicId)))
+    throw topicFrozenError();
+};
 
 /** Last check after context engineering. Never exempt cache hits or compression requests. */
-export const createContextCostGuard = (provider: string): ModelRuntimeHooks => {
-  const check = async (payload: { model: string; messages: unknown[]; tools?: unknown[] }) => {
+export const createContextCostGuard = (
+  provider: string,
+  scope?: { db: LobeChatDatabase; userId: string },
+): ModelRuntimeHooks => {
+  const check = async (
+    payload: { model: string; messages: unknown[]; tools?: unknown[] },
+    options?: { metadata?: Record<string, unknown>; tracing?: Record<string, unknown> },
+  ) => {
+    const topicId = options?.metadata?.topicId ?? options?.tracing?.topicId;
+    const scopedTopicId = typeof topicId === 'string' && topicId ? topicId : undefined;
+    if (scope) await assertTopicNotCostFrozen(scope.db, scope.userId, scopedTopicId);
     const [pricing, capacity] = await Promise.all([
       getModelPropertyWithFallback<Pricing | undefined>(payload.model, 'pricing', provider),
       getModelPropertyWithFallback<number | undefined>(
@@ -27,6 +54,15 @@ export const createContextCostGuard = (provider: string): ModelRuntimeHooks => {
       messages: payload.messages as unknown as UIChatMessage[],
       tools: payload.tools,
     });
+    if (scope && scopedTopicId && tokens.adjustedTotal >= policy.compressionTokenLimit) {
+      await new TopicCostFreezeModel(scope.db, scope.userId).freeze(scopedTopicId, {
+        model: payload.model,
+        provider,
+        estimatedInputTokens: tokens.rawTotal,
+        inputTokenLimit: policy.compressionTokenLimit,
+      });
+      throw topicFrozenError();
+    }
     if (tokens.adjustedTotal > policy.inputTokenLimit) {
       throw AgentRuntimeError.createError(ChatErrorType.BadRequest, {
         code: 'CONTEXT_COST_LIMIT',
@@ -39,10 +75,13 @@ export const createContextCostGuard = (provider: string): ModelRuntimeHooks => {
   };
   return {
     beforeChat: check,
-    beforeGenerateObject: (payload) =>
-      check({
-        ...payload,
-        tools: [...(payload.tools ?? []), ...(payload.schema ? [payload.schema] : [])],
-      }),
+    beforeGenerateObject: (payload, options) =>
+      check(
+        {
+          ...payload,
+          tools: [...(payload.tools ?? []), ...(payload.schema ? [payload.schema] : [])],
+        },
+        options,
+      ),
   };
 };

@@ -1,8 +1,117 @@
 {
-  "version": "v2.2.16",
-  "reviewDate": "2026-09-10",
-  "sourceCount": 51,
   "configurationCount": 18,
+  "configurations": [
+    {
+      "id": "CFG-001",
+      "name": "原生部署基础",
+      "currentBehavior": "v2.2.16源码与Docker PG部署",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-002",
+      "name": "普通飞书登录",
+      "currentBehavior": "普通飞书Provider与现有授权配置",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-003",
+      "name": "chatdev入口",
+      "currentBehavior": "chatdev.cotticoffee.com → app:3230",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-004",
+      "name": "模型连接与目录",
+      "currentBehavior": "沿用已授权模型连接、平台可见列表和默认值",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-005",
+      "name": "OSS同源访问",
+      "currentBehavior": "同源文件转发及签名Host约束",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-006",
+      "name": "Embedding默认值",
+      "currentBehavior": "azure/text-embedding-3-small",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-007",
+      "name": "异步文件签名",
+      "currentBehavior": "独立JWKS配置，密钥仅在运行环境",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-008",
+      "name": "正式历史库",
+      "currentBehavior": "lobehub_history与原加密密钥、独立缓存前缀",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-009",
+      "name": "SearXNG",
+      "currentBehavior": "保留独立容器和原生搜索优先策略",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-010",
+      "name": "Market专用WARP接入",
+      "currentBehavior": "沿用用户确认由社区建议的现有专用出口",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-011",
+      "name": "共享QStash",
+      "currentBehavior": "唯一正式*/10分钟调度至chat.cotti.ai",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-012",
+      "name": "双域名认证",
+      "currentBehavior": "同镜像/同库的两个容器，各自APP_URL与认证入口",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-013",
+      "name": "门户准入",
+      "currentBehavior": "门户成员与聊天准入规则已对齐",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-014",
+      "name": "Sol迁移Terra",
+      "currentBehavior": "已迁移指定Agent、话题及未结束任务，不改历史费用",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-015",
+      "name": "Node内存参数",
+      "currentBehavior": "8GiB老生代、ipv4first、系统CA",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-016",
+      "name": "Composio服务端",
+      "currentBehavior": "两个应用共用已授权配置",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-017",
+      "name": "默认网关优先级",
+      "currentBehavior": "app-cotti default.gw_priority=100，认证网络0",
+      "firstImplemented": "2026-09-09"
+    },
+    {
+      "id": "CFG-018",
+      "name": "邮件登录与发件显示名",
+      "currentBehavior": "双入口复用SMTP，显示名灵枢AI；AUTH_ENABLE_EMAIL_OTP=1，AUTH_ENABLE_MAGIC_LINK=0，邮箱验证开启；Portal入口保留",
+      "firstImplemented": "2026-09-09"
+    }
+  ],
+  "reviewDate": "2026-09-10",
+  "sourceCount": 52,
   "sourceCustomizations": [
     {
       "id": "DEV-001",
@@ -661,8 +770,8 @@
     {
       "id": "DEV-051",
       "name": "上下文成本保护与摘要续聊",
-      "implementation": "成本阈值限制原生压缩触发点，ModelRuntime请求前守卫；新问题与分段摘要续聊入口",
-      "boundary": "双入口已发布；超预算停止本次调用，不删除历史；未包含语义分流、跨档放行、自动任务按天续接和管理员成本明细",
+      "implementation": "成本阈值限制原生压缩触发点，ModelRuntime请求前守卫；新问题与分段摘要续聊入口；明确换题意图的本地轻提示，可关闭，不阻止发送",
+      "boundary": "超预算停止本次调用，不删除历史；换题提示仅识别明确开场语，不做任意语义相似度分类；未包含跨档放行、自动任务按天续接和管理员成本明细",
       "firstImplemented": "2026-09-10",
       "sourceReferences": [
         {
@@ -680,118 +789,46 @@
         {
           "path": "src/features/ChatInput/hooks/useChatInputDraft.ts",
           "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/topicSwitchSuggestion.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/useTopicSwitchSuggestion.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "DEV-052",
+      "name": "话题强制成本冻结",
+      "implementation": "输入达到提前保护阈值时持久化冻结；后续短请求和换模型仍拒绝；发送按钮与快捷键禁用；有长度限制的服务端摘要续接",
+      "boundary": "双入口同镜像发布；冻结基于完整输入的校正估算，不等同账单或每日金额上限。已发出请求无法追回；外部CLI直连供应商不在本服务端守卫范围。没有自动解冻或自动任务迁移。",
+      "firstImplemented": "2026-09-10",
+      "sourceReferences": [
+        {
+          "path": "packages/database/src/schemas/topicCostFreeze.ts",
+          "line": 1
+        },
+        {
+          "path": "packages/database/src/models/topicCostFreeze.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/contextCostGuard.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/topicContinuation.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/TopicCostFreezeLoader.tsx",
+          "line": 1
         }
       ]
     }
   ],
-  "configurations": [
-    {
-      "id": "CFG-001",
-      "name": "原生部署基础",
-      "currentBehavior": "v2.2.16源码与Docker PG部署",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-002",
-      "name": "普通飞书登录",
-      "currentBehavior": "普通飞书Provider与现有授权配置",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-003",
-      "name": "chatdev入口",
-      "currentBehavior": "chatdev.cotticoffee.com → app:3230",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-004",
-      "name": "模型连接与目录",
-      "currentBehavior": "沿用已授权模型连接、平台可见列表和默认值",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-005",
-      "name": "OSS同源访问",
-      "currentBehavior": "同源文件转发及签名Host约束",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-006",
-      "name": "Embedding默认值",
-      "currentBehavior": "azure/text-embedding-3-small",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-007",
-      "name": "异步文件签名",
-      "currentBehavior": "独立JWKS配置，密钥仅在运行环境",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-008",
-      "name": "正式历史库",
-      "currentBehavior": "lobehub_history与原加密密钥、独立缓存前缀",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-009",
-      "name": "SearXNG",
-      "currentBehavior": "保留独立容器和原生搜索优先策略",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-010",
-      "name": "Market专用WARP接入",
-      "currentBehavior": "沿用用户确认由社区建议的现有专用出口",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-011",
-      "name": "共享QStash",
-      "currentBehavior": "唯一正式*/10分钟调度至chat.cotti.ai",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-012",
-      "name": "双域名认证",
-      "currentBehavior": "同镜像/同库的两个容器，各自APP_URL与认证入口",
-      "firstImplemented": "2026-09-07"
-    },
-    {
-      "id": "CFG-013",
-      "name": "门户准入",
-      "currentBehavior": "门户成员与聊天准入规则已对齐",
-      "firstImplemented": "2026-09-08"
-    },
-    {
-      "id": "CFG-014",
-      "name": "Sol迁移Terra",
-      "currentBehavior": "已迁移指定Agent、话题及未结束任务，不改历史费用",
-      "firstImplemented": "2026-09-08"
-    },
-    {
-      "id": "CFG-015",
-      "name": "Node内存参数",
-      "currentBehavior": "8GiB老生代、ipv4first、系统CA",
-      "firstImplemented": "2026-09-08"
-    },
-    {
-      "id": "CFG-016",
-      "name": "Composio服务端",
-      "currentBehavior": "两个应用共用已授权配置",
-      "firstImplemented": "2026-09-08"
-    },
-    {
-      "id": "CFG-017",
-      "name": "默认网关优先级",
-      "currentBehavior": "app-cotti default.gw_priority=100，认证网络0",
-      "firstImplemented": "2026-09-09"
-    },
-    {
-      "id": "CFG-018",
-      "name": "邮件登录与发件显示名",
-      "currentBehavior": "双入口复用SMTP，显示名灵枢AI；AUTH_ENABLE_EMAIL_OTP=1，AUTH_ENABLE_MAGIC_LINK=0，邮箱验证开启；Portal入口保留",
-      "firstImplemented": "2026-09-09"
-    }
-  ]
+  "version": "v2.2.16"
 }

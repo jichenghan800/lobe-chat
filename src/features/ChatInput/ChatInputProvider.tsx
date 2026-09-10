@@ -7,6 +7,7 @@ import { createStore, Provider } from './store';
 import { DEFAULT_CHAT_INPUT_FEATURE } from './store/initialState';
 import type { StoreUpdaterProps } from './StoreUpdater';
 import StoreUpdater from './StoreUpdater';
+import { TopicCostFreezeLoader } from './TopicCostFreezeLoader';
 import { useEditorRootLifecycle } from './useEditorRootLifecycle';
 
 interface ChatInputProviderProps extends StoreUpdaterProps {
@@ -93,6 +94,7 @@ export const ChatInputProvider = memo<ChatInputProviderProps>(
           onVoiceMessageSend={onVoiceMessageSend}
         />
         <ReasoningConfigLoader />
+        <TopicCostFreezeLoader />
         {children}
       </Provider>
     );

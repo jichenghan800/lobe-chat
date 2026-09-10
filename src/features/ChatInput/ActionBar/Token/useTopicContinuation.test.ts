@@ -21,11 +21,11 @@ vi.mock('react-i18next', () => ({
     t: (key: string, values?: Record<string, unknown>) => `${key}:${JSON.stringify(values ?? {})}`,
   }),
 }));
-vi.mock('@/services/chat', () => ({ chatService: { fetchPresetTaskResult: mocks.fetch } }));
 vi.mock('@/services/message', () => ({ messageService: { createMessage: mocks.createMessage } }));
 vi.mock('@/services/topic', () => ({
   topicService: {
     createTopic: mocks.createTopic,
+    summarizeContinuationFragment: mocks.fetch,
     removeTopic: mocks.remove,
     getTopicTranscript: mocks.transcript,
   },
@@ -78,9 +78,7 @@ describe('new question and progress continuation', () => {
       ],
       total: 1,
     });
-    mocks.fetch.mockImplementation(async ({ onFinish }) => {
-      await onFinish('Keep budget 123. Next: finish report.');
-    });
+    mocks.fetch.mockResolvedValue('Keep budget 123. Next: finish report.');
   });
   it('starts a clean topic, preserving the latest draft without calling a model', async () => {
     const navigate = vi.fn();
@@ -110,9 +108,7 @@ describe('new question and progress continuation', () => {
     expect(mocks.createMessage.mock.calls[0][0].content).not.toContain('confirmed budget 123');
   });
   it('a failed summary leaves the source and draft intact', async () => {
-    mocks.fetch.mockImplementation(async ({ onError }) => {
-      onError(new Error('network failed'));
-    });
+    mocks.fetch.mockRejectedValue(new Error('network failed'));
     const { result } = renderHook(() => useTopicContinuation('agent', vi.fn()));
     await act(async () => {
       await expect(result.current.open(true)).rejects.toThrow('network failed');
@@ -122,9 +118,9 @@ describe('new question and progress continuation', () => {
     expect(result.current.busy).toBe(false);
   });
   it('does not switch away after the user changes conversations during summarization', async () => {
-    mocks.fetch.mockImplementation(async ({ onFinish }) => {
+    mocks.fetch.mockImplementation(async () => {
       mocks.activeTopicId = 'other';
-      await onFinish('summary');
+      return 'summary';
     });
     const navigate = vi.fn();
     const { result } = renderHook(() => useTopicContinuation('agent', navigate));

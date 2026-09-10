@@ -1,4 +1,11 @@
 export default {
+  'longTopic.frozen':
+    'This topic is frozen to protect context costs. You can view its history, start a new question, or continue with a summary.',
+
+  'longTopic.switchSuggestion':
+    'Changing subjects? Use “New question” to leave this topic’s history behind. Your draft will carry over.',
+  'longTopic.dismissSuggestion': 'Dismiss',
+
   'longTopic.newQuestion': 'New question',
   'longTopic.continueProgress': 'Continue with a summary',
   'longTopic.summarizing': 'Preparing a handoff · {{current}}/{{total}}',

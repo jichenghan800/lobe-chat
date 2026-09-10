@@ -1134,6 +1134,13 @@
       "when": 1788774382504,
       "tag": "0161_cotti_home_notification",
       "breakpoints": true
+    },
+    {
+      "idx": 162,
+      "version": "7",
+      "when": 1789019688900,
+      "tag": "0162_topic_cost_freeze",
+      "breakpoints": true
     }
   ],
   "version": "6"

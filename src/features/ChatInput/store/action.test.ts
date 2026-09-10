@@ -10,6 +10,21 @@ import { getInputHistory } from '../inputHistoryStorage';
 import { createStore, selectors } from '.';
 
 describe('ChatInput store actions', () => {
+  it('blocks frozen topic sends even when the host live gate allows sending', () => {
+    const onSend = vi.fn();
+    const editor = { getDocument: vi.fn(() => 'retained draft') } as unknown as IEditor;
+    const store = createStore({
+      costFrozen: true,
+      editor,
+      onSend,
+      resolveSendBlocked: () => false,
+      sendButtonProps: { disabled: false, generating: false, onStop: vi.fn() },
+    });
+    store.getState().handleSendButton();
+    expect(onSend).not.toHaveBeenCalled();
+    expect(selectors.sendButtonProps(store.getState()).disabled).toBe(true);
+    expect(editor.getDocument).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     localStorage.clear();
     useAgentStore.setState({ activeAgentId: undefined });

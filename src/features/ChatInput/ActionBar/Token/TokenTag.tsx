@@ -74,7 +74,7 @@ const Token = memo(() => {
           />
         </Flexbox>
       </ActionPopover>
-      {longTopic && <NewTopicButton />}
+      <NewTopicButton />
     </Flexbox>
   );
 });
