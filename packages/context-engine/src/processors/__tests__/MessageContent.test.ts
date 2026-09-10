@@ -665,6 +665,63 @@ describe('MessageContentProcessor', () => {
       expect(content[0].text).not.toContain('http://example.com/test.txt');
     });
 
+    it('should omit spreadsheet body content while retaining its URL when configured', async () => {
+      mockIsCanUseVision.mockReturnValue(false);
+
+      const processor = new MessageContentProcessor({
+        fileContext: { enabled: true, omitSpreadsheetContent: true },
+        isCanUseVision: mockIsCanUseVision,
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+
+      const messages: UIChatMessage[] = [
+        {
+          content: 'Analyze attachments',
+          createdAt: Date.now(),
+          fileList: [
+            {
+              content: 'expanded excel markdown that should not reach the model',
+              fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              id: 'excel-1',
+              name: 'report.xlsx',
+              size: 512_000,
+              url: 'http://example.com/report.xlsx',
+            },
+            {
+              content: 'small text body',
+              fileType: 'text/plain',
+              id: 'text-1',
+              name: 'note.txt',
+              size: 100,
+              url: 'http://example.com/note.txt',
+            },
+            {
+              content: 'large csv body that should not reach the model',
+              fileType: 'text/csv',
+              id: 'csv-1',
+              name: 'transactions.csv',
+              size: 768_000,
+              url: 'http://example.com/transactions.csv',
+            },
+          ],
+          id: 'test',
+          role: 'user',
+          updatedAt: Date.now(),
+        },
+      ];
+
+      const result = await processor.process(createContext(messages));
+
+      const content = result.messages[0].content as any[];
+      expect(content[0].text).toContain(
+        '<file id="excel-1" name="report.xlsx" type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" size="512000" url="http://example.com/report.xlsx"></file>',
+      );
+      expect(content[0].text).not.toContain('expanded excel markdown');
+      expect(content[0].text).not.toContain('large csv body');
+      expect(content[0].text).toContain('small text body');
+    });
+
     it('should not add file context when disabled', async () => {
       mockIsCanUseVision.mockReturnValue(false);
 

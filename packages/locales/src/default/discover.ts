@@ -1077,7 +1077,7 @@ export default {
 
   'skills.details.sidebar.agent.title': 'Send this prompt to your Agent to install this Skill',
 
-  'skills.details.sidebar.agent.useOnLobeAI': 'Use on LobeAI',
+  'skills.details.sidebar.agent.useOnLobeAI': 'Use on 灵枢AI',
 
   'skills.details.sidebar.directoryLayout': 'Directory Layout',
 
@@ -1333,4 +1333,18 @@ export default {
   'user.submitRepoHint': 'The repository will be reviewed before being published.',
   'user.submitRepoSuccess': 'Repository submitted successfully! It will be reviewed shortly.',
   'user.submitRepoTitle': 'Submit Your Repository',
+  'user.logout.error': 'Could not sign out of Community. Try again.',
+  'user.logout.loading': 'Signing out of Community…',
+  'user.logout.success': 'Signed out of Community',
+  'user.switchAccount': 'Use Another Account',
+  'user.switchAccount.modal.description':
+    'LobeHub Market remembers the last account in its own site data. Clear that site data before retrying with another account.',
+  'user.switchAccount.modal.openMarket': 'Open Market Site',
+  'user.switchAccount.modal.retry': 'I’ve Cleared It — Retry',
+  'user.switchAccount.modal.step1': 'Open the LobeHub Market site.',
+  'user.switchAccount.modal.step2':
+    'Use the browser control beside the address bar to open site settings, then delete cookies and site data for {{host}}.',
+  'user.switchAccount.modal.step3': 'Return here and restart Community authorization.',
+  'user.switchAccount.modal.title': 'Use Another Community Account',
+  'user.accountMenu': 'Community account',
 };

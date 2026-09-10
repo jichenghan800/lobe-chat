@@ -506,7 +506,7 @@ const HomeModeContent = memo<HomeModeContentProps>(({ inlineRail, mode, onSugges
   const needsYouCount = useMemo(() => splitBriefs(briefs).needsYou.length, [briefs]);
   const topicRecents = recentsSWR.data ?? [];
 
-  if (mode === 'chat') {
+  if (mode !== 'task') {
     // With the recents section switched off nothing is fetched, so it reports as
     // settled-and-empty rather than perpetually loading, and the remaining
     // activity alone decides what this column is.

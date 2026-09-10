@@ -1219,3 +1219,79 @@ describe('AgentSlice Actions', () => {
     });
   });
 });
+
+describe('pending agent config saves', () => {
+  it('keeps selected model when stale config arrives during an unfinished save', async () => {
+    useAgentStore.setState({
+      activeAgentId: 'audit-agent',
+      agentMap: {
+        'audit-agent': {
+          id: 'audit-agent',
+          model: 'old-model',
+          provider: 'azure',
+        } as LobeAgentConfig,
+      },
+    });
+    let finishSave!: (value: Awaited<ReturnType<typeof agentService.updateAgentConfig>>) => void;
+    vi.mocked(agentService.updateAgentConfig).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishSave = resolve;
+        }),
+    );
+    vi.mocked(agentService.getAgentConfigById).mockResolvedValue({
+      id: 'audit-agent',
+      model: 'old-model',
+      provider: 'azure',
+      title: 'stale response received',
+    } as LobeAgentConfig);
+    let pending!: Promise<void>;
+    act(() => {
+      pending = useAgentStore
+        .getState()
+        .updateAgentConfigById('audit-agent', { model: 'selected-model' });
+    });
+    expect(useAgentStore.getState().agentMap['audit-agent'].model).toBe('selected-model');
+    const view = renderHook(() => useAgentStore().useFetchAgentConfig(true, 'audit-agent'), {
+      wrapper: withSWR,
+    });
+    try {
+      await waitFor(() => expect(view.result.current.data?.title).toBe('stale response received'));
+      expect(useAgentStore.getState().agentMap['audit-agent'].model).toBe('selected-model');
+    } finally {
+      view.unmount();
+      await act(async () => {
+        finishSave({
+          success: true,
+          agent: {
+            id: 'audit-agent',
+            model: 'selected-model',
+            provider: 'azure',
+          } as LobeAgentConfig,
+        });
+        await pending;
+      });
+    }
+  });
+
+  it('waits for the target save and propagates a failed save to the sender', async () => {
+    let rejectSave!: (error: Error) => void;
+    vi.mocked(agentService.updateAgentConfig).mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectSave = reject;
+        }),
+    );
+    const save = useAgentStore
+      .getState()
+      .updateAgentConfigById('pending-agent', { model: 'selected' });
+    const waiting = useAgentStore.getState().waitForAgentConfigUpdateById('pending-agent');
+    const failure = expect(waiting).rejects.toThrow('save failed');
+    await expect(
+      useAgentStore.getState().waitForAgentConfigUpdateById('other-agent'),
+    ).resolves.toBeUndefined();
+    rejectSave(new Error('save failed'));
+    await failure;
+    await save;
+  });
+});

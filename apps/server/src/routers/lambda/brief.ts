@@ -34,6 +34,31 @@ const briefWriteProcedure = briefProcedure.use(withScopedPermission('agent:updat
 
 const idInput = z.object({ id: z.string() });
 
+const acknowledgeBriefTasks = async (
+  taskModel: TaskModel,
+  briefList: Array<{ taskId: string | null; type: string }>,
+) => {
+  const taskIds = [
+    ...new Set(
+      briefList
+        .filter((brief) => brief.type !== 'error')
+        .map((brief) => brief.taskId)
+        .filter((taskId): taskId is string => Boolean(taskId)),
+    ),
+  ];
+  const automationTasks = (await taskModel.findByIds(taskIds)).filter(
+    (task) => task.automationMode,
+  );
+  const acknowledgedAt = new Date().toISOString();
+  await Promise.all(
+    automationTasks.map((task) =>
+      taskModel.updateContext(task.id, {
+        scheduler: { lastResultAcknowledgedAt: acknowledgedAt },
+      }),
+    ),
+  );
+};
+
 const createSchema = z.object({
   actions: z.array(z.record(z.string(), z.unknown())).optional(),
   agentId: z.string().optional(),
@@ -193,6 +218,10 @@ export const briefRouter = router({
       const model = new BriefModel(ctx.serverDB, ctx.userId, ctx.workspaceId ?? undefined);
       const brief = await model.markRead(input.id);
       if (!brief) throw new TRPCError({ code: 'NOT_FOUND', message: 'Brief not found' });
+      await acknowledgeBriefTasks(
+        new TaskModel(ctx.serverDB, ctx.userId, ctx.workspaceId ?? undefined),
+        [brief],
+      );
       return { data: brief, message: 'Brief marked as read', success: true };
     } catch (error) {
       if (error instanceof TRPCError) throw error;
@@ -237,6 +266,10 @@ export const briefRouter = router({
               );
 
         if (!brief) throw new TRPCError({ code: 'NOT_FOUND', message: 'Brief not found' });
+        await acknowledgeBriefTasks(
+          new TaskModel(ctx.serverDB, ctx.userId, ctx.workspaceId ?? undefined),
+          [brief],
+        );
         return { data: brief, message: 'Brief resolved', success: true };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
@@ -257,7 +290,13 @@ export const briefRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         const model = new BriefModel(ctx.serverDB, ctx.userId, ctx.workspaceId ?? undefined);
+        const briefList = await model.findByIds(input.ids);
         const resolvedIds = await model.resolveManyAsRead(input.ids);
+        const resolvedIdSet = new Set(resolvedIds);
+        await acknowledgeBriefTasks(
+          new TaskModel(ctx.serverDB, ctx.userId, ctx.workspaceId ?? undefined),
+          briefList.filter((brief) => resolvedIdSet.has(brief.id)),
+        );
         return { data: resolvedIds, success: true };
       } catch (error) {
         console.error('[brief:resolveManyAsRead]', error);

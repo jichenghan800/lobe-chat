@@ -55,6 +55,7 @@ import { createGatewayEventBuffer } from './gatewayEventBuffer';
 import { createGatewayEventHandler, isCompletedRuntimeEnd } from './gatewayEventHandler';
 import { createGatewayEventRouter } from './gatewayEventRouter';
 import { createGatewayMemberStreamHandler } from './gatewayMemberStreamHandler';
+import { pollQueueOperation } from './pollQueueOperation';
 
 /**
  * Interrupts a gateway operation and rejects when its physical shutdown is unconfirmed.
@@ -1028,7 +1029,7 @@ export class GatewayActionImpl {
       ownerOperationId: result.operationId,
     });
 
-    this.#get().connectToGateway({
+    const connectionOptions: Parameters<ChatStore['connectToGateway']>[0] = {
       gatewayUrl: agentGatewayUrl,
       onEvent: eventRouter,
       onSessionComplete: ({ authFailed, completion, succeeded, terminalReceived }) => {
@@ -1098,7 +1099,28 @@ export class GatewayActionImpl {
       operationId: result.operationId,
       token: result.token || '',
       topicId: result.topicId,
-    });
+    };
+    if (!agentGatewayUrl && !agentShareId) {
+      void pollQueueOperation({
+        onComplete: (succeeded) =>
+          connectionOptions.onSessionComplete?.({
+            authFailed: false,
+            succeeded,
+            terminalReceived: true,
+          }),
+        onEvent: eventRouter,
+        onTimeout: () =>
+          this.#get().failOperation(gatewayOpId, {
+            message:
+              'Result refresh timed out; the server may still be running. Reopen this conversation to check its result.',
+            type: 'QueueRefreshTimeout',
+          }),
+        operationId: result.operationId,
+        signal: this.#get().getOperationAbortSignal(gatewayOpId),
+      });
+    } else {
+      this.#get().connectToGateway(connectionOptions);
+    }
 
     return result;
   };

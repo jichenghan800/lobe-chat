@@ -160,7 +160,7 @@ describe('resolveServerCallLlmContextHints - model-instance reasoning config', (
       provider: 'openai',
     });
 
-    expect(hints.resolvedExtendParams).toEqual({});
+    expect(hints.resolvedExtendParams).toEqual({ reasoning_effort: 'medium' });
   });
 
   it('should apply extend params from instance config even without agent chatConfig', async () => {

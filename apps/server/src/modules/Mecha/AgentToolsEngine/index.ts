@@ -287,6 +287,8 @@ export const createServerAgentToolsEngine = (
   // automatic injection. `allowExplicitActivation` is off so the activator
   // can't smuggle anything else in.
   const chatModeRules = {
+    ...(params.selectedToolIds &&
+      Object.fromEntries(params.selectedToolIds.map((id) => [id, true]))),
     [ImageGenerationManifest.identifier]: imageGenerationEnabled,
     [KnowledgeBaseManifest.identifier]: hasEnabledKnowledgeBases,
     [MemoryManifest.identifier]: globalMemoryEnabled,

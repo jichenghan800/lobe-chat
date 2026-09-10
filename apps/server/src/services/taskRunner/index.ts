@@ -81,6 +81,16 @@ export class TaskRunnerService {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Task not found' });
     }
 
+    // A manual interaction with an automation task is an explicit
+    // acknowledgement of the currently accumulated results. This is also the
+    // resume path for heartbeat tasks that were auto-paused by the unviewed
+    // result guard.
+    if (trigger === 'manual' && task.automationMode) {
+      await this.taskModel.updateContext(task.id, {
+        scheduler: { lastResultAcknowledgedAt: new Date().toISOString() },
+      });
+    }
+
     // Track whether *this* invocation transitioned the task to 'running'. The
     // catch-block rollback must only fire when we own the running state —
     // otherwise an early failure (e.g. CONFLICT thrown because a concurrent

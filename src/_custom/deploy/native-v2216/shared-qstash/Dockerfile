@@ -1,0 +1,5 @@
+FROM lobehub:cotti-v2216-task-model-migration-20260907
+USER root
+COPY --chown=1001:1001 startServer.js /app/startServer.js
+LABEL com.cotti.changes="DEV-001,DEV-002,DEV-003,DEV-004,DEV-005,DEV-006,DEV-007,DEV-008,DEV-009,DEV-010,DEV-011,DEV-012,DEV-013,DEV-014,DEV-015,DEV-016,DEV-017,DEV-018,DEV-019"
+USER nextjs

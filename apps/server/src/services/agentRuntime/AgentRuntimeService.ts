@@ -65,6 +65,7 @@ import {
 import { type IStreamEventManager } from '@/server/modules/AgentRuntime/types';
 import { emitAgentSignalSourceEvent } from '@/server/services/agentSignal';
 import { toAgentSignalTraceEvents } from '@/server/services/agentSignal/observability/traceEvents';
+import { resolveCottiRuntimeModel } from '@/server/services/cotti/modelRetirement';
 import { FileService } from '@/server/services/file';
 import { mcpService } from '@/server/services/mcp';
 import { MessageService } from '@/server/services/message';
@@ -830,6 +831,14 @@ export class AgentRuntimeService {
    * Create a new Agent operation
    */
   async createOperation(params: OperationCreationParams): Promise<OperationCreationResult> {
+    if (params.modelRuntimeConfig?.model && params.modelRuntimeConfig.provider) {
+      const target = await resolveCottiRuntimeModel(this.serverDB, params.modelRuntimeConfig);
+      params = {
+        ...params,
+        modelRuntimeConfig: { ...params.modelRuntimeConfig, ...target },
+        agentConfig: { ...params.agentConfig, ...target },
+      };
+    }
     const {
       activeDeviceId,
       activeDeviceScope,
@@ -1575,6 +1584,17 @@ export class AgentRuntimeService {
         // needs to carry the (potentially multi-MB) `messages` array, which is
         // what trips Upstash's 10MB single-request limit and drops the op.
         await this.rehydrateStateMessagesFromDB(agentState);
+        const currentModelConfig =
+          agentState.modelRuntimeConfig ?? agentState.metadata?.modelRuntimeConfig;
+        if (currentModelConfig?.model && currentModelConfig.provider) {
+          const target = await resolveCottiRuntimeModel(this.serverDB, currentModelConfig);
+          agentState.modelRuntimeConfig = { ...currentModelConfig, ...target };
+          agentState.metadata = {
+            ...agentState.metadata,
+            modelRuntimeConfig: { ...currentModelConfig, ...target },
+            agentConfig: { ...agentState.metadata?.agentConfig, ...target },
+          };
+        }
 
         // Enrich invoke_agent span with agent identity now that state is loaded.
         const stateAgentConfig = agentState.metadata?.agentConfig as

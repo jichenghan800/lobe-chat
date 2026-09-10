@@ -34,7 +34,7 @@ export async function getModelPricing(
   }
 
   // 2. If not found, try to get pricing from other providers with the same model name
-  const fallbackMatch = models.find((m) => m.id === model);
+  const fallbackMatch = models.find((m) => m.id === model && m.pricing);
 
   if (fallbackMatch?.pricing) {
     return fallbackMatch.pricing;

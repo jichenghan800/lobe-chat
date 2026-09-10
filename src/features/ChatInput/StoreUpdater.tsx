@@ -16,6 +16,7 @@ export interface StoreUpdaterProps extends Partial<PublicState> {
 
 const StoreUpdater = memo<StoreUpdaterProps>(
   ({
+    modelDisplayScope,
     agentId,
     canRecordVoiceMessage,
     chatInputEditorRef,
@@ -33,6 +34,7 @@ const StoreUpdater = memo<StoreUpdaterProps>(
     sendMenu,
     mentionItems,
     allowExpand,
+    topicModelScope,
     slashPlacement,
     getMessages,
     resolveSendBlocked,
@@ -41,6 +43,7 @@ const StoreUpdater = memo<StoreUpdaterProps>(
     const useStoreUpdater = createStoreUpdater(storeApi);
     const editor = useChatInputEditor();
 
+    useStoreUpdater('modelDisplayScope', modelDisplayScope);
     useStoreUpdater('agentId', agentId);
     useStoreUpdater('canRecordVoiceMessage', canRecordVoiceMessage);
     useStoreUpdater('contextSelectionKey', contextSelectionKey);
@@ -59,6 +62,7 @@ const StoreUpdater = memo<StoreUpdaterProps>(
     useStoreUpdater('leftActions', leftActions!);
     useStoreUpdater('rightActions', rightActions!);
     useStoreUpdater('allowExpand', allowExpand);
+    useStoreUpdater('topicModelScope', topicModelScope!);
     useStoreUpdater('feature', feature);
     useStoreUpdater('slashPlacement', slashPlacement);
     useStoreUpdater('getMessages', getMessages);

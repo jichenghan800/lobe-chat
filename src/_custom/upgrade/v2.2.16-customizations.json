@@ -1,0 +1,772 @@
+{
+  "version": "v2.2.16",
+  "reviewDate": "2026-09-09",
+  "sourceCount": 50,
+  "configurationCount": 18,
+  "sourceCustomizations": [
+    {
+      "id": "DEV-001",
+      "name": "PDF解析",
+      "implementation": "[src/libs/document-loaders/loaders/pdf/index.ts](<../../libs/document-loaders/loaders/pdf/index.ts#L10>)",
+      "boundary": "读取Blob字节进入pdf-parse；补丁不涉及导出PDF",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/libs/document-loaders/loaders/pdf/index.ts",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "id": "DEV-002",
+      "name": "人员管理",
+      "implementation": "[apps/server/src/routers/lambda/cotti/peopleManagement.ts](<../../../apps/server/src/routers/lambda/cotti/peopleManagement.ts#L58>)",
+      "boundary": "经cottiRouter主路由；新表由0158迁移声明",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/cotti/peopleManagement.ts",
+          "line": 58
+        }
+      ]
+    },
+    {
+      "id": "DEV-003",
+      "name": "蓝版飞书",
+      "implementation": "[src/libs/better-auth/sso/providers/feishu.ts](<../../libs/better-auth/sso/providers/feishu.ts#L177>)",
+      "boundary": "provider工厂用于普通与blue；真人认证另验",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/libs/better-auth/sso/providers/feishu.ts",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "id": "DEV-004",
+      "name": "搜索路由",
+      "implementation": "[src/helpers/getSearchConfig.ts](<../../helpers/getSearchConfig.ts#L40>)",
+      "boundary": "客户端实际工具构建引用；服务端searchDecision对应处理",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/helpers/getSearchConfig.ts",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "id": "DEV-005",
+      "name": "模式模型池/面板",
+      "implementation": "[src/hooks/useEnabledChatModels.ts](<../../hooks/useEnabledChatModels.ts#L9>)",
+      "boundary": "scope读平台目录；ModelSwitchPanel实际消费",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/hooks/useEnabledChatModels.ts",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "id": "DEV-006",
+      "name": "成本修复",
+      "implementation": "[apps/server/src/services/usage/cost.ts](<../../../apps/server/src/services/usage/cost.ts#L48>)",
+      "boundary": "usage服务引用；本轮未重新手算全部价表",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/usage/cost.ts",
+          "line": 48
+        }
+      ]
+    },
+    {
+      "id": "DEV-007",
+      "name": "平台统计",
+      "implementation": "[apps/server/src/routers/lambda/cotti/platformAnalytics.ts](<../../../apps/server/src/routers/lambda/cotti/platformAnalytics.ts#L26>)",
+      "boundary": "主router已注册；管理页overview挂载统计UI",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/cotti/platformAnalytics.ts",
+          "line": 26
+        }
+      ]
+    },
+    {
+      "id": "DEV-008",
+      "name": "内容审计",
+      "implementation": "[apps/server/src/routers/lambda/cotti/platformAudit.ts](<../../../apps/server/src/routers/lambda/cotti/platformAudit.ts#L22>)",
+      "boundary": "主router及平台audit标签；风险规则/查看记录服务分离",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/cotti/platformAudit.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "id": "DEV-009",
+      "name": "会话总览",
+      "implementation": "[src/hooks/useNavLayout.ts](<../../hooks/useNavLayout.ts#L84>)",
+      "boundary": "桌面shared/mobile均注册/overview，cotti.topicOverview后端注册",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/hooks/useNavLayout.ts",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "id": "DEV-010",
+      "name": "首页通知",
+      "implementation": "[src/features/CottiPlatformManagement/HomeNotificationSettings.tsx](<../../features/CottiPlatformManagement/HomeNotificationSettings.tsx#L16>)",
+      "boundary": "配置UI、useCottiHomeNotification及首页展示有消费者",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/features/CottiPlatformManagement/HomeNotificationSettings.tsx",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "id": "DEV-011",
+      "name": "飞书资料连接器",
+      "implementation": "[src/const/connectorPresets.ts](<../../const/connectorPresets.ts#L1>)",
+      "boundary": "预设创建→连接器OAuth/exec，个人设置入口与Agent工具路径存在",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/const/connectorPresets.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "DEV-012",
+      "name": "首页Chat/Agent/Task",
+      "implementation": "[src/features/Home/InputArea/EditorInput.tsx](<../../features/Home/InputArea/EditorInput.tsx#L31>)",
+      "boundary": "Home传mode至输入、选择及发送；默认Chat",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/features/Home/InputArea/EditorInput.tsx",
+          "line": 31
+        }
+      ]
+    },
+    {
+      "id": "DEV-013",
+      "name": "连续未查看暂停",
+      "implementation": "[apps/server/src/services/taskRunner/unviewedResults.ts](<../../../apps/server/src/services/taskRunner/unviewedResults.ts#L21>)",
+      "boundary": "scheduleTick和heartbeatTick均调用；不等同查看后自动恢复",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/taskRunner/unviewedResults.ts",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "id": "DEV-014",
+      "name": "话题分享",
+      "implementation": "[apps/server/src/routers/lambda/shareChat.ts](<../../../apps/server/src/routers/lambda/shareChat.ts#L163>)",
+      "boundary": "桌面/mobile ShareButton保留分享入口",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/shareChat.ts",
+          "line": 163
+        }
+      ]
+    },
+    {
+      "id": "DEV-015",
+      "name": "PDF导出",
+      "implementation": "[src/features/ShareModal/SharePdf/usePdfGeneration.ts](<../../features/ShareModal/SharePdf/usePdfGeneration.ts#L22>)",
+      "boundary": "SharePdf预览与生成hook实际消费，独立于DEV001",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/features/ShareModal/SharePdf/usePdfGeneration.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "id": "DEV-016",
+      "name": "附件与知识分离",
+      "implementation": "[src/store/file/slices/chat/action.ts](<../../store/file/slices/chat/action.ts#L24>)",
+      "boundary": "输入上传及资料库SendFiles路径；知识启用走原生解析",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/store/file/slices/chat/action.ts",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "id": "DEV-017",
+      "name": "联系管理员",
+      "implementation": "[src/features/Home/HomePortrait.tsx](<../../features/Home/HomePortrait.tsx#L60>)",
+      "boundary": "链接URL经feishuSupport校验后挂载",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/features/Home/HomePortrait.tsx",
+          "line": 60
+        }
+      ]
+    },
+    {
+      "id": "DEV-018",
+      "name": "任务模型迁移",
+      "implementation": "[apps/server/src/routers/lambda/cotti/modelDisplay.ts](<../../../apps/server/src/routers/lambda/cotti/modelDisplay.ts#L84>)",
+      "boundary": "模型管理页→路由→cottiTaskModelMigration；后续DEV032扩展",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/cotti/modelDisplay.ts",
+          "line": 84
+        }
+      ]
+    },
+    {
+      "id": "DEV-019",
+      "name": "QStash注册控制",
+      "implementation": "[scripts/serverLauncher/startServer.js](<../../../scripts/serverLauncher/startServer.js#L187>)",
+      "boundary": "启动器实际消费两个env，默认保持原行为",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "scripts/serverLauncher/startServer.js",
+          "line": 187
+        }
+      ]
+    },
+    {
+      "id": "DEV-020",
+      "name": "双域名认证",
+      "implementation": "[src/libs/cotti-ai-sso/route-handler.ts](<../../libs/cotti-ai-sso/route-handler.ts#L43>)",
+      "boundary": "auth/cotti-ai-entry路由适配，普通/Portal分别配置",
+      "firstImplemented": "2026-09-07",
+      "sourceReferences": [
+        {
+          "path": "src/libs/cotti-ai-sso/route-handler.ts",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "id": "DEV-021",
+      "name": "社区清空",
+      "implementation": "[src/layout/AuthProvider/MarketAuth/tokenStorage.ts](<../../layout/AuthProvider/MarketAuth/tokenStorage.ts#L16>)",
+      "boundary": "MarketAuthProvider退出实际await清空；后续DEV042处理失败",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/layout/AuthProvider/MarketAuth/tokenStorage.ts",
+          "line": 16
+        }
+      ]
+    },
+    {
+      "id": "DEV-022",
+      "name": "首页保存时序",
+      "implementation": "[src/store/agent/slices/agent/action.ts](<../../store/agent/slices/agent/action.ts#L358>)",
+      "boundary": "首页发送await；进行中快照延迟刷新",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/store/agent/slices/agent/action.ts",
+          "line": 358
+        }
+      ]
+    },
+    {
+      "id": "DEV-023",
+      "name": "目标Chat工具隔离",
+      "implementation": "[src/helpers/toolEngineering/index.ts](<../../helpers/toolEngineering/index.ts#L220>)",
+      "boundary": "streamingExecutor实际传目标最终chatConfig",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/helpers/toolEngineering/index.ts",
+          "line": 220
+        }
+      ]
+    },
+    {
+      "id": "DEV-024",
+      "name": "追问队列同步",
+      "implementation": "[src/store/chat/slices/agentRun/actions/transports/gateway/gateway.ts](<../../store/chat/slices/agentRun/actions/transports/gateway/gateway.ts#L1104>)",
+      "boundary": "无Gateway分支有轮询调用；错误/取消/超时由poll工具处理",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/store/chat/slices/agentRun/actions/transports/gateway/gateway.ts",
+          "line": 1104
+        }
+      ]
+    },
+    {
+      "id": "DEV-025",
+      "name": "沙箱文件指纹",
+      "implementation": "[apps/server/src/services/sandbox/service.ts](<../../../apps/server/src/services/sandbox/service.ts#L90>)",
+      "boundary": "bootstrap命令使用指纹标记",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/sandbox/service.ts",
+          "line": 90
+        }
+      ]
+    },
+    {
+      "id": "DEV-026",
+      "name": "Agent配置减重",
+      "implementation": "[packages/database/src/models/agent.ts](<../../../packages/database/src/models/agent.ts#L785>)",
+      "boundary": "配置接口默认false，模型输入显式补读",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "packages/database/src/models/agent.ts",
+          "line": 785
+        }
+      ]
+    },
+    {
+      "id": "DEV-027",
+      "name": "消息附件减重",
+      "implementation": "[src/services/chat/mecha/hydrateRuntimeFileContent.ts](<../../services/chat/mecha/hydrateRuntimeFileContent.ts#L100>)",
+      "boundary": "展示省正文；Chat上下文显式查询关联文件",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/services/chat/mecha/hydrateRuntimeFileContent.ts",
+          "line": 100
+        }
+      ]
+    },
+    {
+      "id": "DEV-028",
+      "name": "OSS批删",
+      "implementation": "[apps/server/src/modules/S3/index.ts](<../../../apps/server/src/modules/S3/index.ts#L109>)",
+      "boundary": "DeleteObjects中间件签名前补MD5",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/modules/S3/index.ts",
+          "line": 109
+        }
+      ]
+    },
+    {
+      "id": "DEV-029",
+      "name": "参考图超限反馈",
+      "implementation": "[src/routes/(main)/(create)/features/GenerationInput/useReferenceImageUpload.ts](<../../routes/(main)/(create)/features/GenerationInput/useReferenceImageUpload.ts#L7>)",
+      "boundary": "UploadCard挂载原上传hook；超限反馈不是仅新增文案",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/routes/(main)/(create)/features/GenerationInput/useReferenceImageUpload.ts",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "DEV-030",
+      "name": "Portal准入",
+      "implementation": "[src/libs/better-auth/plugins/email-whitelist.ts](<../../libs/better-auth/plugins/email-whitelist.ts#L58>)",
+      "boundary": "限定APP_URL/client/issuer/callback，其他路径仍本地名单",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/libs/better-auth/plugins/email-whitelist.ts",
+          "line": 58
+        }
+      ]
+    },
+    {
+      "id": "DEV-031",
+      "name": "资料重复删除",
+      "implementation": "[src/services/resource/index.ts](<../../services/resource/index.ts#L271>)",
+      "boundary": "明确查询未找到才跳过；权限/网络不误判成功",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/services/resource/index.ts",
+          "line": 271
+        }
+      ]
+    },
+    {
+      "id": "DEV-032",
+      "name": "全局下线与引用迁移",
+      "implementation": "[apps/server/src/services/cotti/modelRetirement.ts](<../../../apps/server/src/services/cotti/modelRetirement.ts#L12>)",
+      "boundary": "模型管理事务+ModelRuntime守卫；Chat/Agent并集修订保留",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/cotti/modelRetirement.ts",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "id": "DEV-033",
+      "name": "长话题提醒",
+      "implementation": "[src/features/ChatInput/ActionBar/Token/contextWarning.ts](<../../features/ChatInput/ActionBar/Token/contextWarning.ts#L2>)",
+      "boundary": "Token动作区使用提示与原生新话题入口；纯阈值不改历史",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/contextWarning.ts",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "DEV-034",
+      "name": "任务面板延迟挂载",
+      "implementation": "[src/features/AgentTaskManager/index.tsx](<../../features/AgentTaskManager/index.tsx#L34>)",
+      "boundary": "TaskWorkspaceLayout挂载此manager；打开后保留",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/features/AgentTaskManager/index.tsx",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "id": "DEV-035",
+      "name": "导入/内置模型归一",
+      "implementation": "[apps/server/src/services/cotti/agentModelNormalization.ts](<../../../apps/server/src/services/cotti/agentModelNormalization.ts#L20>)",
+      "boundary": "agent与agentGroup创建、AgentService task-agent读取调用",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/cotti/agentModelNormalization.ts",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "id": "DEV-036",
+      "name": "普通用户设置隐藏",
+      "implementation": "[src/features/Settings/features/SettingsContent.tsx](<../../features/Settings/features/SettingsContent.tsx#L160>)",
+      "boundary": "路由gate和desktop/mobile菜单各消费管理权限；不是API限制",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/features/Settings/features/SettingsContent.tsx",
+          "line": 160
+        }
+      ]
+    },
+    {
+      "id": "DEV-037",
+      "name": "灵枢AI品牌",
+      "implementation": "[packages/business/const/src/branding.ts](<../../../packages/business/const/src/branding.ts#L7>)",
+      "boundary": "内置Inbox/Builder及原生品牌消费者，保留历史数据",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "packages/business/const/src/branding.ts",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "DEV-038",
+      "name": "首页快捷入口",
+      "implementation": "[src/features/Home/NewModelShortcuts/starterModels.ts](<../../features/Home/NewModelShortcuts/starterModels.ts#L4>)",
+      "boundary": "首页InputArea挂载；filterVisibleShortcuts按启用目录过滤",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/features/Home/NewModelShortcuts/starterModels.ts",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "DEV-039",
+      "name": "runtime模型裁剪",
+      "implementation": "[packages/database/src/repositories/aiInfra/index.ts](<../../../packages/database/src/repositories/aiInfra/index.ts#L232>)",
+      "boundary": "aiProvider路由实际消费repository+平台策略，非globalConfig裁剪",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "packages/database/src/repositories/aiInfra/index.ts",
+          "line": 232
+        }
+      ]
+    },
+    {
+      "id": "DEV-040",
+      "name": "话题模型加载",
+      "implementation": "[src/features/ChatInput/ActionBar/Model/index.tsx](<../../features/ChatInput/ActionBar/Model/index.tsx#L42>)",
+      "boundary": "未加载话题不猜模型；新会话仍按Agent默认",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/features/ChatInput/ActionBar/Model/index.tsx",
+          "line": 42
+        }
+      ]
+    },
+    {
+      "id": "DEV-041",
+      "name": "流式工具状态",
+      "implementation": "[src/store/chat/agents/StreamingHandler.ts](<../../store/chat/agents/StreamingHandler.ts#L305>)",
+      "boundary": "ClientLLMTransport new StreamingHandler实例消费",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/store/chat/agents/StreamingHandler.ts",
+          "line": 305
+        }
+      ]
+    },
+    {
+      "id": "DEV-042",
+      "name": "社区账户恢复",
+      "implementation": "[src/routes/(main)/community/features/UserAvatar/index.tsx](<../../routes/(main)/community/features/UserAvatar/index.tsx#L58>)",
+      "boundary": "用户菜单调用原生退出；失败保留session",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/routes/(main)/community/features/UserAvatar/index.tsx",
+          "line": 58
+        }
+      ]
+    },
+    {
+      "id": "DEV-043",
+      "name": "Composio入口/同步",
+      "implementation": "[src/store/tool/slices/composioStore/action.ts](<../../store/tool/slices/composioStore/action.ts#L366>)",
+      "boundary": "@入口主动拉取；个人快照替换保留Agent项",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "src/store/tool/slices/composioStore/action.ts",
+          "line": 366
+        }
+      ]
+    },
+    {
+      "id": "DEV-044",
+      "name": "定向诊断/临时文件",
+      "implementation": "[packages/trpc/src/lambda/index.ts](<../../../packages/trpc/src/lambda/index.ts#L29>)",
+      "boundary": "真实baseProcedure挂载；TempFileManager共享监听实现",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "packages/trpc/src/lambda/index.ts",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "id": "DEV-045",
+      "name": "安全提示/记忆/推理默认",
+      "implementation": "[packages/model-runtime/src/utils/modelExtendParams.ts](<../../../packages/model-runtime/src/utils/modelExtendParams.ts#L66>)",
+      "boundary": "Home挂安全提示、DEFAULT_MEMORY_SETTINGS关闭；参数仅支持字段应用",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "packages/model-runtime/src/utils/modelExtendParams.ts",
+          "line": 66
+        }
+      ]
+    },
+    {
+      "id": "DEV-046",
+      "name": "图片单张/隐藏视频",
+      "implementation": "[apps/server/src/routers/lambda/image/index.ts](<../../../apps/server/src/routers/lambda/image/index.ts#L53>)",
+      "boundary": "client也强制1；视频layout重定向image与快捷过滤",
+      "firstImplemented": "2026-09-08",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/image/index.ts",
+          "line": 53
+        }
+      ]
+    },
+    {
+      "id": "DEV-047",
+      "name": "SSE空数据",
+      "implementation": "[packages/model-runtime/src/core/streams/protocol.ts](<../../../packages/model-runtime/src/core/streams/protocol.ts#L435>)",
+      "boundary": "共享转换器跳空值并保证JSON序列化；terminal处理保留",
+      "firstImplemented": "2026-09-09",
+      "sourceReferences": [
+        {
+          "path": "packages/model-runtime/src/core/streams/protocol.ts",
+          "line": 435
+        }
+      ]
+    },
+    {
+      "id": "DEV-048",
+      "name": "小人像/气泡",
+      "implementation": "[src/features/Home/index.tsx](<../../features/Home/index.tsx#L71>)",
+      "boundary": "HomePortrait152框、8px间距共用坐标，已读取全部相关源码",
+      "firstImplemented": "2026-09-09",
+      "sourceReferences": [
+        {
+          "path": "src/features/Home/index.tsx",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "id": "DEV-049",
+      "name": "推荐错误/重试",
+      "implementation": "[src/features/RecommendTaskTemplates/useDailyBriefRecommendationsUI.ts](<../../features/RecommendTaskTemplates/useDailyBriefRecommendationsUI.ts#L309>)",
+      "boundary": "两个UI消费者+business导出实际指向；error带isRetrying",
+      "firstImplemented": "2026-09-09",
+      "sourceReferences": [
+        {
+          "path": "src/features/RecommendTaskTemplates/useDailyBriefRecommendationsUI.ts",
+          "line": 309
+        }
+      ]
+    },
+    {
+      "id": "DEV-050",
+      "name": "邮箱验证码登录",
+      "implementation": "[src/features/Auth/SignIn/useEmailOtpSignIn.ts](<../../features/Auth/SignIn/useEmailOtpSignIn.ts#L8>)",
+      "boundary": "复用原生emailOTP接口；登录页原位复用邮箱/验证码输入框，主按钮获取验证码→验证并登录；保留飞书/Portal与白名单，60秒重发冷却和更换邮箱；不切换独立OTP页面",
+      "firstImplemented": "2026-09-09",
+      "sourceReferences": [
+        {
+          "path": "src/features/Auth/SignIn/useEmailOtpSignIn.ts",
+          "line": 8
+        },
+        {
+          "path": "src/features/Auth/SignIn/SignInEmailStep.tsx",
+          "line": 173
+        }
+      ]
+    }
+  ],
+  "configurations": [
+    {
+      "id": "CFG-001",
+      "name": "原生部署基础",
+      "currentBehavior": "v2.2.16源码与Docker PG部署",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-002",
+      "name": "普通飞书登录",
+      "currentBehavior": "普通飞书Provider与现有授权配置",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-003",
+      "name": "chatdev入口",
+      "currentBehavior": "chatdev.cotticoffee.com → app:3230",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-004",
+      "name": "模型连接与目录",
+      "currentBehavior": "沿用已授权模型连接、平台可见列表和默认值",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-005",
+      "name": "OSS同源访问",
+      "currentBehavior": "同源文件转发及签名Host约束",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-006",
+      "name": "Embedding默认值",
+      "currentBehavior": "azure/text-embedding-3-small",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-007",
+      "name": "异步文件签名",
+      "currentBehavior": "独立JWKS配置，密钥仅在运行环境",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-008",
+      "name": "正式历史库",
+      "currentBehavior": "lobehub_history与原加密密钥、独立缓存前缀",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-009",
+      "name": "SearXNG",
+      "currentBehavior": "保留独立容器和原生搜索优先策略",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-010",
+      "name": "Market专用WARP接入",
+      "currentBehavior": "沿用用户确认由社区建议的现有专用出口",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-011",
+      "name": "共享QStash",
+      "currentBehavior": "唯一正式*/10分钟调度至chat.cotti.ai",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-012",
+      "name": "双域名认证",
+      "currentBehavior": "同镜像/同库的两个容器，各自APP_URL与认证入口",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-013",
+      "name": "门户准入",
+      "currentBehavior": "门户成员与聊天准入规则已对齐",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-014",
+      "name": "Sol迁移Terra",
+      "currentBehavior": "已迁移指定Agent、话题及未结束任务，不改历史费用",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-015",
+      "name": "Node内存参数",
+      "currentBehavior": "8GiB老生代、ipv4first、系统CA",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-016",
+      "name": "Composio服务端",
+      "currentBehavior": "两个应用共用已授权配置",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-017",
+      "name": "默认网关优先级",
+      "currentBehavior": "app-cotti default.gw_priority=100，认证网络0",
+      "firstImplemented": "2026-09-09"
+    },
+    {
+      "id": "CFG-018",
+      "name": "邮件登录与发件显示名",
+      "currentBehavior": "双入口复用SMTP，显示名灵枢AI；AUTH_ENABLE_EMAIL_OTP=1，AUTH_ENABLE_MAGIC_LINK=0，邮箱验证开启；Portal入口保留",
+      "firstImplemented": "2026-09-09"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { Flexbox } from '@lobehub/ui';
 import { memo } from 'react';
 import { Outlet, useParams } from 'react-router';
 
+import { ManagedSettingsGate } from '@/features/CottiPlatformManagement/ManagedSettingsGate';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 
 import DesktopLayoutContainer from './_layout/Desktop/Container';
@@ -19,18 +20,20 @@ export const ProviderLayout = memo(() => {
   };
 
   return (
-    <Flexbox
-      horizontal
-      width={'100%'}
-      style={{
-        maxHeight: '100%',
-      }}
-    >
-      <ProviderMenu mobile={false} onProviderSelect={handleProviderSelect} />
-      <DesktopLayoutContainer>
-        <Outlet />
-      </DesktopLayoutContainer>
-    </Flexbox>
+    <ManagedSettingsGate>
+      <Flexbox
+        horizontal
+        width={'100%'}
+        style={{
+          maxHeight: '100%',
+        }}
+      >
+        <ProviderMenu mobile={false} onProviderSelect={handleProviderSelect} />
+        <DesktopLayoutContainer>
+          <Outlet />
+        </DesktopLayoutContainer>
+      </Flexbox>
+    </ManagedSettingsGate>
   );
 });
 

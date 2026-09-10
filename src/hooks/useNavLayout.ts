@@ -1,9 +1,11 @@
-import { HomeIcon, SearchIcon } from 'lucide-react';
+import { GalleryVerticalEndIcon, HomeIcon, SearchIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isCottiPlatformManagementEnabled } from '@/_custom/registry/platformManagement';
 import { useActiveWorkspaceSlug } from '@/business/client/hooks/useActiveWorkspaceSlug';
 import { getRouteById } from '@/config/routes';
+import { useCottiPlatformAdminAccess } from '@/features/CottiPlatformAnalytics/hooks';
 import { useGlobalStore } from '@/store/global';
 import { SidebarTabKey } from '@/store/global/initialState';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
@@ -34,7 +36,7 @@ export interface NavLayout {
 }
 
 export const useNavLayout = (): NavLayout => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'topic']);
   const toggleCommandMenu = useGlobalStore((s) => s.toggleCommandMenu);
   const { showMarket, hideGitHub } = useServerConfigStore(featureFlagsSelectors);
   const activeWorkspaceSlug = useActiveWorkspaceSlug();
@@ -70,9 +72,19 @@ export const useNavLayout = (): NavLayout => {
     [t, toggleCommandMenu],
   );
 
+  const enabled = isCottiPlatformManagementEnabled();
+  const { swr: accessSWR } = useCottiPlatformAdminAccess();
+
   const bottomMenuItems = useMemo(
     () =>
       [
+        {
+          hidden: !enabled || accessSWR.data?.isAdmin !== true,
+          icon: GalleryVerticalEndIcon,
+          key: 'overview',
+          title: t('overview.title', { ns: 'topic' }),
+          url: '/overview',
+        },
         {
           icon: getRouteById('image')!.icon,
           key: SidebarTabKey.Image,
@@ -100,7 +112,7 @@ export const useNavLayout = (): NavLayout => {
           url: '/memory',
         },
       ] as NavItem[],
-    [t, showMarket, activeWorkspaceSlug],
+    [t, showMarket, activeWorkspaceSlug, enabled, accessSWR.data?.isAdmin],
   );
 
   const footer = useMemo(

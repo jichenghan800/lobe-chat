@@ -1,6 +1,8 @@
 import isEqual from 'fast-deep-equal';
 import { useMemo } from 'react';
 
+import { useServerConfigStore } from '@/store/serverConfig';
+import { serverConfigSelectors } from '@/store/serverConfig/selectors';
 import { useToolStore } from '@/store/tool';
 import {
   agentSkillsSelectors,
@@ -19,6 +21,14 @@ import type { ActionTagData } from './types';
  * Tools:  installedPlugins (excluding skill-type entries), composioServers
  */
 export const useInstalledSkillsAndTools = (): ActionTagData[] => {
+  const isComposioEnabled = useServerConfigStore(serverConfigSelectors.enableComposio);
+  const useFetchUserComposioConnections = useToolStore(
+    (state) => state.useFetchUserComposioConnections,
+  );
+
+  // The mention entry point must not depend on opening the Tools popover first.
+  useFetchUserComposioConnections(isComposioEnabled);
+
   const builtinSkills = useToolStore(builtinToolSelectors.installedBuiltinSkills, isEqual);
   const customConnectors = useToolStore(connectorSelectors.customConnectors, isEqual);
   const installedPlugins = useToolStore(pluginSelectors.installedPluginMetaList, isEqual);

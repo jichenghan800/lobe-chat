@@ -193,4 +193,44 @@ describe('generateMarkdown', () => {
 
     expect(result).toContain('Intro\n\n<think>\n\nReasoning\n\n</think>\n\nOutro');
   });
+
+  it('should export the final authored answer from an assistant group', () => {
+    const finalReport =
+      '## 完整报告\n\n这是 Agent 调研后生成的长篇正文，不能因为 assistantGroup 外层 content 为空而丢失。';
+    const messages = [
+      {
+        children: [
+          {
+            content: '正在调研',
+            id: 'step-1',
+            tools: [{ apiName: 'callSubAgent', id: 'tool-1', identifier: 'lobe-agent' }],
+          },
+          { content: finalReport, id: 'step-2' },
+        ],
+        content: '',
+        id: 'assistant-group-1',
+        role: 'assistantGroup',
+      },
+    ] as UIChatMessage[];
+
+    const result = generateMarkdown({
+      ...defaultParams,
+      messages,
+      withRole: true,
+    });
+
+    expect(result).toContain('##### Assistant:');
+    expect(result).toContain(finalReport);
+  });
+
+  it('should omit the markdown title when the PDF renderer owns the title', () => {
+    const result = generateMarkdown({
+      ...defaultParams,
+      withTitle: false,
+    });
+
+    expect(result).not.toContain('# Chat Title');
+    expect(result).toContain('Hello');
+    expect(result).toContain('Hi there');
+  });
 });

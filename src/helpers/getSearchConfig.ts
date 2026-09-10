@@ -1,3 +1,4 @@
+import type { LobeAgentChatConfig } from '@lobechat/types';
 import { resolveSearchDecision, type SearchDecision } from 'model-bank';
 
 import { getAgentStoreState } from '@/store/agent';
@@ -21,10 +22,12 @@ export const getSearchConfig = (
   model: string,
   provider: string,
   agentId?: string,
+  chatConfigOverride?: Partial<LobeAgentChatConfig>,
 ): SearchConfig => {
   const agentStoreState = getAgentStoreState();
   const targetAgentId = agentId || agentStoreState.activeAgentId || '';
-  const chatConfig = chatConfigByIdSelectors.getChatConfigById(targetAgentId)(agentStoreState);
+  const chatConfig =
+    chatConfigOverride ?? chatConfigByIdSelectors.getChatConfigById(targetAgentId)(agentStoreState);
   const aiInfraStoreState = getAiInfraStoreState();
 
   const providerSearchMode =
@@ -38,6 +41,7 @@ export const getSearchConfig = (
     modelSearchImpl,
     providerSearchMode,
     searchMode: chatConfig.searchMode,
+    searchRoute: chatConfig.searchRoute,
     useModelBuiltinSearch: chatConfig.useModelBuiltinSearch,
   });
 };

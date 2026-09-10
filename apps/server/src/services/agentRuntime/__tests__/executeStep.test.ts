@@ -1791,3 +1791,9 @@ describe('AgentRuntimeService.executeStep - Agent Share authorization revoked mi
     dispatchHooks.mockRestore();
   });
 });
+
+vi.mock('@/database/models/cottiModelDisplay', () => ({
+  CottiModelDisplayModel: class {
+    getConfig = async () => ({ agent: [], chat: [] });
+  },
+}));

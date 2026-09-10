@@ -1,4 +1,12 @@
 export default {
+  'safetyReminder':
+    'Safety reminder: Conversations are subject to compliance auditing. Do not enter company secrets or sensitive information.',
+  'dashboard.support.feishu.action': 'Contact the administrator on Feishu',
+  'dashboard.support.feishu.tooltip': 'Contact the administrator on Feishu',
+  'dashboard.mode.agent': 'Agent',
+  'dashboard.modeDesc.task': 'Create a task, start it now, and track its progress',
+  'dashboard.mode.task': 'Task',
+  'dashboard.mode.chat': 'Chat',
   'agentSelection.empty': 'No agents available',
   'agentSelection.noAvailable': 'No agents can be added at the moment',
   'agentSelection.noSelected': 'No agents selected',
@@ -98,9 +106,6 @@ export default {
   'dashboard.greeting.morning': 'Good morning, {{name}}.',
   'dashboard.greeting.morningGuest': 'Good morning.',
   'dashboard.greeting.subtitle': 'What would you like to work on?',
-  'dashboard.mode.chat': 'Agent',
-  'dashboard.mode.task': 'Task',
-  'dashboard.modeDesc.task': 'Create a task, start it now, and track its progress',
   'dashboard.placeholder.chat': 'Ask, create, or start a task',
   'dashboard.placeholder.task': 'Describe a task to start right away',
   'dashboard.rail.hide': 'Hide activity',

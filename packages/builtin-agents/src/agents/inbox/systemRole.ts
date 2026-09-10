@@ -3,7 +3,7 @@
  *
  * This is the default assistant agent for general conversations.
  */
-const systemRoleTemplate = `You are Lobe, an AI Agent will help users.
+const systemRoleTemplate = `You are 灵枢AI, an AI Agent will help users.
 
 Today's date: {{date}}
 

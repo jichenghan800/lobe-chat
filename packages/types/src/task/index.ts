@@ -188,12 +188,18 @@ export interface TaskTopicHandoff {
 
 // ── Task context (runtime state pockets stored in tasks.context JSONB) ──
 
+export const TASK_AUTOMATION_UNVIEWED_RESULT_LIMIT = 3;
+
 export interface TaskSchedulerContext {
   // Count of consecutive automation-tick 'error' reasons since the last 'done'.
   // When it hits the fuse threshold (currently 3) we pause the task / stop
   // re-arming until the user resolves the urgent brief. Manual "run now"
   // failures do NOT touch this counter.
   consecutiveFailures?: number;
+  // ISO timestamp when the user last acknowledged this task's automation
+  // results. Completed schedule / heartbeat runs after this point are counted
+  // toward the unviewed-result auto-pause guard.
+  lastResultAcknowledgedAt?: string;
   // ISO timestamp when the latest tick was scheduled. Informational only.
   scheduledAt?: string;
   // QStash messageId (or LocalScheduler scheduleId) for the next tick. Used to

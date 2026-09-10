@@ -6,6 +6,7 @@ import { createStaticStyles, cx } from 'antd-style';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useCottiModelDisplayConfig } from '@/_custom/hooks/useCottiModelDisplayConfig';
 import type { BusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
 import { useBusinessModelModeConfig } from '@/business/client/hooks/useBusinessAgentMode';
 import type { HomeNewModelItem } from '@/business/client/hooks/useHomeNewModels';
@@ -15,10 +16,12 @@ import { usePermission } from '@/hooks/usePermission';
 import { agentService } from '@/services/agent';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
+import { useAiInfraStore } from '@/store/aiInfra';
 
 import { useResolvedHomeAgentId } from '../AgentSelect/useResolvedHomeAgentId';
 import { InputBanner } from '../InputArea/InputBanner';
 import { trackHomeModelShortcutClicked } from './analytics';
+import { filterVisibleShortcuts } from './filterVisibleShortcuts';
 import { getShortcutIconModelId } from './getShortcutIconModelId';
 import { useStarterModelDefaults } from './useStarterModelDefaults';
 
@@ -80,6 +83,14 @@ export const NewModelShortcuts = () => {
   const [switchingKey, setSwitchingKey] = useState<string | null>(null);
   const { defaultHomeNewModels, fallbackChatProvider } = useStarterModelDefaults();
   const { isLoading, items } = useHomeNewModels([...defaultHomeNewModels]);
+  const { data: modelDisplayConfig } = useCottiModelDisplayConfig();
+  const enabledModels = useAiInfraStore((s) => s.enabledAiModels);
+  const visibleItems = filterVisibleShortcuts(
+    items,
+    enabledModels || [],
+    modelDisplayConfig,
+    fallbackChatProvider,
+  );
   const applyBusinessModelModeConfig = useBusinessModelModeConfig();
 
   const handleClick = useCallback(
@@ -153,7 +164,7 @@ export const NewModelShortcuts = () => {
     ],
   );
 
-  if (!canCreateContent || (!isLoading && items.length === 0)) return null;
+  if (!canCreateContent || (!isLoading && visibleItems.length === 0)) return null;
 
   return (
     <InputBanner
@@ -172,7 +183,7 @@ export const NewModelShortcuts = () => {
                 width={skeletonWidths[index] ?? 104}
               />
             ))
-          : items.map((item) => {
+          : visibleItems.map((item) => {
               const key = getShortcutKey(item);
               const provider =
                 item.type === 'chat' ? getShortcutProvider(item, fallbackChatProvider) : undefined;

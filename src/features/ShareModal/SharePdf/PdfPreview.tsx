@@ -1,20 +1,21 @@
 'use client';
 
-import { LoadingOutlined } from '@ant-design/icons';
 import { Flexbox } from '@lobehub/ui';
 import { Button, createModal } from '@lobehub/ui/base-ui';
-import { Input, Spin } from 'antd';
+import { Input } from 'antd';
 import { createStaticStyles, cx } from 'antd-style';
-import { ChevronLeft, ChevronRight, Expand, FileText } from 'lucide-react';
-import { memo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Expand, FileText, FileWarning } from 'lucide-react';
+import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import NeuralNetworkLoading from '@/components/NeuralNetworkLoading';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { Document, Page } from '@/libs/pdfjs';
 
 import { containerStyles } from '../style';
+import { decodePdfBase64 } from './pdfData';
 
-const styles = createStaticStyles(({ css }) => ({
+const styles = createStaticStyles(({ css, cssVar }) => ({
   containerWrapper: css`
     position: relative;
     width: 100%;
@@ -36,7 +37,28 @@ const styles = createStaticStyles(({ css }) => ({
 
     height: 100%;
 
-    color: #666;
+    color: ${cssVar.colorTextSecondary};
+  `,
+  errorDescription: css`
+    max-width: 320px;
+    color: ${cssVar.colorTextSecondary};
+    text-align: center;
+  `,
+  errorState: css`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+
+    height: 100%;
+    padding: 20px;
+
+    color: ${cssVar.colorError};
+  `,
+  errorTitle: css`
+    font-weight: 600;
+    color: ${cssVar.colorText};
   `,
   expandButton: css`
     position: absolute;
@@ -106,7 +128,7 @@ const styles = createStaticStyles(({ css }) => ({
   `,
   loadingText: css`
     margin-block-start: 8px;
-    color: #666;
+    color: ${cssVar.colorTextSecondary};
   `,
   pageInput: css`
     width: 50px;
@@ -114,7 +136,7 @@ const styles = createStaticStyles(({ css }) => ({
   `,
   pageNumberText: css`
     font-size: 12px;
-    color: #666;
+    color: ${cssVar.colorTextSecondary};
   `,
   previewContainer: css`
     display: flex;
@@ -126,12 +148,27 @@ const styles = createStaticStyles(({ css }) => ({
 
 interface FullscreenContentProps {
   initialPage: number;
-  pdfDataUri: string;
+  pdfData: string;
 }
 
-const FullscreenContent = memo<FullscreenContentProps>(({ pdfDataUri, initialPage }) => {
+const PdfPreviewError = memo(() => {
+  const { t } = useTranslation('chat');
+
+  return (
+    <div className={styles.errorState} role="alert">
+      <FileWarning size={28} />
+      <div className={styles.errorTitle}>{t('shareModal.pdfPreviewError')}</div>
+      <div className={styles.errorDescription}>{t('shareModal.pdfPreviewErrorDescription')}</div>
+    </div>
+  );
+});
+
+PdfPreviewError.displayName = 'PdfPreviewError';
+
+const FullscreenContent = memo<FullscreenContentProps>(({ pdfData, initialPage }) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(initialPage);
+  const pdfFile = useMemo(() => ({ data: decodePdfBase64(pdfData) }), [pdfData]);
 
   const goToPrev = () => {
     if (pageNumber > 1) setPageNumber(pageNumber - 1);
@@ -149,10 +186,12 @@ const FullscreenContent = memo<FullscreenContentProps>(({ pdfDataUri, initialPag
     <div className={styles.fullscreenModal}>
       <div className={styles.fullscreenContent}>
         <Document
-          file={pdfDataUri}
+          error={<PdfPreviewError />}
+          file={pdfFile}
           onLoadSuccess={({ numPages: total }: { numPages: number }) => setNumPages(total)}
         >
           <Page
+            error={<PdfPreviewError />}
             pageNumber={pageNumber}
             renderAnnotationLayer={false}
             renderTextLayer={false}
@@ -204,9 +243,9 @@ const FullscreenContent = memo<FullscreenContentProps>(({ pdfDataUri, initialPag
 
 FullscreenContent.displayName = 'PdfFullscreenContent';
 
-const openPdfFullscreenModal = (pdfDataUri: string, initialPage: number) =>
+const openPdfFullscreenModal = (pdfData: string, initialPage: number) =>
   createModal({
-    content: <FullscreenContent initialPage={initialPage} pdfDataUri={pdfDataUri} />,
+    content: <FullscreenContent initialPage={initialPage} pdfData={pdfData} />,
     footer: null,
     maskClosable: true,
     styles: {
@@ -229,10 +268,27 @@ const PdfPreview = memo<PdfPreviewProps>(({ loading, pdfData, onGeneratePdf }) =
 
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
+  const [failedPdfData, setFailedPdfData] = useState<string | null>(null);
+  const pdfFile = useMemo(() => {
+    if (!pdfData) return null;
+
+    try {
+      return { data: decodePdfBase64(pdfData) };
+    } catch (error) {
+      console.error('Failed to decode PDF preview data:', error);
+      return null;
+    }
+  }, [pdfData]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setFailedPdfData(null);
     setNumPages(numPages);
     setPageNumber(1);
+  };
+
+  const onDocumentLoadError = (error: Error) => {
+    console.error('Failed to load PDF preview:', error);
+    setFailedPdfData(pdfData);
   };
 
   const goToPrevPage = () => {
@@ -260,7 +316,7 @@ const PdfPreview = memo<PdfPreviewProps>(({ loading, pdfData, onGeneratePdf }) =
         style={{ padding: 12 }}
       >
         <div className={localStyles.loadingState}>
-          <Spin indicator={<LoadingOutlined spin style={{ fontSize: 24 }} />} />
+          <NeuralNetworkLoading size={32} />
           <div className={localStyles.loadingText}>{t('shareModal.generatingPdf')}</div>
         </div>
       </div>
@@ -282,15 +338,15 @@ const PdfPreview = memo<PdfPreviewProps>(({ loading, pdfData, onGeneratePdf }) =
     );
   }
 
-  const pdfDataUri = `data:application/pdf;base64,${pdfData}`;
+  const previewFailed = !pdfFile || failedPdfData === pdfData;
 
   const handleFullscreen = () => {
-    if (pdfData) openPdfFullscreenModal(pdfDataUri, pageNumber);
+    if (pdfData) openPdfFullscreenModal(pdfData, pageNumber);
   };
 
   return (
     <div className={localStyles.containerWrapper}>
-      {pdfData && (
+      {!previewFailed && (
         <Button
           className={localStyles.expandButton}
           icon={<Expand size={16} />}
@@ -307,26 +363,36 @@ const PdfPreview = memo<PdfPreviewProps>(({ loading, pdfData, onGeneratePdf }) =
           localStyles.previewContainer,
         )}
       >
-        <Document
-          file={pdfDataUri}
-          loading={
-            <div className={localStyles.documentLoading}>
-              <Spin />
-              <div className={localStyles.loadingText}>{t('shareModal.loadingPdf')}</div>
-            </div>
-          }
-          onLoadSuccess={onDocumentLoadSuccess}
-        >
-          <Page
-            pageNumber={pageNumber}
-            renderAnnotationLayer={false}
-            renderTextLayer={false}
-            width={isMobile ? 300 : 400}
-          />
-        </Document>
+        {previewFailed ? (
+          <PdfPreviewError />
+        ) : (
+          <Document
+            error={<PdfPreviewError />}
+            file={pdfFile}
+            loading={
+              <div className={localStyles.documentLoading}>
+                <NeuralNetworkLoading size={32} />
+                <div className={localStyles.loadingText}>{t('shareModal.loadingPdf')}</div>
+              </div>
+            }
+            onLoadError={onDocumentLoadError}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onSourceError={onDocumentLoadError}
+          >
+            <Page
+              error={<PdfPreviewError />}
+              pageNumber={pageNumber}
+              renderAnnotationLayer={false}
+              renderTextLayer={false}
+              width={isMobile ? 300 : 400}
+              onLoadError={onDocumentLoadError}
+              onRenderError={onDocumentLoadError}
+            />
+          </Document>
+        )}
       </div>
 
-      {pdfData && numPages > 1 && (
+      {!previewFailed && numPages > 1 && (
         <div className={localStyles.footerNavigation}>
           <Flexbox horizontal align="center" gap={8} justify="center">
             <Button

@@ -76,6 +76,13 @@ export interface UploadFileItem {
    */
   previewUrl?: string;
   /**
+   * This draft file is intentionally kept visible and uploaded, but must not
+   * be sent through ordinary Chat because expanding it into the prompt can
+   * exceed the context window. Switching the conversation to Agent mode lets
+   * the runtime inspect the original file with tools.
+   */
+  requiresAgentMode?: boolean;
+  /**
    * marks a draft entry that references an already-persisted file still backing
    * an existing message (e.g. restored via "restore to input"). Removing such
    * an entry from the draft must only drop the draft item — it must NOT delete

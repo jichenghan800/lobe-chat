@@ -3053,3 +3053,9 @@ describe('AgentRuntimeService', () => {
     });
   });
 });
+
+vi.mock('@/database/models/cottiModelDisplay', () => ({
+  CottiModelDisplayModel: class {
+    getConfig = async () => ({ agent: [], chat: [] });
+  },
+}));

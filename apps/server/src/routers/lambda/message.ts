@@ -53,8 +53,10 @@ const messageProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) 
     ctx: {
       compressionRepo: new CompressionRepository(ctx.serverDB, ctx.userId, wsId),
       fileService: new FileService(ctx.serverDB, ctx.userId, wsId),
-      messageModel: new MessageModel(ctx.serverDB, ctx.userId, wsId),
-      messageService: new MessageService(ctx.serverDB, ctx.userId, wsId),
+      messageModel: new MessageModel(ctx.serverDB, ctx.userId, wsId, undefined, {
+        includeFileContent: false,
+      }),
+      messageService: new MessageService(ctx.serverDB, ctx.userId, wsId, false),
       topicDoctorRepo: new TopicDoctorRepo(ctx.serverDB, ctx.userId, wsId),
     },
   });
@@ -72,7 +74,9 @@ const messageSearchProcedure = messageProcedure.use(async (opts) => {
 
   return opts.next({
     ctx: {
-      messageModel: new MessageModel(ctx.serverDB, ctx.userId, workspaceId, ftsSearchRepo),
+      messageModel: new MessageModel(ctx.serverDB, ctx.userId, workspaceId, ftsSearchRepo, {
+        includeFileContent: false,
+      }),
     },
   });
 });
@@ -398,6 +402,8 @@ export const messageRouter = router({
     .input(
       z.object({
         agentId: z.string().nullish(),
+        includeFileContent: z.boolean().default(false),
+        fileContentIds: z.array(z.string()).max(100).optional(),
         current: z.number().optional(),
         groupId: z.string().nullish(),
         // Opt-in for `file` work summaries in the payload. Absent → the legacy
@@ -415,7 +421,7 @@ export const messageRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const { topicShareId, ...queryParams } = input;
+      const { topicShareId, includeFileContent, fileContentIds, ...queryParams } = input;
 
       // Public access via topicShareId
       if (topicShareId) {
@@ -433,7 +439,13 @@ export const messageRouter = router({
         // visitor topics have their own router (`shareChat.ts`), and this
         // path is only entered when a creator publishes their own conversation
         // via the classic share link — so we do NOT opt into visitor scope.
-        const messageModel = new MessageModel(ctx.serverDB, share.ownerId, shareWorkspaceId);
+        const messageModel = new MessageModel(
+          ctx.serverDB,
+          share.ownerId,
+          shareWorkspaceId,
+          undefined,
+          { includeFileContent, fileContentIds },
+        );
         const fileService = new FileService(ctx.serverDB, share.ownerId, shareWorkspaceId);
 
         return messageModel.query(
@@ -468,7 +480,10 @@ export const messageRouter = router({
       }
 
       const wsId = ctx.workspaceId ?? undefined;
-      const messageModel = new MessageModel(ctx.serverDB, ctx.userId, wsId);
+      const messageModel = new MessageModel(ctx.serverDB, ctx.userId, wsId, undefined, {
+        includeFileContent,
+        fileContentIds,
+      });
       const fileService = new FileService(ctx.serverDB, ctx.userId, wsId);
 
       return messageModel.query(queryParams, {

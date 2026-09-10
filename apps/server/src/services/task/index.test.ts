@@ -1458,7 +1458,10 @@ describe('TaskService', () => {
 
       expect(mockTaskModel.updateContext).toHaveBeenCalledTimes(1);
       expect(mockTaskModel.updateContext).toHaveBeenCalledWith('task-1', {
-        scheduler: { scheduleStartedAt: expect.any(String) },
+        scheduler: {
+          lastResultAcknowledgedAt: expect.any(String),
+          scheduleStartedAt: expect.any(String),
+        },
       });
       const stamped = (mockTaskModel.updateContext.mock.calls[0]![1] as any).scheduler
         .scheduleStartedAt as string;

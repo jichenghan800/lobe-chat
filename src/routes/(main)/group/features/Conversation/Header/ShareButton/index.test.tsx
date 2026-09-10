@@ -86,4 +86,11 @@ describe('Group Conversation ShareButton', () => {
     );
     expect(queryByTestId('share-popover')).toBeNull();
   });
+  it('shows COTTI topic link sharing when upstream business features are disabled', () => {
+    mocks.enableBusinessFeatures = false;
+
+    const { getByTestId, getByRole } = render(<ShareButton />);
+
+    expect(getByTestId('share-popover')).toContainElement(getByRole('button'));
+  });
 });

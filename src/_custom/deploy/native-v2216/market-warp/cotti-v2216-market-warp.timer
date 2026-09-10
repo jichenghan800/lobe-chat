@@ -1,0 +1,10 @@
+[Unit]
+Description=Maintain COTTI v2.2.16 Market-only routing
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=2min
+Unit=cotti-v2216-market-warp.service
+
+[Install]
+WantedBy=timers.target

@@ -183,6 +183,11 @@ const QSTASH_SCHEDULES = [
 
 // Function to create the recurring QStash schedules the server relies on
 const createQstashSchedule = async () => {
+  // A shared queue can serve a migration candidate without activating its copied tasks.
+  if (process.env.QSTASH_DISABLE_SCHEDULES === 'true') {
+    console.log('QStash: Automatic schedule registration disabled for this deployment.');
+    return;
+  }
   const QSTASH_URL = process.env.QSTASH_URL || 'https://qstash-eu-central-1.upstash.io';
 
   const QSTASH_TOKEN = process.env.QSTASH_TOKEN;
@@ -198,6 +203,9 @@ const createQstashSchedule = async () => {
   }
 
   for (const schedule of QSTASH_SCHEDULES) {
+    const scheduleId = process.env.QSTASH_SCHEDULE_ID_PREFIX
+      ? `${process.env.QSTASH_SCHEDULE_ID_PREFIX}-${schedule.id}`
+      : schedule.id;
     const url = `${QSTASH_URL}/v2/schedules/${APP_URL}${schedule.path}`;
 
     try {
@@ -208,18 +216,18 @@ const createQstashSchedule = async () => {
           'Content-Type': 'application/json',
           'Upstash-Method': 'POST',
           'Upstash-Cron': schedule.cron,
-          'Upstash-Schedule-Id': schedule.id,
+          'Upstash-Schedule-Id': scheduleId,
         },
         body: JSON.stringify({}),
       });
 
       if (res.ok) {
-        console.log(`✅ QStash: Schedule ${schedule.id} created successfully.`);
+        console.log(`✅ QStash: Schedule ${scheduleId} created successfully.`);
       } else {
-        console.error(`❌ QStash: Failed to create schedule ${schedule.id}. Status ${res.status}`);
+        console.error(`❌ QStash: Failed to create schedule ${scheduleId}. Status ${res.status}`);
       }
     } catch (err) {
-      console.error(`❌ QStash: Error creating schedule ${schedule.id}:`, err);
+      console.error(`❌ QStash: Error creating schedule ${scheduleId}:`, err);
     }
   }
 };

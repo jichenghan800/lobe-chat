@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { normalizeAsyncError } from '@/libs/swr/normalizeError';
+import { taskService } from '@/services/task';
 import { useAgentStore } from '@/store/agent';
 import { useTaskStore } from '@/store/task';
 import { useUserStore } from '@/store/user';
@@ -55,6 +56,16 @@ export const useActiveTaskDetail = (taskId?: string): ActiveTaskDetailState => {
   // "settled and absent" signal — using it (instead of `!isLoading`) avoids the
   // first-paint flash where no fetch has run yet but the cache is still empty.
   const { error: taskError, mutate } = useFetchTaskDetail(taskId);
+
+  // A task detail surface is an explicit result-consumption action. Keep this
+  // separate from the detail query because list cards also fetch task details
+  // for display and must not silently reset the auto-pause counter.
+  useEffect(() => {
+    if (!taskId || !hasTaskDetail) return;
+    void taskService.acknowledgeResults(taskId).catch((error) => {
+      console.error('[useActiveTaskDetail] failed to acknowledge task results:', error);
+    });
+  }, [hasTaskDetail, taskId]);
 
   // Hydrate-only (never touches `activeAgentId`); no-ops on an empty id, so it
   // simply activates once the assignee is known from the task detail.

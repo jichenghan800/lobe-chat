@@ -42,9 +42,15 @@ const ModelBuiltinSearch = memo<ModelBuiltinSearchProps>(({ disabled }) => {
   const agentId = useAgentId();
   const { updateAgentChatConfig } = useUpdateAgentConfig();
   const { model, provider } = useEffectiveModel(agentId);
-  const checked = useAgentStore((s) =>
-    chatConfigByIdSelectors.getUseModelBuiltinSearchById(agentId)(s),
-  );
+  const checked = useAgentStore((s) => {
+    const chatConfig = chatConfigByIdSelectors.getChatConfigById(agentId)(s);
+
+    return (
+      chatConfig.searchRoute === 'model' ||
+      (chatConfig.searchRoute !== 'application' &&
+        ((chatConfig.searchMode ?? 'auto') === 'auto' || chatConfig.useModelBuiltinSearch === true))
+    );
+  });
 
   const [isLoading, setLoading] = useState(false);
   const modelCard = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
@@ -63,7 +69,10 @@ const ModelBuiltinSearch = memo<ModelBuiltinSearchProps>(({ disabled }) => {
       onClick={async () => {
         if (disabled) return;
         setLoading(true);
-        await updateAgentChatConfig({ useModelBuiltinSearch: !checked });
+        await updateAgentChatConfig({
+          searchRoute: checked ? 'application' : 'model',
+          useModelBuiltinSearch: !checked,
+        });
         setLoading(false);
       }}
     >

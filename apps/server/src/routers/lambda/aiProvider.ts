@@ -15,6 +15,7 @@ import {
   wsCompatProcedure,
 } from '@/business/server/trpc-middlewares/workspaceAuth';
 import { AiProviderModel } from '@/database/models/aiProvider';
+import { CottiModelDisplayModel } from '@/database/models/cottiModelDisplay';
 import { UserModel } from '@/database/models/user';
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
 import { router } from '@/libs/trpc/lambda';
@@ -22,7 +23,7 @@ import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerGlobalConfig } from '@/server/globalConfig';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { getUserScopedAiProviderRuntimeState } from '@/server/services/aiProviderAccess';
+import { getCottiScopedAiProviderRuntimeState } from '@/server/services/cotti/modelDisplayAccess';
 import { type AiProviderDetailItem, type AiProviderRuntimeState } from '@/types/aiProvider';
 import {
   CreateAiProviderSchema,
@@ -39,6 +40,7 @@ const aiProviderProcedure = wsCompatProcedure.use(serverDatabase).use(async (opt
   const gateKeeper = await KeyVaultsGateKeeper.initWithEnvKey();
   return opts.next({
     ctx: {
+      cottiModelDisplayModel: new CottiModelDisplayModel(ctx.serverDB),
       aiInfraRepos: new AiInfraRepos(
         ctx.serverDB,
         ctx.userId,
@@ -172,8 +174,10 @@ export const aiProviderRouter = router({
   getAiProviderRuntimeState: aiProviderProcedure
     .input(z.object({ isLogin: z.boolean().optional() }))
     .query(async ({ ctx }): Promise<AiProviderRuntimeState> => {
-      const state = await getUserScopedAiProviderRuntimeState(ctx.userId, () =>
-        ctx.aiInfraRepos.getAiProviderRuntimeState(KeyVaultsGateKeeper.getUserKeyVaults),
+      const state = await getCottiScopedAiProviderRuntimeState(
+        ctx.userId,
+        () => ctx.aiInfraRepos.getAiProviderRuntimeState(KeyVaultsGateKeeper.getUserKeyVaults),
+        () => ctx.cottiModelDisplayModel.getConfig(),
       );
       const providerBindingAgentTypes = resolveProviderBindingAgentTypes(state);
 
@@ -207,8 +211,10 @@ export const aiProviderRouter = router({
   getProviderBindingRuntime: aiProviderProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }): Promise<HeterogeneousProviderBindingRuntime> => {
-      const state = await getUserScopedAiProviderRuntimeState(ctx.userId, () =>
-        ctx.aiInfraRepos.getAiProviderRuntimeState(KeyVaultsGateKeeper.getUserKeyVaults),
+      const state = await getCottiScopedAiProviderRuntimeState(
+        ctx.userId,
+        () => ctx.aiInfraRepos.getAiProviderRuntimeState(KeyVaultsGateKeeper.getUserKeyVaults),
+        () => ctx.cottiModelDisplayModel.getConfig(),
       );
       const enabled = state.enabledAiProviders.some(({ id }) => id === input.id);
       const runtimeConfig = state.runtimeConfig[input.id];

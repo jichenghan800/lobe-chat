@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router';
 import NotFound from '@/components/404';
 import AsyncBoundary from '@/components/AsyncBoundary';
 import SurfaceSkeleton from '@/components/Skeleton/Surface';
+import { ManagedSettingsGate } from '@/features/CottiPlatformManagement/ManagedSettingsGate';
 import ResourceConfigAccessGate from '@/features/ResourcePermission/ResourceConfigAccessGate';
 import { usePermission } from '@/hooks/usePermission';
 import { useAgentStore } from '@/store/agent';
@@ -179,13 +180,15 @@ const ChannelPage = () => {
   const { aid } = useParams<{ aid?: string }>();
 
   return (
-    <ResourceConfigAccessGate
-      redirectPath={`/agent/${aid ?? ''}`}
-      resourceId={aid}
-      resourceType="agent"
-    >
-      <ChannelContent />
-    </ResourceConfigAccessGate>
+    <ManagedSettingsGate redirectPath={`/agent/${aid ?? ''}`}>
+      <ResourceConfigAccessGate
+        redirectPath={`/agent/${aid ?? ''}`}
+        resourceId={aid}
+        resourceType="agent"
+      >
+        <ChannelContent />
+      </ResourceConfigAccessGate>
+    </ManagedSettingsGate>
   );
 };
 

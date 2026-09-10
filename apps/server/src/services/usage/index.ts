@@ -270,7 +270,7 @@ export class UsageRecordService {
     for (const row of rows) {
       const metadata = row.metadata as MessageMetadata | null;
       const usage = (row.usage as ModelUsage | null) ?? metadata?.usage;
-      const storedCost = usage?.cost ?? metadata?.cost ?? 0;
+      const storedCost = usage?.cost ?? metadata?.cost;
       const split = computeMessageCostSplit(usage, row.provider, row.model, storedCost);
 
       // bucket

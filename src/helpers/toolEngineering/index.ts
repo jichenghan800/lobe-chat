@@ -18,6 +18,7 @@ import {
   type ToolManifest,
   type WorkingModel,
 } from '@lobechat/types';
+import type { PartialDeep } from 'type-fest';
 
 import type { ConnectorToolPermission } from '@/database/schemas';
 import { applyToolNameMaxLength } from '@/helpers/applyToolNameMaxLength';
@@ -35,6 +36,7 @@ import {
 import { connectorSelectors } from '@/store/tool/slices/connector';
 import { useUserStore } from '@/store/user';
 import { settingsSelectors } from '@/store/user/selectors';
+import type { LobeAgentConfig } from '@/types/agent';
 
 import { getSearchConfig } from '../getSearchConfig';
 import { isCanUseFC } from '../isCanUseFC';
@@ -214,9 +216,24 @@ export const createAgentToolsEngine = (
   pluginIds?: string[],
   /** Conversation context for context-aware builtin manifests (scope, isSubAgent). */
   manifestContext?: BuiltinToolResolveContext,
+  selectedToolIds?: string[],
+  targetAgent?: { agentId: string; config: PartialDeep<LobeAgentConfig> },
 ) => {
-  const searchConfig = getSearchConfig(workingModel.model, workingModel.provider);
-  const agentState = getAgentStoreState();
+  const globalAgentState = getAgentStoreState();
+  const agentState = targetAgent
+    ? {
+        ...globalAgentState,
+        activeAgentId: targetAgent.agentId,
+        agentMap: { ...globalAgentState.agentMap, [targetAgent.agentId]: targetAgent.config },
+      }
+    : globalAgentState;
+  const chatConfig = agentChatConfigSelectors.currentChatConfig(agentState);
+  const searchConfig = getSearchConfig(
+    workingModel.model,
+    workingModel.provider,
+    targetAgent?.agentId,
+    targetAgent ? chatConfig : undefined,
+  );
   // `currentAgentPlugins` already resolves to pinned-only identifiers — disabled
   // entries never reach the tools-engine whitelist.
   const userPlugins = agentSelectors.currentAgentPlugins(agentState);
@@ -247,6 +264,7 @@ export const createAgentToolsEngine = (
     imageGenerationCapable && userPlugins.includes(ImageGenerationManifest.identifier);
 
   const chatModeRules = {
+    ...(selectedToolIds && Object.fromEntries(selectedToolIds.map((id) => [id, true]))),
     [ImageGenerationManifest.identifier]: imageGenerationEnabled,
     [KnowledgeBaseManifest.identifier]: kbEnabled,
     [MemoryManifest.identifier]: memoryEnabled,

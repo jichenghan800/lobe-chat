@@ -21,6 +21,7 @@ import MarketAuthConfirmModal from './MarketAuthConfirmModal';
 import { MarketOIDC } from './oidc';
 import type { MarketAuthScene } from './scenes';
 import { createSingleFlight } from './singleFlight';
+import { clearMarketTokensFromDB } from './tokenStorage';
 import {
   type MarketAuthContextType,
   type MarketAuthSession,
@@ -83,25 +84,6 @@ const saveMarketTokensToDB = async (
     });
   } catch (error) {
     console.error('[MarketAuth] Failed to save tokens to DB:', error);
-  }
-};
-
-/**
- * Clear market tokens from DB
- */
-const clearMarketTokensFromDB = async () => {
-  // If there are no tokens, no need to call setSettings
-  const currentTokens = getMarketTokensFromDB();
-  if (!currentTokens?.accessToken && !currentTokens?.refreshToken && !currentTokens?.expiresAt) {
-    return;
-  }
-
-  try {
-    await useUserStore.getState().setSettings({
-      market: undefined,
-    });
-  } catch (error) {
-    console.error('[MarketAuth] Failed to clear tokens from DB:', error);
   }
 };
 
@@ -527,9 +509,9 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
    * Sign-out method
    */
   const signOut = async () => {
+    await clearMarketTokensFromDB({ throwOnError: true });
     setSession(null);
     setStatus('unauthenticated');
-    await clearMarketTokensFromDB();
   };
 
   /**

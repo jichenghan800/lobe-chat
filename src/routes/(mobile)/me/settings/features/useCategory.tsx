@@ -23,6 +23,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type CellProps } from '@/components/Cell';
+import { isCottiManagedSettingsTab } from '@/features/CottiPlatformManagement/managedSettings';
+import { useManagedSettingsAccess } from '@/features/CottiPlatformManagement/useManagedSettingsAccess';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 import { SettingsTabs } from '@/store/global/initialState';
 import {
@@ -55,6 +57,7 @@ export interface CategoryGroup {
 export const useCategory = (): CategoryGroup[] => {
   const navigate = useWorkspaceAwareNavigate();
   const { t } = useTranslation(['setting', 'auth', 'subscription']);
+  const { canManage } = useManagedSettingsAccess();
   const { hideDocs, showApiKeyManage, showProvider } = useServerConfigStore(featureFlagsSelectors);
   const enableBusinessFeatures = useServerConfigStore(serverConfigSelectors.enableBusinessFeatures);
   const isDevMode = useUserStore((s) => userGeneralSettingsSelectors.config(s).isDevMode);
@@ -159,8 +162,14 @@ export const useCategory = (): CategoryGroup[] => {
         key: SettingsGroupKey.Developer,
         title: t('setting:group.developer'),
       },
-    ].filter((group) => group.items.length > 0);
+    ]
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => canManage || !isCottiManagedSettingsTab(item.key)),
+      }))
+      .filter((group) => group.items.length > 0);
   }, [
+    canManage,
     t,
     enableBusinessFeatures,
     hideDocs,

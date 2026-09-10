@@ -1,3 +1,5 @@
+import { getFileExtension, isExcelFileNameOrType } from '@/utils/spreadsheet';
+
 const SUPPORTED_CHAT_IMAGE_TYPES = new Set([
   'image/gif',
   'image/jpeg',
@@ -104,7 +106,12 @@ const SUPPORTED_CHAT_DOCUMENT_MIME_TYPES = new Set([
   'text/plain',
 ]);
 
-const getExtension = (filename: string) => filename.split('.').pop()?.toLowerCase() || '';
+export const LARGE_EXCEL_UPLOAD_LIMIT_BYTES = 128 * 1024;
+
+export const isExcelFile = (file: File) => isExcelFileNameOrType(file.name, file.type);
+
+export const isLargeExcelFile = (file: File) =>
+  isExcelFile(file) && file.size > LARGE_EXCEL_UPLOAD_LIMIT_BYTES;
 
 // Canonical audio mime for each supported extension. Audio containers like .m4a share the
 // ISO-BMFF box layout with .mp4, so the browser often reports an empty mime and byte-sniffing
@@ -129,11 +136,11 @@ const AUDIO_EXTENSION_MIME_TYPES: Record<string, string> = {
  * file is classified and rendered as audio. See lobehub/lobehub#15988.
  */
 export const audioMimeFromExtension = (filename: string): string | undefined =>
-  AUDIO_EXTENSION_MIME_TYPES[getExtension(filename)];
+  AUDIO_EXTENSION_MIME_TYPES[getFileExtension(filename)];
 
 export const isSupportedChatUploadFile = (file: File) => {
   const fileType = file.type.toLowerCase();
-  const extension = getExtension(file.name);
+  const extension = getFileExtension(file.name);
 
   if (fileType.startsWith('image/')) {
     return SUPPORTED_CHAT_IMAGE_TYPES.has(fileType);
@@ -169,4 +176,65 @@ export const filterSupportedChatUploadFiles = (files: File[]) => {
   }
 
   return { supportedFiles, unsupportedFiles };
+};
+
+const getExcelContentSheetCount = async (file: File): Promise<number> => {
+  const { strFromU8, unzip } = await import('fflate');
+  const fileData = new Uint8Array(await file.arrayBuffer());
+  const archive = await new Promise<Record<string, Uint8Array>>((resolve, reject) => {
+    unzip(fileData, (error, files) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve(files);
+    });
+  });
+
+  return Object.entries(archive).filter(([path, data]) => {
+    if (!/^xl\/worksheets\/sheet\d+\.xml$/i.test(path)) return false;
+
+    return /<c(?:\s|>)/i.test(strFromU8(data));
+  }).length;
+};
+
+export const filterExcelChatUploadFiles = async (files: File[]) => {
+  const excelFiles = files.filter(isExcelFile);
+
+  if (excelFiles.length > 1) {
+    return {
+      allowedFiles: files.filter((file) => !isExcelFile(file)),
+      excelFilesRequiringAgentMode: excelFiles,
+    };
+  }
+
+  const allowedFiles: File[] = [];
+  const excelFilesRequiringAgentMode: File[] = [];
+
+  for (const file of files) {
+    if (!isExcelFile(file)) {
+      allowedFiles.push(file);
+      continue;
+    }
+
+    if (isLargeExcelFile(file)) {
+      excelFilesRequiringAgentMode.push(file);
+      continue;
+    }
+
+    try {
+      const contentSheetCount = await getExcelContentSheetCount(file);
+
+      if (contentSheetCount > 1) {
+        excelFilesRequiringAgentMode.push(file);
+      } else {
+        allowedFiles.push(file);
+      }
+    } catch {
+      excelFilesRequiringAgentMode.push(file);
+    }
+  }
+
+  return { allowedFiles, excelFilesRequiringAgentMode };
 };

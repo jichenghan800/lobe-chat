@@ -1,8 +1,10 @@
 'use client';
 
 import { Flexbox } from '@lobehub/ui';
+import { Text } from '@lobehub/ui/base-ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { lazy, memo, Suspense, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useHomeUsageWidgetActive } from '@/business/client/features/HomeUsageWidget';
 import { useHomePromoLine } from '@/business/client/features/useHomePromoLine';
@@ -66,7 +68,7 @@ const RAIL_RECLAIMED_WIDTH = RAIL_CARD_WIDTH + RAIL_GUTTER + RAIL_COLUMN_GAP;
 const COLLAPSED_CONTENT_GAIN = 140;
 const COLLAPSED_CONTENT_OFFSET = (RAIL_RECLAIMED_WIDTH - COLLAPSED_CONTENT_GAIN) / 2;
 /** Portrait width plus its inline inset and the gap the bubble keeps from it. */
-const PORTRAIT_LANE = 152 + 12 + 16;
+const PORTRAIT_LANE = 152 + 12 + 8;
 const BUBBLE_MAX_WIDTH = 360;
 const BUBBLE_GAP = 16;
 /**
@@ -150,46 +152,23 @@ const styles = createStaticStyles(({ css }) => ({
       --home-greeting-measure: calc(100cqw - ${GREETING_LANE}px);
     }
   `,
-  // Parks beside the portrait when the row is wide enough for the three of them;
-  // otherwise it drops below the greeting, where it is just another line and
-  // needs no anchoring.
-  bubbleSlot: css`
-    --home-bubble-tail: none;
-
-    margin-block-start: 16px;
-
-    @container home (width >= ${BUBBLE_INLINE_MIN}px) {
-      --home-bubble-tail: block;
-
-      position: absolute;
-      inset-block-end: 4px;
-
-      /* Anchored to the header's trailing edge, which itself widens and slides
-         on collapse — so the slot only has to make up the difference, and it
-         makes it up with a transform, in step with the portrait it belongs to. */
-      inset-inline-end: ${PORTRAIT_LANE - RAIL_RECLAIMED_WIDTH}px;
-
-      display: flex;
-      justify-content: flex-end;
-
-      max-width: ${BUBBLE_MAX_WIDTH}px;
-      margin-block-start: 0;
-
-      transition: transform ${RAIL_TRANSITION_DURATION}ms ease-out;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      transition: none;
+  headerWithPortrait: css`
+    @container home (width < ${BUBBLE_INLINE_MIN}px) {
+      padding-block-end: 104px;
     }
   `,
-  bubbleSlotCollapsed: css`
-    @container home (width >= ${BUBBLE_INLINE_MIN}px) {
-      transform: translateX(-${RAIL_RECLAIMED_WIDTH}px);
+  // Share the portrait's coordinate space at every width and during rail collapse.
+  bubbleSlot: css`
+    --home-bubble-tail: block;
 
-      &:dir(rtl) {
-        transform: translateX(${RAIL_RECLAIMED_WIDTH}px);
-      }
-    }
+    pointer-events: auto;
+
+    position: absolute;
+    inset-block-end: 4px;
+    inset-inline-end: ${PORTRAIT_LANE}px;
+
+    width: max-content;
+    max-width: min(${BUBBLE_MAX_WIDTH}px, calc(100% - ${PORTRAIT_LANE}px));
   `,
   inputArea: css`
     position: relative;
@@ -216,15 +195,12 @@ const styles = createStaticStyles(({ css }) => ({
   `,
   portrait: css`
     pointer-events: none;
-    grid-area: 1 / 2;
+    position: relative;
+    grid-area: 1 / 1 / 2 / -1;
     transition: transform ${RAIL_TRANSITION_DURATION}ms ease-out;
 
     @media (prefers-reduced-motion: reduce) {
       transition: none;
-    }
-
-    @media (width <= 1100px) {
-      display: none;
     }
   `,
   // With the rail gone the agent has nothing to lean into, so it slides over the
@@ -296,6 +272,12 @@ const styles = createStaticStyles(({ css }) => ({
 }));
 
 const Home = memo(() => {
+  const { t } = useTranslation('home');
+  const safetyReminder = (
+    <Text data-testid={'home-safety-reminder'} fontSize={12} type={'secondary'}>
+      {t('safetyReminder')}
+    </Text>
+  );
   const isLogin = useUserStore(authSelectors.isLogin);
   const showHomeRail = useGlobalStore(systemStatusSelectors.showHomeRail);
   const showHomePortrait = useGlobalStore(systemStatusSelectors.showHomePortrait);
@@ -356,25 +338,33 @@ const Home = memo(() => {
             onModeChange={setMode}
           />
         </div>
+        {safetyReminder}
       </Flexbox>
     );
 
   return (
     <Flexbox className={styles.grid}>
-      <div className={cx(styles.header, styles.content, railCollapsed && styles.contentCollapsed)}>
-        <HomeHeader />
-        {/* The portrait has one voice: a live campaign temporarily speaks in
-            place of the daily brief, which returns when the campaign leaves. */}
-        {portraitVisible && (
-          <div className={cx(styles.bubbleSlot, railCollapsed && styles.bubbleSlotCollapsed)}>
-            <PortraitBubble promo={promo} />
-          </div>
+      <div
+        className={cx(
+          styles.header,
+          styles.content,
+          portraitVisible && styles.headerWithPortrait,
+          railCollapsed && styles.contentCollapsed,
         )}
+      >
+        <HomeHeader />
       </div>
 
       {portraitVisible && (
-        <div className={cx(styles.portrait, railCollapsed && styles.portraitCollapsed)}>
+        <div
+          className={cx(styles.portrait, railCollapsed && styles.portraitCollapsed)}
+          data-testid="home-portrait-slot"
+        >
           <HomePortrait />
+          {/* A live campaign temporarily replaces the daily brief. */}
+          <div className={styles.bubbleSlot} data-testid="home-portrait-bubble-slot">
+            <PortraitBubble promo={promo} />
+          </div>
         </div>
       )}
 
@@ -391,6 +381,7 @@ const Home = memo(() => {
             onInputValueChange={handleInputValueChange}
             onModeChange={setMode}
           />
+          {safetyReminder}
         </Flexbox>
         <HomeModeContent
           inlineRail={railCollapsed && isLogin}

@@ -4,6 +4,8 @@ import { Text } from '@lobehub/ui/base-ui';
 import { Fragment, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isCottiManagedSettingsTab } from '@/features/CottiPlatformManagement/managedSettings';
+import { ManagedSettingsGate } from '@/features/CottiPlatformManagement/ManagedSettingsGate';
 import NavHeader from '@/features/NavHeader';
 import SettingContainer from '@/features/Setting/SettingContainer';
 import { useSettingsAnchorScroll } from '@/features/SettingsSearch/anchor';
@@ -154,4 +156,13 @@ const SettingsContent = ({ mobile, activeTab }: SettingsContentProps) => {
   );
 };
 
-export default SettingsContent;
+const ManagedSettingsContent = (props: SettingsContentProps) =>
+  isCottiManagedSettingsTab(props.activeTab) ? (
+    <ManagedSettingsGate>
+      <SettingsContent {...props} />
+    </ManagedSettingsGate>
+  ) : (
+    <SettingsContent {...props} />
+  );
+
+export default ManagedSettingsContent;

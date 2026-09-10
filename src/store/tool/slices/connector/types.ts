@@ -30,6 +30,8 @@ export interface ConnectorWithTools {
   mcpServerUrl: string | null;
   metadata: Record<string, unknown> | null;
   name: string;
+  /** Existing OAuth token predates capabilities now enabled by this preset. */
+  requiresReauthorization?: boolean;
   sourceType: string;
   status: string;
   tools: ConnectorTool[];

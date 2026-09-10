@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
       metadata?: { description?: string };
       mcpConnectionType?: string;
       name: string;
+      requiresReauthorization?: boolean;
       sourceType: string;
     }>,
     deleteConnector: vi.fn(),
@@ -120,5 +121,25 @@ describe('ConnectorDetail', () => {
     render(<ConnectorDetail connectorId="connector-1" />);
 
     expect(screen.getByRole('button', { name: 'Uninstall' })).toBeInTheDocument();
+  });
+
+  it('shows a direct reauthorization remedy for a stale Feishu grant', () => {
+    mocks.toolState.connectors = [
+      {
+        id: 'connector-feishu',
+        identifier: 'feishu-documents',
+        metadata: { description: 'Feishu documents', presetId: 'feishu_documents' } as any,
+        name: 'Feishu Documents',
+        requiresReauthorization: true,
+        sourceType: ConnectorSourceType.custom,
+      },
+    ];
+
+    render(<ConnectorDetail connectorId="connector-feishu" />);
+
+    expect(screen.getByText('connectorPreset.authorizationUpgrade.title')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'connectorPreset.authorizationUpgrade.action' }),
+    ).toBeInTheDocument();
   });
 });

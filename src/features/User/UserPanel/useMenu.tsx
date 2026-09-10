@@ -16,6 +16,8 @@ import { OFFICIAL_URL } from '@/const/url';
 import DataImporter from '@/features/DataImporter';
 import WorkspaceLink from '@/features/Workspace/WorkspaceLink';
 import { useNavLayout } from '@/hooks/useNavLayout';
+import { useClientDataSWR } from '@/libs/swr';
+import { cottiPeopleManagementService } from '@/services/cottiPeopleManagement';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/selectors';
@@ -58,7 +60,35 @@ export const useMenu = () => {
   const businessMenuItems = useBusinessMenuItems(isLogin);
   const hasActiveWorkspace = useHasActiveWorkspace();
 
+  const peopleAccess = useClientDataSWR(
+    isLogin ? ['cotti', 'people-menu-access'] : null,
+    () => cottiPeopleManagementService.getAccess(),
+    { shouldRetryOnError: false },
+  );
+
   const settings: MenuProps['items'] = [
+    ...(peopleAccess.data?.allowed
+      ? [
+          {
+            key: 'cotti-platform',
+            icon: <Icon icon={Settings2} />,
+            label: (
+              <WorkspaceLink escape to="/settings/cotti-platform">
+                {t('platformManagement.title', { ns: 'setting' })}
+              </WorkspaceLink>
+            ),
+          },
+          {
+            key: 'cotti-overview',
+            icon: <Icon icon={Settings2} />,
+            label: (
+              <WorkspaceLink escape to="/overview">
+                {t('overview.title', { ns: 'topic' })}
+              </WorkspaceLink>
+            ),
+          },
+        ]
+      : []),
     {
       extra: isDesktop ? (
         <div>

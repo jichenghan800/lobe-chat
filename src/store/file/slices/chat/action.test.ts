@@ -4,9 +4,11 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fileService } from '@/services/file';
+import { ragService } from '@/services/rag';
 import { agentByIdSelectors } from '@/store/agent/selectors';
 
 import { useFileStore as useStore } from '../../store';
+import { LARGE_EXCEL_UPLOAD_LIMIT_BYTES } from './uploadGuard';
 
 const AGENT_ID = 'agent-1';
 
@@ -240,6 +242,105 @@ describe('useFileStore:chat', () => {
 
     expect(toast.error).not.toHaveBeenCalled();
     expect(uploadWithProgress).toHaveBeenCalledTimes(1);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
+  });
+
+  it('notifies the picker only after the selected file is visible as a pending attachment', async () => {
+    mockAgentMode({ enableAgentMode: false, heterogeneous: false });
+
+    const { result } = renderHook(() => useStore());
+    const order: string[] = [];
+    const uploadWithProgress = vi.fn().mockImplementation(async () => {
+      order.push('upload');
+      return { id: 'file-1', url: 'http://x/1' };
+    });
+    const onPrepared = vi.fn(() => {
+      order.push('prepared');
+      expect(useStore.getState().chatUploadFileList).toEqual([
+        expect.objectContaining({ id: 'notes.txt', status: 'pending' }),
+      ]);
+    });
+
+    act(() => {
+      useStore.setState({ chatUploadFileList: [], uploadWithProgress: uploadWithProgress as any });
+    });
+
+    await act(async () => {
+      await result.current.uploadChatFiles(
+        [new File(['notes'], 'notes.txt', { type: 'text/plain' })],
+        AGENT_ID,
+        { onPrepared },
+      );
+    });
+
+    expect(onPrepared).toHaveBeenCalledOnce();
+    expect(order).toEqual(['prepared', 'upload']);
+  });
+
+  it('keeps large Excel visible after upload but marks it as Agent-only in chat mode', async () => {
+    mockAgentMode({ enableAgentMode: false, heterogeneous: false });
+
+    const { result } = renderHook(() => useStore());
+    const uploadWithProgress = vi.fn().mockResolvedValue({
+      id: 'file-excel',
+      url: 'https://files.example.com/large.xlsx',
+    });
+    const largeExcel = new File(
+      [new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)],
+      'large.xlsx',
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    );
+
+    act(() => {
+      useStore.setState({
+        chatUploadFileList: [],
+        uploadWithProgress: uploadWithProgress as any,
+      });
+    });
+
+    await act(async () => {
+      await result.current.uploadChatFiles([largeExcel], AGENT_ID);
+    });
+
+    expect(uploadWithProgress).toHaveBeenCalledOnce();
+    expect(result.current.chatUploadFileList).toEqual([
+      expect.objectContaining({
+        requiresAgentMode: true,
+      }),
+    ]);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledWith('upload.validation.largeExcelFileInChat');
+  });
+
+  it('uploadChatFiles should allow large Excel files in agent mode without parsing them', async () => {
+    mockAgentMode({ enableAgentMode: true, heterogeneous: false });
+
+    const { result } = renderHook(() => useStore());
+    const uploadWithProgress = vi.fn().mockResolvedValue({ id: 'file-excel', url: 'http://x/3' });
+    const largeExcel = new File(
+      [new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)],
+      'large.xlsx',
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    );
+
+    act(() => {
+      useStore.setState({
+        chatUploadFileList: [],
+        uploadWithProgress: uploadWithProgress as any,
+      });
+    });
+
+    await act(async () => {
+      await result.current.uploadChatFiles([largeExcel], AGENT_ID);
+    });
+
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(uploadWithProgress).toHaveBeenCalledTimes(1);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
   });
 
   it('uploadChatFiles should allow any file type for heterogeneous agents', async () => {
@@ -289,6 +390,67 @@ describe('useFileStore:chat', () => {
         status: 'error',
       }),
     ]);
+  });
+
+  it('attaches existing resource files without re-uploading or deleting their source records', async () => {
+    const { result } = renderHook(() => useStore());
+    const getKnowledgeItem = vi.spyOn(fileService, 'getKnowledgeItem');
+    const removeFile = vi.spyOn(fileService, 'removeFile').mockResolvedValue(undefined);
+
+    getKnowledgeItem.mockImplementation(async (id) => {
+      if (id === 'docs-parsed') {
+        return {
+          fileId: 'file-sheet',
+          fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          id,
+          name: 'report.xlsx',
+          size: 2048,
+          sourceType: 'document',
+          url: 'https://files.example.com/report.xlsx',
+        } as any;
+      }
+
+      return {
+        fileType: 'application/pdf',
+        id,
+        name: 'guide.pdf',
+        size: 1024,
+        sourceType: 'file',
+        url: 'https://files.example.com/guide.pdf',
+      } as any;
+    });
+
+    await act(async () => {
+      const count = await result.current.attachResourceFilesToChat([
+        'docs-parsed',
+        'file-pdf',
+        'docs-parsed',
+      ]);
+      expect(count).toBe(2);
+    });
+
+    expect(result.current.chatUploadFileList).toEqual([
+      expect.objectContaining({
+        fileUrl: 'https://files.example.com/report.xlsx',
+        id: 'file-sheet',
+        requiresAgentMode: true,
+        skipRemoveFile: true,
+        status: 'success',
+      }),
+      expect.objectContaining({
+        fileUrl: 'https://files.example.com/guide.pdf',
+        id: 'file-pdf',
+        skipRemoveFile: true,
+        status: 'success',
+      }),
+    ]);
+
+    await act(async () => {
+      await result.current.removeChatUploadFile('file-sheet');
+    });
+
+    expect(removeFile).not.toHaveBeenCalled();
+    expect(result.current.chatUploadFileList).toHaveLength(1);
   });
 
   describe('removeChatUploadFile', () => {

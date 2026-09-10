@@ -1,9 +1,18 @@
 import type { TaskAutomationMode } from '@lobechat/types';
+import { TASK_AUTOMATION_UNVIEWED_RESULT_LIMIT } from '@lobechat/types';
 import { Flexbox, Icon, InputNumber, Popover } from '@lobehub/ui';
 import { ActionIcon, Avatar, Button, Select, Switch, Tabs, Text } from '@lobehub/ui/base-ui';
 import { createStaticStyles, cssVar } from 'antd-style';
 import dayjs from 'dayjs';
-import { CalendarClockIcon, CalendarDays, Clock, RefreshCw, TimerIcon, Zap } from 'lucide-react';
+import {
+  CalendarClockIcon,
+  CalendarDays,
+  Clock,
+  InfoIcon,
+  RefreshCw,
+  TimerIcon,
+  Zap,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +49,12 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     padding-inline: 14px;
     border-radius: 12px;
     background: ${cssVar.colorFillQuaternary};
+  `,
+  resultPauseNotice: css`
+    padding-block: 8px;
+    padding-inline: 12px;
+    border-radius: 8px;
+    background: ${cssVar.colorWarningBg};
   `,
 }));
 
@@ -313,6 +328,17 @@ const TaskScheduleConfig = memo(function TaskScheduleConfig({
           <Text style={{ color: cssVar.colorTextSecondary }}>{t('taskSchedule.nextRun')}</Text>
           <Text style={{ flex: 1, textAlign: 'right' }} weight={500}>
             {nextRunText}
+          </Text>
+        </Flexbox>
+      )}
+
+      {enabled && (
+        <Flexbox horizontal align="flex-start" className={styles.resultPauseNotice} gap={8}>
+          <Icon color={cssVar.colorWarning} icon={InfoIcon} size={16} />
+          <Text fontSize={12} style={{ color: cssVar.colorTextSecondary }}>
+            {t('taskSchedule.unviewedResultPauseNotice', {
+              count: TASK_AUTOMATION_UNVIEWED_RESULT_LIMIT,
+            })}
           </Text>
         </Flexbox>
       )}

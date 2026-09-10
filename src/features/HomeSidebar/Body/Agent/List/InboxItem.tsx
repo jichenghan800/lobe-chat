@@ -1,5 +1,6 @@
 'use client';
 
+import { DEFAULT_ASSISTANT_NAME } from '@lobechat/business-const';
 import { DEFAULT_INBOX_AVATAR } from '@lobechat/const';
 import { agentDisplayName } from '@lobechat/types';
 import { Icon } from '@lobehub/ui';
@@ -61,7 +62,7 @@ const InboxItem = memo<InboxItemProps>(({ className, style }) => {
     inboxAgentId ? operationSelectors.isAgentVisiblyRunning(inboxAgentId) : () => false,
   );
   const prefetchAgent = usePrefetchAgent();
-  const inboxAgentTitle = agentDisplayName(inboxMeta, 'Lobe AI');
+  const inboxAgentTitle = agentDisplayName(inboxMeta, DEFAULT_ASSISTANT_NAME);
   const inboxAgentAvatar = inboxMeta.avatar || DEFAULT_INBOX_AVATAR;
   const inboxUrl = usePreservedAgentUrl(inboxRouteAgentId);
 

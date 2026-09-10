@@ -4,6 +4,8 @@
 import { NextRequest } from 'next/server';
 import { describe, expect, it, vi } from 'vitest';
 
+import { auth } from '@/auth';
+
 import { defineConfig } from './define-config';
 
 vi.mock('@/auth', () => ({
@@ -109,5 +111,25 @@ describe('defineConfig Share SPA rewrite', () => {
     const rewrite = await run('http://localhost:3010/shared-workspace/settings?hl=en-US');
 
     expect(new URL(rewrite!).pathname).toMatch(/^\/spa\/[^/]+\/shared-workspace\/settings$/);
+  });
+});
+
+describe('Cotti AI domain isolation', () => {
+  it('keeps anonymous product navigation on cotti.ai', async () => {
+    vi.mocked(auth.api.getSession).mockResolvedValueOnce(null);
+    const res = await middleware(new NextRequest('https://chat.cotti.ai/settings?tab=profile'));
+    const url = new URL(res!.headers.get('location')!);
+    expect(url.origin).toBe('https://chat.cotti.ai');
+    expect(url.pathname).toBe('/auth/cotti-ai-entry');
+    expect(url.searchParams.get('returnTo')).toBe('/settings?tab=profile');
+  });
+  it('resolves the proxy host inside a standalone container', async () => {
+    vi.mocked(auth.api.getSession).mockResolvedValueOnce(null);
+    const res = await middleware(
+      new NextRequest('http://0.0.0.0:3210/settings', {
+        headers: { 'x-forwarded-host': 'chat.cotti.ai' },
+      }),
+    );
+    expect(new URL(res!.headers.get('location')!).origin).toBe('https://chat.cotti.ai');
   });
 });

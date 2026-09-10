@@ -452,8 +452,8 @@ describe('resolveEffectiveReasoningChatConfig', () => {
     });
 
     // Legacy agent-level values must not leak into the payload path
-    expect(result.gpt5_6ReasoningEffort).toBeUndefined();
-    expect(result.reasoningEffort).toBeUndefined();
+    expect(result.gpt5_6ReasoningEffort).toBe('medium');
+    expect(result.reasoningEffort).toBe('medium');
     expect(result.reasoningMode).toBeUndefined();
     // Non-migrated params stay agent-scoped
     expect(result.textVerbosity).toBe('low');
@@ -504,5 +504,39 @@ describe('resolveEffectiveReasoningChatConfig', () => {
     });
 
     expect(params.reasoning_effort).toBe('max');
+  });
+});
+
+describe('enterprise default reasoning effort', () => {
+  it.each([
+    [false, 'low'],
+    [true, 'medium'],
+  ] as const)('uses mode %s default %s on supported models', (enableAgentMode, expected) => {
+    const effective = resolveEffectiveReasoningChatConfig({
+      agentChatConfig: chatConfig({ enableAgentMode }),
+    });
+    expect(
+      applyModelExtendParams({
+        chatConfig: effective,
+        extendParams: ['gpt5_6ReasoningEffort'],
+        model: 'gpt-5.6-terra',
+      }).reasoning_effort,
+    ).toBe(expected);
+    expect(
+      applyModelExtendParams({ chatConfig: effective, extendParams: [], model: 'unsupported' }),
+    ).toEqual({});
+  });
+  it('does not let a family default override a saved generic effort', () => {
+    const effective = resolveEffectiveReasoningChatConfig({
+      agentChatConfig: chatConfig({ enableAgentMode: false }),
+      modelReasoningConfig: { reasoningEffort: 'high' },
+    });
+    expect(
+      applyModelExtendParams({
+        chatConfig: effective,
+        extendParams: ['reasoningEffort', 'gpt5_6ReasoningEffort'],
+        model: 'gpt-5.6-terra',
+      }).reasoning_effort,
+    ).toBe('high');
   });
 });

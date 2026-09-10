@@ -46,6 +46,7 @@ import {
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { AgentService } from '@/server/services/agent';
+import { createAgentModelNormalizer } from '@/server/services/cotti/agentModelNormalization';
 import { EditLockService } from '@/server/services/editLock';
 import { publishResourceEvent } from '@/server/services/resourceEvents';
 import {
@@ -215,8 +216,9 @@ export const agentRouter = router({
           message: `A ${input.visibility} agent cannot be created in a ${folderVisibility} folder`,
         });
 
+      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB);
       const agent = await ctx.agentModel.create({
-        ...input.config,
+        ...normalizeModel(input.config ?? {}),
         // The DB-layer AgentItem (packages/database/src/schemas/agent.ts) is
         // intentionally still typed `plugins?: string[]` — the JSONB column
         // itself isn't widened, only the domain-level `@lobechat/types`
@@ -488,7 +490,8 @@ export const agentRouter = router({
       }
 
       // Create the agent entity only (no session)
-      const agent = await ctx.agentModel.create(input.config ?? {});
+      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB);
+      const agent = await ctx.agentModel.create(normalizeModel(input.config ?? {}));
 
       // Add the agent to the group
       await ctx.chatGroupModel.addAgentToGroup(input.groupId, agent.id);
@@ -637,10 +640,15 @@ export const agentRouter = router({
     .input(
       z.object({
         agentId: z.string(),
+        includeFileContent: z.boolean().default(false),
+        fileContentIds: z.array(z.string()).max(100).optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
-      const config = await ctx.agentService.getAgentConfigById(input.agentId);
+      const config = await ctx.agentService.getAgentConfigById(input.agentId, {
+        includeFileContent: input.includeFileContent,
+        fileContentIds: input.fileContentIds,
+      });
       return protectAgentConfig(ctx, input.agentId, config);
     }),
 

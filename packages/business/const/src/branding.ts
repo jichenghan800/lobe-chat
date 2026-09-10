@@ -4,7 +4,8 @@
 
 export const LOBE_CHAT_CLOUD = 'LobeHub Cloud';
 
-export const BRANDING_NAME = 'LobeHub';
+export const BRANDING_NAME: string = '灵枢AI';
+export const DEFAULT_ASSISTANT_NAME = '灵枢AI';
 export const BRANDING_LOGO_URL = '';
 
 export const ORG_NAME = 'LobeHub';

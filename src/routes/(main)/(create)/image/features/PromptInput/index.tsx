@@ -4,12 +4,10 @@ import { ModelIcon } from '@lobehub/icons';
 import { Flexbox } from '@lobehub/ui';
 import { ActionIcon, Switch, Tabs, Text } from '@lobehub/ui/base-ui';
 import { Divider } from 'antd';
-import { Images } from 'lucide-react';
 import { memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { loginRequired } from '@/components/Error/loginRequiredNotification';
-import Action from '@/features/ChatInput/ActionBar/components/Action';
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import PromptTransformAction from '@/features/PromptTransform/PromptTransformAction';
 import { useFetchAiImageConfig } from '@/hooks/useFetchAiImageConfig';
@@ -28,7 +26,6 @@ import {
 import {
   CfgSliderInput,
   DimensionControlGroup,
-  ImageNum,
   QualitySelect,
   ResolutionSelect,
   SeedNumberInput,
@@ -385,16 +382,6 @@ const PromptInput = ({ showTitle = false }: PromptInputProps) => {
                   )}
                 </Flexbox>
               }
-            />
-            <Action
-              icon={Images}
-              title={t('config.imageNum.label')}
-              trigger={'click'}
-              popover={{
-                content: <ImageNum />,
-                minWidth: 220,
-                title: t('config.imageNum.label'),
-              }}
             />
           </Flexbox>
         }

@@ -411,3 +411,29 @@ describe('ModelDetailPanel rating', () => {
     expect(container).not.toHaveTextContent('Writing');
   });
 });
+
+describe('ModelDetailPanel identity', () => {
+  it('shows the display name and actual model id', () => {
+    render(
+      <ModelDetailPanel
+        enabledList={createEnabledList('openai', textPricing)}
+        model="test-model"
+        provider="openai"
+      />,
+    );
+    expect(screen.getByRole('heading', { name: 'Test Model' })).toBeInTheDocument();
+    expect(screen.getByText('test-model')).toBeInTheDocument();
+  });
+
+  it('uses the model id once when no display name exists', () => {
+    render(
+      <ModelDetailPanel
+        enabledList={createEnabledList('openai', textPricing, { displayName: undefined })}
+        model="test-model"
+        provider="openai"
+      />,
+    );
+    expect(screen.getByRole('heading', { name: 'test-model' })).toBeInTheDocument();
+    expect(screen.getAllByText('test-model')).toHaveLength(1);
+  });
+});

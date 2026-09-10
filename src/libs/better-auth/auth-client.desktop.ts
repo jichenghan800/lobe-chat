@@ -1,5 +1,6 @@
 import {
   adminClient,
+  emailOTPClient,
   genericOAuthClient,
   inferAdditionalFields,
   magicLinkClient,
@@ -20,6 +21,7 @@ function getClient() {
       baseURL,
       plugins: [
         adminClient(),
+        emailOTPClient(),
         inferAdditionalFields<typeof auth>(),
         genericOAuthClient(),
         magicLinkClient(),
@@ -44,6 +46,7 @@ function lazyProp(key: string): any {
 }
 
 export const changeEmail = lazyProp('changeEmail');
+export const emailOtp = lazyProp('emailOtp');
 export const linkSocial = lazyProp('linkSocial');
 export const oauth2 = lazyProp('oauth2');
 export const accountInfo = lazyProp('accountInfo');

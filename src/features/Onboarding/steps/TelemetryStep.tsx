@@ -1,6 +1,6 @@
 'use client';
 
-import { BRANDING_NAME } from '@lobechat/business-const';
+import { BRANDING_NAME, DEFAULT_ASSISTANT_NAME } from '@lobechat/business-const';
 import { type IconProps } from '@lobehub/ui';
 import { Block, Flexbox, Icon } from '@lobehub/ui';
 import { TypewriterEffect } from '@lobehub/ui/awesome';
@@ -71,7 +71,7 @@ const TelemetryStep = memo<TelemetryStepProps>(({ onNext }) => {
             pauseDuration={16_000}
             typingSpeed={64}
             sentences={[
-              t('telemetry.title', { name: 'Lobe AI' }),
+              t('telemetry.title', { name: DEFAULT_ASSISTANT_NAME }),
               t('telemetry.title2'),
               t('telemetry.title3'),
             ]}

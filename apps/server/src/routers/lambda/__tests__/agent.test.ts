@@ -32,6 +32,25 @@ import { KnowledgeType } from '@/types/knowledgeBase';
 
 import { agentRouter } from '../agent';
 
+vi.mock('@/database/models/cottiModelDisplay', () => ({
+  CottiModelDisplayModel: vi.fn(() => ({
+    getConfig: vi.fn(async () => ({
+      agent: [
+        { provider: 'vertexai', model: 'gemini-3.8-flash', enabled: true },
+        { provider: 'qwen', model: 'explicit-model', enabled: true },
+      ],
+      chat: [],
+      defaults: { agent: { provider: 'vertexai', model: 'gemini-3.8-flash' } },
+    })),
+  })),
+}));
+vi.mock('@/server/services/cotti/deployedModels', () => ({
+  getDeployedModelOptions: vi.fn(async () => [
+    { provider: 'vertexai', model: 'gemini-3.8-flash' },
+    { provider: 'qwen', model: 'explicit-model' },
+  ]),
+}));
+
 vi.mock('@/server/services/resourceEvents', () => ({ publishResourceEvent: vi.fn() }));
 vi.mock('../_helpers/workspaceAgentGuard', () => ({
   getWorkspaceAgentParentGroupIds: vi.fn().mockResolvedValue([]),
@@ -211,6 +230,34 @@ describe('agentRouter', () => {
       knowledgeBaseModel: knowledgeBaseModelMock,
       sessionModel: sessionModelMock,
     };
+  });
+
+  it('uses the COTTI Agent default when absent or unavailable while preserving available models', async () => {
+    agentModelMock.create = vi.fn(async () => ({ id: 'new-agent', visibility: 'private' }));
+    const caller = agentRouter.createCaller(mockCtx);
+    await caller.createAgent({});
+    expect(agentModelMock.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: 'gemini-3.8-flash', provider: 'vertexai' }),
+    );
+    await caller.createAgent({ config: { model: 'explicit-model', provider: 'qwen' } });
+    expect(agentModelMock.create).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: 'explicit-model', provider: 'qwen' }),
+    );
+  });
+
+  it('replaces unavailable imported models without changing the prompt', async () => {
+    agentModelMock.create = vi.fn(async () => ({ id: 'new-agent', visibility: 'private' }));
+    const caller = agentRouter.createCaller(mockCtx);
+    await caller.createAgent({
+      config: { model: 'missing', provider: 'openai', systemRole: 'Keep me' },
+    });
+    expect(agentModelMock.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'gemini-3.8-flash',
+        provider: 'vertexai',
+        systemRole: 'Keep me',
+      }),
+    );
   });
 
   describe('getAgentConfig', () => {

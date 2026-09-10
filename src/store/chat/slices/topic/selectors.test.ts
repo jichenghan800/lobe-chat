@@ -48,6 +48,25 @@ describe('topicSelectors', () => {
     });
   });
 
+  describe('isActiveTopicModelLoading', () => {
+    it('waits for an uncached topic instead of allowing the agent default to flash', () => {
+      const state = merge(initialStore, { activeAgentId: 'test', activeTopicId: 'unloaded' });
+      expect(topicSelectors.isActiveTopicModelLoading(state)).toBe(true);
+    });
+    it('does not wait when starting a new conversation without a topic', () => {
+      expect(topicSelectors.isActiveTopicModelLoading(initialStore)).toBe(false);
+    });
+    it('allows an already loaded legacy topic with no pinned model to use the agent fallback', () => {
+      const state = merge(initialStore, {
+        activeAgentId: 'test',
+        activeTopicId: 'topic1',
+        topicDataMap,
+      });
+      expect(topicSelectors.isActiveTopicModelLoading(state)).toBe(false);
+      expect(topicSelectors.activeTopicModel(state)).toBeUndefined();
+    });
+  });
+
   describe('getTopicModelById / activeTopicModel', () => {
     const modelTopicDataMap = createTopicDataMap('test');
     modelTopicDataMap[topicMapKey({ agentId: 'test' })].items = [

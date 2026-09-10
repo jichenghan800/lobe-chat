@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import { useFileStore } from '@/store/file';
 
+import { useUploadFilesValidation } from '../../image/features/ConfigPanel/hooks/useUploadFilesValidation';
 import type { UploadData } from './UploadCard';
 
 /**
@@ -76,6 +77,7 @@ export const useReferenceImageUpload = ({
   onLimitExceeded,
 }: UseReferenceImageUploadOptions) => {
   const uploadWithProgress = useFileStore((s) => s.uploadWithProgress);
+  const { validateFiles } = useUploadFilesValidation(undefined, maxFileSize);
 
   const maxCount = useMemo(() => slots.reduce((sum, slot) => sum + slot.capacity, 0), [slots]);
 
@@ -103,6 +105,10 @@ export const useReferenceImageUpload = ({
 
       // Drop files over the model's size limit before consuming capacity, so an
       // oversized file doesn't steal a slot from a valid one later in the drop.
+      if (maxFileSize) {
+        const oversizedFiles = imageFiles.filter((file) => file.size > maxFileSize);
+        if (oversizedFiles.length > 0) validateFiles(oversizedFiles);
+      }
       const uploadableFiles = maxFileSize
         ? imageFiles.filter((file) => file.size <= maxFileSize)
         : imageFiles;
@@ -187,6 +193,7 @@ export const useReferenceImageUpload = ({
       imagePreviewUrls,
       uploadingPreviews,
       uploadWithProgress,
+      validateFiles,
       addUploadingPreviews,
       removeUploadingPreviews,
       onFirstDimensions,

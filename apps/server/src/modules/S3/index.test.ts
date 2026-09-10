@@ -1,4 +1,5 @@
 // @vitest-environment node
+import type * as S3SDK from '@aws-sdk/client-s3';
 import type { ListPartsCommandOutput } from '@aws-sdk/client-s3';
 import {
   AbortMultipartUploadCommand,
@@ -21,6 +22,13 @@ import { FileS3, S3 } from './index';
 // Mock AWS SDK
 vi.mock('@aws-sdk/client-s3');
 vi.mock('@aws-sdk/s3-request-presigner');
+
+beforeEach(async () => {
+  const actual = await vi.importActual<typeof S3SDK>('@aws-sdk/client-s3');
+  vi.mocked(DeleteObjectsCommand).mockImplementation(function (input) {
+    return new actual.DeleteObjectsCommand(input);
+  });
+});
 
 // Mock environment variables
 vi.mock('@/envs/file', () => ({

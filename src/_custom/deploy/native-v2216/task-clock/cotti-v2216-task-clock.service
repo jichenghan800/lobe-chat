@@ -1,0 +1,10 @@
+[Unit]
+Description=COTTI chatdev native task schedule dispatcher
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/lobechat-v2.2.16/src/_custom/deploy/native-v2216/task-clock/dispatch.py --execute
+TimeoutStartSec=100
+UMask=0077

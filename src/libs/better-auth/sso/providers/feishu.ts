@@ -1,6 +1,6 @@
 import { authEnv } from '@/envs/auth';
 
-import { type GenericProviderDefinition } from '../types';
+import type { GenericProviderDefinition } from '../types';
 
 const FEISHU_AUTHORIZATION_URL = 'https://accounts.feishu.cn/open-apis/authen/v1/authorize';
 const FEISHU_TOKEN_URL = 'https://open.feishu.cn/open-apis/authen/v2/oauth/token';
@@ -56,13 +56,14 @@ const isFeishuProfile = (value: unknown): value is FeishuUserProfile => {
 const parseScopes = (scope: string | undefined) =>
   scope ? scope.split(/[\s,]+/).filter(Boolean) : [];
 
-const provider: GenericProviderDefinition<{
-  AUTH_FEISHU_APP_ID: string;
-  AUTH_FEISHU_APP_SECRET: string;
-}> = {
+type FeishuProviderEnv = Record<'clientId' | 'clientSecret', string>;
+
+const createFeishuProvider = (
+  id: string,
+  checkEnvs: () => FeishuProviderEnv | false,
+): GenericProviderDefinition<FeishuProviderEnv> => ({
   build: (env) => {
-    const clientId = env.AUTH_FEISHU_APP_ID;
-    const clientSecret = env.AUTH_FEISHU_APP_SECRET;
+    const { clientId, clientSecret } = env;
 
     return {
       authorizationUrl: FEISHU_AUTHORIZATION_URL,
@@ -144,12 +145,13 @@ const provider: GenericProviderDefinition<{
         // 1. Admin hasn't enabled "Allow OpenAPI to access email field" in Feishu admin console
         // 2. User hasn't bound an email in Feishu
         // 3. User's email changes later (which would cause account mismatch)
-        const email = profile.email || profile.enterprise_email || `${unionId}@feishu.sso`;
+        const verifiedEmail = profile.email || profile.enterprise_email;
+        const email = verifiedEmail || `${unionId}@${id}.sso`;
 
         return {
           ...profile,
           email,
-          emailVerified: false,
+          emailVerified: Boolean(verifiedEmail),
           id: unionId,
           image:
             profile.avatar_url ??
@@ -160,23 +162,34 @@ const provider: GenericProviderDefinition<{
         };
       },
       pkce: false,
-      providerId: 'feishu',
+      providerId: id,
       responseMode: 'query',
       scopes: ['contact:user.base:readonly', 'contact:user.email:readonly'],
       tokenUrl: FEISHU_TOKEN_URL,
     };
   },
 
-  checkEnvs: () => {
-    return !!(authEnv.AUTH_FEISHU_APP_ID && authEnv.AUTH_FEISHU_APP_SECRET)
-      ? {
-          AUTH_FEISHU_APP_ID: authEnv.AUTH_FEISHU_APP_ID,
-          AUTH_FEISHU_APP_SECRET: authEnv.AUTH_FEISHU_APP_SECRET,
-        }
-      : false;
-  },
-  id: 'feishu',
+  checkEnvs,
+  id,
   type: 'generic',
-};
+});
 
-export default provider;
+export const Feishu = createFeishuProvider('feishu', () => {
+  return authEnv.AUTH_FEISHU_APP_ID && authEnv.AUTH_FEISHU_APP_SECRET
+    ? {
+        clientId: authEnv.AUTH_FEISHU_APP_ID,
+        clientSecret: authEnv.AUTH_FEISHU_APP_SECRET,
+      }
+    : false;
+});
+
+export const FeishuBlue = createFeishuProvider('feishu-blue', () => {
+  return authEnv.AUTH_FEISHU_BLUE_APP_ID && authEnv.AUTH_FEISHU_BLUE_APP_SECRET
+    ? {
+        clientId: authEnv.AUTH_FEISHU_BLUE_APP_ID,
+        clientSecret: authEnv.AUTH_FEISHU_BLUE_APP_SECRET,
+      }
+    : false;
+});
+
+export default Feishu;

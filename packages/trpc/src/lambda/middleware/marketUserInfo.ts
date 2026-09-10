@@ -1,9 +1,12 @@
 import { type LobeChatDatabase } from '@lobechat/database';
+import debug from 'debug';
 
 import { UserModel } from '@/database/models/user';
 import { type TrustedClientUserInfo } from '@/libs/trusted-client';
 
 import { trpc } from '../init';
+
+const log = debug('lobe-server:market-user-info');
 
 interface ContextWithServerDB {
   marketAccessToken?: string;
@@ -20,6 +23,7 @@ interface MarketUserContext {
 export const resolveMarketUserContext = async (
   ctx: ContextWithServerDB,
 ): Promise<MarketUserContext> => {
+  const startedAt = Date.now();
   // If userId or serverDB is not available, skip fetching user info
   if (!ctx.userId || !ctx.serverDB) return { marketUserInfo: undefined };
 
@@ -42,12 +46,14 @@ export const resolveMarketUserContext = async (
     const userSettings = await userModel.getUserSettings();
     const marketTokenFromDB = (userSettings?.market as any)?.accessToken;
 
+    log('resolved durationMs=%d hasDatabaseToken=%s', Date.now() - startedAt, !!marketTokenFromDB);
     return {
       // Prioritize database token over cookie token
       marketAccessToken: marketTokenFromDB || ctx.marketAccessToken,
       marketUserInfo,
     };
   } catch {
+    log('failed durationMs=%d', Date.now() - startedAt);
     // If fetching user info fails, continue without it
     return { marketUserInfo: undefined };
   }

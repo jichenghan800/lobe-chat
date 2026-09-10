@@ -8,6 +8,7 @@ import { getServerDB } from '@/database/server';
 import { setTaskSchedulerExecutionCallback } from '@/server/services/taskScheduler';
 
 import { TaskRunnerService } from './index';
+import { pauseForUnviewedResults } from './unviewedResults';
 
 const log = debug('task-runner:heartbeat-tick');
 
@@ -23,6 +24,8 @@ export type HeartbeatTickSkipReason =
   | 'mode-changed'
   | 'no-interval'
   | 'not-found'
+  | 'paused'
+  | 'unviewed-results'
   | 'stale-tick'
   | 'terminal';
 
@@ -66,12 +69,21 @@ export async function runHeartbeatTick(
     log('skip task=%s reason=terminal (status=%s)', taskId, task.status);
     return { ran: false, reason: 'terminal' };
   }
+  if (task.status === 'paused') {
+    log('skip task=%s reason=paused', taskId);
+    return { ran: false, reason: 'paused' };
+  }
   if (!task.heartbeatInterval || task.heartbeatInterval <= 0) {
     log('skip task=%s reason=no-interval', taskId);
     return { ran: false, reason: 'no-interval' };
   }
 
   const wsId = task.workspaceId ?? undefined;
+  if (await pauseForUnviewedResults({ db, task, userId, workspaceId: wsId })) {
+    log('skip task=%s reason=unviewed-results', taskId);
+    return { ran: false, reason: 'unviewed-results' };
+  }
+
   const briefModel = new BriefModel(db, userId, wsId);
   if (await briefModel.hasUnresolvedUrgentByTask(taskId, { excludeTypes: ['error'] })) {
     log('skip task=%s reason=human-waiting', taskId);

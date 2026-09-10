@@ -493,6 +493,9 @@ export interface ShareVisitorWriteOptions {
  * construction and stop threading per-call opt-ins through their code.
  */
 export interface MessageModelOptions {
+  fileContentIds?: string[];
+  /** UI reads omit parsed bodies; runtime reads may select only required files. */
+  includeFileContent?: boolean;
   includeShareVisitor?: boolean;
 }
 
@@ -923,6 +926,7 @@ export class MessageModel {
    * Defaults to false so every ordinary creator-facing caller fails closed.
    */
   private includeShareVisitor: boolean;
+  private fileContentOptions: Pick<MessageModelOptions, 'includeFileContent' | 'fileContentIds'>;
 
   constructor(
     db: LobeChatDatabase,
@@ -936,6 +940,7 @@ export class MessageModel {
     this.workspaceId = workspaceId;
     this.ftsSearchCandidateSource = ftsSearchCandidateSource;
     this.includeShareVisitor = options.includeShareVisitor ?? false;
+    this.fileContentOptions = options;
   }
 
   /**
@@ -1826,6 +1831,12 @@ export class MessageModel {
     // through the unguarded documents join below.
     const fileIds = relatedFileList
       .filter((file) => file.name !== null)
+      .filter(
+        (file) =>
+          this.fileContentOptions.includeFileContent !== false &&
+          (!this.fileContentOptions.fileContentIds ||
+            this.fileContentOptions.fileContentIds.includes(file.id!)),
+      )
       .map((file) => file.id)
       .filter(Boolean);
 
@@ -2216,6 +2227,12 @@ export class MessageModel {
     // document content must not leak through the unguarded documents join.
     const fileIds = relatedFileList
       .filter((file) => file.name !== null)
+      .filter(
+        (file) =>
+          this.fileContentOptions.includeFileContent !== false &&
+          (!this.fileContentOptions.fileContentIds ||
+            this.fileContentOptions.fileContentIds.includes(file.id!)),
+      )
       .map((file) => file.id)
       .filter(Boolean);
 

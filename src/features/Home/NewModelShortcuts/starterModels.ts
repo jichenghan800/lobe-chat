@@ -1,14 +1,14 @@
 import type { HomeNewModelItem } from '@/business/client/hooks/useHomeNewModels';
 
 // Chat
-export const NEW_GLM_MODEL = 'glm-5.2';
-export const NEW_GLM_MODEL_NAME = 'GLM-5.2';
-export const NEW_KIMI_MODEL = 'kimi-k2.7-code';
-export const NEW_KIMI_MODEL_NAME = 'Kimi K2.7 Code';
+export const COTTI_FAST_MODEL = 'gemini-3.5-flash-lite';
+export const COTTI_FAST_MODEL_NAME = 'COTTI-快速';
+export const NEW_CHAT_MODEL = 'gpt-5.6-terra';
+export const NEW_CHAT_MODEL_NAME = 'GPT-5.6 Terra';
 
 export const BUSINESS_CHAT_PROVIDER = 'lobehub';
-export const OSS_GLM_PROVIDER = 'zhipu';
-export const OSS_KIMI_PROVIDER = 'moonshot';
+export const OSS_CHAT_PROVIDER = 'vertexai';
+export const NEW_CHAT_PROVIDER = 'azure';
 
 // Image
 export const NEW_IMAGE_MODEL = 'gpt-image-2';
@@ -20,15 +20,15 @@ export const NEW_VIDEO_MODEL_NAME = 'Seedance 2.0';
 
 export const BUSINESS_HOME_NEW_MODELS = [
   {
-    model: NEW_GLM_MODEL,
+    model: COTTI_FAST_MODEL,
     provider: BUSINESS_CHAT_PROVIDER,
-    title: NEW_GLM_MODEL_NAME,
+    title: COTTI_FAST_MODEL_NAME,
     type: 'chat',
   },
   {
-    model: NEW_KIMI_MODEL,
-    provider: BUSINESS_CHAT_PROVIDER,
-    title: NEW_KIMI_MODEL_NAME,
+    model: NEW_CHAT_MODEL,
+    provider: NEW_CHAT_PROVIDER,
+    title: NEW_CHAT_MODEL_NAME,
     type: 'chat',
   },
   {
@@ -45,15 +45,15 @@ export const BUSINESS_HOME_NEW_MODELS = [
 
 export const OSS_HOME_NEW_MODELS = [
   {
-    model: NEW_GLM_MODEL,
-    provider: OSS_GLM_PROVIDER,
-    title: NEW_GLM_MODEL_NAME,
+    model: COTTI_FAST_MODEL,
+    provider: OSS_CHAT_PROVIDER,
+    title: COTTI_FAST_MODEL_NAME,
     type: 'chat',
   },
   {
-    model: NEW_KIMI_MODEL,
-    provider: OSS_KIMI_PROVIDER,
-    title: NEW_KIMI_MODEL_NAME,
+    model: NEW_CHAT_MODEL,
+    provider: NEW_CHAT_PROVIDER,
+    title: NEW_CHAT_MODEL_NAME,
     type: 'chat',
   },
   {

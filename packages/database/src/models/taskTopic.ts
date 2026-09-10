@@ -1,5 +1,5 @@
 import type { BriefDecision, TaskTopicHandoff } from '@lobechat/types';
-import { and, count, desc, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gt, gte, inArray, sql } from 'drizzle-orm';
 
 import type { TaskTopicItem } from '../schemas/task';
 import { tasks, taskTopics } from '../schemas/task';
@@ -238,6 +238,39 @@ export class TaskTopicModel {
       .from(taskTopics)
       .where(and(...conditions));
     return rows[0]?.value ?? 0;
+  }
+
+  /**
+   * Count the latest uninterrupted streak of successful automation runs.
+   * Manual runs are ignored and any failed / canceled / timed-out automation
+   * run breaks the streak. The bounded read is used by the pre-tick
+   * unviewed-result guard, so it never needs to scan the full task history.
+   */
+  async countConsecutiveCompletedAutomationRuns(
+    taskId: string,
+    options?: { limit?: number; since?: Date },
+  ): Promise<number> {
+    const limit = Math.max(1, options?.limit ?? 3);
+    const conditions = [
+      eq(taskTopics.taskId, taskId),
+      inArray(taskTopics.trigger, ['schedule', 'heartbeat']),
+      this.ownership(),
+    ];
+    if (options?.since) conditions.push(gt(taskTopics.createdAt, options.since));
+
+    const rows = await this.db
+      .select({ status: taskTopics.status })
+      .from(taskTopics)
+      .where(and(...conditions))
+      .orderBy(desc(taskTopics.seq))
+      .limit(limit);
+
+    let completed = 0;
+    for (const row of rows) {
+      if (row.status !== 'completed') break;
+      completed += 1;
+    }
+    return completed;
   }
 
   async findByTaskId(taskId: string): Promise<TaskTopicItem[]> {

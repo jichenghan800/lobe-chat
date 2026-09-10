@@ -93,6 +93,7 @@ export const useTokenBreakdown = (): TokenBreakdown => {
     systemRole,
     enableAgentMode,
     searchMode,
+    searchRoute,
     useModelBuiltinSearch,
     skillActivateMode,
     agentMemoryEnabled,
@@ -106,6 +107,7 @@ export const useTokenBreakdown = (): TokenBreakdown => {
       agentByIdSelectors.getAgentSystemRoleById(agentId)(s),
       chatConfig.enableAgentMode,
       chatConfig.searchMode,
+      chatConfig.searchRoute,
       chatConfig.useModelBuiltinSearch,
       chatConfigByIdSelectors.getSkillActivateModeById(agentId)(s),
       chatConfig.memory?.enabled,
@@ -133,6 +135,7 @@ export const useTokenBreakdown = (): TokenBreakdown => {
     memoryEnabled: effectiveMemoryEnabled,
     runtimeMode,
     searchMode,
+    searchRoute,
     skillActivateMode,
     useModelBuiltinSearch,
   });

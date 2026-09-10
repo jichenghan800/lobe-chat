@@ -29,6 +29,16 @@ describe('getModelPricing', () => {
     ]);
   });
 
+  it('skips unpriced same-ID entries when falling back to another provider', async () => {
+    const pricing = { units: [{ name: 'textInput', rate: 4, strategy: 'fixed', unit: 'millionTokens' }] };
+    loadModelsMock.mockResolvedValue([
+      { id: 'shared-model', providerId: 'azure' },
+      { id: 'shared-model', providerId: 'other' },
+      { id: 'shared-model', providerId: 'openai', pricing },
+    ]);
+    expect(await getModelPricing('shared-model', 'azure')).toEqual(pricing);
+  });
+
   it('should use injected LobeHub pricing before same-id fallback pricing', async () => {
     loadModelsMock.mockResolvedValue([
       {

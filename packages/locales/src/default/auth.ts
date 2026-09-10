@@ -1,4 +1,22 @@
 export default {
+  'otp.send': 'Get code',
+  'otp.cooldownShort': '{{seconds}}s',
+  'otp.sentInline': 'Code sent to {{email}}. Valid for 5 minutes.',
+
+  'otp.instructions':
+    'Enter the 6-digit code from your email. The code expires in 5 minutes; you can read it on any device.',
+  'otp.title': 'Enter your email code',
+  'otp.description':
+    'A 6-digit code was sent to {{email}}. Read it on any device, then enter it here within 5 minutes.',
+  'otp.code': '6-digit verification code',
+  'otp.submit': 'Verify and sign in',
+  'otp.resend': 'Resend code',
+  'otp.cooldown': 'Resend in {{seconds}}s',
+  'otp.sendError': 'Unable to send the code. Please try again shortly.',
+  'otp.invalid': 'The code is invalid or expired. Check it or request a new code.',
+  'otp.format': 'Enter the 6-digit code from your email.',
+  'otp.rateLimit': 'Too many attempts. Please wait a minute and try again.',
+
   'agreement.checkbox':
     'I have read and agree to the <terms>Terms and Conditions</terms> and <privacy>Privacy Policy</privacy>',
   'agreement.confirm.content':
@@ -119,6 +137,7 @@ export default {
   'betterAuth.signin.continueWithCasdoor': 'Sign in with Casdoor',
   'betterAuth.signin.continueWithCloudflareZeroTrust': 'Sign in with Cloudflare Zero Trust',
   'betterAuth.signin.continueWithCognito': 'Continue with AWS Cognito',
+  'betterAuth.signin.continueWithFeishuBlue': 'Sign in with Feishu Blue',
   'betterAuth.signin.continueWithFeishu': 'Sign in with Feishu',
   'betterAuth.signin.continueWithGithub': 'Continue with GitHub',
   'betterAuth.signin.continueWithGoogle': 'Continue with Google',

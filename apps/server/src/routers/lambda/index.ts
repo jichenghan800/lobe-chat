@@ -48,6 +48,7 @@ import { comfyuiRouter } from './comfyui';
 import { composioRouter } from './composio';
 import { configRouter } from './config';
 import { connectorRouter } from './connector';
+import { cottiRouter } from './cotti';
 import { deviceRouter } from './device';
 import { documentRouter } from './document';
 import { documentCommentRouter } from './documentComment';
@@ -103,6 +104,7 @@ import { workRouter } from './work';
 import { workspaceUserSettingsRouter } from './workspaceUserSettings';
 
 export const lambdaRouter = router({
+  cotti: cottiRouter,
   acceptance: acceptanceRouter,
   agent: agentRouter,
   agentBotProvider: agentBotProviderRouter,

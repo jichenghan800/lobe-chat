@@ -56,6 +56,7 @@ interface PendingTaskRun {
 
 export const useSend = (mode: HomeMode = 'chat') => {
   const { t } = useTranslation('home');
+  const { t: tChat } = useTranslation('chat');
   const router = useQueryRoute();
   const activeWorkspaceId = useActiveWorkspaceId();
   const activeWorkspaceSlug = useActiveWorkspaceSlug();
@@ -108,7 +109,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
       // currently displayed daily-brief hint (with cosmetic ellipsis stripped)
       // and rotate the carousel so the next press shows / sends a different
       // pair.
-      const hint = mode === 'chat' && currentPair?.hint ? stripHintEllipsis(currentPair.hint) : '';
+      const hint = mode !== 'task' && currentPair?.hint ? stripHintEllipsis(currentPair.hint) : '';
       const usedHint = !typed && !!hint;
       const message = typed || hint;
 
@@ -124,6 +125,10 @@ export const useSend = (mode: HomeMode = 'chat') => {
         : (getEditorData?.() ?? mainInputEditor?.getJSONState());
 
       if (!canCreateContent) return;
+      if (mode === 'chat' && fileList.some((item) => item.requiresAgentMode)) {
+        toast.error(tChat('attachment.agentModeRequiredHome'));
+        return;
+      }
 
       if ((mode === 'task' || !inputActiveMode) && !canUseResource) return;
 
@@ -229,6 +234,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
           default: {
             if (!selectedAgentId) return;
 
+            await useAgentStore.getState().waitForAgentConfigUpdateById(selectedAgentId);
             await ensureAgentConfigLoaded(selectedAgentId);
 
             sendMessage({
@@ -288,6 +294,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
       canUseResource,
       canCreateContent,
       t,
+      tChat,
     ],
   );
 

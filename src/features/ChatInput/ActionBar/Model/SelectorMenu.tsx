@@ -20,6 +20,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ModelSwitchSubmenuPopup } from '@/features/ModelSwitchPanel';
+import type { ModelDisplayScope } from '@/types/modelDisplay';
 
 import type { SelectorSubmenuItem } from '../../components/buildSelectorSubmenu';
 import { buildSelectorSubmenu } from '../../components/buildSelectorSubmenu';
@@ -75,6 +76,7 @@ interface SelectorMenuProps {
   displayName: string;
   effort: ReasoningEffortControl;
   model: string;
+  modelDisplayScope?: ModelDisplayScope;
   onModelChange: (params: { model: string; provider: string }) => Promise<void>;
   openOnHover?: boolean;
   placement?: DropdownPlacement;
@@ -93,6 +95,7 @@ const SelectorMenu = memo<SelectorMenuProps>(
     children,
     displayName,
     effort,
+    modelDisplayScope,
     model,
     onModelChange,
     openOnHover = false,
@@ -178,6 +181,7 @@ const SelectorMenu = memo<SelectorMenuProps>(
                   </DropdownMenuSubmenuTrigger>
                   <ModelSwitchSubmenuPopup
                     model={model}
+                    modelDisplayScope={modelDisplayScope}
                     provider={provider}
                     onModelChange={onModelChange}
                     onOpenChange={handleModelPanelOpenChange}

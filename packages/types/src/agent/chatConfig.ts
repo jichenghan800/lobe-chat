@@ -154,6 +154,11 @@ export interface LobeAgentChatConfig extends AgentMemoryChatConfig, AgentSelfIte
 
   searchMode?: SearchMode;
   /**
+   * Selects the search route when both model-native and application search are available.
+   * When omitted, auto mode prefers model-native search and falls back to application search.
+   */
+  searchRoute?: 'application' | 'model';
+  /**
    * Skill activate mode:
    * - 'auto': Default tools (LobeTools, Skills, SkillStore, etc.) are always active,
    *   allowing AI to autonomously activate tools, run skills, and install new skills.
@@ -280,6 +285,7 @@ export const AgentChatConfigSchema = z
       })
       .optional(),
     searchMode: z.enum(['off', 'on', 'auto']).optional(),
+    searchRoute: z.enum(['application', 'model']).optional(),
     step3_5ReasoningEffort: z.enum(['low', 'high']).optional(),
     skillActivateMode: z.enum(['auto', 'manual']).optional(),
     textVerbosity: z.enum(['low', 'medium', 'high']).optional(),

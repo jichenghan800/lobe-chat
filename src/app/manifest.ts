@@ -21,12 +21,10 @@ const manifest = async (): Promise<MetadataRoute.Manifest> => {
     };
   }
 
-  const [{ BRANDING_LOGO_URL, BRANDING_NAME }, { kebabCase }, { manifestModule }] =
-    await Promise.all([
-      import('@lobechat/business-const'),
-      import('es-toolkit/compat'),
-      import('@/libs/metadata/manifest'),
-    ]);
+  const [{ BRANDING_LOGO_URL, BRANDING_NAME }, { manifestModule }] = await Promise.all([
+    import('@lobechat/business-const'),
+    import('@/libs/metadata/manifest'),
+  ]);
 
   // @ts-expect-error - manifestModule.generate returns extended manifest with custom properties
   return manifestModule.generate({
@@ -53,7 +51,8 @@ const manifest = async (): Promise<MetadataRoute.Manifest> => {
         url: '/app-icons/icon-512x512.maskable.png',
       },
     ],
-    id: kebabCase(BRANDING_NAME),
+    // Preserve the identity of existing installed web apps when renaming the product.
+    id: 'lobe-hub',
     name: BRANDING_NAME,
     screenshots: BRANDING_LOGO_URL
       ? []

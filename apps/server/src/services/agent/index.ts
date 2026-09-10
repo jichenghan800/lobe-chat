@@ -21,6 +21,7 @@ import {
   RedisKeys,
 } from '@/libs/redis';
 import { getServerDefaultAgentConfig } from '@/server/globalConfig';
+import { createAgentModelNormalizer } from '@/server/services/cotti/agentModelNormalization';
 
 import { type UpdateAgentResult } from './type';
 
@@ -94,7 +95,17 @@ export class AgentService {
     const mergedConfig = this.mergeDefaultConfig(agent, defaultAgentConfig);
     if (!mergedConfig) return null;
 
-    return this.applyBuiltinIdentity(mergedConfig, slug);
+    return this.normalizeTaskAgentModel(this.applyBuiltinIdentity(mergedConfig, slug), slug);
+  }
+
+  private async normalizeTaskAgentModel<T extends LobeAgentConfig>(
+    config: T,
+    fallbackSlug?: string,
+  ) {
+    const slug = (config as { slug?: string | null }).slug ?? fallbackSlug;
+    if (slug !== 'task-agent') return config;
+    const normalizeModel = await createAgentModelNormalizer(this.db);
+    return normalizeModel(config);
   }
 
   /**
@@ -143,7 +154,7 @@ export class AgentService {
     const config = this.mergeDefaultConfig(agent, defaultAgentConfig) as AgentConfigWithId | null;
     if (!config) return null;
 
-    return this.applyBuiltinIdentity(config);
+    return this.normalizeTaskAgentModel(this.applyBuiltinIdentity(config));
   }
 
   /**
@@ -156,9 +167,12 @@ export class AgentService {
    * 4. The actual agent config from database
    * 5. AI-generated welcome data from Redis (if available)
    */
-  async getAgentConfigById(agentId: string) {
+  async getAgentConfigById(
+    agentId: string,
+    options?: Parameters<AgentModel['getAgentConfigById']>[1],
+  ) {
     const [agent, defaultAgentConfig, welcomeData] = await Promise.all([
-      this.agentModel.getAgentConfigById(agentId),
+      this.agentModel.getAgentConfigById(agentId, options),
       this.userModel.getUserSettingsDefaultAgentConfig(),
       this.getAgentWelcomeFromRedis(agentId),
     ]);
@@ -166,7 +180,7 @@ export class AgentService {
     const config = this.mergeDefaultConfig(agent, defaultAgentConfig);
     if (!config) return null;
 
-    const normalizedConfig = this.applyBuiltinIdentity(config);
+    const normalizedConfig = await this.normalizeTaskAgentModel(this.applyBuiltinIdentity(config));
 
     // Merge AI-generated welcome data if available
     if (welcomeData) {
@@ -260,7 +274,7 @@ export class AgentService {
     await this.agentModel.updateConfig(agentId, value as any);
 
     // 2. Query and return updated data (with default config merged)
-    const agent = await this.getAgentConfigById(agentId);
+    const agent = await this.getAgentConfigById(agentId, { includeFileContent: false });
     if (!agent) throw new TRPCError({ code: 'NOT_FOUND', message: 'Agent not found' });
 
     return { agent: agent as any, success: true };

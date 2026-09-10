@@ -1,11 +1,12 @@
 import { getComposioAppByIdentifier, getLobehubSkillProviderById } from '@lobechat/const';
-import { Tooltip } from '@lobehub/ui';
-import { Button, confirmModal, toast } from '@lobehub/ui/base-ui';
-import { PencilIcon, RefreshCwIcon, Trash2 } from 'lucide-react';
+import { Flexbox, Tooltip } from '@lobehub/ui';
+import { Alert, Button, confirmModal, toast } from '@lobehub/ui/base-ui';
+import { PencilIcon, RefreshCwIcon, SquareArrowOutUpRight, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isFeishuDocumentsConnector } from '@/const/connectorPresets';
 import type { ConnectorToolPermission } from '@/database/schemas';
 import { ConnectorSourceType } from '@/database/schemas';
 import { useResourceManageable } from '@/hooks/useResourceManageable';
@@ -13,6 +14,7 @@ import { useToolStore } from '@/store/tool';
 import { connectorSelectors } from '@/store/tool/slices/connector';
 
 import CustomConnectorModal from '../CustomConnectorModal';
+import { useConnectFeishuDocuments } from '../useConnectFeishuDocuments';
 import { getLocalizedConnectorDetail } from './localization';
 import ToolPermissionGroup from './ToolPermissionGroup';
 
@@ -53,6 +55,8 @@ const ConnectorDetail = memo<ConnectorDetailProps>(
     const { t } = useTranslation('tool');
     const { t: ts } = useTranslation('setting');
 
+    const { connect: connectFeishuDocuments, connecting: connectingFeishuDocuments } =
+      useConnectFeishuDocuments();
     const [customModalOpen, setCustomModalOpen] = useState(false);
 
     const connector = useToolStore(connectorSelectors.connectorById(connectorId));
@@ -75,6 +79,7 @@ const ConnectorDetail = memo<ConnectorDetailProps>(
     const isMcpConnector = connector?.sourceType === ConnectorSourceType.custom;
     const isBuiltin = connector?.sourceType === ConnectorSourceType.builtin;
     const isMarketplace = connector?.sourceType === ConnectorSourceType.marketplace;
+    const isManagedPreset = connector ? isFeishuDocumentsConnector(connector) : false;
 
     // Only the creator or a workspace owner may manage this connector — the
     // server enforces the same rule, this keeps the UI honest about it.
@@ -227,6 +232,16 @@ const ConnectorDetail = memo<ConnectorDetailProps>(
         >
           <div style={{ fontSize: 14, fontWeight: 500 }}>{connectorName}</div>
           <div style={{ display: 'flex', gap: 8 }}>
+            {isManagedPreset && !connector?.requiresReauthorization && (
+              <Button
+                icon={<SquareArrowOutUpRight size={14} />}
+                loading={connectingFeishuDocuments}
+                size="small"
+                onClick={connectFeishuDocuments}
+              >
+                {t('connectorPreset.reauthorize', { ns: 'setting' })}
+              </Button>
+            )}
             {/* Reset permissions: restore all tools to auto (fully open) */}
             <ManageTooltip title={manageTooltip}>
               <Button
@@ -256,7 +271,7 @@ const ConnectorDetail = memo<ConnectorDetailProps>(
               </Button>
             </ManageTooltip>
             {/* Edit button for custom MCP connectors — only http type has a server URL to edit */}
-            {isMcpConnector && connector?.mcpConnectionType === 'http' && (
+            {isMcpConnector && !isManagedPreset && connector?.mcpConnectionType === 'http' && (
               <ManageTooltip title={manageTooltip}>
                 <Button
                   disabled={!canManage}
@@ -347,6 +362,24 @@ const ConnectorDetail = memo<ConnectorDetailProps>(
             padding: 16,
           }}
         >
+          {isManagedPreset && connector.requiresReauthorization && (
+            <Flexbox gap={8} style={{ marginBlockEnd: 16 }}>
+              <Alert
+                showIcon
+                description={ts('connectorPreset.authorizationUpgrade.description')}
+                title={ts('connectorPreset.authorizationUpgrade.title')}
+                type="warning"
+              />
+              <Button
+                loading={connectingFeishuDocuments}
+                type="primary"
+                onClick={connectFeishuDocuments}
+              >
+                {ts('connectorPreset.authorizationUpgrade.action')}
+              </Button>
+            </Flexbox>
+          )}
+
           {/* Description */}
           {connectorDescription && (
             <div
@@ -401,7 +434,7 @@ const ConnectorDetail = memo<ConnectorDetailProps>(
           )}
 
           {/* Edit modal — only http connectors have a server URL to edit */}
-          {isMcpConnector && connector?.mcpConnectionType === 'http' && (
+          {isMcpConnector && !isManagedPreset && connector?.mcpConnectionType === 'http' && (
             <CustomConnectorModal
               connectorId={connectorId}
               open={customModalOpen}

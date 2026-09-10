@@ -9,6 +9,7 @@ import { agentByIdSelectors } from '@/store/agent/selectors';
 import { useUserStore } from '@/store/user';
 
 import { useAgentId } from './useAgentId';
+import { useSwitchModelDisplayScope } from './useSwitchModelDisplayScope';
 import { useUpdateAgentConfig } from './useUpdateAgentConfig';
 
 /**
@@ -20,6 +21,7 @@ import { useUpdateAgentConfig } from './useUpdateAgentConfig';
  */
 export const useToggleAgentMode = () => {
   const agentId = useAgentId();
+  const switchModelDisplayScope = useSwitchModelDisplayScope();
   const { updateAgentChatConfig } = useUpdateAgentConfig();
   const canEnableBusinessAgentMode = useBusinessCanEnableAgentMode(agentId);
   const agent = useAgentStore(agentByIdSelectors.getAgentById(agentId));
@@ -30,19 +32,22 @@ export const useToggleAgentMode = () => {
 
   return useCallback(
     async (enable: boolean) => {
-      if (isAccessLoading) return;
+      if (isAccessLoading) return false;
 
       const enableAgentMode = enable && canEnableBusinessAgentMode;
+      if (!(await switchModelDisplayScope(enableAgentMode ? 'agent' : 'chat'))) return false;
       if (usesWorkspaceMemberMode) {
         await updateWorkspaceUserPreference({
           agentModeOverrides: { [agentId]: enableAgentMode },
         });
-        return;
+        return enableAgentMode === enable;
       }
 
       await updateAgentChatConfig({ enableAgentMode });
+      return enableAgentMode === enable;
     },
     [
+      switchModelDisplayScope,
       agentId,
       canEnableBusinessAgentMode,
       isAccessLoading,

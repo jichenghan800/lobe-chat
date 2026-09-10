@@ -64,6 +64,15 @@ export class BriefModel {
     return result[0] || null;
   }
 
+  async findByIds(ids: string[]): Promise<BriefItem[]> {
+    if (ids.length === 0) return [];
+
+    return this.db
+      .select()
+      .from(briefs)
+      .where(and(inArray(briefs.id, ids), this.ownership()));
+  }
+
   async list(options?: {
     limit?: number;
     offset?: number;

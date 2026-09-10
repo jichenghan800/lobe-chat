@@ -158,7 +158,7 @@ exports[`OpenAIResponsesStream > should handle chunks with undefined values grac
 ",
   "event: reasoning
 ",
-  "data: undefined
+  "data: null
 
 ",
 ]

@@ -34,7 +34,9 @@ export class AiChatService {
   private topicModel: TopicModel;
 
   constructor(serverDB: LobeChatDatabase, userId: string, workspaceId?: string) {
-    this.messageModel = new MessageModel(serverDB, userId, workspaceId);
+    this.messageModel = new MessageModel(serverDB, userId, workspaceId, undefined, {
+      includeFileContent: false,
+    });
     this.topicModel = new TopicModel(serverDB, userId, workspaceId);
     this.fileService = new FileService(serverDB, userId, workspaceId);
   }

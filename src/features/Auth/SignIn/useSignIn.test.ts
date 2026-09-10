@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSignIn } from './useSignIn';
@@ -10,6 +10,8 @@ const mockMessageSuccess = vi.hoisted(() => vi.fn());
 const mockSignInSocial = vi.hoisted(() => vi.fn());
 const mockSignInOauth2 = vi.hoisted(() => vi.fn());
 const mockSignInEmail = vi.hoisted(() => vi.fn());
+const mockSendOtp = vi.hoisted(() => vi.fn());
+const mockSignInOtp = vi.hoisted(() => vi.fn());
 const mockSignInMagicLink = vi.hoisted(() => vi.fn());
 const mockRequestPasswordReset = vi.hoisted(() => vi.fn());
 const mockBusinessSignin = vi.hoisted(() => ({
@@ -39,9 +41,11 @@ vi.mock('@lobehub/ui/base-ui', async (importOriginal) => ({
 }));
 
 vi.mock('@/libs/better-auth/auth-client', () => ({
+  emailOtp: { sendVerificationOtp: mockSendOtp },
   requestPasswordReset: mockRequestPasswordReset,
   signIn: {
     email: mockSignInEmail,
+    emailOtp: mockSignInOtp,
     magicLink: mockSignInMagicLink,
     oauth2: mockSignInOauth2,
     social: mockSignInSocial,
@@ -67,6 +71,7 @@ vi.mock('@/business/client/hooks/useBusinessSignin', () => ({
 
 let mockEnableBusinessFeatures = false;
 let mockEnableMagicLink = false;
+let mockEnableEmailOtp = false;
 vi.mock('@/features/AuthShell/AuthServerConfigProvider', () => ({
   useAuthServerConfigStore: (selector: (s: any) => any) =>
     selector({
@@ -74,6 +79,7 @@ vi.mock('@/features/AuthShell/AuthServerConfigProvider', () => ({
         disableEmailPassword: false,
         enableBusinessFeatures: mockEnableBusinessFeatures,
         enableMagicLink: mockEnableMagicLink,
+        enableEmailOtp: mockEnableEmailOtp,
         oAuthSSOProviders: ['google', 'github'],
       },
       serverConfigInit: true,
@@ -119,6 +125,7 @@ describe('useSignIn', () => {
     mockSearchParamsGet.mockReturnValue(null);
     mockEnableBusinessFeatures = false;
     mockEnableMagicLink = false;
+    mockEnableEmailOtp = false;
     mockBusinessSignin.ssoProviders = [];
     mockBusinessSignin.getAdditionalData.mockResolvedValue({});
     mockBusinessSignin.preSocialSigninCheck.mockResolvedValue(true);
@@ -152,6 +159,51 @@ describe('useSignIn', () => {
   });
 
   describe('handleCheckUser', () => {
+    it('keeps the destination email stable during an overlapping submit', async () => {
+      mockEnableEmailOtp = true;
+      let finish!: (value: { data: { success: boolean } }) => void;
+      mockSendOtp.mockReturnValueOnce(
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+      );
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ exists: true, hasPassword: false }),
+      });
+      const { result } = renderHook(() => useSignIn());
+      let first!: Promise<void>;
+      await act(async () => {
+        first = result.current.handleCheckUser({ email: 'first@example.com' });
+      });
+      await act(async () => {
+        await result.current.handleCheckUser({ email: 'second@example.com' });
+      });
+      await act(async () => {
+        finish({ data: { success: true } });
+        await first;
+      });
+      expect(result.current.email).toBe('first@example.com');
+      expect(result.current.step).toBe('emailOtp');
+      expect(mockSendOtp).toHaveBeenCalledTimes(1);
+    });
+
+    it('uses email codes instead of magic links or passwords when enabled', async () => {
+      mockEnableEmailOtp = true;
+      mockEnableMagicLink = true;
+      mockSendOtp.mockResolvedValue({ data: { success: true } });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ exists: true, hasPassword: true }),
+      });
+      const { result } = renderHook(() => useSignIn());
+      await act(async () => {
+        await result.current.handleCheckUser({ email: 'user@example.com' });
+      });
+      expect(result.current.step).toBe('emailOtp');
+      expect(mockSignInMagicLink).not.toHaveBeenCalled();
+    });
+
     it('should redirect to signup when user does not exist', async () => {
       mockFetch.mockResolvedValueOnce({
         json: async () => ({ exists: false }),
@@ -355,6 +407,71 @@ describe('useSignIn', () => {
   });
 
   describe('handleSocialSignIn', () => {
+    it('should automatically start Cotti AI SSO and discard a legacy cross-domain callback', async () => {
+      mockEnableBusinessFeatures = true;
+      mockBusinessSignin.ssoProviders = ['generic-oidc'];
+      mockSearchParamsGet.mockImplementation((key: string) =>
+        key === 'callbackUrl' ? 'https://chatdev.cotticoffee.com/' : null,
+      );
+      mockSignInOauth2.mockResolvedValue({ url: 'https://auth.cotti.ai/oauth2/authorize' });
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: {
+          ...originalLocation,
+          hostname: 'chat.cotti.ai',
+          origin: 'https://chat.cotti.ai',
+          href: '',
+        },
+        writable: true,
+      });
+
+      renderHook(() => useSignIn());
+
+      await waitFor(() => expect(mockSignInOauth2).toHaveBeenCalledTimes(1));
+      expect(mockSignInOauth2).toHaveBeenCalledWith(
+        expect.objectContaining({
+          callbackURL: 'https://chat.cotti.ai/',
+          providerId: 'generic-oidc',
+        }),
+      );
+    });
+
+    it('should not automatically start Cotti AI SSO on the legacy host', async () => {
+      mockEnableBusinessFeatures = true;
+      mockBusinessSignin.ssoProviders = ['generic-oidc'];
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { ...originalLocation, hostname: 'chatdev.cotticoffee.com', href: '' },
+        writable: true,
+      });
+
+      renderHook(() => useSignIn());
+
+      await waitFor(() => expect(mockSignInOauth2).not.toHaveBeenCalled());
+    });
+
+    it('should keep the Cotti AI recovery page visible when OAuth reports an error', async () => {
+      mockEnableBusinessFeatures = true;
+      mockBusinessSignin.ssoProviders = ['generic-oidc'];
+      mockSearchParamsGet.mockImplementation((key: string) =>
+        key === 'error' ? 'invalid_code' : null,
+      );
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: {
+          ...originalLocation,
+          hostname: 'chat.cotti.ai',
+          origin: 'https://chat.cotti.ai',
+          href: '',
+        },
+        writable: true,
+      });
+
+      renderHook(() => useSignIn());
+
+      await waitFor(() => expect(mockSignInOauth2).not.toHaveBeenCalled());
+    });
+
     it('should bind relative OAuth callbacks to the current auth origin', async () => {
       const authOrigin = 'https://auth.example.com';
       Object.defineProperty(window, 'location', {

@@ -26,6 +26,54 @@ beforeEach(() => {
 
 describe('AiInfraRepos', () => {
   describe('getAiProviderRuntimeState', () => {
+    it.each(['chat', 'image', 'video', 'embedding'] as const)(
+      'excludes %s models from disabled providers while preserving explicitly enabled providers',
+      async (type) => {
+        const providers: EnabledProvider[] = [
+          { id: 'openai', source: 'builtin' },
+          // Effective user configuration may enable a provider disabled by server defaults.
+          { id: 'anthropic', source: 'builtin' },
+        ];
+        const models: EnabledAiModel[] = ['openai', 'anthropic', 'fal'].map((providerId) => ({
+          abilities: {},
+          enabled: true,
+          id: 'shared-model',
+          providerId,
+          type,
+        }));
+        vi.spyOn(repo.aiProviderModel, 'getAiProviderRuntimeConfig').mockResolvedValue({});
+        vi.spyOn(repo, 'getUserEnabledProviderList').mockResolvedValue(providers);
+        vi.spyOn(repo, 'getEnabledModels').mockResolvedValue(models);
+
+        const result = await repo.getAiProviderRuntimeState();
+
+        expect(result.enabledAiModels).toEqual(models.slice(0, 2));
+        expect(result.enabledAiProviders).toEqual(providers);
+        expect(models).toHaveLength(3);
+      },
+    );
+
+    it('does not advertise a modality when its only model is disabled', async () => {
+      const provider: EnabledProvider = { id: 'openai', source: 'builtin' };
+      vi.spyOn(repo.aiProviderModel, 'getAiProviderRuntimeConfig').mockResolvedValue({});
+      vi.spyOn(repo, 'getUserEnabledProviderList').mockResolvedValue([provider]);
+      vi.spyOn(repo, 'getEnabledModels').mockResolvedValue(
+        (['chat', 'image', 'video'] as const).map((type) => ({
+          abilities: {},
+          enabled: false,
+          id: type,
+          providerId: 'openai',
+          type,
+        })),
+      );
+      const result = await repo.getAiProviderRuntimeState();
+      expect(result.enabledAiModels).toEqual([]);
+      expect(result.enabledChatAiProviders).toEqual([]);
+      expect(result.enabledImageAiProviders).toEqual([]);
+      expect(result.enabledVideoAiProviders).toEqual([]);
+      expect(result.enabledAiProviders).toEqual([provider]);
+    });
+
     it('should return complete runtime state', async () => {
       const mockRuntimeConfig = {
         openai: { apiKey: 'test-key' },

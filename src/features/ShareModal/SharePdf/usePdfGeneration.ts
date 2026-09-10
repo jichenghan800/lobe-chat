@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 
 import { lambdaQuery } from '@/libs/trpc/client/lambda';
 
+import { createPdfBlob } from './pdfData';
+
 interface PdfGenerationParams {
   content: string;
   sessionId: string;
@@ -56,15 +58,7 @@ export const usePdfGeneration = (): PdfGenerationState => {
     if (!pdfData) return;
 
     try {
-      // Convert base64 to blob
-      const byteCharacters = atob(pdfData);
-      const byteNumbers = Array.from({ length: byteCharacters.length }, (_, i) =>
-        byteCharacters.charCodeAt(i),
-      );
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
-
-      // Create download link
+      const blob = createPdfBlob(pdfData);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -72,7 +66,7 @@ export const usePdfGeneration = (): PdfGenerationState => {
       document.body.append(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      globalThis.setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch (error) {
       console.error('Failed to download PDF:', error);
       throw error;

@@ -11,6 +11,7 @@ vi.mock('@/libs/trpc/client', () => ({
       resolve: { mutate: vi.fn() },
     },
     task: {
+      acknowledgeResults: { mutate: vi.fn() },
       addComment: { mutate: vi.fn() },
       addDependency: { mutate: vi.fn() },
       cancelTopic: { mutate: vi.fn() },
@@ -89,6 +90,11 @@ describe('TaskService', () => {
   });
 
   describe('mutations', () => {
+    it('acknowledgeResults should call task.acknowledgeResults.mutate', async () => {
+      await taskService.acknowledgeResults('T-1');
+      expect(lambdaClient.task.acknowledgeResults.mutate).toHaveBeenCalledWith({ id: 'T-1' });
+    });
+
     it('create should call task.create.mutate', async () => {
       const params = { instruction: 'Do something', name: 'Test' };
       await taskService.create(params);

@@ -15,13 +15,14 @@ import {
   wsCompatProcedure,
 } from '@/business/server/trpc-middlewares/workspaceAuth';
 import { AiModelModel } from '@/database/models/aiModel';
+import { CottiModelDisplayModel } from '@/database/models/cottiModelDisplay';
 import { UserModel } from '@/database/models/user';
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerGlobalConfig } from '@/server/globalConfig';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { getUserScopedAiProviderModelList } from '@/server/services/aiProviderAccess';
+import { getCottiScopedAiProviderModelList } from '@/server/services/cotti/modelDisplayAccess';
 import { type ProviderConfig } from '@/types/user/settings';
 
 const AI_MODEL_UNIQUE_CONSTRAINT = 'ai_models_id_provider_id_user_id_pk';
@@ -57,6 +58,7 @@ const aiModelProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) 
 
   return opts.next({
     ctx: {
+      cottiModelDisplayModel: new CottiModelDisplayModel(ctx.serverDB),
       aiInfraRepos: new AiInfraRepos(
         ctx.serverDB,
         ctx.userId,
@@ -183,8 +185,12 @@ export const aiModelRouter = router({
         type: input.type,
       };
 
-      return getUserScopedAiProviderModelList(ctx.userId, input.id, options, (scopedOptions) =>
-        ctx.aiInfraRepos.getAiProviderModelList(input.id, scopedOptions),
+      return getCottiScopedAiProviderModelList(
+        ctx.userId,
+        input.id,
+        options,
+        (scopedOptions) => ctx.aiInfraRepos.getAiProviderModelList(input.id, scopedOptions),
+        () => ctx.cottiModelDisplayModel.getConfig(),
       );
     }),
 

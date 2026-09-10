@@ -1,3 +1,4 @@
+import { resolveAssistantGroupFinalContent } from '@lobechat/conversation-flow';
 import { type UIChatMessage } from '@lobechat/types';
 
 import { LOADING_FLAT } from '@/const/message';
@@ -10,5 +11,9 @@ interface MarkdownParams {
 export const generateMarkdown = ({ messages }: MarkdownParams): string =>
   messages
     .filter((m) => m.content !== LOADING_FLAT)
-    .map((message) => normalizeThinkTags(processWithArtifact(message.content)))
+    .map((message) =>
+      normalizeThinkTags(
+        processWithArtifact(resolveAssistantGroupFinalContent(message) ?? message.content),
+      ),
+    )
     .join('\n\n');

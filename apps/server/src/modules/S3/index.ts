@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
@@ -95,6 +97,20 @@ export class S3 {
       Bucket: this.bucket,
       Delete: { Objects: keys.map((key) => ({ Key: key })) },
     });
+
+    // OSS requires Content-MD5 even when the SDK sends a modern checksum.
+    // Hash the SDK-serialized XML before signing, including its escaping rules.
+    command.middlewareStack.add(
+      (next) => async (args) => {
+        const request = args.request as {
+          body: string | Uint8Array;
+          headers: Record<string, string>;
+        };
+        request.headers['content-md5'] = createHash('md5').update(request.body).digest('base64');
+        return next(args);
+      },
+      { name: 'ossDeleteContentMd5', priority: 'low', step: 'build' },
+    );
 
     return this.client.send(command);
   }

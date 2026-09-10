@@ -14,6 +14,7 @@ interface ResolveServerSearchDecisionInput {
   builtinModels: readonly SearchModelCard[];
   chatConfig?: {
     searchMode?: 'auto' | 'off' | 'on';
+    searchRoute?: 'application' | 'model';
     useModelBuiltinSearch?: boolean;
   };
   hasModelAbilitiesOverride?: boolean;
@@ -60,6 +61,7 @@ export const resolveServerSearchDecision = ({
     modelSearchImpl: resolvedModelSearchImpl,
     providerSearchMode: providerSearchMode ?? builtinProviderSearchMode,
     searchMode: chatConfig?.searchMode,
+    searchRoute: chatConfig?.searchRoute,
     useModelBuiltinSearch: chatConfig?.useModelBuiltinSearch,
   });
 };

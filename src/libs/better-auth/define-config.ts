@@ -324,7 +324,13 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
     },
     plugins: [
       ...customOptions.plugins,
-      emailWhitelist(),
+      emailWhitelist({
+        isAllowed: async (email) => {
+          const { CottiPeopleManagementService } =
+            await import('@/server/services/cotti/peopleManagement');
+          return new CottiPeopleManagementService(serverDB).isRegistrationAllowed(email);
+        },
+      }),
       expo(),
       admin(),
       // Email OTP plugin for mobile verification

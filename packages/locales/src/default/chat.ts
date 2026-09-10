@@ -1,4 +1,33 @@
 export default {
+  'longTopic.label': 'Long context',
+  'longTopic.description':
+    'This conversation has a large estimated context. Later turns may resend its history and increase token usage. Start a new topic when changing subjects; the old conversation stays available. To continue the same task, copy only the key conclusions and next steps. This estimate is not a bill.',
+  'longTopic.newTopic': 'New topic',
+  'longTopic.failed': 'Could not open a new topic. Please try again.',
+
+  'attachment.addAsKnowledge': 'Add as knowledge',
+  'attachment.addFiles': 'Add files',
+  'attachment.agentModeRequired':
+    'This spreadsheet is kept. Switch to Agent mode to send it and use tools to read the original file; no upload is needed again.',
+  'attachment.agentModeRequiredHome':
+    'This spreadsheet is kept. Switch to Agent below to send it; no upload is needed again.',
+  'attachment.empty': 'No files available',
+  'attachment.fromLibrary': 'Choose from Resources',
+  'attachment.pickerTitle': 'Choose files from Resources',
+  'attachment.resourceUnavailable': 'This file is unavailable. Refresh and try again.',
+  'attachment.searchEmpty': 'No matching files',
+  'attachment.searchPlaceholder': 'Search files',
+  'attachment.selected': 'Added',
+  'attachment.sendWithMessage': 'Send with message',
+  'upload.validation.largeExcelFileInChat':
+    'Spreadsheet kept: {{files}}. It is not suitable for expansion in regular Chat; switch to Agent mode before sending.',
+  'shareModal.pdfPreviewErrorDescription':
+    'The PDF was generated. You can download it or generate it again.',
+  'shareModal.pdfPreviewError': 'PDF preview unavailable',
+  'taskSchedule.unviewedResultPauseNotice':
+    'The task pauses before its next run after {{count}} consecutive results go unviewed. Viewing a result resets the count; a paused task must be resumed manually.',
+  'chatMode.chatDesc': 'No runtime environment or autonomy; uses fewer tokens',
+  'chatMode.agentDesc': 'Agent can use tools and environment to complete tasks automatically',
   'ModelSwitch.title': 'Model',
   'active': 'Active',
   'audioPlayer.download': 'Download audio',
@@ -611,7 +640,7 @@ export default {
   'historySummary': 'Historical Message Summary',
   'inactive': 'Inactive',
   'inbox.desc': 'Collaborate in one Workspace and move ideas into outcomes.',
-  'inbox.title': 'Lobe AI',
+  'inbox.title': '灵枢AI',
   'input.addAi': 'Add an AI message',
   'input.addAiPrefillUnsupported':
     'The current model doesn’t support ending the conversation with an assistant message. Follow it with a user message before sending.',
@@ -812,12 +841,12 @@ export default {
   'createModal.skillSuggestion.actions.install': 'Add Skill',
   'createModal.skillSuggestion.actions.installing': 'Adding…',
   'createModal.skillSuggestion.actions.openSkills': 'View in Skills',
-  'createModal.skillSuggestion.actions.tryInLobeAI': 'Use in LobeAI',
+  'createModal.skillSuggestion.actions.tryInLobeAI': 'Use in 灵枢AI',
   'createModal.skillSuggestion.description':
     'This looks like a reusable workflow. Install the Skill once, then use it across Agents.',
   'createModal.skillSuggestion.installed.description':
-    'You can use this Skill in LobeAI or add it to any Agent.',
-  'createModal.skillSuggestion.installed.ready': 'Ready in LobeAI',
+    'You can use this Skill in 灵枢AI or add it to any Agent.',
+  'createModal.skillSuggestion.installed.ready': 'Ready in 灵枢AI',
   'createModal.skillSuggestion.installed.title': 'Skill added',
   'createModal.skillSuggestion.installError':
     "Skill wasn't added. Retry, or create an Agent anyway.",
@@ -1202,11 +1231,12 @@ export default {
   'search.grounding.imageSearchQueries': 'Image Search Keywords',
   'search.grounding.imageTitle': 'Found {{count}} images',
   'chatMode.agent': 'Agent',
-  'plus.search.appSearch': 'Smart Search',
+  'plus.search.appSearch': 'Platform Search',
   'plus.search.appSearchDesc':
-    'LobeHub optimized search service, delivering best retrieval results.',
-  'plus.search.modelSearch': 'Provider Search',
-  'plus.search.modelSearchDesc': 'May cause unexpected behavior when enabled, not recommended.',
+    'Use the platform search service as a fallback or manual alternative.',
+  'plus.search.modelSearch': 'Model Search',
+  'plus.search.modelSearchDesc':
+    "Use the model provider's native web search. Preferred when available.",
   'plus.search.off': 'Off',
   'plus.search.offDesc': '',
   'plus.addAttachments': 'Attachments',
@@ -1218,10 +1248,8 @@ export default {
   'chatMode.agentCap.memory': 'Memory',
   'chatMode.agentCap.tools': 'Tool calls',
   'chatMode.agentCap.web': 'Web search',
-  'chatMode.agentDesc': 'Agent can use tools and environment to complete tasks automatically',
   'chatMode.agentUnsupported': 'The current model does not support tool calling',
   'chatMode.chat': 'Chat',
-  'chatMode.chatDesc': 'No runtime environment or autonomy; uses fewer tokens',
   'chatMode.select': 'Switch Mode',
   'runtimeEnv.mode.cloud': 'Cloud Sandbox',
   'runtimeEnv.mode.cloudDesc': 'Run in a secure cloud sandbox',
@@ -2070,7 +2098,7 @@ export default {
   'taskList.title': 'Tasks',
   'taskList.truncated': 'Showing the first {{loaded}} of {{total}} tasks',
   'taskList.unassigned': 'Unassigned',
-  'taskList.unassignedAgentHint': 'Lobe AI will run this task when no agent is selected',
+  'taskList.unassignedAgentHint': '灵枢AI will run this task when no agent is selected',
   'taskList.assignTo': 'Assign to',
   'taskList.assigneeSearch.agentEmpty': 'No matching agent',
   'taskList.assigneeSearch.agentPlaceholder': 'Search agent...',

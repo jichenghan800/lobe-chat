@@ -1,11 +1,19 @@
+import {
+  isFeishuDocumentsConnector,
+  isFeishuDocumentsToolAuthorized,
+} from '@/const/connectorPresets';
 import type { ConnectorModel, DecryptedConnector } from '@/database/models/connector';
 import type { ConnectorToolModel } from '@/database/models/connectorTool';
-import type { ConnectorCredentials } from '@/database/schemas';
 import { ConnectorMcpConnectionType, ConnectorStatus } from '@/database/schemas';
-import type { AuthConfig } from '@/libs/mcp';
+import {
+  buildConnectorHttpTransport,
+  buildHttpAuthFromCredentials,
+} from '@/libs/mcp/connectorTransport';
 import { inferCrudType } from '@/libs/mcp/utils';
 import { mcpService } from '@/server/services/mcp';
 
+import { FEISHU_MESSAGE_TOOL_DEFINITIONS } from './feishuMessages';
+import { FEISHU_SHEET_TOOL_DEFINITIONS } from './feishuSheets';
 import { ensureFreshConnectorToken } from './tokens';
 
 export interface ConnectorToolSyncContext {
@@ -28,17 +36,10 @@ export const buildConnectorMcpParams = (
     };
   }
   if (!connector.mcpServerUrl) throw new Error('Connector has no MCP server URL configured');
-  const { auth, headers } = buildHttpAuthFromCredentials(connector.credentials);
-  // Custom headers live in `metadata.customHeaders` (plaintext, independent of
-  // the single-kind `credentials` column) so they can coexist with any auth
-  // type. Merge them on top of any header-type credential headers (older rows
-  // stored custom headers as a 'header' credential before this split).
-  const customHeaders = connector.metadata?.customHeaders as Record<string, string> | undefined;
-  const mergedHeaders =
-    headers || customHeaders ? { ...headers, ...customHeaders } : undefined;
+  const { auth, headers } = buildConnectorHttpTransport(connector);
   return {
     auth,
-    headers: mergedHeaders,
+    headers,
     name: connector.name,
     type: 'http',
     url: connector.mcpServerUrl,
@@ -53,38 +54,7 @@ export const buildConnectorMcpParams = (
  * - bearer / apikey → bearer auth
  * - header          → passed through verbatim as request headers
  */
-export const buildHttpAuthFromCredentials = (
-  credentials: ConnectorCredentials | null,
-): { auth?: AuthConfig; headers?: Record<string, string> } => {
-  if (!credentials) return {};
-
-  switch (credentials.type) {
-    case 'oauth2': {
-      return {
-        auth: {
-          accessToken: credentials.accessToken,
-          clientId: undefined,
-          clientSecret: credentials.clientSecret,
-          refreshToken: credentials.refreshToken,
-          tokenExpiresAt: credentials.expiresAt,
-          type: 'oauth2',
-        },
-      };
-    }
-    case 'bearer': {
-      return { auth: { token: credentials.token, type: 'bearer' } };
-    }
-    case 'apikey': {
-      return { auth: { token: credentials.apiKey, type: 'bearer' } };
-    }
-    case 'header': {
-      return { headers: credentials.headers };
-    }
-    default: {
-      return {};
-    }
-  }
-};
+export { buildHttpAuthFromCredentials };
 
 /**
  * Connect to a connector's MCP server, fetch its tool list, and sync it into
@@ -118,14 +88,33 @@ export const syncConnectorToolsById = async (
     throw err;
   }
 
-  const syncInputs = rawTools.map((t) => ({
+  const availableTools = isFeishuDocumentsConnector(connector)
+    ? rawTools.filter((tool) => isFeishuDocumentsToolAuthorized(connector, tool.name))
+    : rawTools;
+
+  const remoteSyncInputs = availableTools.map((t) => ({
     crudType: inferCrudType(t.name),
-    description: t.description,
+    description:
+      isFeishuDocumentsConnector(connector) && t.name === 'fetch-doc'
+        ? `${t.description || 'Read a Feishu document.'} Electronic spreadsheets are not supported by this tool; use fetch-sheet instead.`
+        : t.description,
     inputSchema: t.inputSchema as Record<string, unknown>,
     toolName: t.name,
   }));
+  const virtualSyncInputs = isFeishuDocumentsConnector(connector)
+    ? [...FEISHU_MESSAGE_TOOL_DEFINITIONS, ...FEISHU_SHEET_TOOL_DEFINITIONS].filter((tool) =>
+        isFeishuDocumentsToolAuthorized(connector, tool.toolName),
+      )
+    : [];
+  const syncInputs = [...remoteSyncInputs, ...virtualSyncInputs];
 
   await ctx.connectorToolModel.upsertMany(connectorId, syncInputs);
+  if (isFeishuDocumentsConnector(connector)) {
+    await ctx.connectorToolModel.deleteToolsNotIn(
+      connectorId,
+      syncInputs.map((tool) => tool.toolName),
+    );
+  }
   await ctx.connectorModel.updateStatus(connectorId, ConnectorStatus.connected);
 
   return { toolCount: syncInputs.length };

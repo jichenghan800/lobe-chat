@@ -1,5 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  FEISHU_DOCUMENTS_CONNECTOR_PRESET,
+  FEISHU_DOCUMENTS_CREATE_SCOPES,
+  FEISHU_DOCUMENTS_MESSAGE_SCOPES,
+  FEISHU_DOCUMENTS_MESSAGE_SEARCH_SCOPES,
+  FEISHU_DOCUMENTS_SHEET_SCOPES,
+} from '@/const/connectorPresets';
 import { ConnectorToolPermission } from '@/database/schemas';
 import { deviceGateway } from '@/server/services/deviceGateway';
 import { mcpService } from '@/server/services/mcp';
@@ -48,6 +55,10 @@ beforeEach(() => {
   (deviceGateway as any).isConfigured = false;
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('callConnectorToolById', () => {
   it('rejects when the connector is not found', async () => {
     await expect(
@@ -76,6 +87,344 @@ describe('callConnectorToolById', () => {
     await expect(
       callConnectorToolById({ identifier: 'my-conn', toolName: 'do_thing' }, ctx),
     ).rejects.toHaveProperty('code', 'FORBIDDEN');
+    expect(mcpService.callTool).not.toHaveBeenCalled();
+  });
+
+  it('hard-blocks a stale tool outside the Feishu preset allowlist', async () => {
+    const feishuConnector = {
+      ...connector,
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'update-doc' })]);
+
+    await expect(
+      callConnectorToolById(
+        { identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier, toolName: 'update-doc' },
+        ctx,
+      ),
+    ).rejects.toHaveProperty('code', 'FORBIDDEN');
+    expect(mcpService.callTool).not.toHaveBeenCalled();
+  });
+
+  it('requires reauthorization before calling create-doc with a legacy token', async () => {
+    const feishuConnector = {
+      ...connector,
+      credentials: {
+        accessToken: 'legacy-token',
+        scope: 'search:docs:read docx:document:readonly',
+        type: 'oauth2',
+      },
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'create-doc' })]);
+
+    await expect(
+      callConnectorToolById(
+        { identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier, toolName: 'create-doc' },
+        ctx,
+      ),
+    ).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'Reauthorize Feishu Documents to enable document creation',
+    });
+    expect(mcpService.callTool).not.toHaveBeenCalled();
+  });
+
+  it('allows create-doc after the user grants the write scopes', async () => {
+    const feishuConnector = {
+      ...connector,
+      credentials: {
+        accessToken: 'upgraded-token',
+        scope: FEISHU_DOCUMENTS_CREATE_SCOPES.join(' '),
+        type: 'oauth2',
+      },
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'create-doc' })]);
+    vi.mocked(mcpService.callTool).mockResolvedValue({ success: true });
+
+    await callConnectorToolById(
+      { identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier, toolName: 'create-doc' },
+      ctx,
+    );
+
+    expect(mcpService.callTool).toHaveBeenCalled();
+  });
+
+  it('requires reauthorization before exposing Feishu chat history tools', async () => {
+    const feishuConnector = {
+      ...connector,
+      credentials: {
+        accessToken: 'legacy-token',
+        scope: FEISHU_DOCUMENTS_CREATE_SCOPES.join(' '),
+        type: 'oauth2',
+      },
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'list-chat-messages' })]);
+
+    await expect(
+      callConnectorToolById(
+        {
+          args: '{"chat_id":"oc_private"}',
+          identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+          toolName: 'list-chat-messages',
+        },
+        ctx,
+      ),
+    ).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'Reauthorize Feishu Documents to enable chat history access',
+    });
+  });
+
+  it('reads one bounded page of Feishu p2p or group messages with the user token', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 0,
+          data: { has_more: true, items: [{ message_id: 'om_1' }], page_token: 'next' },
+        }),
+        { headers: { 'Content-Type': 'application/json' }, status: 200 },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const feishuConnector = {
+      ...connector,
+      credentials: {
+        accessToken: 'per-user-uat',
+        scope: [...FEISHU_DOCUMENTS_CREATE_SCOPES, ...FEISHU_DOCUMENTS_MESSAGE_SCOPES].join(' '),
+        type: 'oauth2',
+      },
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'list-chat-messages' })]);
+
+    const result = await callConnectorToolById(
+      {
+        args: JSON.stringify({
+          chat_id: 'oc_private',
+          end_time: 1_786_000_000,
+          page_size: 20,
+          start_time: '1785000000',
+        }),
+        identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+        toolName: 'list-chat-messages',
+      },
+      ctx,
+    );
+
+    expect(result).toMatchObject({
+      state: { structuredContent: { has_more: true, page_token: 'next' } },
+      success: true,
+    });
+    const [requestUrl, requestInit] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(requestUrl.origin + requestUrl.pathname).toBe(
+      'https://open.feishu.cn/open-apis/im/v1/messages',
+    );
+    expect(requestUrl.searchParams.get('container_id')).toBe('oc_private');
+    expect(requestUrl.searchParams.get('container_id_type')).toBe('chat');
+    expect(requestUrl.searchParams.get('page_size')).toBe('20');
+    expect(requestInit.headers).toMatchObject({ Authorization: 'Bearer per-user-uat' });
+    expect(mcpService.callTool).not.toHaveBeenCalled();
+  });
+
+  it('routes authorized p2p message discovery through the user-scoped search API', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ code: 0, data: { has_more: false, items: [] } }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const feishuConnector = {
+      ...connector,
+      credentials: {
+        accessToken: 'search-user-uat',
+        scope: [...FEISHU_DOCUMENTS_MESSAGE_SCOPES, ...FEISHU_DOCUMENTS_MESSAGE_SEARCH_SCOPES].join(
+          ' ',
+        ),
+        type: 'oauth2',
+      },
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'search-chat-messages' })]);
+
+    const result = await callConnectorToolById(
+      {
+        args: JSON.stringify({
+          chat_type: 'p2p_chat',
+          end_time: 1_786_118_399,
+          query: '',
+          start_time: 1_786_032_000,
+        }),
+        identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+        toolName: 'search-chat-messages',
+      },
+      ctx,
+    );
+
+    expect(result).toMatchObject({
+      state: {
+        structuredContent: {
+          applied_filters: { chat_type: 'p2p_chat', query: '' },
+          matched_count: 0,
+        },
+      },
+      success: true,
+    });
+    const [requestUrl, requestInit] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(requestUrl.pathname).toBe('/open-apis/search/v2/message');
+    expect(requestInit.headers).toMatchObject({ Authorization: 'Bearer search-user-uat' });
+    expect(mcpService.callTool).not.toHaveBeenCalled();
+  });
+
+  it('rejects oversized Feishu message pages before making a network request', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const feishuConnector = {
+      ...connector,
+      credentials: {
+        accessToken: 'per-user-uat',
+        scope: [...FEISHU_DOCUMENTS_CREATE_SCOPES, ...FEISHU_DOCUMENTS_MESSAGE_SCOPES].join(' '),
+        type: 'oauth2',
+      },
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'list-chat-messages' })]);
+
+    await expect(
+      callConnectorToolById(
+        {
+          args: '{"chat_id":"oc_private","page_size":21}',
+          identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+          toolName: 'list-chat-messages',
+        },
+        ctx,
+      ),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('requires reauthorization before exposing the Feishu spreadsheet tool', async () => {
+    const feishuConnector = {
+      ...connector,
+      credentials: {
+        accessToken: 'legacy-token',
+        scope: FEISHU_DOCUMENTS_CREATE_SCOPES.join(' '),
+        type: 'oauth2',
+      },
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'fetch-sheet' })]);
+
+    await expect(
+      callConnectorToolById(
+        {
+          args: '{"document_id":"https://example.feishu.cn/wiki/wiki-token"}',
+          identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+          toolName: 'fetch-sheet',
+        },
+        ctx,
+      ),
+    ).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'Reauthorize Feishu Documents to enable spreadsheet reading',
+    });
+    expect(mcpService.callTool).not.toHaveBeenCalled();
+  });
+
+  it('routes authorized Feishu spreadsheet reads through the local OpenAPI tool', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              node: { obj_token: 'spreadsheet-token', obj_type: 'sheet', title: 'Report' },
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              sheets: [
+                {
+                  grid_properties: { column_count: 2, row_count: 2 },
+                  hidden: false,
+                  index: 0,
+                  sheet_id: 'sheet-1',
+                  title: 'Summary',
+                },
+              ],
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 0,
+            data: {
+              valueRanges: [
+                {
+                  range: 'sheet-1!A1:B2',
+                  values: [
+                    ['Name', 'Amount'],
+                    ['A', 5],
+                  ],
+                },
+              ],
+            },
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const feishuConnector = {
+      ...connector,
+      credentials: {
+        accessToken: 'sheet-user-token',
+        scope: [...FEISHU_DOCUMENTS_CREATE_SCOPES, ...FEISHU_DOCUMENTS_SHEET_SCOPES].join(' '),
+        type: 'oauth2',
+      },
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+    const ctx = makeCtx([feishuConnector], [tool({ toolName: 'fetch-sheet' })]);
+
+    const result = await callConnectorToolById(
+      {
+        args: '{"document_id":"https://example.feishu.cn/wiki/wiki-token"}',
+        identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+        toolName: 'fetch-sheet',
+      },
+      ctx,
+    );
+
+    expect(result).toMatchObject({ success: true });
+    expect(JSON.parse((result as { content: string }).content)).toMatchObject({
+      sheet: { sheet_id: 'sheet-1', title: 'Summary' },
+      spreadsheet: { title: 'Report', token: 'spreadsheet-token' },
+      values: [
+        ['Name', 'Amount'],
+        ['A', 5],
+      ],
+    });
     expect(mcpService.callTool).not.toHaveBeenCalled();
   });
 

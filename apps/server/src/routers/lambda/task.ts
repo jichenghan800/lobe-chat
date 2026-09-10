@@ -372,6 +372,28 @@ async function resolveSafeParentTaskId(
 }
 
 export const taskRouter = router({
+  acknowledgeResults: taskProcedureWrite.input(idInput).mutation(async ({ input, ctx }) => {
+    try {
+      const task = await ctx.taskModel.resolve(input.id);
+      if (!task) throw new TRPCError({ code: 'NOT_FOUND', message: 'Task not found' });
+
+      if (task.automationMode) {
+        await ctx.taskModel.updateContext(task.id, {
+          scheduler: { lastResultAcknowledgedAt: new Date().toISOString() },
+        });
+      }
+      return { success: true };
+    } catch (error) {
+      if (error instanceof TRPCError) throw error;
+      console.error('[task:acknowledgeResults]', error);
+      throw new TRPCError({
+        cause: error,
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to acknowledge task results',
+      });
+    }
+  }),
+
   /**
    * Read a composer draft and report what it means — a name, the outcome as
    * understood, the questions that would change the deliverable, and whether

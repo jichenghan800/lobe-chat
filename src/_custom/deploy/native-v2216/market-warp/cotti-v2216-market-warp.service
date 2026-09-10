@@ -1,0 +1,9 @@
+[Unit]
+Description=COTTI v2.2.16 Market-only WARP routing
+After=docker.service redsocks.service lobehub-market-warp.service
+Requires=docker.service redsocks.service
+Wants=lobehub-market-warp.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/lobechat-v2.2.16/src/_custom/deploy/native-v2216/market-warp/route.sh start

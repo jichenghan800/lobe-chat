@@ -1,6 +1,7 @@
 import { CLIENT_VERSION_HEADER, CURRENT_VERSION } from '@lobechat/const';
 import {
   adminClient,
+  emailOTPClient,
   genericOAuthClient,
   inferAdditionalFields,
   magicLinkClient,
@@ -11,6 +12,7 @@ import { type auth } from '@/auth';
 
 export const {
   changeEmail,
+  emailOtp,
   linkSocial,
   oauth2,
   accountInfo,
@@ -31,6 +33,7 @@ export const {
   },
   plugins: [
     adminClient(),
+    emailOTPClient(),
     inferAdditionalFields<typeof auth>(),
     genericOAuthClient(),
     // Always include magicLinkClient - server will reject if not enabled

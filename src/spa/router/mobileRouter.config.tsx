@@ -308,6 +308,58 @@ export const mobileRoutes: RouteObject[] = [
     children: [
       ...sharedMainAreaChildren,
 
+      {
+        path: 'settings/cotti-people',
+        element: dynamicElement(
+          () => import('@/routes/(main)/settings/cotti-people'),
+          'Mobile > COTTI > People',
+        ),
+      },
+      {
+        path: 'settings/cotti-models',
+        element: dynamicElement(
+          () => import('@/routes/(main)/settings/cotti-models'),
+          'Mobile > COTTI > Models',
+        ),
+      },
+      {
+        path: 'overview',
+        element: dynamicLayout(
+          () => import('@/routes/(main)/overview/_layout'),
+          'COTTI > Conversations',
+        ),
+        children: [
+          {
+            index: true,
+            element: dynamicElement(
+              () => import('@/routes/(main)/overview'),
+              'COTTI > Conversations > List',
+            ),
+          },
+          {
+            path: ':topicId',
+            element: dynamicElement(
+              () => import('@/routes/(main)/overview/[topicId]'),
+              'COTTI > Conversations > Detail',
+            ),
+          },
+        ],
+      },
+      {
+        path: 'settings/platform-analytics',
+        element: dynamicElement(
+          () => import('@/routes/(main)/settings/cotti-platform'),
+          'COTTI > Original Management URL',
+        ),
+      },
+      {
+        path: 'settings/cotti-platform',
+        element: dynamicElement(
+          () => import('@/routes/(main)/settings/cotti-platform'),
+          'Mobile > COTTI > Platform',
+        ),
+      },
+
       // Apps page (personal-only — never mirrored under /:workspaceSlug)
       {
         element: dynamicElement(() => import('@/routes/(main)/apps'), 'Mobile > Apps', {

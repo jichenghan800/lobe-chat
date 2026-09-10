@@ -8,6 +8,11 @@ import { auth } from '@/auth';
 import { LOBE_LOCALE_COOKIE } from '@/const/locale';
 import { appEnv } from '@/envs/app';
 import { authEnv } from '@/envs/auth';
+import {
+  buildCottiAiSsoEntryUrl,
+  isCottiAiChatHost,
+  resolveRequestHostname,
+} from '@/libs/cotti-ai-sso/entry';
 import { type Locales } from '@/locales/resources';
 import { parseBrowserLanguage } from '@/utils/locale';
 import { DEFAULT_LANG, locales, RouteVariants } from '@/utils/server/routeVariants';
@@ -287,7 +292,11 @@ export function defineConfig() {
       if (isProtected) {
         logBetterAuth('Request a protected route, redirecting to sign-in page');
 
-        const callbackUrl = `${appEnv.APP_URL}${req.nextUrl.pathname}${req.nextUrl.search}`;
+        const returnTo = `${req.nextUrl.pathname}${req.nextUrl.search}`;
+        if (isCottiAiChatHost(resolveRequestHostname(req.headers, req.nextUrl.hostname))) {
+          return Response.redirect(buildCottiAiSsoEntryUrl(returnTo));
+        }
+        const callbackUrl = `${appEnv.APP_URL}${returnTo}`;
         const signInUrl = new URL('/signin', appEnv.APP_URL);
         signInUrl.searchParams.set('callbackUrl', callbackUrl);
         const hl = req.nextUrl.searchParams.get('hl');

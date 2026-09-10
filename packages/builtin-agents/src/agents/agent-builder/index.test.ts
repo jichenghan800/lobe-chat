@@ -39,3 +39,15 @@ describe('AGENT_BUILDER runtime plugins', () => {
     ]);
   });
 });
+
+it('identifies the builtin builder as 灵枢AI while retaining its agent-configuration role', () => {
+  const config = getAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.agentBuilder, {});
+  expect(config?.systemRole).toMatch(/^You are 灵枢AI, an Agent Builder integrated into 灵枢AI\./);
+  expect(config?.systemRole).toContain('You configure agents; you never become one.');
+});
+
+it('identifies the default assistant as 灵枢AI and preserves the selected reply language', () => {
+  const config = getAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.inbox, { userLocale: 'zh-CN' });
+  expect(config?.systemRole).toMatch(/^You are 灵枢AI,/);
+  expect(config?.systemRole).toContain('Preferred reply language: zh-CN');
+});

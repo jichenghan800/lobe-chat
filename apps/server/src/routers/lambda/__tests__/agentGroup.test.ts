@@ -24,6 +24,25 @@ import {
 } from '../_helpers/workspaceAgentGuard';
 import { agentGroupRouter } from '../agentGroup';
 
+vi.mock('@/database/models/cottiModelDisplay', () => ({
+  CottiModelDisplayModel: vi.fn(() => ({
+    getConfig: vi.fn(async () => ({
+      agent: [
+        { provider: 'vertexai', model: 'gemini-3.8-flash', enabled: true },
+        { provider: 'qwen', model: 'explicit-model', enabled: true },
+      ],
+      chat: [],
+      defaults: { agent: { provider: 'vertexai', model: 'gemini-3.8-flash' } },
+    })),
+  })),
+}));
+vi.mock('@/server/services/cotti/deployedModels', () => ({
+  getDeployedModelOptions: vi.fn(async () => [
+    { provider: 'vertexai', model: 'gemini-3.8-flash' },
+    { provider: 'qwen', model: 'explicit-model' },
+  ]),
+}));
+
 vi.mock('@/server/services/resourceEvents', () => ({ publishResourceEvent: vi.fn() }));
 // Both read the DB directly; `mockCtx.serverDB` is a bare object.
 vi.mock('@/server/services/workspacePermission', () => ({
@@ -209,6 +228,22 @@ describe('agentGroupRouter', () => {
     });
   });
 
+  it('normalizes every new member added to an existing group', async () => {
+    agentModelMock.batchCreate.mockResolvedValue([{ id: 'new-member' }]);
+    const caller = agentGroupRouter.createCaller(mockCtx);
+    await caller.batchCreateAgentsInGroup({
+      groupId: 'group-1',
+      agents: [
+        { title: 'Missing model', model: 'unavailable', provider: 'openai' },
+        { title: 'Available model', model: 'explicit-model', provider: 'qwen' },
+      ],
+    });
+    expect(agentModelMock.batchCreate).toHaveBeenCalledWith([
+      expect.objectContaining({ model: 'gemini-3.8-flash', provider: 'vertexai' }),
+      expect.objectContaining({ model: 'explicit-model', provider: 'qwen' }),
+    ]);
+  });
+
   describe('createGroupWithMembers', () => {
     it('should create a group with virtual member agents', async () => {
       const mockInput = {
@@ -235,8 +270,20 @@ describe('agentGroupRouter', () => {
       const result = await caller.createGroupWithMembers(mockInput);
 
       expect(agentModelMock.batchCreate).toHaveBeenCalledWith([
-        { title: 'Agent 1', systemRole: 'Helper', virtual: true },
-        { title: 'Agent 2', systemRole: 'Assistant', virtual: true },
+        {
+          title: 'Agent 1',
+          systemRole: 'Helper',
+          virtual: true,
+          model: 'gemini-3.8-flash',
+          provider: 'vertexai',
+        },
+        {
+          title: 'Agent 2',
+          systemRole: 'Assistant',
+          virtual: true,
+          model: 'gemini-3.8-flash',
+          provider: 'vertexai',
+        },
       ]);
       expect(agentGroupRepoMock.createGroupWithSupervisor).toHaveBeenCalledWith(
         {
@@ -244,7 +291,7 @@ describe('agentGroupRouter', () => {
           config: { ...DEFAULT_CHAT_GROUP_CHAT_CONFIG, allowDM: true },
         },
         ['agent-1', 'agent-2'],
-        undefined,
+        { model: 'gemini-3.8-flash', provider: 'vertexai' },
       );
       expect(result).toEqual({
         agentIds: ['agent-1', 'agent-2'],

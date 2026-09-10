@@ -1,3 +1,4 @@
+import { DEFAULT_ASSISTANT_NAME } from '@lobechat/business-const';
 import { type MetaData } from '@lobechat/types';
 import { useMemo } from 'react';
 
@@ -6,7 +7,7 @@ import { agentSelectors } from '@/store/agent/selectors';
 
 import { contextSelectors, useConversationStore } from '../store';
 
-const LOBE_AI_TITLE = 'Lobe AI';
+const LOBE_AI_TITLE = DEFAULT_ASSISTANT_NAME;
 
 /**
  * Hook to get agent meta data for a specific agent or the current conversation.

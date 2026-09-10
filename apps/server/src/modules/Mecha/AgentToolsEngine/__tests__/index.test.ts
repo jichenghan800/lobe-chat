@@ -82,6 +82,29 @@ const createMockContext = (
 });
 
 describe('createServerToolsEngine', () => {
+  it('should enable only the tool explicitly selected for the current chat turn', () => {
+    const context = createMockContext();
+    const engine = createServerAgentToolsEngine(context, {
+      agentConfig: {
+        chatConfig: { enableAgentMode: false },
+        plugins: ['another-plugin', 'test-plugin'],
+      },
+      model: 'gpt-4',
+      provider: 'openai',
+      selectedToolIds: ['test-plugin'],
+    });
+
+    const result = engine.generateToolsDetailed({
+      model: 'gpt-4',
+      provider: 'openai',
+      toolIds: ['another-plugin', 'test-plugin'],
+    });
+
+    expect(result.enabledToolIds).toContain('test-plugin');
+    expect(result.enabledToolIds).not.toContain('another-plugin');
+    expect(result.enabledToolIds).not.toContain(ImageGenerationManifest.identifier);
+  });
+
   it('should return a ToolsEngine instance', () => {
     const context = createMockContext();
     const engine = createServerToolsEngine(context);

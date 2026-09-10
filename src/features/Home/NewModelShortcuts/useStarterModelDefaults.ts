@@ -3,7 +3,7 @@ import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfi
 import {
   BUSINESS_CHAT_PROVIDER,
   BUSINESS_HOME_NEW_MODELS,
-  OSS_GLM_PROVIDER,
+  OSS_CHAT_PROVIDER,
   OSS_HOME_NEW_MODELS,
 } from './starterModels';
 
@@ -12,6 +12,6 @@ export const useStarterModelDefaults = () => {
 
   return {
     defaultHomeNewModels: enableBusinessFeatures ? BUSINESS_HOME_NEW_MODELS : OSS_HOME_NEW_MODELS,
-    fallbackChatProvider: enableBusinessFeatures ? BUSINESS_CHAT_PROVIDER : OSS_GLM_PROVIDER,
+    fallbackChatProvider: enableBusinessFeatures ? BUSINESS_CHAT_PROVIDER : OSS_CHAT_PROVIDER,
   };
 };

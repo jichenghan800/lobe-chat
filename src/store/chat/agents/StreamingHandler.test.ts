@@ -259,6 +259,34 @@ describe('StreamingHandler', () => {
       expect(callbacks.toggleToolCallingStreaming).toHaveBeenCalled();
     });
 
+    it.each([undefined, []])(
+      'keeps streamed activation calls when finish toolCalls is %s',
+      async (toolCalls) => {
+        const callbacks = createMockCallbacks();
+        const handler = new StreamingHandler(mockContext, callbacks);
+        const first = {
+          id: 'activate-1',
+          type: 'function' as const,
+          function: {
+            name: 'lobe-activator____activateTools',
+            arguments: '{"identifiers":',
+          },
+        };
+        const complete = {
+          ...first,
+          function: { ...first.function, arguments: '{"identifiers":["lobe-cloud-sandbox"]}' },
+        };
+        handler.handleChunk({ type: 'tool_calls', tool_calls: [first] });
+        handler.handleChunk({ type: 'tool_calls', tool_calls: [complete] });
+        expect(callbacks.onToolCallsUpdate).toHaveBeenCalledTimes(1);
+        expect(handler.getTools()).toEqual([{ ...complete, transformed: true }]);
+        const result = await handler.handleFinish({ type: 'stop', toolCalls });
+        expect(result.tools).toEqual([{ ...complete, transformed: true }]);
+        expect(result.isFunctionCall).toBe(true);
+        vi.runAllTimers();
+      },
+    );
+
     it('should throttle tool calls updates', async () => {
       const callbacks = createMockCallbacks();
       const handler = new StreamingHandler(mockContext, callbacks);

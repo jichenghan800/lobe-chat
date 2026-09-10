@@ -1,3 +1,9 @@
+import { execFile } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { promisify } from 'node:util';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
@@ -48,6 +54,43 @@ describe('SandboxMiddlewareService file initialization', () => {
     findFilesToInitInSandbox.mockResolvedValue([
       { fileType: 'text/csv', id: 'f1', name: 'data.csv', size: 10, url: 'key-1' },
     ]);
+  });
+
+  it('syncs later attachments in the same sandbox without resyncing rotated URLs or reordered files', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'sandbox-attachment-'));
+    const provider = createProvider();
+    const options = baseOptions();
+    const a = { fileType: 'text/csv', id: 'a', name: 'a.csv', size: 10, url: 'key-a' };
+    const b = { ...a, id: 'b', name: 'b.csv', url: 'key-b' };
+    vi.mocked(provider.callTool).mockImplementation(async (tool, params) => {
+      if (tool === 'runCommand') {
+        const command = String(params.command).replaceAll('/mnt/data', directory);
+        await promisify(execFile)('bash', [
+          '-c',
+          `curl() { printf synthetic > "$4"; printf x >> '${directory}/downloads'; }; ${command}`,
+        ]);
+      }
+      return { result: {}, success: true };
+    });
+    const sync = async (files: (typeof a)[]) => {
+      findFilesToInitInSandbox.mockResolvedValue(files);
+      await new SandboxMiddlewareService(provider, options).callTool('listFiles', {});
+    };
+    try {
+      await sync([]);
+      await sync([a]);
+      expect(await readFile(path.join(directory, 'a.csv'), 'utf8')).toBe('synthetic');
+      await sync([a, b]);
+      expect(await readFile(path.join(directory, 'b.csv'), 'utf8')).toBe('synthetic');
+      const count = await readFile(path.join(directory, 'downloads'), 'utf8');
+      vi.mocked(options.fileService.createCachedPreSignedUrlForPreview).mockResolvedValue(
+        'https://rotated.invalid',
+      );
+      await sync([b, a]);
+      expect(await readFile(path.join(directory, 'downloads'), 'utf8')).toBe(count);
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
   });
 
   it('syncs uploaded files into the sandbox before the first tool call', async () => {

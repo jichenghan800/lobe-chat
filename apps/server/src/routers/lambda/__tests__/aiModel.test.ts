@@ -5,6 +5,14 @@ import { AiInfraRepos } from '@/database/repositories/aiInfra';
 
 import { aiModelRouter } from '../aiModel';
 
+vi.mock('@/database/models/cottiModelDisplay', () => ({
+  CottiModelDisplayModel: vi.fn(() => ({ getConfig: vi.fn() })),
+}));
+vi.mock('@/server/services/cotti/modelDisplayAccess', async () => {
+  const original = await import('@/server/services/aiProviderAccess');
+  return { getCottiScopedAiProviderModelList: original.getUserScopedAiProviderModelList };
+});
+
 const mockGetHiddenBuiltinModelsForUser = vi.hoisted(() => vi.fn());
 
 vi.mock('@/business/server/aiProvider', () => ({

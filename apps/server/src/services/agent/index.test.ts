@@ -12,6 +12,25 @@ import { parseAgentConfig } from '@/server/globalConfig/parseDefaultAgent';
 
 import { AgentService } from './index';
 
+vi.mock('@/database/models/cottiModelDisplay', () => ({
+  CottiModelDisplayModel: vi.fn(() => ({
+    getConfig: vi.fn(async () => ({
+      agent: [
+        { provider: 'vertexai', model: 'gemini-3.8-flash', enabled: true },
+        { provider: 'qwen', model: 'explicit-model', enabled: true },
+      ],
+      chat: [],
+      defaults: { agent: { provider: 'vertexai', model: 'gemini-3.8-flash' } },
+    })),
+  })),
+}));
+vi.mock('@/server/services/cotti/deployedModels', () => ({
+  getDeployedModelOptions: vi.fn(async () => [
+    { provider: 'vertexai', model: 'gemini-3.8-flash' },
+    { provider: 'qwen', model: 'explicit-model' },
+  ]),
+}));
+
 vi.mock('@/envs/app', () => ({
   appEnv: {
     DEFAULT_AGENT_CONFIG: 'model=gpt-4;temperature=0.7',
@@ -537,6 +556,8 @@ describe('AgentService', () => {
 
       expect(result?.avatar).toBe(BUILTIN_AGENTS['task-agent']?.avatar);
       expect(result?.title).toBe('任务助手');
+      expect(result?.model).toBe('gemini-3.8-flash');
+      expect(result?.provider).toBe('vertexai');
     });
 
     it('should fall back inbox avatar and title when the inbox row has none', async () => {

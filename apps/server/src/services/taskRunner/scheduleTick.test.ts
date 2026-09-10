@@ -44,10 +44,12 @@ describe('runScheduleTick', () => {
   const userId = 'user-1';
 
   const mockTaskModel = {
+    updateContext: vi.fn(),
     updateStatus: vi.fn(),
   };
   const mockTaskTopicModel = {
     countByTask: vi.fn(),
+    countConsecutiveCompletedAutomationRuns: vi.fn().mockResolvedValue(0),
   };
   const mockBriefModel = {
     hasUnresolvedUrgentByTask: vi.fn().mockResolvedValue(false),
@@ -71,6 +73,7 @@ describe('runScheduleTick', () => {
     vi.clearAllMocks();
     mockSelectTask.mockResolvedValue([]);
     mockBriefModel.hasUnresolvedUrgentByTask.mockResolvedValue(false);
+    mockTaskTopicModel.countConsecutiveCompletedAutomationRuns.mockResolvedValue(0);
     (TaskModel as any).mockImplementation(() => mockTaskModel);
     (TaskTopicModel as any).mockImplementation(() => mockTaskTopicModel);
     (BriefModel as any).mockImplementation(() => mockBriefModel);
@@ -115,6 +118,31 @@ describe('runScheduleTick', () => {
       excludeTypes: ['error'],
     });
     expect(mockTaskTopicModel.countByTask).not.toHaveBeenCalled();
+    expect(mockRunner.runTask).toHaveBeenCalledWith({ taskId, trigger: 'schedule' });
+  });
+
+  it('pauses before the next model call after three consecutive results go unviewed', async () => {
+    mockSelectTask.mockResolvedValue([baseTask({ context: {} })]);
+    mockTaskTopicModel.countConsecutiveCompletedAutomationRuns.mockResolvedValue(3);
+
+    const outcome = await runScheduleTick(taskId, userId);
+
+    expect(outcome).toEqual({ ran: false, reason: 'unviewed-results' });
+    expect(mockTaskTopicModel.countConsecutiveCompletedAutomationRuns).toHaveBeenCalledWith(
+      taskId,
+      { limit: 3, since: undefined },
+    );
+    expect(mockTaskModel.updateStatus).toHaveBeenCalledWith(taskId, 'paused', { error: null });
+    expect(mockRunner.runTask).not.toHaveBeenCalled();
+  });
+
+  it('keeps running while only two consecutive results are unviewed', async () => {
+    mockSelectTask.mockResolvedValue([baseTask({ context: {} })]);
+    mockTaskTopicModel.countConsecutiveCompletedAutomationRuns.mockResolvedValue(2);
+
+    const outcome = await runScheduleTick(taskId, userId);
+
+    expect(outcome).toEqual({ ran: true, taskIdentifier: 'T-1' });
     expect(mockRunner.runTask).toHaveBeenCalledWith({ taskId, trigger: 'schedule' });
   });
 

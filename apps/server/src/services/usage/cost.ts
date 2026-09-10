@@ -1,13 +1,7 @@
 import { USD_TO_CNY } from '@lobechat/const';
-import { LOBE_DEFAULT_MODEL_LIST, type Pricing } from 'model-bank';
+import { LOBE_DEFAULT_MODEL_LIST, type Pricing, type PricingUnitName } from 'model-bank';
 
 import { type ModelUsage } from '@/types/message';
-import {
-  getCachedTextInputUnitRate,
-  getTextInputUnitRate,
-  getTextOutputUnitRate,
-  getWriteCacheInputUnitRate,
-} from '@/utils/pricing';
 
 const PER_MILLION = 1_000_000;
 
@@ -16,12 +10,12 @@ const PER_MILLION = 1_000_000;
 const pricingByKey = new Map<string, Pricing | undefined>();
 for (const m of LOBE_DEFAULT_MODEL_LIST) {
   pricingByKey.set(`${m.providerId}/${m.id}`, m.pricing);
-  if (!pricingByKey.has(m.id)) pricingByKey.set(m.id, m.pricing);
+  if (!pricingByKey.get(m.id)) pricingByKey.set(m.id, m.pricing);
 }
 
 const lookupPricing = (provider?: string | null, model?: string | null): Pricing | undefined => {
   if (!model) return undefined;
-  if (provider && pricingByKey.has(`${provider}/${model}`)) {
+  if (provider && pricingByKey.get(`${provider}/${model}`)) {
     return pricingByKey.get(`${provider}/${model}`);
   }
   return pricingByKey.get(model);
@@ -31,6 +25,25 @@ const lookupPricing = (provider?: string | null, model?: string | null): Pricing
 // USD so every aggregate is comparable regardless of the model's listed currency.
 const toUsdRate = (rate: number | undefined, currency?: string): number | undefined =>
   rate === undefined ? undefined : currency === 'CNY' ? rate / USD_TO_CNY : rate;
+
+// Unlike UI price labels, cost attribution must select the tier for the full input size.
+const inputTierRate = (
+  pricing: Pricing | undefined,
+  name: PricingUnitName,
+  inputTokens: number,
+) => {
+  const unit = pricing?.units.find((item) => item.name === name);
+  if (!unit || unit.unit !== 'millionTokens') return undefined;
+  if (unit.strategy === 'fixed') return unit.rate;
+  if (unit.strategy === 'tiered') {
+    return (
+      unit.tiers.find((tier) => tier.upTo === 'infinity' || inputTokens <= tier.upTo) ??
+      unit.tiers.at(-1)
+    )?.rate;
+  }
+  // A lookup (e.g. cache TTL) cannot be recovered from token counts alone.
+  return undefined;
+};
 
 export interface MessageCostSplit {
   cachedInputCost: number;
@@ -61,22 +74,27 @@ export const computeMessageCostSplit = (
   usage: ModelUsage | undefined,
   provider?: string | null,
   model?: string | null,
-  storedCost = 0,
+  storedCost?: number,
 ): MessageCostSplit => {
   const pricing = lookupPricing(provider, model);
   const currency = pricing?.currency;
 
-  const inputRate = toUsdRate(getTextInputUnitRate(pricing), currency);
-  const cachedRate = toUsdRate(getCachedTextInputUnitRate(pricing), currency) ?? inputRate;
-  const writeRate = toUsdRate(getWriteCacheInputUnitRate(pricing), currency) ?? inputRate;
-  const outputRate = toUsdRate(getTextOutputUnitRate(pricing), currency);
+  const tierTokens = usage?.totalInputTokens ?? 0;
+  const inputRate = toUsdRate(inputTierRate(pricing, 'textInput', tierTokens), currency);
+  const cachedRate =
+    toUsdRate(inputTierRate(pricing, 'textInput_cacheRead', tierTokens), currency) ?? inputRate;
+  const writeRate =
+    toUsdRate(inputTierRate(pricing, 'textInput_cacheWrite', tierTokens), currency) ?? inputRate;
+  const outputRate = toUsdRate(inputTierRate(pricing, 'textOutput', tierTokens), currency);
 
   const cacheReadTokens = usage?.inputCachedTokens ?? 0;
   const totalInputTokens = usage?.totalInputTokens ?? 0;
-  const cacheMissTokens =
-    usage?.inputCacheMissTokens ?? Math.max(0, totalInputTokens - cacheReadTokens);
   const toolTokens = usage?.inputToolTokens ?? 0;
   const cacheWriteTokens = usage?.inputWriteCacheTokens ?? 0;
+  // Normalized totals already include tool tokens. An explicit miss bucket excludes them.
+  const cacheMissTokens =
+    usage?.inputCacheMissTokens ??
+    Math.max(0, totalInputTokens - cacheReadTokens - cacheWriteTokens - toolTokens);
   const outputTokens = usage?.totalOutputTokens ?? 0;
 
   let freshInputCost =
@@ -87,7 +105,7 @@ export const computeMessageCostSplit = (
   let computedTotal = freshInputCost + cacheReadCost + cacheWriteCost + outputCost;
 
   // Reconcile the split with the billed cost so cards == chart.
-  if (storedCost > 0) {
+  if (storedCost !== undefined && Number.isFinite(storedCost) && storedCost >= 0) {
     if (computedTotal > 0) {
       const scale = storedCost / computedTotal;
       freshInputCost *= scale;

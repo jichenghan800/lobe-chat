@@ -30,6 +30,8 @@ import {
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isCottiManagedSettingsTab } from '@/features/CottiPlatformManagement/managedSettings';
+import { useManagedSettingsAccess } from '@/features/CottiPlatformManagement/useManagedSettingsAccess';
 import { useElectronStore } from '@/store/electron';
 import { electronSyncSelectors } from '@/store/electron/selectors';
 import { SettingsTabs } from '@/store/global/initialState';
@@ -71,6 +73,7 @@ export const useCategory = () => {
   const { t: tLabs } = useTranslation('labs');
   const { t: tSubscription } = useTranslation('subscription');
   const mobile = useServerConfigStore((s) => s.isMobile);
+  const { canManage } = useManagedSettingsAccess();
   const { hideDocs, showApiKeyManage, showProvider } = useServerConfigStore(featureFlagsSelectors);
   const [avatar, username] = useUserStore((s) => [
     userProfileSelectors.userAvatar(s),
@@ -268,8 +271,14 @@ export const useCategory = () => {
       title: t('group.developer'),
     });
 
-    return groups;
+    return groups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => canManage || !isCottiManagedSettingsTab(item.key)),
+      }))
+      .filter((group) => group.items.length > 0);
   }, [
+    canManage,
     t,
     tAuth,
     tLabs,

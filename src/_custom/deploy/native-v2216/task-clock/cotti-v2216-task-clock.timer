@@ -1,0 +1,11 @@
+[Unit]
+Description=Scan COTTI chatdev scheduled tasks every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
+Persistent=false
+Unit=cotti-v2216-task-clock.service
+
+[Install]
+WantedBy=timers.target

@@ -4,13 +4,15 @@ import { Alert, Button, Text } from '@lobehub/ui/base-ui';
 import { type FormInstance, type InputRef } from 'antd';
 import { Badge, Divider, Form } from 'antd';
 import { createStaticStyles } from 'antd-style';
-import { Mail } from 'lucide-react';
+import { KeyRound, Mail } from 'lucide-react';
 import { type CSSProperties, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AuthIcons from '@/components/AuthIcons';
 import AuthCard from '@/features/AuthCard';
 import AuthAgreement, { useAuthAgreement } from '@/features/AuthShell/AuthAgreement';
+
+import type { useEmailOtpSignIn } from './useEmailOtpSignIn';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   inlineLink: css`
@@ -48,6 +50,9 @@ export interface SignInEmailStepProps {
   onResetEmail: () => void;
   onSetPassword: () => void;
   onSocialSignIn: (provider: string) => void;
+  otp?: ReturnType<typeof useEmailOtpSignIn>;
+  otpEmail?: string;
+  otpSent?: boolean;
   serverConfigInit: boolean;
   sessionExpired?: boolean;
   socialLoading: string | null;
@@ -60,6 +65,9 @@ export const SignInEmailStep = ({
   lastAuthProvider,
   loading,
   oAuthSSOProviders,
+  otp,
+  otpEmail = '',
+  otpSent = false,
   serverConfigInit,
   sessionExpired,
   socialLoading,
@@ -75,7 +83,7 @@ export const SignInEmailStep = ({
 
   useEffect(() => {
     emailInputRef.current?.focus();
-  }, []);
+  }, [otpSent]);
 
   const divider = (
     <Divider>
@@ -157,39 +165,101 @@ export const SignInEmailStep = ({
           layout="vertical"
           onFinish={(values) =>
             continueWithAgreement(() => {
-              void onCheckUser(values as { email: string });
+              if (otp && otpSent) void otp.verify(otpEmail);
+              else void onCheckUser(values as { email: string });
             })
           }
         >
-          <Form.Item
-            name="email"
-            rules={[
-              { message: t('betterAuth.errors.emailRequired'), required: true },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  const trimmedValue = (value as string).trim();
-                  if (EMAIL_REGEX.test(trimmedValue) || USERNAME_REGEX.test(trimmedValue)) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error(t('betterAuth.errors.emailInvalid')));
+          {otp && otpSent ? (
+            <Form.Item key="otp">
+              <Input
+                aria-describedby={otp.error ? 'email-otp-error' : 'email-otp-recipient'}
+                aria-invalid={!!otp.error}
+                aria-label={t('otp.code')}
+                autoComplete="one-time-code"
+                disabled={loading || otp.busy}
+                inputMode="numeric"
+                maxLength={6}
+                placeholder={t('otp.code')}
+                prefix={<Icon icon={KeyRound} style={{ marginInline: 6 }} />}
+                ref={emailInputRef}
+                size="large"
+                style={{ padding: 6 }}
+                value={otp.code}
+                onChange={(event) => otp.setCode(event.target.value)}
+              />
+              {otp.error && (
+                <Text id="email-otp-error" role="alert" type="danger">
+                  {otp.error}
+                </Text>
+              )}
+            </Form.Item>
+          ) : (
+            <Form.Item
+              key="email"
+              name="email"
+              rules={[
+                { message: t('betterAuth.errors.emailRequired'), required: true },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    const trimmedValue = (value as string).trim();
+                    if (EMAIL_REGEX.test(trimmedValue) || USERNAME_REGEX.test(trimmedValue)) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error(t('betterAuth.errors.emailInvalid')));
+                  },
                 },
-              },
-            ]}
-          >
-            <Input
-              autoComplete="username"
-              inputMode="email"
-              placeholder={t('betterAuth.signin.emailPlaceholder')}
-              prefix={<Icon icon={Mail} style={{ marginInline: 6 }} />}
-              ref={emailInputRef}
-              size="large"
-              style={{ padding: 6 }}
-            />
-          </Form.Item>
+              ]}
+            >
+              <Input
+                autoComplete="username"
+                disabled={!!otp && (otpSent || loading || otp.busy)}
+                inputMode="email"
+                placeholder={t('betterAuth.signin.emailPlaceholder')}
+                prefix={<Icon icon={Mail} style={{ marginInline: 6 }} />}
+                ref={emailInputRef}
+                size="large"
+                style={{ padding: 6 }}
+              />
+            </Form.Item>
+          )}
+          {otp && otpSent && (
+            <Flexbox gap={4} style={{ marginBottom: 16 }}>
+              <Text fontSize={13} id="email-otp-recipient" type="secondary">
+                {t('otp.sentInline', { email: otpEmail })}
+              </Text>
+              <Flexbox horizontal justify="space-between">
+                <Button
+                  disabled={loading || otp.busy || otp.remaining > 0}
+                  size="small"
+                  type="text"
+                  onClick={() => void otp.send(otpEmail)}
+                >
+                  {otp.remaining > 0
+                    ? t('otp.cooldown', { seconds: otp.remaining })
+                    : t('otp.resend')}
+                </Button>
+                <Button
+                  disabled={loading || otp.busy}
+                  size="small"
+                  type="text"
+                  onClick={onResetEmail}
+                >
+                  {t('betterAuth.signin.emailSent.changeEmail')}
+                </Button>
+              </Flexbox>
+            </Flexbox>
+          )}
           <AuthAgreement checked={agreementChecked} onChange={setAgreementChecked} />
-          <Button block htmlType="submit" loading={loading} size="large" type="primary">
-            {t('betterAuth.signin.nextStep')}
+          <Button
+            block
+            htmlType="submit"
+            loading={loading || otp?.busy}
+            size="large"
+            type="primary"
+          >
+            {t(otp ? (otpSent ? 'otp.submit' : 'otp.send') : 'betterAuth.signin.nextStep')}
           </Button>
         </Form>
       )}

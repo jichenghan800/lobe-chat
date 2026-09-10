@@ -1,0 +1,136 @@
+name: cotti-v2216-native
+
+services:
+  app:
+    image: &cotti_app_image lobehub:cotti-v2216-email-otp-reuse-20260909
+    ports:
+      - '127.0.0.1:3230:3210'
+    env_file:
+      - ../../../../.records/native-v2216/app.env
+    environment:
+      NODE_OPTIONS: --max-old-space-size=8192 --dns-result-order=ipv4first --use-openssl-ca
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis-history:
+        condition: service_healthy
+      searxng:
+        condition: service_healthy
+    restart: unless-stopped
+
+  app-cotti:
+    image: *cotti_app_image
+    ports:
+      - '127.0.0.1:3231:3210'
+    env_file:
+      - ../../../../.records/native-v2216/app-cotti.env
+    environment:
+      NODE_OPTIONS: --max-old-space-size=8192 --dns-result-order=ipv4first --use-openssl-ca
+    networks:
+      # Keep Market egress on the application bridge after container recreation.
+      default:
+        gw_priority: 100
+      # OIDC remains reachable on its directly connected network.
+      cotti-auth-shared:
+        gw_priority: 0
+    restart: unless-stopped
+
+  postgresql:
+    image: sg-ai-han-registry.ap-southeast-1.cr.aliyuncs.com/lobechat/paradedb@sha256:4d270f6411d94134f6d188a8c7c25605c0e95c0a737c87c4bbcd9953e069cbe2
+    command: ['postgres', '-c', 'shared_preload_libraries=pg_search']
+    env_file:
+      - ../../../../.records/native-v2216/postgres.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d lobehub_native']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  redis:
+    image: redis@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  redis-history:
+    image: redis@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-history-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  searxng:
+    image: searxng/searxng@sha256:c7cc75852051bf6254afda6ed1b920dd1677d8efe4ab141bf558f02e582f4371
+    cpus: 0.75
+    mem_limit: 768m
+    volumes:
+      - ../../../../.records/native-v2216/search/settings.yml:/etc/searxng/settings.yml:ro
+      - searxng-cache:/var/cache/searxng
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  storage:
+    image: rustfs/rustfs@sha256:b7014e0ce2bc703c1316b3ef760e29dfae61fe4a50d1a66fa89638e0f8ea211f
+    env_file:
+      - ../../../../.records/native-v2216/storage.env
+    environment:
+      RUSTFS_CONSOLE_ENABLE: 'true'
+    ports:
+      - '127.0.0.1:19300:9000'
+      - '127.0.0.1:19301:9001'
+    volumes:
+      - storage-data:/data
+    command: ['/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:9000/health >/dev/null 2>&1']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  storage-init:
+    image: minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    env_file:
+      - ../../../../.records/native-v2216/storage.env
+    depends_on:
+      storage:
+        condition: service_healthy
+    volumes:
+      - ../../../../docker-compose/deploy/bucket.config.json:/bucket.config.json:ro
+    entrypoint: ['/bin/sh', '-ec']
+    command:
+      - >-
+        mc alias set native http://storage:9000 "$${RUSTFS_ACCESS_KEY}" "$${RUSTFS_SECRET_KEY}" >/dev/null;
+        mc mb native/lobe --ignore-existing;
+        mc anonymous set-json /bucket.config.json native/lobe
+    restart: 'no'
+
+volumes:
+  postgres-data:
+  redis-data:
+  storage-data:
+  redis-history-data:
+  searxng-cache:
+
+networks:
+  cotti-auth-shared:
+    external: true
+    name: cotti-auth-shared

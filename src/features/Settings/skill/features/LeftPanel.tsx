@@ -2,13 +2,13 @@
 
 import { DropdownMenu, Flexbox, Icon } from '@lobehub/ui';
 import { Button, Text } from '@lobehub/ui/base-ui';
-import { GithubIcon } from '@lobehub/ui/icons';
+import { GithubIcon, Lark } from '@lobehub/ui/icons';
 import { createStaticStyles } from 'antd-style';
 import { FileArchive, Grid2x2Plus, Link, Store } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { CustomConnectorModal } from '@/features/Connectors';
+import { CustomConnectorModal, useConnectFeishuDocuments } from '@/features/Connectors';
 import { createSkillStoreModal } from '@/features/SkillStore';
 import { openImportFromGithubModal } from '@/features/SkillStore/SkillList/ImportFromGithubModal';
 import { openImportFromUrlModal } from '@/features/SkillStore/SkillList/ImportFromUrlModal';
@@ -57,6 +57,8 @@ const LeftPanel = memo<LeftPanelProps>(
   ({ onDeleteSelected, onSelect, selectedIdentifier, viewMode }) => {
     const { t } = useTranslation('setting');
     const [showAddConnector, setShowAddConnector] = useState(false);
+    const { connect: connectFeishuDocuments, connecting: connectingFeishuDocuments } =
+      useConnectFeishuDocuments();
 
     const handleOpenStore = useCallback(() => {
       createSkillStoreModal();
@@ -76,16 +78,38 @@ const LeftPanel = memo<LeftPanelProps>(
 
             <div style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
               {isConnectorView ? (
-                // Connector view: single action to add a custom OAuth connector.
-                <Button
-                  icon={Grid2x2Plus}
-                  size="small"
-                  title={t('connector.add.title', {
-                    defaultValue: 'Add Custom Connector',
-                    ns: 'tool',
-                  })}
-                  onClick={() => setShowAddConnector(true)}
-                />
+                <DropdownMenu
+                  nativeButton={false}
+                  placement="bottomRight"
+                  items={[
+                    {
+                      icon: <Icon icon={Lark.Color} />,
+                      key: 'feishuDocuments',
+                      label: (
+                        <Flexbox gap={2}>
+                          <span>{t('connectorPreset.feishuDocuments.title')}</span>
+                          <Text style={{ fontSize: 12 }} type="secondary">
+                            {t('connectorPreset.feishuDocuments.description')}
+                          </Text>
+                        </Flexbox>
+                      ),
+                      onClick: connectFeishuDocuments,
+                    },
+                    {
+                      icon: <Icon icon={Grid2x2Plus} />,
+                      key: 'customConnector',
+                      label: t('connectorPreset.customConnector'),
+                      onClick: () => setShowAddConnector(true),
+                    },
+                  ]}
+                >
+                  <Button
+                    icon={Grid2x2Plus}
+                    loading={connectingFeishuDocuments}
+                    size="small"
+                    title={t('connectorPreset.add')}
+                  />
+                </DropdownMenu>
               ) : (
                 // Skill view: import a skill from a URL, GitHub, or a zip upload.
                 <DropdownMenu

@@ -849,6 +849,7 @@ export const discoverTools = async (
       },
       model,
       provider,
+      selectedToolIds,
       useApplicationBuiltinSearchTool: searchDecision.useApplicationBuiltinSearchTool,
     });
 

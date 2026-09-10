@@ -1,5 +1,5 @@
 import { Tooltip } from '@lobehub/ui';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
@@ -10,8 +10,11 @@ import { topicSelectors } from '@/store/chat/slices/topic/selectors';
 import SelectorTrigger from '../../components/SelectorTrigger';
 import { useAgentId } from '../../hooks/useAgentId';
 import { useAgentModelSelection } from '../../hooks/useAgentModelSelection';
+import { useEffectiveAgentMode } from '../../hooks/useEffectiveAgentMode';
 import { useModelLockTooltip } from '../../hooks/useModelLockTooltip';
 import { useReasoningEffortControl } from '../../hooks/useReasoningEffortControl';
+import { useSwitchModelDisplayScope } from '../../hooks/useSwitchModelDisplayScope';
+import { useChatInputStore } from '../../store';
 import { useActionBarContext } from '../context';
 import SelectorMenu from './SelectorMenu';
 
@@ -19,6 +22,9 @@ const ModelSwitch = memo(() => {
   const { t } = useTranslation('chat');
   const { dropdownPlacement } = useActionBarContext();
   const agentId = useAgentId();
+  const effectiveAgentMode = useEffectiveAgentMode(agentId);
+  const explicitScope = useChatInputStore((s) => s.modelDisplayScope);
+  const modelDisplayScope = explicitScope ?? effectiveAgentMode.currentMode;
   const {
     canDisplayModel,
     canSelectModel,
@@ -33,9 +39,16 @@ const ModelSwitch = memo(() => {
   // (via selectModel, which honors workspace member overrides).
   const activeTopicId = useChatStore((s) => s.activeTopicId);
   const topicModel = useChatStore(topicSelectors.activeTopicModel);
+  const isTopicModelLoading = useChatStore(topicSelectors.isActiveTopicModelLoading);
   const updateTopicModel = useChatStore((s) => s.updateTopicModel);
   const model = topicModel?.model ?? agentModel;
   const provider = topicModel?.model ? topicModel.provider : agentProvider;
+
+  const switchModelDisplayScope = useSwitchModelDisplayScope();
+  useEffect(() => {
+    if (!explicitScope || !canSelectModel || !agentId || isTopicModelLoading) return;
+    void switchModelDisplayScope(explicitScope).catch(console.error);
+  }, [agentId, canSelectModel, explicitScope, isTopicModelLoading, switchModelDisplayScope]);
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
   const displayName = enabledModel?.displayName || model;
@@ -48,12 +61,12 @@ const ModelSwitch = memo(() => {
 
   const handleModelChange = useCallback(
     async (params: { model: string; provider: string }) => {
-      if (!canSelectModel) return;
+      if (!canSelectModel || isTopicModelLoading) return;
 
       if (activeTopicId) await updateTopicModel(activeTopicId, params);
       else await selectModel(params);
     },
-    [activeTopicId, canSelectModel, selectModel, updateTopicModel],
+    [activeTopicId, canSelectModel, isTopicModelLoading, selectModel, updateTopicModel],
   );
 
   // Both current values in one label, the way the heterogeneous selector reads:
@@ -72,7 +85,7 @@ const ModelSwitch = memo(() => {
     />
   );
 
-  if (!canDisplayModel) return null;
+  if (!canDisplayModel || isTopicModelLoading) return null;
 
   // Model + effort in one menu, so the two settings that decide how a turn runs
   // are picked in the same place (see SelectorMenu).
@@ -83,6 +96,7 @@ const ModelSwitch = memo(() => {
         displayName={displayName}
         effort={effort}
         model={model}
+        modelDisplayScope={modelDisplayScope}
         placement={dropdownPlacement ?? 'topRight'}
         provider={provider}
         onModelChange={handleModelChange}
@@ -98,6 +112,7 @@ const ModelSwitch = memo(() => {
   return (
     <ModelSwitchPanel
       model={model}
+      modelDisplayScope={modelDisplayScope}
       openOnHover={false}
       placement={dropdownPlacement ?? 'topRight'}
       provider={provider}

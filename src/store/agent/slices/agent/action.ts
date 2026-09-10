@@ -104,6 +104,8 @@ export class AgentSliceActionImpl {
   readonly #set: Setter;
   readonly #pendingAgentDocuments = new Map<string, Promise<AgentContextDocument[] | undefined>>();
   readonly #updateAgentConfigControllers = new Map<string, AbortController>();
+  readonly #pendingAgentConfigUpdates = new Map<string, Promise<void>>();
+  readonly #deferredAgentConfigFetches = new Set<string>();
   readonly #updateAgentMetaControllers = new Map<string, AbortController>();
 
   constructor(set: Setter, get: () => AgentStore, _api?: unknown) {
@@ -333,12 +335,36 @@ export class AgentSliceActionImpl {
       agentId,
     );
 
+    const update = this.#get().optimisticUpdateAgentConfig(agentId, config, controller.signal, {
+      ...options,
+      rethrow: true,
+    });
+    this.#pendingAgentConfigUpdates.set(agentId, update);
     try {
-      await this.#get().optimisticUpdateAgentConfig(agentId, config, controller.signal, options);
+      await update;
+    } catch (error) {
+      if (options?.rethrow) throw error;
     } finally {
       if (this.#updateAgentConfigControllers.get(agentId) === controller) {
         this.#updateAgentConfigControllers.delete(agentId);
+        this.#pendingAgentConfigUpdates.delete(agentId);
+        if (this.#deferredAgentConfigFetches.delete(agentId)) {
+          await this.#get().internal_refreshAgentConfig(agentId);
+        }
       }
+    }
+  };
+
+  waitForAgentConfigUpdateById = async (agentId: string): Promise<void> => {
+    let pending = this.#pendingAgentConfigUpdates.get(agentId);
+    while (pending) {
+      try {
+        await pending;
+      } catch (error) {
+        const latest = this.#pendingAgentConfigUpdates.get(agentId);
+        if (!latest || latest === pending) throw error;
+      }
+      pending = this.#pendingAgentConfigUpdates.get(agentId);
     }
   };
 
@@ -427,6 +453,10 @@ export class AgentSliceActionImpl {
       },
       {
         onData: (data) => {
+          if (this.#pendingAgentConfigUpdates.has(agentId)) {
+            this.#deferredAgentConfigFetches.add(agentId);
+            return;
+          }
           // A successful fetch that resolves to null means the agent doesn't
           // exist or the caller lost access (e.g. a workspace agent switched
           // back to private) — a settled state, not "still loading".

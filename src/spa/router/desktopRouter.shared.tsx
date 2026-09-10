@@ -1152,6 +1152,58 @@ const createMainAreaChildrenDefinition = (options: MainAreaRouteOptions = {}): R
     path: 'apps',
   },
 
+  {
+    path: 'settings/cotti-people',
+    element: dynamicElement(
+      () => import('@/routes/(main)/settings/cotti-people'),
+      'COTTI > People',
+    ),
+  },
+  {
+    path: 'settings/cotti-models',
+    element: dynamicElement(
+      () => import('@/routes/(main)/settings/cotti-models'),
+      'COTTI > Models',
+    ),
+  },
+  {
+    path: 'overview',
+    element: dynamicLayout(
+      () => import('@/routes/(main)/overview/_layout'),
+      'COTTI > Conversations',
+    ),
+    children: [
+      {
+        index: true,
+        element: dynamicElement(
+          () => import('@/routes/(main)/overview'),
+          'COTTI > Conversations > List',
+        ),
+      },
+      {
+        path: ':topicId',
+        element: dynamicElement(
+          () => import('@/routes/(main)/overview/[topicId]'),
+          'COTTI > Conversations > Detail',
+        ),
+      },
+    ],
+  },
+  {
+    path: 'settings/platform-analytics',
+    element: dynamicElement(
+      () => import('@/routes/(main)/settings/cotti-platform'),
+      'COTTI > Original Management URL',
+    ),
+  },
+  {
+    path: 'settings/cotti-platform',
+    element: dynamicElement(
+      () => import('@/routes/(main)/settings/cotti-platform'),
+      'COTTI > Platform',
+    ),
+  },
+
   // Settings routes (personal-only — never mirrored under /:workspaceSlug)
   {
     children: [

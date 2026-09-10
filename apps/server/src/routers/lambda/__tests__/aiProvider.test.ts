@@ -13,6 +13,14 @@ import { type AiProviderDetailItem, type AiProviderRuntimeState } from '@/types/
 
 import { aiProviderRouter } from '../aiProvider';
 
+vi.mock('@/database/models/cottiModelDisplay', () => ({
+  CottiModelDisplayModel: vi.fn(() => ({ getConfig: vi.fn() })),
+}));
+vi.mock('@/server/services/cotti/modelDisplayAccess', async () => {
+  const original = await import('@/server/services/aiProviderAccess');
+  return { getCottiScopedAiProviderRuntimeState: original.getUserScopedAiProviderRuntimeState };
+});
+
 const mockGetHiddenBuiltinModelsForUser = vi.hoisted(() => vi.fn());
 
 vi.mock('@/business/server/aiProvider', () => ({

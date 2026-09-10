@@ -324,14 +324,14 @@ describe('resolveModelExtendParams', () => {
         expect(result.reasoning_effort).toBe('medium');
       });
 
-      it('should not set reasoning_effort when not configured', () => {
+      it('should use medium reasoning_effort for an unconfigured Agent', () => {
         const result = resolveModelExtendParams({
           chatConfig: {} as any,
           model: 'gpt-4',
           provider: 'openai',
         });
 
-        expect(result.reasoning_effort).toBeUndefined();
+        expect(result.reasoning_effort).toBe('medium');
       });
     });
 
@@ -1685,7 +1685,7 @@ describe('parameter precedence and conflicts', () => {
         budget_tokens: 0,
         type: 'disabled',
       });
-      expect(result.reasoning_effort).toBeUndefined();
+      expect(result.reasoning_effort).toBe('medium');
       expect(result.verbosity).toBeUndefined();
       expect(result.thinkingBudget).toBeUndefined();
       expect(result.thinkingLevel).toBe('high');
@@ -1717,7 +1717,7 @@ describe('model-instance reasoning config migration', () => {
       provider: 'openai',
     });
 
-    expect(result.reasoning_effort).toBeUndefined();
+    expect(result.reasoning_effort).toBe('medium');
   });
 
   it('should apply model-instance config over stale agent chatConfig values', () => {

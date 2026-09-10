@@ -1,7 +1,7 @@
 import { Flexbox, Icon } from '@lobehub/ui';
 import { Button, Popover } from '@lobehub/ui/base-ui';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
-import { ChevronDownIcon, InfinityIcon, ListTodoIcon } from 'lucide-react';
+import { ChevronDownIcon, InfinityIcon, ListTodoIcon, MessageCircleIcon } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,6 +9,7 @@ import { usePermission } from '@/hooks/usePermission';
 
 import type { HomeMode } from '../types';
 import { isHomeModeDisabled, resolvePermittedHomeMode } from './modePermission';
+import { homeModePresentation } from './modePresentation';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   activeOption: css`
@@ -99,7 +100,8 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 // look like two different features. Agent mode keeps the infinity mark, which
 // is the product's own sign for the open-ended, keeps-going side of the pair.
 const MODES = [
-  { icon: InfinityIcon, key: 'chat' },
+  { icon: MessageCircleIcon, key: 'chat' },
+  { icon: InfinityIcon, key: 'agent' },
   { icon: ListTodoIcon, key: 'task' },
 ] as const;
 
@@ -157,9 +159,11 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
                 <Icon icon={icon} size={16} />
               </Flexbox>
               <Flexbox className={styles.optionText} flex={1}>
-                <div className={styles.optionTitle}>{t(`dashboard.mode.${key}`)}</div>
+                <div className={styles.optionTitle}>{t(homeModePresentation[key].labelKey)}</div>
                 <div className={styles.optionDesc}>
-                  {key === 'chat' ? tChat('chatMode.agentDesc') : t('dashboard.modeDesc.task')}
+                  {key === 'task'
+                    ? t('dashboard.modeDesc.task')
+                    : tChat(homeModePresentation[key].descriptionKey)}
                 </div>
               </Flexbox>
             </Flexbox>

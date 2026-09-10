@@ -82,7 +82,7 @@ const Recommendations = memo<RecommendationsProps>(({ variant = 'default' }) => 
 
   // Rendered through the skeleton phase, not just in 'cards': the control that
   // started the refresh must not vanish while the refresh it started is running.
-  const refresh = showTaskTemplates && (
+  const refresh = showTaskTemplates && taskTemplatesState.mode !== 'error' && (
     <Button
       disabled={!canRefresh && !isRefreshing}
       icon={<RefreshCw className={isRefreshing ? styles.refreshSpin : undefined} size={12} />}

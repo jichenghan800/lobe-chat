@@ -1,10 +1,40 @@
+import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 
 import {
   audioMimeFromExtension,
+  filterExcelChatUploadFiles,
   filterSupportedChatUploadFiles,
+  isLargeExcelFile,
   isSupportedChatUploadFile,
+  LARGE_EXCEL_UPLOAD_LIMIT_BYTES,
 } from './uploadGuard';
+
+const createWorkbookFile = (
+  sheets: Array<{ data: unknown[][]; name: string }>,
+  name = 'test.xlsx',
+) => {
+  const workbookFiles = Object.fromEntries(
+    sheets.map((sheet, index) => {
+      const cells = sheet.data
+        .flatMap((row, rowIndex) =>
+          row.map(
+            (cell, columnIndex) =>
+              `<c r="${String.fromCodePoint(65 + columnIndex)}${rowIndex + 1}" t="inlineStr"><is><t>${String(cell)}</t></is></c>`,
+          ),
+        )
+        .join('');
+      const sheetXml = `<worksheet><sheetData>${cells ? `<row>${cells}</row>` : ''}</sheetData></worksheet>`;
+
+      return [`xl/worksheets/sheet${index + 1}.xml`, strToU8(sheetXml)];
+    }),
+  );
+  const buffer = zipSync(workbookFiles);
+
+  return new File([buffer], name, {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+};
 
 describe('isSupportedChatUploadFile', () => {
   it('accepts supported chat image formats', () => {
@@ -75,6 +105,83 @@ describe('isSupportedChatUploadFile', () => {
     expect(isSupportedChatUploadFile(new File(['a'], 'voice.wav', { type: 'audio/wav' }))).toBe(
       true,
     );
+  });
+});
+
+describe('isLargeExcelFile', () => {
+  it('detects Excel files above the regular chat size limit', () => {
+    const largeExcel = new File(
+      [new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)],
+      'large.xlsx',
+      {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    );
+    const smallExcel = new File([new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES)], 'small.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const largeCsv = new File([new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)], 'large.csv', {
+      type: 'text/csv',
+    });
+
+    expect(isLargeExcelFile(largeExcel)).toBe(true);
+    expect(isLargeExcelFile(smallExcel)).toBe(false);
+    expect(isLargeExcelFile(largeCsv)).toBe(false);
+  });
+});
+
+describe('filterExcelChatUploadFiles', () => {
+  it('requires Agent mode when uploading multiple Excel files in regular chat', async () => {
+    const firstExcel = createWorkbookFile([{ data: [['a']], name: 'Sheet1' }], 'first.xlsx');
+    const secondExcel = createWorkbookFile([{ data: [['b']], name: 'Sheet1' }], 'second.xlsx');
+    const textFile = new File(['note'], 'note.txt', { type: 'text/plain' });
+
+    const result = await filterExcelChatUploadFiles([firstExcel, textFile, secondExcel]);
+
+    expect(result.allowedFiles).toEqual([textFile]);
+    expect(result.excelFilesRequiringAgentMode).toEqual([firstExcel, secondExcel]);
+  });
+
+  it('requires Agent mode for a single Excel file with multiple non-empty sheets', async () => {
+    const multiSheetExcel = createWorkbookFile([
+      {
+        data: [
+          ['Engineer', 'Ticket'],
+          ['Alice', 'A001'],
+        ],
+        name: 'Install',
+      },
+      {
+        data: [
+          ['Engineer', 'Ticket'],
+          ['Bob', 'R001'],
+        ],
+        name: 'Repair',
+      },
+    ]);
+
+    const result = await filterExcelChatUploadFiles([multiSheetExcel]);
+
+    expect(result.allowedFiles).toEqual([]);
+    expect(result.excelFilesRequiringAgentMode).toEqual([multiSheetExcel]);
+  });
+
+  it('allows a small single-sheet Excel file in regular chat', async () => {
+    const singleSheetExcel = createWorkbookFile([
+      {
+        data: [
+          ['Engineer', 'Ticket'],
+          ['Alice', 'A001'],
+        ],
+        name: 'Install',
+      },
+      { data: [], name: 'Empty' },
+    ]);
+
+    const result = await filterExcelChatUploadFiles([singleSheetExcel]);
+
+    expect(result.allowedFiles).toEqual([singleSheetExcel]);
+    expect(result.excelFilesRequiringAgentMode).toEqual([]);
   });
 });
 

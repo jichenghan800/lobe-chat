@@ -61,6 +61,7 @@ const agentState = vi.hoisted(() => ({
     agt_inbox: {},
   } as Record<string, any>,
   inboxAgentId: 'agt_inbox',
+  waitForAgentConfigUpdateById: vi.fn().mockResolvedValue(undefined),
   internal_dispatchAgentMap: vi.fn(),
 }));
 
@@ -178,6 +179,7 @@ describe('Home InputArea useSend', () => {
     routerMock.push.mockReset();
     routerMock.replace.mockReset();
     sendMessageMock.mockReset();
+    agentState.waitForAgentConfigUpdateById.mockReset().mockResolvedValue(undefined);
     clearContentMock.mockReset();
     clearChatUploadFileListMock.mockReset();
     clearChatContextSelectionsMock.mockReset();
@@ -497,5 +499,55 @@ describe('Home InputArea useSend', () => {
       }),
     );
     expect(clearChatContextSelectionsMock).toHaveBeenCalledWith('home:chat:agt_inbox');
+  });
+  it('keeps an Agent-only spreadsheet draft on Home instead of sending it through Chat', async () => {
+    fileState.chatUploadFileList = [
+      { id: 'file-sheet', requiresAgentMode: true, status: 'success' },
+    ] as any;
+    const { result } = renderHook(() => useSend('chat'));
+
+    await act(async () => {
+      await result.current.send({
+        clearContent: vi.fn(),
+        editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+        getEditorData: () => undefined,
+        getMarkdownContent: () => 'analyze this workbook',
+      });
+    });
+
+    expect(sendMessageMock).not.toHaveBeenCalled();
+    expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+    expect(messageErrorMock).toHaveBeenCalledWith('attachment.agentModeRequiredHome');
+  });
+
+  it('does not send until the selected agent model is saved', async () => {
+    let finish!: () => void;
+    agentState.waitForAgentConfigUpdateById.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const { result } = renderHook(() => useSend('chat'));
+    const params: Parameters<SendButtonHandler>[0] = {
+      clearContent: vi.fn(),
+      editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+      getEditorData: () => undefined,
+      getMarkdownContent: () => 'test pending save',
+    };
+    sendMessageMock.mockClear();
+    let sending!: Promise<void>;
+    act(() => {
+      sending = Promise.resolve(result.current.send(params));
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(sendMessageMock).not.toHaveBeenCalled();
+    await act(async () => {
+      finish();
+      await sending;
+    });
+    expect(sendMessageMock).toHaveBeenCalledTimes(1);
   });
 });

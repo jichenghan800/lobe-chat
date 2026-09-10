@@ -56,3 +56,10 @@ export * from './userMemories';
 export * from './verify';
 export * from './work';
 export * from './workspace';
+
+export * from './cottiPeople';
+export * from './cottiModelDisplay';
+
+export * from './cottiAudit';
+
+export * from './cottiHomeNotification';

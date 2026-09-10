@@ -14,6 +14,8 @@ const provider: GenericProviderDefinition<{
       clientSecret: env.AUTH_GENERIC_OIDC_SECRET,
       issuer: env.AUTH_GENERIC_OIDC_ISSUER,
       overrides: {
+        // Restore the Portal confidential client's original Basic token authentication.
+        authentication: 'basic',
         /**
          * Mirror NextAuth's fallback that prefers name -> username -> email so Better Auth never
          * fails with name_is_missing when upstream profiles only expose username/email fields.

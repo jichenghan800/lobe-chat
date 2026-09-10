@@ -1,4 +1,5 @@
 import { CUSTOM_DOCUMENT_FILE_TYPE, DERIVED_DOCUMENT_SOURCE_TYPE } from '@lobechat/const';
+import { TRPCClientError } from '@trpc/client';
 
 import { type FileListItem, type KnowledgeItemStatus } from '@/types/files';
 import {
@@ -261,9 +262,20 @@ export class ResourceService {
   /**
    * Delete a resource
    */
+  private async getResourceForDeletion(id: string): Promise<ResourceItem | undefined> {
+    try {
+      return await this.getResource(id);
+    } catch (error) {
+      // A stale list can still contain files removed in another tab.
+      // Preserve authorization, transport, and server failures.
+      if (error instanceof TRPCClientError && error.data?.code === 'NOT_FOUND') return;
+      throw error;
+    }
+  }
+
   async deleteResource(id: string): Promise<void> {
     // Check if this is a file or document
-    const existing = await this.getResource(id);
+    const existing = await this.getResourceForDeletion(id);
     if (!existing) return; // Already deleted
 
     if (existing.sourceType === 'file') {
@@ -283,7 +295,7 @@ export class ResourceService {
 
     await Promise.all(
       ids.map(async (id) => {
-        const item = await this.getResource(id);
+        const item = await this.getResourceForDeletion(id);
         if (item) {
           if (item.sourceType === 'file') {
             fileIds.push(id);

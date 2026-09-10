@@ -1041,7 +1041,7 @@ export class AiAgentService {
       const settings = await userModel.getUserSettings();
       const memorySettings = settings?.memory as { enabled?: boolean } | undefined;
 
-      globalMemoryEnabled = agentMemoryEnabled ?? memorySettings?.enabled !== false;
+      globalMemoryEnabled = agentMemoryEnabled ?? memorySettings?.enabled ?? false;
 
       // Timezone drives the session-date placeholder rendered back to whoever
       // is actually conversing. In a share-visitor run that is the VISITOR,
