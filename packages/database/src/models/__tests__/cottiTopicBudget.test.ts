@@ -3,7 +3,13 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getTestDB } from '../../core/getTestDB';
-import { cottiTopicBudgetSettings, messages, topics, users } from '../../schemas';
+import {
+  cottiTopicBudgetSettings,
+  cottiUserPolicies,
+  messages,
+  topics,
+  users,
+} from '../../schemas';
 import { CottiTopicBudgetModel } from '../cottiTopicBudget';
 import { TopicCostFreezeModel } from '../topicCostFreeze';
 import { recomputeTopicUsage } from '../topicUsage';
@@ -61,6 +67,24 @@ describe('per-topic recorded spending limit', () => {
     await budget.updateConfig({ enabled: false, limitFen: 10000 }, 'admin');
     await budget.freezeIfExceeded('budget-owner', 'budget-topic');
     expect(await freezes.get('budget-topic')).not.toBeNull();
+  });
+  it('uses per-user limits, keeps other users independent and preserves existing freezes', async () => {
+    await db.insert(cottiUserPolicies).values({ userId: 'budget-owner', topicLimitFen: 500 });
+    await db.insert(messages).values({
+      id: 'budget-msg',
+      topicId: 'budget-topic',
+      userId: 'budget-owner',
+      role: 'assistant',
+      usage: { cost: 1 },
+    });
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic');
+    expect(await freezes.get('budget-topic')).toMatchObject({ reason: 'budget', limitFen: 500 });
+    await db
+      .update(cottiUserPolicies)
+      .set({ topicLimitFen: 5000 })
+      .where(eq(cottiUserPolicies.userId, 'budget-owner'));
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic');
+    expect(await freezes.get('budget-topic')).toMatchObject({ reason: 'budget', limitFen: 500 });
   });
   it('excludes foreign users, copied transcripts and non-assistant costs without double counting retries', async () => {
     await db.insert(messages).values([

@@ -7,6 +7,7 @@ import type { MockInstance } from 'vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AgentOperationModel } from '@/database/models/agentOperation';
+import { assertCottiAgentAllowed } from '@/server/services/cotti/userModelAccess';
 
 import { AgentRuntimeService, createEvalToolForwardingHook } from './AgentRuntimeService';
 import { hookDispatcher } from './hooks';
@@ -154,6 +155,8 @@ vi.mock('model-bank', async (importOriginal) => {
   };
 });
 
+vi.mock('@/server/services/cotti/userModelAccess', () => ({ assertCottiAgentAllowed: vi.fn() }));
+
 describe('AgentRuntimeService', () => {
   let service: AgentRuntimeService;
   let mockCoordinator: any;
@@ -213,6 +216,7 @@ describe('AgentRuntimeService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(assertCottiAgentAllowed).mockResolvedValue(undefined);
     process.env.AGENT_RUNTIME_BASE_URL = 'http://localhost:3010';
 
     // Mock database
@@ -771,6 +775,34 @@ describe('AgentRuntimeService', () => {
         }),
       );
     });
+
+    it('stops a queued Agent before tools or model execution after access is revoked', async () => {
+      vi.mocked(assertCottiAgentAllowed).mockRejectedValueOnce(new Error('Agent access revoked'));
+      const step = vi.fn();
+      vi.spyOn(service as any, 'createAgentRuntime').mockReturnValue({ runtime: { step } });
+      await expect(service.executeStep(mockParams)).rejects.toThrow('Agent access revoked');
+      expect(step).not.toHaveBeenCalled();
+    });
+
+    it.each([{ enableAgentMode: false }, { toolMode: 'chat' }])(
+      'preserves ordinary Chat through the shared gateway: %j',
+      async (chatConfig) => {
+        vi.mocked(assertCottiAgentAllowed).mockRejectedValueOnce(new Error('Agent access revoked'));
+        mockCoordinator.loadAgentState.mockResolvedValue({
+          ...mockState,
+          metadata: {
+            agentConfig: { chatConfig },
+          },
+        });
+        const stepResult = { newState: { ...mockState, status: 'done' }, events: [] };
+        const step = vi.fn().mockResolvedValue(stepResult);
+        vi.spyOn(service as any, 'createAgentRuntime').mockReturnValue({ runtime: { step } });
+        await service.executeStep(mockParams);
+        expect(step).toHaveBeenCalled();
+        expect(assertCottiAgentAllowed).not.toHaveBeenCalled();
+        vi.mocked(assertCottiAgentAllowed).mockReset();
+      },
+    );
 
     it('should execute step successfully', async () => {
       const mockStepResult = {

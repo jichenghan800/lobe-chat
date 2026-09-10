@@ -27,6 +27,7 @@ const MODEL_ITEMS_MAX_LENGTH = 50;
 const PROVIDER_ID_MAX_LENGTH = 100;
 
 const modelDisplayItemSchema = z.object({
+  vip: z.boolean().optional(),
   displayName: z.string().max(MODEL_DISPLAY_NAME_MAX_LENGTH).optional(),
   enabled: z.boolean(),
   model: z.string().min(1).max(MODEL_ID_MAX_LENGTH),

@@ -8,9 +8,11 @@ import { cottiPlatformAnalyticsRouter } from './platformAnalytics';
 import { cottiPlatformAuditRouter } from './platformAudit';
 import { cottiTopicBudgetRouter } from './topicBudget';
 import { cottiTopicOverviewRouter } from './topicOverview';
+import { cottiUsersRouter } from './users';
 
 export const cottiRouter = router({
   admin: cottiAdminRouter,
+  users: cottiUsersRouter,
   topicBudget: cottiTopicBudgetRouter,
   homeNotification: cottiHomeNotificationRouter,
   platformAudit: cottiPlatformAuditRouter,

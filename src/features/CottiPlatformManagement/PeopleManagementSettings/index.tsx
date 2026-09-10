@@ -7,20 +7,25 @@ import { useTranslation } from 'react-i18next';
 
 import LoginAccessSettings from './LoginAccessSettings';
 import PlatformAdminSettings from './PlatformAdminSettings';
+import { UserManagementSettings } from './UserManagementSettings';
 
 export default function PeopleManagementSettings() {
   const { t } = useTranslation('setting');
-  const [section, setSection] = useState('administrators');
+  const [section, setSection] = useState('users');
   return (
     <Flexbox gap={16}>
       <Tabs
         activeKey={section}
         items={[
+          { key: 'users', label: t('platformManagement.users.title') },
           { key: 'administrators', label: t('platformManagement.people.sections.administrators') },
           { key: 'login', label: t('platformManagement.people.sections.login') },
         ]}
         onChange={setSection}
       />
+      <div hidden={section !== 'users'}>
+        <UserManagementSettings />
+      </div>
       <div hidden={section !== 'administrators'}>
         <PlatformAdminSettings />
       </div>

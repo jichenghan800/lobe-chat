@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useCottiModelDisplayConfig } from '@/_custom/hooks/useCottiModelDisplayConfig';
 import { isCottiProfessionalChannel } from '@/_custom/registry/modelDisplayConfig';
+import { isVipModel, setModelVip } from '@/_custom/registry/userModelAccess';
 import AsyncError from '@/components/AsyncError';
 import { useClientDataSWR } from '@/libs/swr';
 import { cottiModelDisplayService } from '@/services/cottiModelDisplay';
@@ -101,7 +102,7 @@ const ModelDisplaySettings = memo(() => {
   const [selectedOptionKey, setSelectedOptionKey] = useState<string>();
   const [retirementSource, setRetirementSource] = useState<string>();
   const [saving, setSaving] = useState(false);
-  const configSWR = useCottiModelDisplayConfig();
+  const configSWR = useCottiModelDisplayConfig(true, true);
   const optionsSWR = useClientDataSWR(
     ['cotti', 'model-display-options'],
     () => cottiModelDisplayService.getOptions(),
@@ -262,6 +263,14 @@ const ModelDisplaySettings = memo(() => {
                       />
                     </Flexbox>
                   )}
+                  <Flexbox align={'center'} gap={4}>
+                    <Text fontSize={12}>VIP</Text>
+                    <Switch
+                      aria-label={t('platformManagement.users.vipModel')}
+                      checked={isVipModel(draft, item)}
+                      onChange={(vip) => updateDraft(setModelVip(draft, item, vip))}
+                    />
+                  </Flexbox>
                   <Switch
                     checked={item.enabled}
                     disabled={isProfessionalChannel}

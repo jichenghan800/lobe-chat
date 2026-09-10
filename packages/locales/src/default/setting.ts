@@ -1,4 +1,31 @@
 export default {
+  'platformManagement.users.title': 'Users',
+  'platformManagement.users.desc':
+    'Manage model access, Agent access and per-topic spending limits for all users.',
+  'platformManagement.users.identity': 'User',
+  'platformManagement.users.vip': 'Allow VIP models',
+  'platformManagement.users.vipModel': 'VIP model',
+  'platformManagement.users.agent': 'Allow Agent',
+  'platformManagement.users.limit': 'Topic limit (CNY)',
+  'platformManagement.users.inherit': 'Use platform default',
+  'platformManagement.users.policyNote':
+    'VIP, Agent and administrator access are independent. Leave the amount blank to inherit the platform default. Changing the limit does not unfreeze existing topics.',
+  'platformManagement.users.all': 'All',
+  'platformManagement.users.yes': 'Yes',
+  'platformManagement.users.no': 'No',
+  'platformManagement.users.search': 'Search name, email or phone',
+  'platformManagement.users.empty': 'No matching users',
+  'platformManagement.users.login': 'Login status',
+  'platformManagement.users.banned': 'Blocked',
+  'platformManagement.users.normal': 'Allowed',
+  'platformManagement.users.active': 'Last active',
+  'platformManagement.users.actions': 'Actions',
+  'platformManagement.users.edit': 'Edit access',
+  'platformManagement.users.cancel': 'Cancel',
+  'platformManagement.users.save': 'Save',
+  'platformManagement.users.saved': 'User access saved',
+  'platformManagement.users.failed': 'Failed to save',
+
   'platformManagement.topicBudget.title': 'Topic spending limit',
   'platformManagement.topicBudget.desc':
     'Each topic accumulates its own costs and freezes at the limit. Switching models does not reset spending.',

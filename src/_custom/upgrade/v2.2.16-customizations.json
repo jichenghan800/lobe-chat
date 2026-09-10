@@ -130,12 +130,24 @@
       "id": "DEV-002",
       "name": "人员管理",
       "implementation": "[apps/server/src/routers/lambda/cotti/peopleManagement.ts](<../../../apps/server/src/routers/lambda/cotti/peopleManagement.ts#L58>)",
-      "boundary": "经cottiRouter主路由；新表由0158迁移声明",
+      "boundary": "人员管理分用户管理、管理员设置、准入设置；用户列表服务端搜索分页；独立 VIP、Agent 权限及个人话题限额；0164 声明用户策略表。旧 Agent 24 条启用规则按原前缀匹配一次性绑定现有用户 ID，不恢复全局 Agent 模式选择。",
       "firstImplemented": "2026-09-07",
       "sourceReferences": [
         {
           "path": "apps/server/src/routers/lambda/cotti/peopleManagement.ts",
           "line": 58
+        },
+        {
+          "path": "src/features/CottiPlatformManagement/PeopleManagementSettings/UserManagementSettings.tsx",
+          "line": 1
+        },
+        {
+          "path": "packages/database/src/models/cottiUserPolicy.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/userModelAccess.ts",
+          "line": 1
         }
       ]
     },
@@ -169,7 +181,7 @@
       "id": "DEV-005",
       "name": "模式模型池/面板",
       "implementation": "[src/hooks/useEnabledChatModels.ts](<../../hooks/useEnabledChatModels.ts#L9>)",
-      "boundary": "scope读平台目录；ModelSwitchPanel实际消费",
+      "boundary": "Chat/Agent 模型池共用同一 provider/model 的 VIP 分类；普通用户列表剔除 VIP；ModelRuntime 请求校验 VIP；管理页面可编辑完整目录。既有模型默认普通，不自动选定 VIP。",
       "firstImplemented": "2026-09-07",
       "sourceReferences": [
         {
@@ -836,7 +848,7 @@
       "id": "DEV-052",
       "name": "话题强制成本冻结",
       "implementation": "独立 Token 上限与话题累计金额任一达到即持久冻结；Gemini 3.8 Flash / Vertex 校正后 100 万 Token；默认每话题 10 元，平台管理→模型管理可调整或关闭金额保护；费用入库后与下一请求前复核，换模型不清零",
-      "boundary": "按已记录模型费用含历史，以固定 7.12 汇率换算，不含另计工具、存储或促销返还；最后一次及已发出并行请求可超限。关闭或调高不自动解冻旧话题。用户单独额度为后续扩展，本次仅平台默认。原生压缩完全遵循官方逻辑，不受成本策略覆盖。",
+      "boundary": "按已记录模型费用含历史，以固定 7.12 汇率换算，不含另计工具、存储或促销返还；最后一次及已发出并行请求可超限。关闭或调高不自动解冻旧话题。个人话题限额在用户管理配置，留空继承平台默认；金额总开关仍由模型管理控制。原生压缩完全遵循官方逻辑，不受成本策略覆盖。",
       "firstImplemented": "2026-09-10",
       "sourceReferences": [
         {

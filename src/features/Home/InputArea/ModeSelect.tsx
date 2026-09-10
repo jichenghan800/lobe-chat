@@ -5,6 +5,7 @@ import { ChevronDownIcon, InfinityIcon, ListTodoIcon, MessageCircleIcon } from '
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useCottiUserPolicy } from '@/_custom/hooks/useCottiUserPolicy';
 import { usePermission } from '@/hooks/usePermission';
 
 import type { HomeMode } from '../types';
@@ -116,11 +117,14 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
   const { allowed: canCreateContent, reason: createContentReason } =
     usePermission('create_content');
   const [open, setOpen] = useState(false);
+  const { data: userPolicy } = useCottiUserPolicy();
+  const canUseAgent = userPolicy?.agentEnabled ?? false;
 
   useEffect(() => {
-    const permittedMode = resolvePermittedHomeMode(value, canCreateContent);
+    if (!userPolicy) return;
+    const permittedMode = resolvePermittedHomeMode(value, canCreateContent, canUseAgent);
     if (permittedMode !== value) onChange(permittedMode);
-  }, [canCreateContent, onChange, value]);
+  }, [canCreateContent, canUseAgent, onChange, userPolicy, value]);
 
   const handleSelect = useCallback(
     (mode: HomeMode) => {
@@ -135,7 +139,7 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
   const content = (
     <Flexbox gap={4} role={'menu'} style={{ maxWidth: 320, minWidth: 280 }}>
       {MODES.map(({ icon, key }) => {
-        const disabled = isHomeModeDisabled(key, canCreateContent);
+        const disabled = isHomeModeDisabled(key, canCreateContent, canUseAgent);
 
         return (
           <Button
@@ -144,8 +148,14 @@ const ModeSelect = memo<ModeSelectProps>(({ onChange, value }) => {
             disabled={disabled}
             key={key}
             role={'menuitemradio'}
-            title={disabled ? createContentReason : undefined}
             type={'text'}
+            title={
+              disabled
+                ? !canUseAgent && key !== 'chat'
+                  ? tChat('chatMode.agentPermissionDenied')
+                  : createContentReason
+                : undefined
+            }
             onClick={() => handleSelect(key)}
           >
             <Flexbox horizontal align={'center'} className={styles.optionContent} gap={12}>

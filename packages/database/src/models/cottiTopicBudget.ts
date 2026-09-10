@@ -3,6 +3,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { cottiTopicBudgetSettings, messages, topicCostFreezes, topics } from '../schemas';
 import type { LobeChatDatabase, Transaction } from '../type';
 import { notCopiedTranscript } from '../utils/copiedTranscript';
+import { CottiUserPolicyModel } from './cottiUserPolicy';
 
 /** Same fixed display conversion as the topic cost footer; excludes promotional credits. */
 export const TOPIC_BUDGET_USD_TO_CNY = 7.12;
@@ -34,6 +35,8 @@ export class CottiTopicBudgetModel {
   async freezeIfExceeded(userId: string, topicId: string) {
     const config = await this.getConfig();
     if (!config.enabled) return;
+    const userPolicy = await new CottiUserPolicyModel(this.db).get(userId);
+    const limitFen = userPolicy.topicLimitFen ?? config.limitFen;
     const [topic] = await this.db
       .select({ id: topics.id, model: topics.model, provider: topics.provider })
       .from(topics)
@@ -45,7 +48,7 @@ export class CottiTopicBudgetModel {
     const [summary] = await this.db
       .select({
         spentCny: sql<string>`coalesce(sum(${cost}), 0) * ${TOPIC_BUDGET_USD_TO_CNY}::numeric`,
-        exceeded: sql<boolean>`coalesce(sum(${cost}), 0) * ${TOPIC_BUDGET_USD_TO_CNY}::numeric * 100 >= ${config.limitFen}`,
+        exceeded: sql<boolean>`coalesce(sum(${cost}), 0) * ${TOPIC_BUDGET_USD_TO_CNY}::numeric * 100 >= ${limitFen}`,
       })
       .from(messages)
       .where(
@@ -63,7 +66,7 @@ export class CottiTopicBudgetModel {
         topicId,
         reason: 'budget',
         spentCny: String(summary.spentCny),
-        limitFen: config.limitFen,
+        limitFen,
         model: topic.model ?? '',
         provider: topic.provider ?? '',
         estimatedInputTokens: 0,

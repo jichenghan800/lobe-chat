@@ -54,6 +54,7 @@ import { AgentOperationModel } from '@/database/models/agentOperation';
 import { MessageModel } from '@/database/models/message';
 import { type LobeChatDatabase } from '@/database/type';
 import { appEnv } from '@/envs/app';
+import { resolveToolMode } from '@/helpers/executionTarget';
 import { type AgentRuntimeCoordinatorOptions } from '@/server/modules/AgentRuntime';
 import { AgentRuntimeCoordinator, createStreamEventManager } from '@/server/modules/AgentRuntime';
 import { formatErrorForState } from '@/server/modules/AgentRuntime/formatErrorForState';
@@ -66,6 +67,7 @@ import { type IStreamEventManager } from '@/server/modules/AgentRuntime/types';
 import { emitAgentSignalSourceEvent } from '@/server/services/agentSignal';
 import { toAgentSignalTraceEvents } from '@/server/services/agentSignal/observability/traceEvents';
 import { resolveCottiRuntimeModel } from '@/server/services/cotti/modelRetirement';
+import { assertCottiAgentAllowed } from '@/server/services/cotti/userModelAccess';
 import { FileService } from '@/server/services/file';
 import { mcpService } from '@/server/services/mcp';
 import { MessageService } from '@/server/services/message';
@@ -1698,6 +1700,12 @@ export class AgentRuntimeService {
               return this.buildShareAbortResult(operationId, agentState);
             }
           }
+        }
+
+        // Recheck revocable access for queued jobs and already-running Agents before tools or LLMs.
+        const userChatConfig = agentState.metadata?.agentConfig?.chatConfig;
+        if (resolveToolMode(userChatConfig) !== 'chat') {
+          await assertCottiAgentAllowed(this.serverDB, this.userId);
         }
 
         let beforeStepSignalEvents: Array<{ [key: string]: unknown; type: string }> = [];

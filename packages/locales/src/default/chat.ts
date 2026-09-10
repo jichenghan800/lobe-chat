@@ -1,4 +1,5 @@
 export default {
+  'chatMode.agentPermissionDenied': 'Agent access is disabled. Contact your administrator.',
   'messages.topicTokens.total': 'Topic total: {{value}} tokens',
   'messages.topicTokens.loading': 'Updating topic tokens…',
   'messages.topicTokens.unavailable': 'Topic tokens unavailable',

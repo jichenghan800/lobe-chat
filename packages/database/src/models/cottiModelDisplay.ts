@@ -68,6 +68,7 @@ const normalizeItem = (item: ModelDisplayItem): ModelDisplayItem | undefined => 
 
   return {
     ...(displayName ? { displayName } : {}),
+    ...(item.vip !== undefined ? { vip: item.vip } : {}),
     enabled: item.enabled,
     model,
     provider,
@@ -236,6 +237,16 @@ export class CottiModelDisplayModel {
       const current = await new CottiModelDisplayModel(tx as LobeChatDatabase).getSettings();
       const retirements = current?.config.retirements || config.retirements;
       const next = structuredClone({ ...config, retirements });
+      for (const scope of ['chat', 'agent'] as const) {
+        next[scope] = next[scope].map((item) => ({
+          ...item,
+          vip:
+            item.vip ??
+            [...(current?.config.chat ?? []), ...(current?.config.agent ?? [])].some(
+              (old) => old.vip && isSameModelDisplayRef(old, item),
+            ),
+        }));
+      }
       for (const retired of retirements || []) {
         for (const scope of ['chat', 'agent'] as const) {
           next[scope] = next[scope].map((r) =>

@@ -3,6 +3,7 @@ export interface ModelDisplayItem {
   enabled: boolean;
   model: string;
   provider: string;
+  vip?: boolean;
 }
 
 export interface ModelDisplayModelRef {

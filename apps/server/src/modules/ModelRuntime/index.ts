@@ -45,6 +45,7 @@ import {
   createModelRetirementGuard,
   withModelRetirement,
 } from '@/server/services/cotti/modelRetirement';
+import { createUserModelAccessGuard } from '@/server/services/cotti/userModelAccess';
 import { createLLMGenerationTracingHook } from '@/server/services/llmGenerationTracing/hook';
 import { ensureFreshOAuthToken } from '@/server/services/oauthDeviceFlow/refresh';
 
@@ -434,6 +435,7 @@ export const initModelRuntimeWithUserPayload = (
 ) => {
   const runtimeProvider = payload.runtimeProvider ?? provider;
   hooks = mergeModelRuntimeHooks(createContextCostGuard(provider, costScope), hooks);
+  hooks = mergeModelRuntimeHooks(createUserModelAccessGuard(provider, costScope), hooks);
 
   /**
    * User-configured endpoints can come from older clients or persisted rows that predate

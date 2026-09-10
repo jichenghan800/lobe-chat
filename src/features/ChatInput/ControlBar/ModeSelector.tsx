@@ -12,7 +12,10 @@ import {
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useBusinessAgentModeSync } from '@/business/client/hooks/useBusinessAgentMode';
+import {
+  useBusinessAgentModeSync,
+  useBusinessCanEnableAgentMode,
+} from '@/business/client/hooks/useBusinessAgentMode';
 import { useAgentId } from '@/features/ChatInput/hooks/useAgentId';
 import { useChatInputResourceAccess } from '@/features/ChatInput/hooks/useChatInputResourceAccess';
 import { useEffectiveAgentMode } from '@/features/ChatInput/hooks/useEffectiveAgentMode';
@@ -147,8 +150,14 @@ const ModeSelector = memo(() => {
     ? reason
     : t(isGroupContext ? 'input.viewOnlyGroup' : 'input.viewOnlyAgent');
 
-  const { canSelectAgentMode, currentMode, isAgentModeUnavailable, isPreferenceLoading } =
-    useEffectiveAgentMode(agentId);
+  const {
+    canSelectAgentMode: modelCanSelectAgentMode,
+    currentMode,
+    isAgentModeUnavailable,
+    isPreferenceLoading,
+  } = useEffectiveAgentMode(agentId);
+  const canUseAgent = useBusinessCanEnableAgentMode(agentId);
+  const canSelectAgentMode = modelCanSelectAgentMode && canUseAgent;
   const CurrentIcon = currentMode === 'agent' ? InfinityIcon : MessageCircleIcon;
 
   const handleSelect = useCallback(
@@ -189,7 +198,11 @@ const ModeSelector = memo(() => {
     : currentMode === 'agent'
       ? agentTooltip
       : chatTooltip;
-  const agentDesc = canSelectAgentMode ? t('chatMode.agentDesc') : t('chatMode.agentUnsupported');
+  const agentDesc = !canUseAgent
+    ? t('chatMode.agentPermissionDenied')
+    : canSelectAgentMode
+      ? t('chatMode.agentDesc')
+      : t('chatMode.agentUnsupported');
 
   const popoverContent = (
     <Flexbox gap={4} style={{ maxWidth: 320, minWidth: 280 }}>
