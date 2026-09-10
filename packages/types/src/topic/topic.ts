@@ -623,6 +623,10 @@ export interface ChatTopic extends Omit<BaseDataModel, 'meta'> {
   title: string;
   /** Server-side mock until real token aggregation lands. */
   tokenUsage?: number | null;
+  totalInputTokens?: number | null;
+  totalOutputTokens?: number | null;
+  /** Native persisted usage rollup; null means usage has not been recorded. */
+  totalTokens?: number | null;
   trigger?: string | null;
   userId?: string;
 }

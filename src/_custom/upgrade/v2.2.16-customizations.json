@@ -775,7 +775,7 @@
       "id": "DEV-051",
       "name": "上下文成本保护与摘要续聊",
       "implementation": "成本阈值限制原生压缩触发点，ModelRuntime请求前守卫；自动命名同次生成标题和100字符内描述；移除两个常驻按钮，直接发送前识别换题并弹框，默认新建话题并发送；冻结状态提供单入口弹框选择空话题或摘要续接",
-      "boundary": "概览优先使用description，旧话题回退title，不批量补描述；判断最多200字符概览和1000字符新输入，不读取历史；复用命名模型，明确续接免调用、相同草稿复用判断；失败放行，成本守卫独立兜底。仅普通话题的空闲文本提交，不拦截自动任务、工具循环、群聊或线程。冻结与压缩同阈值冲突仍待独立修复。",
+      "boundary": "概览优先使用description，旧话题回退title，不批量补描述；判断最多200字符概览和1000字符新输入，不读取历史；复用命名模型，明确续接免调用、相同草稿复用判断；失败放行，成本守卫独立兜底。仅普通话题的空闲文本提交，不拦截自动任务、工具循环、群聊或线程。冻结与压缩同阈值冲突仍待独立修复。；最新回答结束后在普通模式显示原生Topic累计Token，含输入输出明细提示；复用getTopicDetail与total_tokens，不重复计入缓存，不写入模型上下文，分享/审计/子线程视图不额外读取私人话题",
       "firstImplemented": "2026-09-10",
       "sourceReferences": [
         {
@@ -813,6 +813,10 @@
         {
           "path": "src/features/ChatInput/ActionBar/Token/topicChoiceModal.tsx",
           "line": 1
+        },
+        {
+          "path": "src/features/Conversation/Messages/components/Extras/Usage/TopicTokenUsage.tsx",
+          "line": 14
         }
       ]
     },

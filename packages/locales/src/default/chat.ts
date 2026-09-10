@@ -1,4 +1,12 @@
 export default {
+  'messages.topicTokens.total': 'Topic total: {{value}} tokens',
+  'messages.topicTokens.loading': 'Updating topic tokens…',
+  'messages.topicTokens.unavailable': 'Topic tokens unavailable',
+  'messages.topicTokens.unavailableHint':
+    'Usage is missing or could not be loaded; this does not mean zero consumption.',
+  'messages.topicTokens.hint':
+    'Recorded total: {{total}} tokens (input {{input}}, output {{output}}). Includes recorded model calls and threads. Cache tokens are already included. This is cumulative consumption, not the current context size; missing usage is not counted and deleted messages may reduce the total.',
+
   'topicChoice.title': 'Start a new topic?',
   'topicChoice.body': 'This looks like a new question. A new topic avoids unrelated history.',
   'topicChoice.newSend': 'New topic and send',
