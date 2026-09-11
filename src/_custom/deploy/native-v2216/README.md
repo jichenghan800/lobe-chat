@@ -11,7 +11,7 @@ docker compose -f src/_custom/deploy/native-v2216/compose.yml config --quiet
 docker compose -f src/_custom/deploy/native-v2216/compose.yml up -d --no-deps app app-cotti
 ```
 
-当前镜像：`lobehub:lingshu-v2216-image25-flare-20260911`。通用构建脚本见[build.sh](build.sh)，以独立标签构建，不覆盖现有镜像标签：
+当前开发镜像：`lobehub:lingshu-v2216-image-preview320-20260911`，图片预览长边上限 320px。独立生产 `chat.cotticoffee.com` 未发布此调整，仍保留 `lobehub:lingshu-v2216-image25-flare-20260911`。通用构建脚本见[build.sh](build.sh)，以独立标签构建，不覆盖现有镜像标签：
 
 ```bash
 COTTI_IMAGE_TAG=lobehub:your-new-release-tag bash src/_custom/deploy/native-v2216/build.sh
