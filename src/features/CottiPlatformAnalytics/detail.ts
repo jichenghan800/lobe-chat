@@ -43,9 +43,9 @@ const USER_SORTS = new Set<CottiPlatformAnalyticsChatUserSort>([
   'recordedCost',
   'totalTokens',
 ]);
-const DEFAULT_AGENT_SORT: CottiPlatformAnalyticsAgentSort = 'totalTokens';
-const DEFAULT_MODEL_SORT: CottiPlatformAnalyticsChatModelSort = 'totalTokens';
-const DEFAULT_USER_SORT: CottiPlatformAnalyticsChatUserSort = 'totalTokens';
+const DEFAULT_AGENT_SORT: CottiPlatformAnalyticsAgentSort = 'recordedCost';
+const DEFAULT_MODEL_SORT: CottiPlatformAnalyticsChatModelSort = 'recordedCost';
+const DEFAULT_USER_SORT: CottiPlatformAnalyticsChatUserSort = 'recordedCost';
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_QUERY_LENGTH = 100;
 

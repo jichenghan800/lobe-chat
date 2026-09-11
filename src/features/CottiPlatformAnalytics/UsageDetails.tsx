@@ -5,6 +5,7 @@ import { Tabs, Text } from '@lobehub/ui/base-ui';
 import { BotIcon, UsersIcon, WorkflowIcon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 
 import { AgentUsageTable } from './AgentUsageTable';
 import { ChatModelsTable } from './ChatModelsTable';
@@ -25,13 +26,11 @@ export const UsageDetails = memo<UsageDetailsProps>(({ enabled, range }) => {
   return (
     <Block className={styles.detailSection} padding={0} variant={'outlined'}>
       <Flexbox className={styles.detailHeader} gap={12}>
-        <Flexbox gap={4}>
-          <Text fontSize={18} weight={600}>
+        <Flexbox horizontal align={'center'} gap={12} justify={'space-between'}>
+          <Text fontSize={16} weight={600}>
             {t('platformAnalytics.details.title')}
           </Text>
-          <Text fontSize={13} type={'secondary'}>
-            {t('platformAnalytics.details.desc')}
-          </Text>
+          <Link to="/overview">{t('platformAnalytics.compact.topicsLink')}</Link>
         </Flexbox>
         <Tabs
           activeKey={details.view}

@@ -11,16 +11,17 @@ import AsyncBoundary from '@/components/AsyncBoundary';
 import AsyncError from '@/components/AsyncError';
 import InlineTable from '@/components/InlineTable';
 import TablePagination from '@/components/TablePagination';
-import TotalToken from '@/components/TotalToken';
 import type {
   CottiPlatformAnalyticsChatUserItem,
   CottiPlatformAnalyticsChatUserSort,
 } from '@/types/cotti/platformAnalytics';
 
+import TotalToken from './CompactTokens';
 import type { CottiPlatformAnalyticsDetailListState } from './detail';
 import { DetailEmpty } from './DetailEmpty';
 import { DetailTableSkeleton } from './DetailTableSkeleton';
 import { DetailToolbar } from './DetailToolbar';
+import { formatCost, formatUsd } from './format';
 import { useCottiPlatformAnalyticsChatUsers } from './hooks';
 import type { CottiPlatformAnalyticsRangeSelection } from './range';
 import { styles } from './style';
@@ -34,7 +35,6 @@ interface ChatUsersTableProps {
   state: CottiPlatformAnalyticsDetailListState<CottiPlatformAnalyticsChatUserSort>;
 }
 
-const formatCost = (value: number) => `$${formatNumber(value, value > 0 && value < 0.01 ? 4 : 2)}`;
 const formatPercent = (value: number) => `${formatNumber(value * 100, 2)}%`;
 
 export const ChatUsersTable = memo<ChatUsersTableProps>(
@@ -66,24 +66,29 @@ export const ChatUsersTable = memo<ChatUsersTableProps>(
               <Flexbox horizontal align={'center'} className={styles.detailIdentity} gap={10}>
                 <Avatar avatar={record.avatar || name} size={28} />
                 <Flexbox className={styles.detailIdentityCopy} gap={2}>
-                  <Tooltip title={name}>
+                  <Tooltip title={[name, metadata].filter(Boolean).join(' · ')}>
                     <Text ellipsis weight={500}>
                       {name}
                     </Text>
                   </Tooltip>
-                  {metadata && (
-                    <Tooltip title={metadata}>
-                      <Text ellipsis fontSize={12} type={'secondary'}>
-                        {metadata}
-                      </Text>
-                    </Tooltip>
-                  )}
                 </Flexbox>
               </Flexbox>
             );
           },
           title: t('platformAnalytics.details.columns.user'),
           width: 260,
+        },
+        {
+          align: 'right',
+          dataIndex: 'recordedCost',
+          key: 'recordedCost',
+          render: (value) => (
+            <Tooltip title={formatUsd(value)}>
+              <span>{formatCost(value)}</span>
+            </Tooltip>
+          ),
+          title: t('platformAnalytics.details.columns.cost'),
+          width: 112,
         },
         {
           align: 'right',
@@ -128,16 +133,9 @@ export const ChatUsersTable = memo<ChatUsersTableProps>(
             />
           ),
           title: t('platformAnalytics.details.columns.tokens'),
-          width: 220,
+          width: 120,
         },
-        {
-          align: 'right',
-          dataIndex: 'recordedCost',
-          key: 'recordedCost',
-          render: (value) => formatCost(value),
-          title: t('platformAnalytics.details.columns.cost'),
-          width: 112,
-        },
+
         {
           align: 'right',
           dataIndex: 'errorMessages',

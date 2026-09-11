@@ -21,7 +21,19 @@ export const styles = createStaticStyles(({ css }) => ({
   `,
   chart: css`
     width: 100%;
-    min-height: 320px;
+    min-height: 220px;
+  `,
+  disclosure: css`
+    border: 1px solid ${cssVar.colorBorderSecondary};
+    border-radius: ${cssVar.borderRadiusLG};
+    background: ${cssVar.colorBgContainer};
+
+    & > summary {
+      cursor: pointer;
+      padding-block: 14px;
+      padding-inline: 20px;
+      font-weight: 500;
+    }
   `,
   content: css`
     overflow: hidden auto;
@@ -97,7 +109,7 @@ export const styles = createStaticStyles(({ css }) => ({
   `,
   featureCard: css`
     min-width: 0;
-    min-height: 228px;
+    min-height: 160px;
     background: ${cssVar.colorBgContainer};
   `,
   featureGrid: css`
@@ -130,16 +142,16 @@ export const styles = createStaticStyles(({ css }) => ({
   `,
   metricCard: css`
     min-width: 0;
-    min-height: 148px;
+    min-height: 120px;
     background: ${cssVar.colorBgContainer};
   `,
   metricGrid: css`
     display: grid;
-    grid-template-columns: repeat(5, minmax(180px, 1fr));
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
     gap: 12px;
 
     ${responsive.lg} {
-      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
     }
 
     ${responsive.md} {

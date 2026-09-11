@@ -19,9 +19,9 @@ describe('COTTI platform analytics detail URL state', () => {
     });
 
     expect(parseCottiPlatformAnalyticsDetails(params)).toEqual({
-      agents: { page: 1, pageSize: 20, q: '', sortBy: 'totalTokens' },
-      models: { page: 1, pageSize: 20, q: '', sortBy: 'totalTokens' },
-      users: { page: 1, pageSize: 20, q: '', sortBy: 'totalTokens' },
+      agents: { page: 1, pageSize: 20, q: '', sortBy: 'recordedCost' },
+      models: { page: 1, pageSize: 20, q: '', sortBy: 'recordedCost' },
+      users: { page: 1, pageSize: 20, q: '', sortBy: 'recordedCost' },
       view: 'agents',
     });
   });
@@ -74,7 +74,7 @@ describe('COTTI platform analytics detail URL state', () => {
     const state = {
       agents: { page: 2, pageSize: 50, q: '财务', sortBy: 'executions' },
       models: { page: 4, pageSize: 50, q: 'vertex', sortBy: 'recordedCost' },
-      users: { page: 1, pageSize: 20, q: '', sortBy: 'totalTokens' },
+      users: { page: 1, pageSize: 20, q: '', sortBy: 'recordedCost' },
       view: 'users',
     } as const satisfies CottiPlatformAnalyticsDetailsState;
 
@@ -89,7 +89,7 @@ describe('COTTI platform analytics detail URL state', () => {
     expect(result.get('usageModelPage')).toBe('4');
     expect(result.get('usageModelPageSize')).toBe('50');
     expect(result.get('usageModelQ')).toBe('vertex');
-    expect(result.get('usageModelSort')).toBe('recordedCost');
+    expect(result.get('usageModelSort')).toBeNull();
     expect(result.get('usageUserPage')).toBeNull();
     expect(result.get('usageUserPageSize')).toBeNull();
     expect(result.get('usageUserQ')).toBeNull();

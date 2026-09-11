@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { CottiPlatformAnalyticsTrendItem } from '@/types/cotti/platformAnalytics';
 
+import { formatCost } from './format';
 import { styles } from './style';
 import {
   buildCottiPlatformAnalyticsTrendData,
@@ -43,8 +44,7 @@ const TrendSection = memo<TrendSectionProps>(({ data, loading, metric, setMetric
   const hasActivity = (data ?? []).some((item) => item.totalMessages > 0);
 
   const valueFormatter = (value: number) => {
-    if (metric === 'recordedCost')
-      return `$${formatNumber(value, value > 0 && value < 0.01 ? 4 : 2)}`;
+    if (metric === 'recordedCost') return formatCost(value);
     if (metric === 'errorRate') return `${formatNumber(value * 100, 2)}%`;
     return formatUsageValue(value);
   };
@@ -54,10 +54,7 @@ const TrendSection = memo<TrendSectionProps>(({ data, loading, metric, setMetric
       <Flexbox horizontal align={'flex-start'} gap={12} justify={'space-between'} wrap={'wrap'}>
         <Flexbox gap={4}>
           <Text fontSize={18} weight={600}>
-            {t('platformAnalytics.trend.title')}
-          </Text>
-          <Text fontSize={13} type={'secondary'}>
-            {t('platformAnalytics.trend.desc')}
+            {t('platformAnalytics.compact.trend')}
           </Text>
         </Flexbox>
         <Segmented
@@ -95,7 +92,7 @@ const TrendSection = memo<TrendSectionProps>(({ data, loading, metric, setMetric
           showGridLines
           className={styles.chart}
           data={chartData}
-          height={320}
+          height={220}
           index={'day'}
           showLegend={isActiveUsersMetric}
           startEndOnly={(data?.length ?? 0) > 14}

@@ -35,8 +35,13 @@ const CottiPlatformAnalytics = memo<CottiPlatformAnalyticsProps>(({ embedded = f
   const rangeState = useCottiPlatformAnalyticsRange();
   const canLoadDashboard = enabled && accessSWR.data?.isAdmin === true;
   const dashboardSWR = useCottiPlatformAnalyticsDashboard(rangeState.range, canLoadDashboard);
-  const featuresSWR = useCottiPlatformAnalyticsFeatures(rangeState.range, canLoadDashboard);
-  const [trendMetric, setTrendMetric] = useState<CottiPlatformAnalyticsTrendMetric>('activeUsers');
+  const [featuresOpen, setFeaturesOpen] = useState(false);
+  const [errorsOpen, setErrorsOpen] = useState(false);
+  const featuresSWR = useCottiPlatformAnalyticsFeatures(
+    rangeState.range,
+    canLoadDashboard && featuresOpen,
+  );
+  const [trendMetric, setTrendMetric] = useState<CottiPlatformAnalyticsTrendMetric>('recordedCost');
 
   const dashboard = dashboardSWR.data;
   const initialError = (!accessSWR.data && accessSWR.error) || (!dashboard && dashboardSWR.error);
@@ -63,39 +68,36 @@ const CottiPlatformAnalytics = memo<CottiPlatformAnalyticsProps>(({ embedded = f
   ) : initialError ? (
     <AsyncError error={initialError} variant={'page'} onRetry={retryInitialLoad} />
   ) : (
-    <Flexbox gap={20}>
+    <Flexbox gap={12}>
       <div className={styles.pageHeader}>
-        <Flexbox className={styles.headerCopy} gap={4}>
-          <Text fontSize={24} weight={600}>
-            {t('platformAnalytics.heading')}
-          </Text>
-          <Text type={'secondary'}>{t('platformAnalytics.desc')}</Text>
-        </Flexbox>
         <RangeControl
           mode={rangeState.mode}
           range={rangeState.range}
           setCustomDate={rangeState.setCustomDate}
           setMode={rangeState.setMode}
         />
+        <Flexbox horizontal align={'center'} gap={12} wrap={'wrap'}>
+          <Text className={styles.generatedAt} fontSize={12}>
+            {generatedAt
+              ? t('platformAnalytics.generatedAt', { time: generatedAt })
+              : t('platformAnalytics.loading')}
+          </Text>
+          <Button
+            disabled={!canLoadDashboard}
+            icon={<Icon icon={RefreshCwIcon} />}
+            loading={dashboardSWR.isValidating || featuresSWR.isValidating}
+            size={'small'}
+            onClick={() => {
+              void Promise.all([
+                dashboardSWR.mutate(),
+                ...(featuresOpen ? [featuresSWR.mutate()] : []),
+              ]);
+            }}
+          >
+            {t('platformAnalytics.refresh')}
+          </Button>
+        </Flexbox>
       </div>
-      <Flexbox horizontal align={'center'} gap={12} justify={'space-between'} wrap={'wrap'}>
-        <Text className={styles.generatedAt} fontSize={12}>
-          {generatedAt
-            ? t('platformAnalytics.generatedAt', { time: generatedAt })
-            : t('platformAnalytics.loading')}
-        </Text>
-        <Button
-          disabled={!canLoadDashboard}
-          icon={<Icon icon={RefreshCwIcon} />}
-          loading={dashboardSWR.isValidating || featuresSWR.isValidating}
-          size={'small'}
-          onClick={() => {
-            void Promise.all([dashboardSWR.mutate(), featuresSWR.mutate()]);
-          }}
-        >
-          {t('platformAnalytics.refresh')}
-        </Button>
-      </Flexbox>
       {dashboard && dashboardSWR.error && (
         <AsyncError
           error={dashboardSWR.error}
@@ -115,18 +117,36 @@ const CottiPlatformAnalytics = memo<CottiPlatformAnalyticsProps>(({ embedded = f
         </>
       )}
       {canLoadDashboard && (
-        <FeatureAdoption
-          data={featuresSWR.data}
-          error={featuresSWR.error}
-          loading={!featuresSWR.data && !featuresSWR.error}
-          retrying={featuresSWR.isValidating}
-          onRetry={() => void featuresSWR.mutate()}
-        />
+        <>
+          <UsageDetails enabled={canLoadDashboard} range={rangeState.range} />
+          <details
+            className={styles.disclosure}
+            open={errorsOpen}
+            onToggle={(e) => setErrorsOpen(e.currentTarget.open)}
+          >
+            <summary>{t('platformAnalytics.errors.title')}</summary>
+            {errorsOpen && (
+              <ErrorDistribution enabled={canLoadDashboard} range={rangeState.range} />
+            )}
+          </details>
+          <details
+            className={styles.disclosure}
+            open={featuresOpen}
+            onToggle={(e) => setFeaturesOpen(e.currentTarget.open)}
+          >
+            <summary>{t('platformAnalytics.features.title')}</summary>
+            {featuresOpen && (
+              <FeatureAdoption
+                data={featuresSWR.data}
+                error={featuresSWR.error}
+                loading={!featuresSWR.data && !featuresSWR.error}
+                retrying={featuresSWR.isValidating}
+                onRetry={() => void featuresSWR.mutate()}
+              />
+            )}
+          </details>
+        </>
       )}
-      {canLoadDashboard && (
-        <ErrorDistribution enabled={canLoadDashboard} range={rangeState.range} />
-      )}
-      {canLoadDashboard && <UsageDetails enabled={canLoadDashboard} range={rangeState.range} />}
     </Flexbox>
   );
 
@@ -140,7 +160,7 @@ const CottiPlatformAnalytics = memo<CottiPlatformAnalyticsProps>(({ embedded = f
       <SettingContainer
         className={styles.content}
         maxWidth={1280}
-        paddingBlock={'24px 128px'}
+        paddingBlock={24}
         paddingInline={24}
         variant={'secondary'}
       >

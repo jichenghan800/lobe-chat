@@ -11,16 +11,17 @@ import AsyncBoundary from '@/components/AsyncBoundary';
 import AsyncError from '@/components/AsyncError';
 import InlineTable from '@/components/InlineTable';
 import TablePagination from '@/components/TablePagination';
-import TotalToken from '@/components/TotalToken';
 import type {
   CottiPlatformAnalyticsAgentItem,
   CottiPlatformAnalyticsAgentSort,
 } from '@/types/cotti/platformAnalytics';
 
+import TotalToken from './CompactTokens';
 import type { CottiPlatformAnalyticsDetailListState } from './detail';
 import { DetailEmpty } from './DetailEmpty';
 import { DetailTableSkeleton } from './DetailTableSkeleton';
 import { DetailToolbar } from './DetailToolbar';
+import { formatCost, formatUsd } from './format';
 import { useCottiPlatformAnalyticsAgents } from './hooks';
 import type { CottiPlatformAnalyticsRangeSelection } from './range';
 import { styles } from './style';
@@ -34,7 +35,6 @@ interface AgentUsageTableProps {
   state: CottiPlatformAnalyticsDetailListState<CottiPlatformAnalyticsAgentSort>;
 }
 
-const formatCost = (value: number) => `$${formatNumber(value, value > 0 && value < 0.01 ? 4 : 2)}`;
 const formatPercent = (value: number) => `${formatNumber(value * 100, 2)}%`;
 
 const formatDuration = (value: number) => {
@@ -83,6 +83,20 @@ export const AgentUsageTable = memo<AgentUsageTableProps>(
         },
         {
           align: 'right',
+          dataIndex: 'recordedCost',
+          key: 'recordedCost',
+          render: (value, record) => (
+            <Tooltip
+              title={`${formatUsd(value)} · ${t('platformAnalytics.details.agents.coverage', { executions: formatNumber(record.executions), recorded: formatNumber(record.costRecordedExecutions) })}`}
+            >
+              <span>{formatCost(value)}</span>
+            </Tooltip>
+          ),
+          title: t('platformAnalytics.details.columns.cost'),
+          width: 112,
+        },
+        {
+          align: 'right',
           dataIndex: 'activeUsers',
           key: 'activeUsers',
           render: (value) => formatUsageValue(value),
@@ -128,25 +142,9 @@ export const AgentUsageTable = memo<AgentUsageTableProps>(
             </Tooltip>
           ),
           title: t('platformAnalytics.details.columns.tokens'),
-          width: 220,
+          width: 120,
         },
-        {
-          align: 'right',
-          dataIndex: 'recordedCost',
-          key: 'recordedCost',
-          render: (value, record) => (
-            <Tooltip
-              title={t('platformAnalytics.details.agents.coverage', {
-                executions: formatNumber(record.executions),
-                recorded: formatNumber(record.costRecordedExecutions),
-              })}
-            >
-              <span>{formatCost(value)}</span>
-            </Tooltip>
-          ),
-          title: t('platformAnalytics.details.columns.cost'),
-          width: 112,
-        },
+
         {
           dataIndex: 'errorExecutions',
           key: 'outcomes',

@@ -13,16 +13,17 @@ import AsyncBoundary from '@/components/AsyncBoundary';
 import AsyncError from '@/components/AsyncError';
 import InlineTable from '@/components/InlineTable';
 import TablePagination from '@/components/TablePagination';
-import TotalToken from '@/components/TotalToken';
 import type {
   CottiPlatformAnalyticsChatModelItem,
   CottiPlatformAnalyticsChatModelSort,
 } from '@/types/cotti/platformAnalytics';
 
+import TotalToken from './CompactTokens';
 import type { CottiPlatformAnalyticsDetailListState } from './detail';
 import { DetailEmpty } from './DetailEmpty';
 import { DetailTableSkeleton } from './DetailTableSkeleton';
 import { DetailToolbar } from './DetailToolbar';
+import { formatCost, formatUsd } from './format';
 import { useCottiPlatformAnalyticsChatModels } from './hooks';
 import type { CottiPlatformAnalyticsRangeSelection } from './range';
 import { styles } from './style';
@@ -36,7 +37,6 @@ interface ChatModelsTableProps {
   state: CottiPlatformAnalyticsDetailListState<CottiPlatformAnalyticsChatModelSort>;
 }
 
-const formatCost = (value: number) => `$${formatNumber(value, value > 0 && value < 0.01 ? 4 : 2)}`;
 const formatPercent = (value: number) => `${formatNumber(value * 100, 2)}%`;
 
 export const ChatModelsTable = memo<ChatModelsTableProps>(
@@ -85,6 +85,18 @@ export const ChatModelsTable = memo<ChatModelsTableProps>(
         },
         {
           align: 'right',
+          dataIndex: 'recordedCost',
+          key: 'recordedCost',
+          render: (value) => (
+            <Tooltip title={formatUsd(value)}>
+              <span>{formatCost(value)}</span>
+            </Tooltip>
+          ),
+          title: t('platformAnalytics.details.columns.cost'),
+          width: 112,
+        },
+        {
+          align: 'right',
           dataIndex: 'activeUsers',
           key: 'activeUsers',
           render: (value) => formatUsageValue(value),
@@ -110,16 +122,9 @@ export const ChatModelsTable = memo<ChatModelsTableProps>(
             />
           ),
           title: t('platformAnalytics.details.columns.tokens'),
-          width: 220,
+          width: 120,
         },
-        {
-          align: 'right',
-          dataIndex: 'recordedCost',
-          key: 'recordedCost',
-          render: (value) => formatCost(value),
-          title: t('platformAnalytics.details.columns.cost'),
-          width: 112,
-        },
+
         {
           align: 'right',
           dataIndex: 'errorMessages',

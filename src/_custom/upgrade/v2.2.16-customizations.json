@@ -211,7 +211,7 @@
       "id": "DEV-007",
       "name": "平台统计",
       "implementation": "[apps/server/src/routers/lambda/cotti/platformAnalytics.ts](<../../../apps/server/src/routers/lambda/cotti/platformAnalytics.ts#L26>)",
-      "boundary": "主router已注册；管理页overview挂载统计UI",
+      "boundary": "主 router 注册，平台管理概览四张核心指标；人民币费用展示（固定 7.12，原始 USD 不变），默认费用趋势、用户/模型/Agent 按费用排序；功能与错误明细折叠并按需加载。原统计接口和权限保持。",
       "firstImplemented": "2026-09-07",
       "sourceReferences": [
         {

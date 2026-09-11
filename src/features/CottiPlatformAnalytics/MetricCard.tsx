@@ -18,7 +18,7 @@ interface MetricCardProps {
 
 const MetricCard = memo<MetricCardProps>(
   ({ description, fullValue, icon, loading, title, value }) => (
-    <Block className={styles.metricCard} gap={16} padding={16} variant={'outlined'}>
+    <Block className={styles.metricCard} gap={10} padding={16} variant={'outlined'}>
       <Flexbox horizontal align={'center'} gap={12} justify={'space-between'}>
         <Text fontSize={13} type={'secondary'} weight={500}>
           {title}

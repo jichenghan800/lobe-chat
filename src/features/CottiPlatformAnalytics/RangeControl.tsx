@@ -1,7 +1,7 @@
 'use client';
 
 import { DatePicker, Flexbox } from '@lobehub/ui';
-import { Segmented, Text } from '@lobehub/ui/base-ui';
+import { Segmented } from '@lobehub/ui/base-ui';
 import dayjs from 'dayjs';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,9 +24,6 @@ const RangeControl = memo<RangeControlProps>(({ mode, range, setCustomDate, setM
 
   return (
     <Flexbox className={styles.rangeControls}>
-      <Text fontSize={13} type={'secondary'}>
-        {t('platformAnalytics.range.label')}
-      </Text>
       <Segmented
         size={'small'}
         value={String(mode)}

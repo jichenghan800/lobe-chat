@@ -194,6 +194,28 @@ const AgentMode = memo(() => {
       <Flexbox
         horizontal
         align="center"
+        className={cx(styles.option, currentMode === 'chat' && styles.activeOption)}
+        gap={12}
+        onClick={() => handleSelect('chat')}
+      >
+        <Flexbox
+          align="center"
+          className={styles.optionIcon}
+          height={32}
+          justify="center"
+          width={32}
+        >
+          <Icon icon={MessageCircleIcon} size={16} />
+        </Flexbox>
+        <Flexbox flex={1}>
+          <div className={styles.optionTitle}>{t('chatMode.chat')}</div>
+          <div className={styles.optionDesc}>{t('chatMode.chatDesc')}</div>
+        </Flexbox>
+      </Flexbox>
+
+      <Flexbox
+        horizontal
+        align="center"
         gap={12}
         className={cx(
           styles.option,
@@ -214,28 +236,6 @@ const AgentMode = memo(() => {
         <Flexbox flex={1}>
           <div className={styles.optionTitle}>{t('chatMode.agent')}</div>
           <div className={styles.optionDesc}>{agentDesc}</div>
-        </Flexbox>
-      </Flexbox>
-
-      <Flexbox
-        horizontal
-        align="center"
-        className={cx(styles.option, currentMode === 'chat' && styles.activeOption)}
-        gap={12}
-        onClick={() => handleSelect('chat')}
-      >
-        <Flexbox
-          align="center"
-          className={styles.optionIcon}
-          height={32}
-          justify="center"
-          width={32}
-        >
-          <Icon icon={MessageCircleIcon} size={16} />
-        </Flexbox>
-        <Flexbox flex={1}>
-          <div className={styles.optionTitle}>{t('chatMode.chat')}</div>
-          <div className={styles.optionDesc}>{t('chatMode.chatDesc')}</div>
         </Flexbox>
       </Flexbox>
     </Flexbox>
