@@ -1,7 +1,7 @@
-import { type Generation, type GenerationBatch } from '@/types/generation';
+import type { Generation, GenerationBatch } from '@/types/generation';
 
 // Default maximum width for image items
-export const DEFAULT_MAX_ITEM_WIDTH = 256;
+export const DEFAULT_MAX_ITEM_WIDTH = 320;
 
 /**
  * Get image dimensions from various sources
@@ -99,33 +99,17 @@ export const getAspectRatio = (
 };
 
 /**
- * Calculate display max width for generation items
- * Ensures height doesn't exceed half screen height based on original aspect ratio
- *
- * @note This function is only used in client-side rendering environments.
- * It directly accesses window.innerHeight and is not designed for SSR compatibility.
+ * Fit previews and placeholders within a 320px long edge, preserving aspect ratio
+ * and the native half-screen height limit. The container handles narrower widths.
+ * Client-side only, like the existing generation feed.
  */
 export const getThumbnailMaxWidth = (
   generation: Generation,
   generationBatch?: GenerationBatch,
 ): number => {
-  const dimensions = getImageDimensions(generation, generationBatch);
-
-  // Return default width if no dimension information is available
-  if (!dimensions.aspectRatio) {
-    return DEFAULT_MAX_ITEM_WIDTH * 2;
-  }
-
-  // Parse aspect ratio string (format: "16 / 9")
-  const [widthStr, heightStr] = dimensions.aspectRatio.split(' / ');
+  const [widthStr, heightStr] = getAspectRatio(generation, generationBatch).split(' / ');
   const aspectRatio = Number(widthStr) / Number(heightStr);
+  const maxHeight = Math.min(DEFAULT_MAX_ITEM_WIDTH, window.innerHeight / 2);
 
-  // Apply screen height constraint (half of screen height)
-  // Note: window.innerHeight is safe to use here as this function is client-side only
-  const maxScreenHeight = window.innerHeight / 2;
-  const maxWidthFromHeight = Math.round(maxScreenHeight * aspectRatio);
-
-  // Use the smaller of: calculated width from height constraint or a reasonable maximum
-  const maxReasonableWidth = DEFAULT_MAX_ITEM_WIDTH * 2;
-  return Math.min(maxWidthFromHeight, maxReasonableWidth);
+  return Math.min(DEFAULT_MAX_ITEM_WIDTH, Math.floor(maxHeight * aspectRatio));
 };

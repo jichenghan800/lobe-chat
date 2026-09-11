@@ -3,12 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Generation, type GenerationBatch } from '@/types/generation';
 
 // Import functions for testing
-import {
-  DEFAULT_MAX_ITEM_WIDTH,
-  getAspectRatio,
-  getImageDimensions,
-  getThumbnailMaxWidth,
-} from './utils';
+import { getAspectRatio, getImageDimensions, getThumbnailMaxWidth } from './utils';
 
 describe('getImageDimensions', () => {
   // Mock base generation object
@@ -473,128 +468,43 @@ describe('getThumbnailMaxWidth (isolated unit testing)', () => {
     global.window = originalWindow;
   });
 
-  it('should return DEFAULT_MAX_ITEM_WIDTH when no dimensions available', () => {
-    const result = getThumbnailMaxWidth(mockGeneration, mockGenerationBatch);
-    expect(result).toBe(DEFAULT_MAX_ITEM_WIDTH * 2);
+  it.each([
+    [1024, 1024, 320],
+    [1536, 1024, 320],
+    [1024, 1536, 213],
+    [2160, 3840, 180],
+    [3840, 2160, 320],
+  ])('fits %i × %i within a 320px long edge', (width, height, expectedWidth) => {
+    const generation: Generation = {
+      ...mockGeneration,
+      asset: { type: 'image', width, height },
+    };
+    const result = getThumbnailMaxWidth(generation);
+    expect(result).toBe(expectedWidth);
+    expect((result * height) / width).toBeLessThanOrEqual(320);
   });
 
-  it('should return DEFAULT_MAX_ITEM_WIDTH when width is missing', () => {
-    const mockGen: Generation = {
-      ...mockGeneration,
-      // No asset with width/height, should fall back to default
-    };
-    const result = getThumbnailMaxWidth(mockGen);
-    expect(result).toBe(DEFAULT_MAX_ITEM_WIDTH * 2);
+  it('uses the same compact square for pending images with unknown dimensions', () => {
+    expect(getThumbnailMaxWidth(mockGeneration, mockGenerationBatch)).toBe(320);
   });
 
-  it('should return DEFAULT_MAX_ITEM_WIDTH when height is missing', () => {
-    const mockGen: Generation = {
+  it('keeps a configured placeholder the same size as the completed image', () => {
+    const batch = { ...mockGenerationBatch, config: { prompt: 'test', size: '1024x1536' } };
+    const completed: Generation = {
       ...mockGeneration,
-      // No asset with valid dimensions
+      asset: { type: 'image', width: 1024, height: 1536 },
     };
-    const result = getThumbnailMaxWidth(mockGen);
-    expect(result).toBe(DEFAULT_MAX_ITEM_WIDTH * 2);
+    expect(getThumbnailMaxWidth(mockGeneration, batch)).toBe(213);
+    expect(getThumbnailMaxWidth(completed, batch)).toBe(213);
   });
 
-  it('should calculate width based on screen height constraint', () => {
-    const mockGen: Generation = {
+  it('retains the half-screen height limit on a short viewport', () => {
+    window.innerHeight = 400;
+    const generation: Generation = {
       ...mockGeneration,
-      asset: {
-        type: 'image',
-        width: 300,
-        height: 200,
-      },
+      asset: { type: 'image', width: 1024, height: 1536 },
     };
-
-    // aspectRatio = 300/200 = 1.5
-    // maxScreenHeight = 800/2 = 400
-    // maxWidthFromHeight = 400 * 1.5 = 600
-    // maxReasonableWidth = 200 * 2 = 400
-    // min(600, 400) = 400
-    const result = getThumbnailMaxWidth(mockGen);
-    expect(result).toBe(512);
-  });
-
-  it('should apply maxReasonableWidth limit', () => {
-    const mockGen: Generation = {
-      ...mockGeneration,
-      asset: {
-        type: 'image',
-        width: 600,
-        height: 200,
-      },
-    };
-
-    // aspectRatio = 600/200 = 3
-    // maxScreenHeight = 800/2 = 400
-    // maxWidthFromHeight = 400 * 3 = 1200
-    // maxReasonableWidth = 200 * 2 = 400
-    // min(1200, 400) = 400
-    const result = getThumbnailMaxWidth(mockGen);
-    expect(result).toBe(512);
-  });
-
-  it('should use screen height constraint when smaller', () => {
-    const mockGen: Generation = {
-      ...mockGeneration,
-      asset: {
-        type: 'image',
-        width: 200,
-        height: 400,
-      },
-    };
-
-    // aspectRatio = 200/400 = 0.5
-    // maxScreenHeight = 800/2 = 400
-    // maxWidthFromHeight = 400 * 0.5 = 200
-    // maxReasonableWidth = 200 * 2 = 400
-    // min(200, 400) = 200
-    const result = getThumbnailMaxWidth(mockGen);
-    expect(result).toBe(200);
-  });
-
-  it('should handle different window.innerHeight values', () => {
-    Object.defineProperty(global, 'window', {
-      writable: true,
-      value: {
-        innerHeight: 600,
-      },
-    });
-
-    const mockGen: Generation = {
-      ...mockGeneration,
-      asset: {
-        type: 'image',
-        width: 400,
-        height: 200,
-      },
-    };
-
-    // aspectRatio = 400/200 = 2
-    // maxScreenHeight = 600/2 = 300
-    // maxWidthFromHeight = 300 * 2 = 600
-    // maxReasonableWidth = 200 * 2 = 400
-    // min(600, 400) = 400
-    const result = getThumbnailMaxWidth(mockGen);
-    expect(result).toBe(512);
-  });
-
-  it('should round calculated width correctly', () => {
-    const mockGen: Generation = {
-      ...mockGeneration,
-      asset: {
-        type: 'image',
-        width: 512,
-        height: 1000,
-      },
-    };
-
-    // aspectRatio = 512/1000 = 0.512
-    // maxScreenHeight = 800/2 = 400
-    // maxWidthFromHeight = Math.round(400 * 0.512) = Math.round(204.8) = 205
-    // maxReasonableWidth = 200 * 2 = 400
-    // min(205, 400) = 205
-    const result = getThumbnailMaxWidth(mockGen);
-    expect(result).toBe(205);
+    expect(getThumbnailMaxWidth(generation)).toBe(133);
+    expect(getThumbnailMaxWidth(mockGeneration)).toBe(200);
   });
 });
