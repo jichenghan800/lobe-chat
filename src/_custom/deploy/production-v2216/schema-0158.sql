@@ -1,0 +1,5 @@
+SELECT jsonb_build_object(
+ 'columns', (SELECT jsonb_agg(to_jsonb(t) ORDER BY table_name,column_name) FROM (SELECT table_name,column_name,data_type,udt_name,is_nullable,column_default FROM information_schema.columns WHERE table_schema='public' AND table_name IN ('cotti_login_access_rules','cotti_login_access_settings','cotti_platform_admin_assignments')) t),
+ 'constraints', (SELECT jsonb_agg(to_jsonb(t) ORDER BY relname,conname) FROM (SELECT c.relname,co.conname,pg_get_constraintdef(co.oid) AS definition FROM pg_constraint co JOIN pg_class c ON c.oid=co.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('cotti_login_access_rules','cotti_login_access_settings','cotti_platform_admin_assignments')) t),
+ 'indexes', (SELECT jsonb_agg(to_jsonb(t) ORDER BY tablename,indexname) FROM (SELECT tablename,indexname,indexdef FROM pg_indexes WHERE schemaname='public' AND tablename IN ('cotti_login_access_rules','cotti_login_access_settings','cotti_platform_admin_assignments')) t)
+);

@@ -1,0 +1,7 @@
+services:
+  app:
+    image: lobehub:lingshu-v2216-overview-design-20260911
+    env_file:
+      - ${COTTI_RELEASE_DIR:?}/production-runtime.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?}

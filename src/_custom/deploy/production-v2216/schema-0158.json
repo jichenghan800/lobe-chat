@@ -1,0 +1,244 @@
+{
+  "columns": [
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "accessed_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "created_by",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "enabled",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "note",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "type",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "updated_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "cotti_login_access_rules",
+      "column_name": "value",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_login_access_settings",
+      "column_name": "accessed_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_login_access_settings",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "cotti_login_access_settings",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "'default'::character varying"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "cotti_login_access_settings",
+      "column_name": "mode",
+      "is_nullable": "NO",
+      "column_default": "'allowlist'::character varying"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_login_access_settings",
+      "column_name": "updated_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "cotti_login_access_settings",
+      "column_name": "updated_by",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_platform_admin_assignments",
+      "column_name": "accessed_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_platform_admin_assignments",
+      "column_name": "created_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "cotti_platform_admin_assignments",
+      "column_name": "created_by",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "cotti_platform_admin_assignments",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "cotti_platform_admin_assignments",
+      "column_name": "note",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "cotti_platform_admin_assignments",
+      "column_name": "updated_at",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "cotti_platform_admin_assignments",
+      "column_name": "user_id",
+      "is_nullable": "NO",
+      "column_default": null
+    }
+  ],
+  "constraints": [
+    {
+      "conname": "cotti_login_access_rules_created_by_users_id_fk",
+      "relname": "cotti_login_access_rules",
+      "definition": "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL"
+    },
+    {
+      "conname": "cotti_login_access_rules_pkey",
+      "relname": "cotti_login_access_rules",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "cotti_login_access_settings_pkey",
+      "relname": "cotti_login_access_settings",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "cotti_login_access_settings_updated_by_users_id_fk",
+      "relname": "cotti_login_access_settings",
+      "definition": "FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL"
+    },
+    {
+      "conname": "cotti_platform_admin_assignments_created_by_users_id_fk",
+      "relname": "cotti_platform_admin_assignments",
+      "definition": "FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL"
+    },
+    {
+      "conname": "cotti_platform_admin_assignments_pkey",
+      "relname": "cotti_platform_admin_assignments",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "conname": "cotti_platform_admin_assignments_user_id_users_id_fk",
+      "relname": "cotti_platform_admin_assignments",
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+    }
+  ],
+  "indexes": [
+    {
+      "indexdef": "CREATE UNIQUE INDEX cotti_login_access_rules_pkey ON public.cotti_login_access_rules USING btree (id)",
+      "indexname": "cotti_login_access_rules_pkey",
+      "tablename": "cotti_login_access_rules"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX cotti_login_access_rules_type_value_unique ON public.cotti_login_access_rules USING btree (type, value)",
+      "indexname": "cotti_login_access_rules_type_value_unique",
+      "tablename": "cotti_login_access_rules"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX cotti_login_access_settings_pkey ON public.cotti_login_access_settings USING btree (id)",
+      "indexname": "cotti_login_access_settings_pkey",
+      "tablename": "cotti_login_access_settings"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX cotti_platform_admin_assignments_pkey ON public.cotti_platform_admin_assignments USING btree (id)",
+      "indexname": "cotti_platform_admin_assignments_pkey",
+      "tablename": "cotti_platform_admin_assignments"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX cotti_platform_admin_assignments_user_id_unique ON public.cotti_platform_admin_assignments USING btree (user_id)",
+      "indexname": "cotti_platform_admin_assignments_user_id_unique",
+      "tablename": "cotti_platform_admin_assignments"
+    }
+  ]
+}
