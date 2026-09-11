@@ -11,8 +11,8 @@ export const OSS_CHAT_PROVIDER = 'vertexai';
 export const NEW_CHAT_PROVIDER = 'azure';
 
 // Image
-export const NEW_IMAGE_MODEL = 'gpt-image-2';
-export const NEW_IMAGE_MODEL_NAME = 'GPT Image 2';
+export const NEW_IMAGE_MODEL = 'gpt-image-2.5-flare';
+export const NEW_IMAGE_MODEL_NAME = 'GPT Image 2.5 Flare';
 
 // Video
 export const NEW_VIDEO_MODEL = 'dreamina-seedance-2-0-260128';

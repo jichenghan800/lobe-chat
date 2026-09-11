@@ -584,25 +584,29 @@ describe('LobeAzureOpenAI', () => {
       expect(res).toEqual({ imageUrl: url });
     });
 
-    it('should not send input_fidelity for gpt-image-2 edit requests', async () => {
-      const url = 'https://example.com/gpt-image-2-edited.png';
-      const editSpy = vi
-        .spyOn(instance['client'].images, 'edit')
-        .mockResolvedValue({ data: [{ url }] } as any);
+    it.each(['gpt-image-2', 'gpt-image-2.5-flare'])(
+      'should not send input_fidelity for %s edit requests',
+      async (model) => {
+        const url = 'https://example.com/gpt-image-2-edited.png';
+        const editSpy = vi
+          .spyOn(instance['client'].images, 'edit')
+          .mockResolvedValue({ data: [{ url }] } as any);
 
-      const helpers = await import('../../core/contextBuilders/openai');
-      vi.spyOn(helpers, 'convertImageUrlToFile').mockResolvedValue({} as any);
+        const helpers = await import('../../core/contextBuilders/openai');
+        vi.spyOn(helpers, 'convertImageUrlToFile').mockResolvedValue({} as any);
 
-      const res = await instance.createImage({
-        model: 'gpt-image-2',
-        params: { prompt: 'edit', imageUrl: 'https://example.com/in.png' },
-      });
+        const res = await instance.createImage({
+          model,
+          params: { prompt: 'edit', imageUrl: 'https://example.com/in.png' },
+        });
 
-      expect(editSpy).toHaveBeenCalledTimes(1);
-      const arg = vi.mocked(editSpy).mock.calls[0][0] as any;
-      expect(arg).not.toHaveProperty('input_fidelity');
-      expect(res).toEqual({ imageUrl: url });
-    });
+        expect(editSpy).toHaveBeenCalledTimes(1);
+        const arg = vi.mocked(editSpy).mock.calls[0][0] as any;
+        expect(arg).not.toHaveProperty('input_fidelity');
+        expect(arg).toMatchObject({ model, n: 1 });
+        expect(res).toEqual({ imageUrl: url });
+      },
+    );
 
     it('should convert multiple imageUrls and pass images array to edit', async () => {
       const url = 'https://example.com/edited2.png';

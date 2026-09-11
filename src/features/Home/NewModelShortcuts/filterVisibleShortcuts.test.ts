@@ -44,7 +44,7 @@ describe('home discovery with the configured COTTI catalog', () => {
   const models = [
     { id: 'gemini-3.5-flash-lite', providerId: 'vertexai', type: 'chat' },
     { id: 'gpt-5.6-terra', providerId: 'azure', type: 'chat' },
-    { id: 'gpt-image-2', providerId: 'azure', type: 'image' },
+    { id: 'gpt-image-2.5-flare', providerId: 'azure', type: 'image' },
   ];
   const config = {
     agent: [],
@@ -59,7 +59,7 @@ describe('home discovery with the configured COTTI catalog', () => {
     expect(result.map(({ title }) => title)).toEqual([
       'COTTI-快速',
       'GPT-5.6 Terra',
-      'GPT Image 2',
+      'GPT Image 2.5 Flare',
     ]);
     expect(result.slice(0, 2).map(({ model, provider }) => ({ model, provider }))).toEqual([
       { model: models[0].id, provider: 'vertexai' },
@@ -76,7 +76,7 @@ describe('home discovery with the configured COTTI catalog', () => {
       filterVisibleShortcuts([...OSS_HOME_NEW_MODELS], models, retired, 'vertexai').map(
         ({ title }) => title,
       ),
-    ).toEqual(['COTTI-快速', 'GPT Image 2']);
+    ).toEqual(['COTTI-快速', 'GPT Image 2.5 Flare']);
   });
 
   it('uses the administrator display name without changing the model target', () => {

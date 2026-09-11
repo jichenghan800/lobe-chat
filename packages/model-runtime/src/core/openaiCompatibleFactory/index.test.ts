@@ -2449,6 +2449,7 @@ describe('LobeOpenAICompatibleFactory', () => {
         ['gpt-image-1-mini', false], // mini tier explicitly excluded
         ['gpt-image-2', false], // gpt-image-2 dropped the param
         ['gpt-image-2-2026-04-21', false], // gpt-image-2 snapshot alias
+        ['gpt-image-2.5-flare', false],
       ])('should %s include input_fidelity for %s', async (model, shouldInclude) => {
         const mockResponse = { data: [{ b64_json: 'edited' }] };
         const mockFile = new File(['content'], 'test.jpg', { type: 'image/jpeg' });

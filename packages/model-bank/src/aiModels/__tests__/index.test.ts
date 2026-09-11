@@ -290,3 +290,21 @@ describe('vendor provider cards', () => {
     expect(glm53Flash?.settings?.searchImpl).toBe('params');
   });
 });
+
+describe('GPT Image 2.5 Flare catalog', () => {
+  it('exposes image generation parameters and image-only output pricing', async () => {
+    const models = await loadModels();
+    const flare = models.find((m) => m.providerId === 'openai' && m.id === 'gpt-image-2.5-flare');
+    expect(flare).toMatchObject({ type: 'image', displayName: 'GPT Image 2.5 Flare' });
+    expect(flare?.parameters).toHaveProperty('imageUrls');
+    expect(flare?.parameters).toHaveProperty('size');
+    expect(flare?.pricing?.units).toContainEqual({
+      name: 'imageOutput',
+      rate: 30,
+      strategy: 'fixed',
+      unit: 'millionTokens',
+    });
+    expect(flare?.pricing?.units.some((unit) => unit.name === 'textOutput')).toBe(false);
+    expect(models.some((m) => m.providerId === 'openai' && m.id === 'gpt-image-2')).toBe(true);
+  });
+});
