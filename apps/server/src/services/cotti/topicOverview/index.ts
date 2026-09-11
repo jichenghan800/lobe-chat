@@ -18,6 +18,7 @@ import type {
 const MAX_TOPIC_MESSAGES = 5000;
 
 export const cottiTopicOverviewQuerySchema = z.object({
+  status: z.enum(['active', 'frozen', 'all']).default('active'),
   page: z.number().int().min(1).max(10_000).default(1),
   pageSize: z.union([z.literal(20), z.literal(50)]).default(50),
   q: z.string().trim().max(100).optional(),
@@ -25,12 +26,16 @@ export const cottiTopicOverviewQuerySchema = z.object({
 
 interface TopicOverviewRow {
   agentId: null | string;
+  costRecords: number | string;
+  costUsd: number | string | null;
   createdAt: Date | string;
+  frozen: boolean;
   groupId: null | string;
   id: string;
   imageCount: number | string;
   messageCount: number | string;
   mode: CottiTopicOverviewMode;
+  pricedRecords: number | string;
   sessionId: null | string;
   targetTitle: null | string;
   title: null | string;
@@ -52,26 +57,14 @@ const toNumber = (value: number | string | null | undefined) => Number(value || 
 const toISOString = (value: Date | string) =>
   (value instanceof Date ? value : new Date(value)).toISOString();
 
-/** Keep transcript text, tool activity and images; omit every other file surface. */
-export const sanitizeCottiTopicOverviewMessage = (message: UIChatMessage): UIChatMessage => {
-  const {
-    audioList: _audioList,
-    chunksList: _chunksList,
-    fileList: _fileList,
-    files: _files,
-    videoList: _videoList,
-    works: _works,
-    ...safeMessage
-  } = message;
-
-  return {
-    ...safeMessage,
-    compressedMessages: message.compressedMessages?.map(sanitizeCottiTopicOverviewMessage),
-    extra: message.extra ? { ...message.extra, tts: undefined } : undefined,
-    members: message.members?.map(sanitizeCottiTopicOverviewMessage),
-    tasks: message.tasks?.map(sanitizeCottiTopicOverviewMessage),
-  };
-};
+/** Admin-only transcript: preserve native attachment and work cards; no TTS generation. */
+export const sanitizeCottiTopicOverviewMessage = (message: UIChatMessage): UIChatMessage => ({
+  ...message,
+  compressedMessages: message.compressedMessages?.map(sanitizeCottiTopicOverviewMessage),
+  extra: message.extra ? { ...message.extra, tts: undefined } : undefined,
+  members: message.members?.map(sanitizeCottiTopicOverviewMessage),
+  tasks: message.tasks?.map(sanitizeCottiTopicOverviewMessage),
+});
 
 export class CottiTopicOverviewService {
   private db: LobeChatDatabase;
@@ -99,7 +92,7 @@ export class CottiTopicOverviewService {
           1,
           item.messageCount <= MAX_TOPIC_MESSAGES ? item.messageCount + 1 : MAX_TOPIC_MESSAGES,
         ),
-        skipWorks: true,
+        skipWorks: false,
         topicId: item.id,
       },
       {
@@ -107,8 +100,25 @@ export class CottiTopicOverviewService {
       },
     );
 
+    const agentRows = await this.db.execute(sql`
+      SELECT id, title, name, avatar, background_color FROM agents
+      WHERE id=${item.agentId ?? null} OR id IN (SELECT DISTINCT agent_id FROM messages WHERE topic_id=${item.id})
+    `);
+    const agentMetas = Object.fromEntries(
+      agentRows.rows.map((agent) => [
+        String(agent.id),
+        {
+          title: agent.title == null ? undefined : String(agent.title),
+          name: agent.name == null ? undefined : String(agent.name),
+          avatar: agent.avatar == null ? undefined : String(agent.avatar),
+          backgroundColor:
+            agent.background_color == null ? undefined : String(agent.background_color),
+        },
+      ]),
+    );
     return {
       ...item,
+      agentMetas,
       messages: messages.map(sanitizeCottiTopicOverviewMessage),
       messagesTruncated: item.messageCount > MAX_TOPIC_MESSAGES,
     };
@@ -118,15 +128,15 @@ export class CottiTopicOverviewService {
     const query = cottiTopicOverviewQuerySchema.parse(input ?? {});
     const offset = (query.page - 1) * query.pageSize;
     const result = await this.db.execute(sql`
-      ${this.buildTopicRowsQuery({ q: query.q })}
+      ${this.buildTopicRowsQuery({ q: query.q, status: query.status })}
       ${this.buildPageRowsQuery(sql`
         SELECT *, COUNT(*) OVER() AS total
         FROM filtered_topics
-        ORDER BY "updatedAt" DESC, id DESC
+        ORDER BY "costUsd" DESC NULLS LAST, "updatedAt" DESC, id DESC
         LIMIT ${query.pageSize}
         OFFSET ${offset}
       `)}
-      ORDER BY "updatedAt" DESC, id DESC
+      ORDER BY "costUsd" DESC NULLS LAST, "updatedAt" DESC, id DESC
     `);
     const rows = result.rows as unknown as TopicOverviewRow[];
     // An empty out-of-range page has no window-count row; preserve the real total.
@@ -135,7 +145,7 @@ export class CottiTopicOverviewService {
       : toNumber(
           (
             await this.db.execute(sql`
-      ${this.buildTopicRowsQuery({ q: query.q })}
+      ${this.buildTopicRowsQuery({ q: query.q, status: query.status })}
       SELECT COUNT(*) AS total FROM filtered_topics
     `)
           ).rows[0]?.total as number | string | undefined,
@@ -168,7 +178,15 @@ export class CottiTopicOverviewService {
     });
   }
 
-  private buildTopicRowsQuery = ({ q, topicId }: { q?: string; topicId?: string }) => {
+  private buildTopicRowsQuery = ({
+    q,
+    topicId,
+    status,
+  }: {
+    q?: string;
+    topicId?: string;
+    status?: 'active' | 'frozen' | 'all';
+  }) => {
     const normalizedQuery = q
       ?.trim()
       .toLowerCase()
@@ -178,6 +196,8 @@ export class CottiTopicOverviewService {
       WITH filtered_topics AS MATERIALIZED (
         SELECT
           topics.id,
+          (topics.cost->'llm'->>'total')::numeric AS "costUsd",
+          EXISTS (SELECT 1 FROM topic_cost_freezes f WHERE f.topic_id=topics.id) AS frozen,
           topics.title,
           topics.agent_id AS "agentId",
           topics.group_id AS "groupId",
@@ -200,6 +220,7 @@ export class CottiTopicOverviewService {
         LEFT JOIN agents ON agents.id = topics.agent_id
         LEFT JOIN chat_groups ON chat_groups.id = topics.group_id
         WHERE COALESCE(topics.is_deleted, FALSE) = FALSE
+          AND (${status ?? 'all'}='all' OR EXISTS (SELECT 1 FROM topic_cost_freezes f WHERE f.topic_id=topics.id) = (${status ?? 'all'}='frozen'))
           AND (${topicId ?? null}::text IS NULL OR topics.id = ${topicId ?? null})
           AND (
             ${normalizedQuery ?? null}::text IS NULL
@@ -229,12 +250,16 @@ export class CottiTopicOverviewService {
         WHEN operation.has_operation THEN 'agent'
         ELSE 'chat'
       END AS mode,
+      COALESCE(message_stats.cost_records, 0) AS "costRecords",
+      COALESCE(message_stats.priced_records, 0) AS "pricedRecords",
       COALESCE(message_stats.message_count, 0) AS "messageCount",
       COALESCE(message_stats.image_count, 0) AS "imageCount"
     FROM (${page}) page
         LEFT JOIN LATERAL (
           SELECT
             COUNT(DISTINCT messages.id) AS message_count,
+            COUNT(DISTINCT messages.id) FILTER (WHERE messages.role='assistant' AND messages.user_id=page."userId" AND coalesce(messages.metadata->>'copied','') <> 'true') AS cost_records,
+            COUNT(DISTINCT messages.id) FILTER (WHERE messages.role='assistant' AND messages.user_id=page."userId" AND coalesce(messages.metadata->>'copied','') <> 'true' AND coalesce(messages.usage->>'cost', messages.metadata->'usage'->>'cost', messages.metadata->>'cost') ~ '^[0-9]+([.][0-9]+)?$') AS priced_records,
             COUNT(*) FILTER (WHERE files.file_type LIKE 'image/%') AS image_count
           FROM messages
           LEFT JOIN messages_files ON messages_files.message_id = messages.id
@@ -253,6 +278,9 @@ export class CottiTopicOverviewService {
   `;
 
   private mapTopicRow = (row: TopicOverviewRow): CottiTopicOverviewItem => ({
+    costUsd: row.costUsd == null ? null : Number(row.costUsd),
+    costComplete: toNumber(row.costRecords) === toNumber(row.pricedRecords),
+    frozen: row.frozen,
     agentId: row.agentId,
     createdAt: toISOString(row.createdAt),
     groupId: row.groupId,

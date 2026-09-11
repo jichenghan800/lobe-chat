@@ -14,12 +14,19 @@ const parsePage = (value: string | null) => {
 export const useCottiTopicOverviewList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const state = useMemo(
-    () => ({ page: parsePage(searchParams.get('page')), q: searchParams.get('q')?.trim() ?? '' }),
+    () => ({
+      page: parsePage(searchParams.get('page')),
+      q: searchParams.get('q')?.trim() ?? '',
+      status: (['active', 'frozen', 'all'].includes(searchParams.get('status') ?? '')
+        ? searchParams.get('status')
+        : 'active') as 'active' | 'frozen' | 'all',
+    }),
     [searchParams],
   );
   const [queryInput, setQueryInput] = useState(state.q);
   const debouncedQuery = useDebounce(queryInput, { wait: 300 });
   const query = {
+    status: state.status,
     page: state.page,
     pageSize: 50,
     q: state.q || undefined,
@@ -40,12 +47,18 @@ export const useCottiTopicOverviewList = () => {
   }, [debouncedQuery, searchParams, setSearchParams, state.q]);
 
   const swr = useClientDataSWR(
-    ['cotti', 'topic-overview', 'list', query.q ?? '', query.page, query.pageSize],
+    ['cotti', 'topic-overview', 'list', query.q ?? '', query.page, query.pageSize, query.status],
     () => cottiTopicOverviewService.list(query),
     { keepPreviousData: true, revalidateOnFocus: false },
   );
 
   return {
+    setStatus: (status: 'active' | 'frozen' | 'all') => {
+      const next = new URLSearchParams(searchParams);
+      next.set('status', status);
+      next.delete('page');
+      setSearchParams(next);
+    },
     queryInput,
     setPage: (page: number) => {
       const next = new URLSearchParams(searchParams);
@@ -67,3 +80,10 @@ export const useCottiTopicOverviewDetail = (topicId?: string) => {
     { revalidateOnFocus: false, revalidateOnReconnect: false },
   );
 };
+
+export const useCottiTopicAccounting = (topicId: string) =>
+  useClientDataSWR(
+    ['cotti', 'topic-accounting', topicId],
+    () => cottiTopicOverviewService.accounting(topicId),
+    { refreshInterval: 15000, revalidateOnFocus: true },
+  );

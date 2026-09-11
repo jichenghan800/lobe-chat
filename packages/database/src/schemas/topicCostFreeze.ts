@@ -8,7 +8,7 @@ export const topicCostFreezes = pgTable('topic_cost_freezes', {
   topicId: text('topic_id')
     .primaryKey()
     .references(() => topics.id, { onDelete: 'cascade' }),
-  reason: text('reason').$type<'context' | 'budget'>().notNull().default('context'),
+  reason: text('reason').$type<'context' | 'budget' | 'manual'>().notNull().default('context'),
   spentCny: numeric('spent_cny'),
   limitFen: integer('limit_fen'),
   model: text('model').notNull(),

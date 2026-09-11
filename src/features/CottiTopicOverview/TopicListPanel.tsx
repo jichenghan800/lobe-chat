@@ -1,7 +1,7 @@
 'use client';
 
 import { Center, Empty, Flexbox, SearchBar } from '@lobehub/ui';
-import { Button, Text } from '@lobehub/ui/base-ui';
+import { Button, Select, Text } from '@lobehub/ui/base-ui';
 import {
   BotIcon,
   ChevronLeftIcon,
@@ -22,6 +22,7 @@ import type { CottiTopicOverviewMode } from '@/types/cotti/topicOverview';
 
 import { useCottiTopicOverviewList } from './hooks';
 import { styles } from './style';
+import { topicCny } from './TopicManagement';
 import { TopicModeTag } from './TopicModeTag';
 
 const modeIcons = {
@@ -34,7 +35,7 @@ export const TopicListPanel = memo(() => {
   const { i18n, t } = useTranslation('topic');
   const { topicId } = useParams<{ topicId: string }>();
   const location = useLocation();
-  const { queryInput, setPage, setQueryInput, state, swr } = useCottiTopicOverviewList();
+  const { queryInput, setStatus, setPage, setQueryInput, state, swr } = useCottiTopicOverviewList();
   const data = swr.data;
   const pageCount = Math.max(1, Math.ceil((data?.total ?? 0) / 50));
   const dateFormatter = useMemo(
@@ -53,6 +54,14 @@ export const TopicListPanel = memo(() => {
             {data ? t('overview.total', { count: data.total }) : undefined}
           </Text>
         </Flexbox>
+        <Select
+          value={state.status}
+          options={(['active', 'frozen', 'all'] as const).map((value) => ({
+            value,
+            label: t(`overview.manage.filter.${value}`),
+          }))}
+          onChange={(value) => setStatus(value as 'active' | 'frozen' | 'all')}
+        />
         <SearchBar
           allowClear
           maxLength={100}
@@ -94,9 +103,7 @@ export const TopicListPanel = memo(() => {
           <div className={styles.list}>
             {data?.items.map((item) => {
               const title = item.title?.trim() || t('overview.untitled');
-              const description = [item.userName || item.userEmail, item.targetTitle]
-                .filter(Boolean)
-                .join(' · ');
+              const description = item.userName || item.userEmail || '';
               const href = `/overview/${item.id}${location.search}`;
 
               return (
@@ -118,6 +125,22 @@ export const TopicListPanel = memo(() => {
                             {description}
                           </Text>
                         )}
+                        <Text
+                          strong
+                          fontSize={12}
+                          style={{ flexShrink: 0 }}
+                          title={
+                            item.costComplete === false
+                              ? t('overview.manage.incomplete')
+                              : undefined
+                          }
+                        >
+                          {item.costUsd == null
+                            ? t('overview.manage.unknown')
+                            : topicCny(item.costUsd)}
+                          {item.costComplete === false ? '*' : ''}
+                        </Text>
+                        {item.frozen && <Text fontSize={11}>{t('overview.manage.frozen')}</Text>}
                       </Flexbox>
                     }
                     extra={

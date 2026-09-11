@@ -1,6 +1,12 @@
 import { and, eq, sql } from 'drizzle-orm';
 
-import { cottiTopicBudgetSettings, messages, topicCostFreezes, topics } from '../schemas';
+import {
+  cottiTopicBudgetSettings,
+  cottiTopicPolicies,
+  messages,
+  topicCostFreezes,
+  topics,
+} from '../schemas';
 import type { LobeChatDatabase, Transaction } from '../type';
 import { notCopiedTranscript } from '../utils/copiedTranscript';
 import { CottiUserPolicyModel } from './cottiUserPolicy';
@@ -39,7 +45,12 @@ export class CottiTopicBudgetModel {
     const config = await this.getConfig();
     if (!config.enabled) return;
     const userPolicy = await new CottiUserPolicyModel(this.db).get(userId);
-    const limitFen = userPolicy.topicLimitFen ?? config.limitFen;
+    const [topicPolicy] = await this.db
+      .select()
+      .from(cottiTopicPolicies)
+      .where(eq(cottiTopicPolicies.topicId, topicId))
+      .limit(1);
+    const limitFen = topicPolicy?.limitFen ?? userPolicy.topicLimitFen ?? config.limitFen;
     const [topic] = await this.db
       .select({ id: topics.id, model: topics.model, provider: topics.provider })
       .from(topics)

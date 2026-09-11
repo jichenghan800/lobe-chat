@@ -1,6 +1,25 @@
 import { createStaticStyles, cssVar } from 'antd-style';
 
 export const styles = createStaticStyles(({ css }) => ({
+  management: css`
+    overflow: auto;
+    flex: none;
+
+    width: 360px;
+    padding: 20px;
+    border-inline-start: 1px solid ${cssVar.colorBorderSecondary};
+
+    background: ${cssVar.colorBgContainer};
+
+    @media (width <= 1100px) {
+      position: absolute;
+      z-index: 5;
+      inset-block: 0;
+      inset-inline: auto 0;
+
+      width: min(100%, 360px);
+    }
+  `,
   detail: css`
     overflow: hidden;
     min-width: 0;

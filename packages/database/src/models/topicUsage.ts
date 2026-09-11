@@ -256,14 +256,14 @@ export const recomputeTopicUsage = async (
       provider,
       model,
       count(*)::int AS "msgCount",
-      sum((COALESCE(usage, metadata->'usage')->>'cost')::numeric) AS "cost",
+      sum(CASE WHEN coalesce(usage->>'cost', metadata->'usage'->>'cost', metadata->>'cost') ~ '^[0-9]+([.][0-9]+)?$' THEN coalesce(usage->>'cost', metadata->'usage'->>'cost', metadata->>'cost')::numeric END) AS "cost",
       sum((metadata->'performance'->>'duration')::numeric) AS "durationMs",
       ${sql.raw(fieldSelects)}
     FROM messages
     WHERE topic_id = ${topicId}
       AND ${rowOwnership}
       AND role = 'assistant'
-      AND (usage IS NOT NULL OR metadata ? 'usage')
+      AND (usage IS NOT NULL OR metadata ? 'usage' OR metadata ? 'cost')
       AND ${sql.raw(NOT_COPIED_TRANSCRIPT_SQL)}
     GROUP BY provider, model
   `);

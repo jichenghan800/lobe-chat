@@ -17,6 +17,14 @@ vi.mock('../store', async (importOriginal) => {
 });
 
 describe('useAgentMeta', () => {
+  it('uses transcript-scoped metadata without changing the viewers agent store', () => {
+    const scoped = { title: 'Owner assistant', avatar: '/owner.png' };
+    act(() => useAgentStore.setState({ agentMap: { scoped: { title: 'Viewer assistant' } } }));
+    vi.mocked(useConversationStore).mockReturnValueOnce('scoped').mockReturnValueOnce(scoped);
+    const { result } = renderHook(() => useAgentMeta());
+    expect(result.current).toEqual(scoped);
+    expect(useAgentStore.getState().agentMap.scoped.title).toBe('Viewer assistant');
+  });
   it('should return agent meta for regular (non-builtin) agents', () => {
     const mockAgentId = 'regular-agent-123';
     const mockMeta = {

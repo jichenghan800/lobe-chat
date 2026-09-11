@@ -1256,6 +1256,15 @@ table cotti_topic_budget_settings {
   updated_at "timestamp with time zone" [not null, default: `now()`]
 }
 
+table cotti_user_policies {
+  user_id text [pk, not null]
+  vip boolean [not null, default: false]
+  agent_enabled boolean [not null, default: false]
+  topic_limit_fen integer
+  updated_by text
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+}
+
 table devices {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   user_id text [not null]
@@ -4292,11 +4301,9 @@ table workspaces {
   }
 }
 
-table cotti_user_policies {
-  user_id text [pk, not null]
-  vip boolean [not null, default: false]
-  agent_enabled boolean [not null, default: false]
-  topic_limit_fen integer
+table cotti_topic_policies {
+  topic_id text [pk, not null]
+  limit_fen integer
   updated_by text
   updated_at "timestamp with time zone" [not null, default: `now()`]
 }

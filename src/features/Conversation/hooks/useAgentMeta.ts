@@ -22,7 +22,12 @@ export const useAgentMeta = (messageAgentId?: string | null): MetaData => {
   const contextAgentId = useConversationStore(contextSelectors.agentId);
   // Use message's agentId if provided, otherwise fallback to context agentId
   const agentId = messageAgentId || contextAgentId;
-  const agentMeta = useAgentStore(agentSelectors.getAgentMetaById(agentId));
+  const storedAgentMeta = useAgentStore(agentSelectors.getAgentMetaById(agentId));
+  // Read-only admin transcripts supply metadata without mutating the viewer's global agent store.
+  const scopedAgentMeta = useConversationStore(
+    (s) => (s.context.metadata?.agentMetas as Record<string, MetaData> | undefined)?.[agentId],
+  );
+  const agentMeta = scopedAgentMeta ?? storedAgentMeta;
   const builtinAgentIdMap = useAgentStore((s) => s.builtinAgentIdMap);
 
   return useMemo(() => {

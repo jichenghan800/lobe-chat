@@ -38,6 +38,12 @@ describe('cotti.topicOverview router', () => {
 
     await expect(caller.topicOverview.list()).rejects.toMatchObject({ code: 'FORBIDDEN' });
     expect(list).not.toHaveBeenCalled();
+    await expect(caller.topicOverview.accounting({ topicId: 'private' })).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
+    await expect(
+      caller.topicOverview.manage({ topicId: 'private', action: 'unfreeze' }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
   });
 
   it('loads the server-paginated topic list', async () => {
@@ -48,7 +54,7 @@ describe('cotti.topicOverview router', () => {
     await expect(caller.topicOverview.list({ page: 2, pageSize: 50, q: 'alice' })).resolves.toEqual(
       { data: overview, success: true },
     );
-    expect(list).toHaveBeenCalledWith({ page: 2, pageSize: 50, q: 'alice' });
+    expect(list).toHaveBeenCalledWith({ page: 2, pageSize: 50, q: 'alice', status: 'active' });
   });
 
   it('records the administrator identity when topic detail is returned', async () => {

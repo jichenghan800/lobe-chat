@@ -6,6 +6,7 @@ import {
   cottiTopicOverviewQuerySchema,
   CottiTopicOverviewService,
 } from '@/server/services/cotti/topicOverview';
+import { CottiTopicManagementService } from '@/server/services/cotti/topicOverview/management';
 
 import { cottiAdminProcedure } from './procedure';
 
@@ -14,12 +15,36 @@ const cottiTopicOverviewProcedure = cottiAdminProcedure.use(async (opts) => {
 
   return opts.next({
     ctx: {
+      topicManagementService: new CottiTopicManagementService(ctx.serverDB),
       topicOverviewService: new CottiTopicOverviewService(ctx.serverDB),
     },
   });
 });
 
 export const cottiTopicOverviewRouter = router({
+  accounting: cottiTopicOverviewProcedure
+    .input(z.object({ topicId: z.string().min(1) }))
+    .query(({ ctx, input }) => ctx.topicManagementService.get(input.topicId)),
+  manage: cottiTopicOverviewProcedure
+    .input(
+      z
+        .object({
+          topicId: z.string().min(1),
+          action: z.enum(['freeze', 'unfreeze', 'setLimit', 'setLimitAndUnfreeze']),
+          limitFen: z.number().int().min(1).max(100_000_000).nullable().optional(),
+        })
+        .refine(
+          (value) => !value.action.startsWith('setLimit') || value.limitFen !== undefined,
+          'Limit is required',
+        ),
+    )
+    .mutation(({ ctx, input }) =>
+      ctx.topicManagementService.update(
+        input,
+        ctx.platformAdmin.userId,
+        ctx.platformAdmin.normalizedEmail || ctx.platformAdmin.email,
+      ),
+    ),
   detail: cottiTopicOverviewProcedure
     .input(z.object({ topicId: z.string().min(1) }))
     .query(async ({ ctx, input }) => {

@@ -21,6 +21,7 @@ export * from './cottiHomeNotification';
 export * from './cottiModelDisplay';
 export * from './cottiPeople';
 export * from './cottiTopicBudget';
+export * from './cottiTopicPolicy';
 export * from './cottiUserPolicy';
 export * from './device';
 export * from './documentComment';

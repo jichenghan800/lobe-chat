@@ -3,7 +3,7 @@
 import { Center, Empty, Flexbox, Icon } from '@lobehub/ui';
 import { Tag, Text } from '@lobehub/ui/base-ui';
 import { ImageIcon, MessageCircleIcon, TriangleAlertIcon } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router';
 
@@ -14,6 +14,7 @@ import BackButton from '@/features/NavPanel/components/BackButton';
 import { useCottiTopicOverviewDetail } from './hooks';
 import { ReadOnlyConversation } from './ReadOnlyConversation';
 import { styles } from './style';
+import { TopicManagement, TopicManagementHeader } from './TopicManagement';
 import { TopicModeTag } from './TopicModeTag';
 
 export const TopicDetail = memo(() => {
@@ -22,6 +23,7 @@ export const TopicDetail = memo(() => {
   const location = useLocation();
   const swr = useCottiTopicOverviewDetail(topicId);
   const detail = swr.data;
+  const [managementOpen, setManagementOpen] = useState(false);
 
   return (
     <AsyncBoundary
@@ -40,9 +42,13 @@ export const TopicDetail = memo(() => {
                 title={t('overview.backToList')}
                 to={`/overview${location.search}`}
               />
-              <div className={styles.detailTitle}>
+              <div className={styles.detailTitle} style={{ flex: 1, minWidth: 0 }}>
                 {detail.title?.trim() || t('overview.untitled')}
               </div>
+              <TopicManagementHeader
+                topicId={detail.id}
+                onOpen={() => setManagementOpen((open) => !open)}
+              />
             </Flexbox>
             <Flexbox horizontal align={'center'} gap={8} wrap={'wrap'}>
               <TopicModeTag mode={detail.mode} />
@@ -75,16 +81,25 @@ export const TopicDetail = memo(() => {
               <Text fontSize={12}>{t('overview.truncated')}</Text>
             </Flexbox>
           )}
-          <Flexbox className={styles.transcript} flex={1}>
-            {detail.messages.length > 0 ? (
-              <ReadOnlyConversation detail={detail} />
-            ) : (
-              <Center flex={1} padding={24}>
-                <Empty
-                  description={t('overview.noMessagesDescription')}
-                  title={t('overview.noMessagesTitle')}
-                />
-              </Center>
+          <Flexbox horizontal flex={1} style={{ minHeight: 0, position: 'relative' }}>
+            <Flexbox className={styles.transcript} flex={1} style={{ minWidth: 0 }}>
+              {detail.messages.length > 0 ? (
+                <ReadOnlyConversation detail={detail} />
+              ) : (
+                <Center flex={1} padding={24}>
+                  <Empty
+                    description={t('overview.noMessagesDescription')}
+                    title={t('overview.noMessagesTitle')}
+                  />
+                </Center>
+              )}
+            </Flexbox>
+            {managementOpen && (
+              <TopicManagement
+                key={detail.id}
+                topicId={detail.id}
+                onClose={() => setManagementOpen(false)}
+              />
             )}
           </Flexbox>
         </Flexbox>

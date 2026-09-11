@@ -54,6 +54,28 @@ describe('per-topic recorded spending limit', () => {
     await budget.freezeIfExceeded('budget-owner', 'budget-topic', 100);
     expect(await freezes.get('budget-topic')).toBeNull();
   });
+  it('preserves legacy root metadata costs when a live topic summary is recomputed', async () => {
+    await budget.updateConfig({ enabled: false, limitFen: 1000 }, 'admin');
+    await db.insert(messages).values([
+      {
+        id: 'budget-legacy',
+        topicId: 'budget-topic',
+        userId: 'budget-owner',
+        role: 'assistant',
+        metadata: { cost: 1 },
+      },
+      {
+        id: 'budget-current',
+        topicId: 'budget-topic',
+        userId: 'budget-owner',
+        role: 'assistant',
+        usage: { cost: 2 },
+      },
+    ]);
+    await db.transaction(async (tx) => recomputeTopicUsage(tx, 'budget-owner', 'budget-topic'));
+    const [topic] = await db.select().from(topics).where(eq(topics.id, 'budget-topic'));
+    expect(topic.cost).toMatchObject({ llm: { total: 3 } });
+  });
   it('uses ten yuan by default and freezes only the topic with enough recorded cost', async () => {
     expect(await budget.getConfig()).toEqual({ enabled: true, limitFen: 1000 });
     await db.insert(messages).values({

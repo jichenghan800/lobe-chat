@@ -32,18 +32,18 @@ const message = {
 } as UIChatMessage;
 
 describe('sanitizeCottiTopicOverviewMessage', () => {
-  it('retains chat content and images while omitting other attachment surfaces recursively', () => {
+  it('retains native read-only attachment and work surfaces recursively', () => {
     const result = sanitizeCottiTopicOverviewMessage(message);
 
     expect(result.content).toBe('hello');
     expect(result.imageList).toEqual([{ alt: 'image', id: 'image-1', url: '/image-1' }]);
-    expect(result).not.toHaveProperty('audioList');
-    expect(result).not.toHaveProperty('chunksList');
-    expect(result).not.toHaveProperty('fileList');
-    expect(result).not.toHaveProperty('files');
-    expect(result).not.toHaveProperty('videoList');
-    expect(result).not.toHaveProperty('works');
+    expect(result).toHaveProperty('audioList');
+    expect(result).toHaveProperty('chunksList');
+    expect(result).toHaveProperty('fileList');
+    expect(result).toHaveProperty('files');
+    expect(result).toHaveProperty('videoList');
+    expect(result).toHaveProperty('works');
     expect(result.compressedMessages?.[0].imageList).toHaveLength(1);
-    expect(result.compressedMessages?.[0]).not.toHaveProperty('fileList');
+    expect(result.compressedMessages?.[0]).toHaveProperty('fileList');
   });
 });

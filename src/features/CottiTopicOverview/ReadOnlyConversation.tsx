@@ -42,9 +42,10 @@ export const ReadOnlyConversation = memo<ReadOnlyConversationProps>(({ detail })
       agentId: detail.agentId ?? `overview-${detail.id}`,
       groupId: detail.groupId ?? undefined,
       topicId: detail.id,
+      metadata: { agentMetas: detail.agentMetas },
       topicShareId: `admin-overview-${detail.id}`,
     }),
-    [detail.agentId, detail.groupId, detail.id],
+    [detail.agentId, detail.groupId, detail.id, detail.agentMetas],
   );
   const turnTimeMap = useMemo(
     () => buildOverviewTurnTimeMap(detail.messages, i18n.language),
