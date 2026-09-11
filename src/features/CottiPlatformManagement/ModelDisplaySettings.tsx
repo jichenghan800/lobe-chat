@@ -4,8 +4,7 @@ import { Block, Empty, Flexbox, Icon } from '@lobehub/ui';
 import { Button, Select, Skeleton, Switch, Tabs, Tag, Text, toast } from '@lobehub/ui/base-ui';
 import { Input } from 'antd';
 import { createStaticStyles, cssVar, responsive } from 'antd-style';
-import isEqual from 'fast-deep-equal';
-import { ArrowDownIcon, ArrowUpIcon, RotateCcwIcon, SaveIcon, SparklesIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowUpIcon, SparklesIcon } from 'lucide-react';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -39,6 +38,7 @@ import {
 import { ProfessionalModelMatchField } from './ProfessionalModelMatchField';
 import { sharedStyles } from './sharedStyle';
 import TaskModelMigration from './TaskModelMigration';
+import { useConfigAutosave } from './useConfigAutosave';
 
 const styles = createStaticStyles(({ css }) => ({
   addSelect: css`
@@ -98,21 +98,32 @@ const styles = createStaticStyles(({ css }) => ({
 const ModelDisplaySettings = memo(() => {
   const { t } = useTranslation('setting');
   const [scope, setScope] = useState<ModelDisplayScope>('chat');
-  const [draft, setDraft] = useState<ModelDisplayConfig>();
   const [selectedOptionKey, setSelectedOptionKey] = useState<string>();
   const [retirementSource, setRetirementSource] = useState<string>();
-  const [saving, setSaving] = useState(false);
   const configSWR = useCottiModelDisplayConfig(true, true);
   const optionsSWR = useClientDataSWR(
     ['cotti', 'model-display-options'],
     () => cottiModelDisplayService.getOptions(),
     { revalidateOnFocus: false },
   );
-  const dirty = Boolean(draft && configSWR.data && !isEqual(draft, configSWR.data));
+  const { draft, saving, status, error, retry, save } = useConfigAutosave(
+    configSWR.data,
+    async (next) => {
+      const saved = await cottiModelDisplayService.updateConfig(next);
+      await configSWR.mutate(saved, { revalidate: false });
+      // A runtime refresh failure must not roll back an already committed configuration.
+      try {
+        await useAiInfraStore.getState().refreshAiProviderRuntimeState();
+      } catch {
+        toast.warning(t('platformManagement.models.autoSave.refreshFailed'));
+      }
+      return saved;
+    },
+  );
 
   useEffect(() => {
-    if (configSWR.data && (!draft || !dirty)) setDraft(configSWR.data);
-  }, [configSWR.data, dirty, draft]);
+    if (status === 'failed') toast.error(t('platformManagement.models.autoSave.failed'));
+  }, [status, t]);
 
   const optionMap = useMemo(
     () =>
@@ -148,7 +159,7 @@ const ModelDisplaySettings = memo(() => {
 
   if (!draft) return <Skeleton height={160} />;
 
-  const updateDraft = (next: ModelDisplayConfig) => setDraft(next);
+  const updateDraft = (next: ModelDisplayConfig) => void save(next);
   const addSelectedModel = () => {
     if (!selectedOptionKey) return;
     const option = optionMap.get(selectedOptionKey);
@@ -157,28 +168,18 @@ const ModelDisplaySettings = memo(() => {
     updateDraft(addModelDisplayItem(draft, scope, option));
     setSelectedOptionKey(undefined);
   };
-  const save = async () => {
-    setSaving(true);
-    try {
-      const saved = await cottiModelDisplayService.updateConfig(draft);
-      setDraft(saved);
-      await configSWR.mutate(saved, { revalidate: false });
-      await useAiInfraStore.getState().refreshAiProviderRuntimeState();
-      toast.success(t('platformManagement.models.feedback.saved'));
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t('platformManagement.models.feedback.saveFailed'),
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
 
   return (
     <Flexbox gap={16}>
       <Block className={sharedStyles.card} gap={16} padding={20} variant={'outlined'}>
         <Flexbox className={sharedStyles.sectionHeader} gap={4}>
           <Text className={sharedStyles.sectionTitle}>{t('platformManagement.models.title')}</Text>
+          <Text aria-live={'polite'} fontSize={12}>
+            {t(`platformManagement.models.autoSave.${status}`)}
+          </Text>
+          {status === 'failed' && (
+            <AsyncError error={error} variant={'inline'} onRetry={() => void retry()} />
+          )}
           <Text className={sharedStyles.copy} fontSize={13}>
             {t('platformManagement.models.desc')}
           </Text>
@@ -207,7 +208,7 @@ const ModelDisplaySettings = memo(() => {
             value={selectedOptionKey}
             onChange={setSelectedOptionKey}
           />
-          <Button disabled={!selectedOptionKey} onClick={addSelectedModel}>
+          <Button disabled={saving || !selectedOptionKey} onClick={addSelectedModel}>
             {t('platformManagement.models.actions.add')}
           </Button>
         </div>
@@ -242,9 +243,8 @@ const ModelDisplaySettings = memo(() => {
                   {isProfessionalChannel ? (
                     <ProfessionalModelMatchField
                       className={styles.displayName}
-                      disabled={dirty || saving}
+                      disabled={saving}
                       onSwitched={async (config) => {
-                        setDraft(config);
                         await configSWR.mutate(config, { revalidate: false });
                       }}
                     />
@@ -254,10 +254,13 @@ const ModelDisplaySettings = memo(() => {
                         {t('platformManagement.models.displayName.label')}
                       </Text>
                       <Input
+                        defaultValue={item.displayName}
+                        disabled={saving}
+                        key={item.displayName}
                         maxLength={100}
                         placeholder={t('platformManagement.models.displayName.placeholder')}
-                        value={item.displayName}
-                        onChange={(event) =>
+                        onPressEnter={(event) => event.currentTarget.blur()}
+                        onBlur={(event) =>
                           updateDraft(setModelDisplayName(draft, scope, item, event.target.value))
                         }
                       />
@@ -268,18 +271,15 @@ const ModelDisplaySettings = memo(() => {
                     <Switch
                       aria-label={t('platformManagement.users.vipModel')}
                       checked={isVipModel(draft, item)}
+                      disabled={saving}
                       onChange={(vip) => updateDraft(setModelVip(draft, item, vip))}
                     />
                   </Flexbox>
                   <Switch
                     checked={item.enabled}
-                    disabled={isProfessionalChannel}
+                    disabled={saving || isProfessionalChannel}
                     onChange={(enabled) => {
                       if (!enabled) {
-                        if (dirty) {
-                          toast.warning(t('platformManagement.models.migration.saveFirst'));
-                          return;
-                        }
                         setRetirementSource(JSON.stringify([item.provider, item.model]));
                         document
                           .getElementById('global-model-retirement')
@@ -305,7 +305,7 @@ const ModelDisplaySettings = memo(() => {
                   />
                   <div className={styles.rowActions}>
                     <Button
-                      disabled={!item.enabled || isDefault}
+                      disabled={saving || !item.enabled || isDefault}
                       size={'small'}
                       onClick={() => updateDraft(setModelDisplayDefault(draft, scope, item))}
                     >
@@ -314,13 +314,13 @@ const ModelDisplaySettings = memo(() => {
                         : t('platformManagement.models.default.action')}
                     </Button>
                     <Button
-                      disabled={index === 0}
+                      disabled={saving || index === 0}
                       icon={<Icon icon={ArrowUpIcon} />}
                       size={'small'}
                       onClick={() => updateDraft(moveModelDisplayItem(draft, scope, index, -1))}
                     />
                     <Button
-                      disabled={index === draft[scope].length - 1}
+                      disabled={saving || index === draft[scope].length - 1}
                       icon={<Icon icon={ArrowDownIcon} />}
                       size={'small'}
                       onClick={() => updateDraft(moveModelDisplayItem(draft, scope, index, 1))}
@@ -335,38 +335,14 @@ const ModelDisplaySettings = memo(() => {
 
       <TaskModelMigration
         config={configSWR.data || draft}
-        disabled={dirty || saving}
+        disabled={saving}
         options={optionsSWR.data || []}
         requestedSource={retirementSource}
         onSaved={async (config) => {
-          setDraft(config);
           await configSWR.mutate(config, { revalidate: false });
           await useAiInfraStore.getState().refreshAiProviderRuntimeState();
         }}
       />
-      <div className={sharedStyles.actionRow}>
-        <Text className={sharedStyles.copy} fontSize={12}>
-          {dirty
-            ? t('platformManagement.models.saveState.unsaved')
-            : t('platformManagement.models.saveState.saved')}
-        </Text>
-        <Button
-          disabled={!dirty || saving}
-          icon={<Icon icon={RotateCcwIcon} />}
-          onClick={() => setDraft(configSWR.data)}
-        >
-          {t('platformManagement.models.actions.reset')}
-        </Button>
-        <Button
-          disabled={!dirty}
-          icon={<Icon icon={SaveIcon} />}
-          loading={saving}
-          type={'primary'}
-          onClick={() => void save()}
-        >
-          {t('platformManagement.models.actions.save')}
-        </Button>
-      </div>
     </Flexbox>
   );
 });

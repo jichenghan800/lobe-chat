@@ -234,6 +234,11 @@ export default {
   'platformManagement.models.professional.title': 'COTTI Professional channel',
   'platformManagement.models.professional.unavailable':
     'Both Gemini 3.6 Flash and Gemini 3.7 Flash must be deployed before switching is available.',
+  'platformManagement.models.autoSave.saved': 'Changes saved automatically',
+  'platformManagement.models.autoSave.saving': 'Saving…',
+  'platformManagement.models.autoSave.failed': 'Save failed; changes were reverted',
+  'platformManagement.models.autoSave.refreshFailed':
+    'Saved. Refresh the page to reload model availability.',
   'platformManagement.models.saveState.saved': 'All changes saved',
   'platformManagement.models.saveState.unsaved': 'Unsaved changes',
   'platformManagement.models.scope.agent': 'Agent models',
