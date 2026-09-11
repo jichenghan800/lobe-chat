@@ -131,11 +131,23 @@ export const estimateTopicRequestCost = (
     totalOutputTokens: outputTokens,
     totalTokens: inputTokens + outputTokens,
   };
-  const ordinary = computeChatCost(pricing, usage);
+  // Cache TTL is unknown before dispatch. Reserve the highest listed cache-write
+  // rate instead of passing an unresolved lookup to the billing engine. This is
+  // a request estimate only; actual usage continues to use the native price table.
+  const requestPricing: Pricing = {
+    ...pricing,
+    units: pricing.units.map((unit) => {
+      if (unit.name !== 'textInput_cacheWrite' || unit.strategy !== 'lookup') return unit;
+      const rates = Object.values(unit.lookup?.prices ?? {});
+      if (!rates.length || rates.some((rate) => !Number.isFinite(rate) || rate < 0)) return unit;
+      return { ...unit, rate: Math.max(...rates), strategy: 'fixed' as const };
+    }),
+  };
+  const ordinary = computeChatCost(requestPricing, usage);
   if (!ordinary || ordinary.issues.length) return;
   if (!pricing.units.some((unit) => unit.name === 'textInput_cacheWrite'))
     return ordinary.totalCost;
-  const write = computeChatCost(pricing, {
+  const write = computeChatCost(requestPricing, {
     ...usage,
     inputCacheMissTokens: 0,
     inputWriteCacheTokens: inputTokens,

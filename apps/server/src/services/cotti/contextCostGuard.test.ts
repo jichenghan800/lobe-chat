@@ -226,6 +226,43 @@ describe('topic request budget estimate', () => {
     expect(estimateTopicRequestCost(pricing, 100000, 1000)).toBeCloseTo(0.262);
     expect(estimateTopicRequestCost(pricing, 100000)).toBeCloseTo(0.348304);
   });
+  it('reserves the highest listed cache TTL rate when request TTL is unknown', () => {
+    const ttlPricing = {
+      units: pricing.units.map((unit) =>
+        unit.name === 'textInput_cacheWrite'
+          ? {
+              name: unit.name,
+              strategy: 'lookup' as const,
+              unit: 'millionTokens' as const,
+              lookup: { prices: { '5m': 2.5, '1h': 4 }, pricingParams: ['ttl'] },
+            }
+          : unit,
+      ),
+    };
+    expect(estimateTopicRequestCost(ttlPricing, 100_000, 1000)).toBeCloseTo(0.412);
+    expect(ttlPricing.units.find((unit) => unit.name === 'textInput_cacheWrite')?.strategy).toBe(
+      'lookup',
+    );
+  });
+  it('keeps an empty cache lookup unavailable instead of assuming free writes', () => {
+    expect(
+      estimateTopicRequestCost(
+        {
+          units: [
+            ...pricing.units.filter((unit) => unit.name !== 'textInput_cacheWrite'),
+            {
+              name: 'textInput_cacheWrite',
+              strategy: 'lookup',
+              unit: 'millionTokens',
+              lookup: { prices: {}, pricingParams: ['ttl'] },
+            },
+          ],
+        },
+        100,
+        100,
+      ),
+    ).toBeUndefined();
+  });
   it('never treats a missing price as free', () => {
     expect(estimateTopicRequestCost(undefined, 100)).toBeUndefined();
     expect(estimateTopicRequestCost({ units: [] }, 100)).toBeUndefined();
