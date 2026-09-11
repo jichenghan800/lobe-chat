@@ -1,10 +1,11 @@
 import { countContextTokens } from '@lobechat/context-engine';
+import type * as ModelRuntime from '@lobechat/model-runtime';
 import { getModelPropertyWithFallback } from '@lobechat/model-runtime';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
 
-import { createContextCostGuard } from './contextCostGuard';
+import { createContextCostGuard, estimateTopicRequestCost } from './contextCostGuard';
 
 const budgetCheck = vi.hoisted(() => vi.fn());
 vi.mock('@/database/models/cottiTopicBudget', () => ({
@@ -14,7 +15,14 @@ vi.mock('@/database/models/cottiTopicBudget', () => ({
 }));
 
 vi.mock('@lobechat/context-engine', () => ({ countContextTokens: vi.fn() }));
-vi.mock('@lobechat/model-runtime', () => ({
+vi.mock('@lobechat/model-runtime', async (importOriginal) => ({
+  ...(await importOriginal<typeof ModelRuntime>()),
+  getModelPricing: vi.fn(async () => ({
+    units: [
+      { name: 'textInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+      { name: 'textOutput', rate: 12, strategy: 'fixed', unit: 'millionTokens' },
+    ],
+  })),
   getModelPropertyWithFallback: vi.fn(),
   AgentRuntimeError: {
     createError: (_type: string, body: { message: string }) => new Error(body.message),
@@ -116,6 +124,22 @@ describe('final context cost guard', () => {
       expect.objectContaining({ inputTokenLimit: 1_000_000 }),
     );
   });
+  it('blocks before sending when the next request would exhaust the remaining budget', async () => {
+    vi.mocked(countContextTokens).mockReturnValue({
+      rawTotal: 100,
+      adjustedTotal: 125,
+    } as ReturnType<typeof countContextTokens>);
+    budgetCheck.mockImplementation(async (_user, _topic, nextCost) => {
+      if (nextCost > 0) freezeStore.frozen = true;
+    });
+    await expect(
+      createContextCostGuard('azure', { db: {} as LobeChatDatabase, userId: 'owner' }).beforeChat!(
+        { model: 'gpt-5.6-terra', messages: [], max_tokens: 1000 },
+        { metadata: { topicId: 'topic' } },
+      ),
+    ).rejects.toThrow('预算');
+    expect(budgetCheck).toHaveBeenLastCalledWith('owner', 'topic', 0.01225);
+  });
   it('blocks short requests once recorded spending reaches the limit', async () => {
     budgetCheck.mockImplementation(async () => {
       freezeStore.frozen = true;
@@ -166,5 +190,44 @@ describe('final context cost guard', () => {
       messages: payload.messages,
       tools: payload.tools,
     });
+  });
+});
+
+describe('topic request budget estimate', () => {
+  const pricing = {
+    units: [
+      {
+        name: 'textInput' as const,
+        rate: 2,
+        strategy: 'fixed' as const,
+        unit: 'millionTokens' as const,
+      },
+      {
+        name: 'textInput_cacheRead' as const,
+        rate: 0.2,
+        strategy: 'fixed' as const,
+        unit: 'millionTokens' as const,
+      },
+      {
+        name: 'textInput_cacheWrite' as const,
+        rate: 2.5,
+        strategy: 'fixed' as const,
+        unit: 'millionTokens' as const,
+      },
+      {
+        name: 'textOutput' as const,
+        rate: 12,
+        strategy: 'fixed' as const,
+        unit: 'millionTokens' as const,
+      },
+    ],
+  };
+  it('reserves cache write instead of assuming a hit, without charging input twice', () => {
+    expect(estimateTopicRequestCost(pricing, 100000, 1000)).toBeCloseTo(0.262);
+    expect(estimateTopicRequestCost(pricing, 100000)).toBeCloseTo(0.348304);
+  });
+  it('never treats a missing price as free', () => {
+    expect(estimateTopicRequestCost(undefined, 100)).toBeUndefined();
+    expect(estimateTopicRequestCost({ units: [] }, 100)).toBeUndefined();
   });
 });

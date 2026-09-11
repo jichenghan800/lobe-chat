@@ -30,6 +30,30 @@ describe('per-topic recorded spending limit', () => {
     await db.delete(users).where(eq(users.id, 'budget-other'));
     await db.delete(cottiTopicBudgetSettings);
   });
+  it('freezes before a request when historical cost plus its estimate reaches the limit', async () => {
+    await budget.updateConfig({ enabled: true, limitFen: 1068 }, 'admin');
+    await db.insert(messages).values({
+      id: 'budget-msg',
+      topicId: 'budget-topic',
+      userId: 'budget-owner',
+      role: 'assistant',
+      usage: { cost: 1 },
+    });
+    await budget.freezeIfExceeded('budget-other', 'budget-topic', 100);
+    expect(await freezes.get('budget-topic')).toBeNull();
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic', 0.49);
+    expect(await freezes.get('budget-topic')).toBeNull();
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic', 0.5);
+    expect(await freezes.get('budget-topic')).toMatchObject({ reason: 'budget', spentCny: '7.12' });
+  });
+  it('does not persist a reservation as spending and respects disabled protection', async () => {
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic', 0.1);
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic', 0.1);
+    expect(await freezes.get('budget-topic')).toBeNull();
+    await budget.updateConfig({ enabled: false, limitFen: 1000 }, 'admin');
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic', 100);
+    expect(await freezes.get('budget-topic')).toBeNull();
+  });
   it('uses ten yuan by default and freezes only the topic with enough recorded cost', async () => {
     expect(await budget.getConfig()).toEqual({ enabled: true, limitFen: 1000 });
     await db.insert(messages).values({

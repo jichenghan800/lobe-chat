@@ -1254,7 +1254,7 @@
   "platformManagement.topicBudget.desc": "每个话题独立累计，达到限额后冻结。换模型不会清零。",
   "platformManagement.topicBudget.failed": "保存失败",
   "platformManagement.topicBudget.invalid": "请输入 0.01 至 1,000,000 元，最多两位小数。",
-  "platformManagement.topicBudget.note": "按已记录模型费用和固定汇率 7.12 计算，包含历史调用。最后一次调用可能超出限额，已发出的并行请求仍会产生费用。调高或关闭限额不会自动解冻已有话题。",
+  "platformManagement.topicBudget.note": "按已记录的历史模型费用和固定汇率 7.12 计算。发送前预留本次输入和输出预算（未设输出上限时按 8,192 Token 估算），不假定缓存命中。估算误差和并行调用仍可能超限。调高或关闭限额不会自动解冻已有话题。",
   "platformManagement.topicBudget.save": "保存",
   "platformManagement.topicBudget.saved": "费用上限已保存",
   "platformManagement.topicBudget.title": "话题费用上限",

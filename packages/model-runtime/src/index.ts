@@ -6,6 +6,7 @@ export { ModelRuntime } from './core/ModelRuntime';
 export { createOpenAICompatibleRuntime } from './core/openaiCompatibleFactory';
 export * from './core/RouterRuntime';
 export * from './core/usageConverters';
+export { computeChatCost } from './core/usageConverters/utils/computeChatCost';
 export {
   CATEGORY_NUMERIC_PREFIX,
   CLOUD_TIER_DIGIT,

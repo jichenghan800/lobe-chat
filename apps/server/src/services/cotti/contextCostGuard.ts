@@ -1,6 +1,8 @@
 import { countContextTokens } from '@lobechat/context-engine';
 import {
   AgentRuntimeError,
+  computeChatCost,
+  getModelPricing,
   getModelPropertyWithFallback,
   type ModelRuntimeHooks,
 } from '@lobechat/model-runtime';
@@ -15,18 +17,19 @@ import type { LobeChatDatabase } from '@/database/type';
 export const topicFrozenError = () =>
   AgentRuntimeError.createError(ChatErrorType.BadRequest, {
     code: 'TOPIC_COST_FROZEN',
-    message: '此话题已达到成本保护限额并冻结，不能继续发送或执行任务。历史仍可查看，请新建话题。',
+    message: '此话题预算已用完或不足以覆盖下一次调用，已冻结。历史仍可查看，请新建话题。',
   });
 
 export const assertTopicNotCostFrozen = async (
   db: LobeChatDatabase,
   userId: string,
   topicId?: string,
+  estimatedNextCostUsd = 0,
 ) => {
   if (!topicId) return;
   const freezes = new TopicCostFreezeModel(db, userId);
   if (await freezes.get(topicId)) throw topicFrozenError();
-  await new CottiTopicBudgetModel(db).freezeIfExceeded(userId, topicId);
+  await new CottiTopicBudgetModel(db).freezeIfExceeded(userId, topicId, estimatedNextCostUsd);
   if (await freezes.get(topicId)) throw topicFrozenError();
 };
 
@@ -36,7 +39,7 @@ export const createContextCostGuard = (
   scope?: { db: LobeChatDatabase; userId: string },
 ): ModelRuntimeHooks => {
   const check = async (
-    payload: { model: string; messages: unknown[]; tools?: unknown[] },
+    payload: { model: string; messages: unknown[]; tools?: unknown[]; max_tokens?: number },
     options?: { metadata?: Record<string, unknown>; tracing?: Record<string, unknown> },
   ) => {
     const topicId = options?.metadata?.topicId ?? options?.tracing?.topicId;
@@ -75,6 +78,25 @@ export const createContextCostGuard = (
           '本次上下文过大，已停止发送以控制费用。请使用“带着进展继续”或“新问题”，或减少本次资料后重试。',
       });
     }
+    if (scope && scopedTopicId) {
+      const billingPricing = await getModelPricing(payload.model, provider);
+      const estimatedNextCostUsd = estimateTopicRequestCost(
+        billingPricing,
+        tokens.adjustedTotal,
+        payload.max_tokens,
+      );
+      // No price must not be interpreted as free when monetary protection is enabled.
+      if (estimatedNextCostUsd === undefined) {
+        if ((await new CottiTopicBudgetModel(scope.db).getConfig()).enabled) {
+          throw AgentRuntimeError.createError(ChatErrorType.BadRequest, {
+            code: 'TOPIC_BUDGET_PRICE_UNAVAILABLE',
+            message: '暂时无法估算此模型费用，请切换模型后重试。',
+          });
+        }
+      } else {
+        await assertTopicNotCostFrozen(scope.db, scope.userId, scopedTopicId, estimatedNextCostUsd);
+      }
+    }
   };
   return {
     beforeChat: check,
@@ -87,4 +109,37 @@ export const createContextCostGuard = (
         options,
       ),
   };
+};
+
+/** Estimate only: no cache-hit promise, output fallback is not a provider output cap. */
+export const estimateTopicRequestCost = (
+  pricing: Pricing | undefined,
+  inputTokens: number,
+  maxOutputTokens?: number,
+): number | undefined => {
+  if (
+    !pricing?.units.some((unit) => unit.name === 'textInput') ||
+    !pricing.units.some((unit) => unit.name === 'textOutput')
+  )
+    return;
+  const outputTokens = maxOutputTokens && maxOutputTokens > 0 ? maxOutputTokens : 8192;
+  const usage = {
+    inputTextTokens: inputTokens,
+    inputCacheMissTokens: inputTokens,
+    outputTextTokens: outputTokens,
+    totalInputTokens: inputTokens,
+    totalOutputTokens: outputTokens,
+    totalTokens: inputTokens + outputTokens,
+  };
+  const ordinary = computeChatCost(pricing, usage);
+  if (!ordinary || ordinary.issues.length) return;
+  if (!pricing.units.some((unit) => unit.name === 'textInput_cacheWrite'))
+    return ordinary.totalCost;
+  const write = computeChatCost(pricing, {
+    ...usage,
+    inputCacheMissTokens: 0,
+    inputWriteCacheTokens: inputTokens,
+  });
+  if (!write || write.issues.length) return;
+  return Math.max(ordinary.totalCost, write.totalCost);
 };

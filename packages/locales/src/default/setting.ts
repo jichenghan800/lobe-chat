@@ -40,7 +40,7 @@ export default {
     'Each topic accumulates its own costs and freezes at the limit. Switching models does not reset spending.',
   'platformManagement.topicBudget.amount': 'Limit per topic (CNY)',
   'platformManagement.topicBudget.note':
-    'Uses recorded model costs, including history, at a fixed USD/CNY rate of 7.12. The last call may exceed the limit; already-sent concurrent requests may still incur charges. Raising or disabling the limit does not unfreeze existing topics.',
+    'Uses recorded historical model costs at a fixed USD/CNY rate of 7.12. Before sending, checks the next input and output estimate (8,192 output tokens if unspecified), without assuming cache hits. Estimates and concurrent calls may still exceed the limit. Raising or disabling the limit does not unfreeze existing topics.',
   'platformManagement.topicBudget.save': 'Save',
   'platformManagement.topicBudget.saved': 'Spending limit saved',
   'platformManagement.topicBudget.failed': 'Failed to save',

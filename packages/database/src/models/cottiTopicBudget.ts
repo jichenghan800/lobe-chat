@@ -32,7 +32,10 @@ export class CottiTopicBudgetModel {
   }
 
   /** Re-read persisted costs: retries overwrite usage, so they are never added twice. */
-  async freezeIfExceeded(userId: string, topicId: string) {
+  async freezeIfExceeded(userId: string, topicId: string, estimatedNextCostUsd = 0) {
+    if (!Number.isFinite(estimatedNextCostUsd) || estimatedNextCostUsd < 0) {
+      throw new Error('Invalid topic budget estimate');
+    }
     const config = await this.getConfig();
     if (!config.enabled) return;
     const userPolicy = await new CottiUserPolicyModel(this.db).get(userId);
@@ -48,7 +51,7 @@ export class CottiTopicBudgetModel {
     const [summary] = await this.db
       .select({
         spentCny: sql<string>`coalesce(sum(${cost}), 0) * ${TOPIC_BUDGET_USD_TO_CNY}::numeric`,
-        exceeded: sql<boolean>`coalesce(sum(${cost}), 0) * ${TOPIC_BUDGET_USD_TO_CNY}::numeric * 100 >= ${limitFen}`,
+        exceeded: sql<boolean>`(coalesce(sum(${cost}), 0) + ${estimatedNextCostUsd}::numeric) * ${TOPIC_BUDGET_USD_TO_CNY}::numeric * 100 >= ${limitFen}`,
       })
       .from(messages)
       .where(
