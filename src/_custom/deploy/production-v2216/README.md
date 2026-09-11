@@ -1,6 +1,6 @@
 # chat.cotticoffee.com：v2.2.16 生产发布准备
 
-2026-09-11。**已获用户批准并完成生产切换；下文保留发布步骤作为操作记录，当前结果见 [发布验收记录](release-result.md)。**
+2026-09-11。**已获用户批准并完成生产切换；下文保留发布步骤作为操作记录，初次升级结果见 [发布验收记录](release-result.md)，后续当前镜像与图片模型升级见 [GPT Image 2.5 Flare](../native-v2216/image25-flare/README.md)。**
 
 ## 发布对象
 

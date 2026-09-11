@@ -2,7 +2,7 @@ name: cotti-v2216-native
 
 services:
   app:
-    image: &cotti_app_image lobehub:lingshu-v2216-overview-design-20260911
+    image: &cotti_app_image lobehub:lingshu-v2216-image25-flare-20260911
     ports:
       - '127.0.0.1:3230:3210'
     env_file:

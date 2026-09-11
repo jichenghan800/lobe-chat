@@ -11,7 +11,7 @@ docker compose -f src/_custom/deploy/native-v2216/compose.yml config --quiet
 docker compose -f src/_custom/deploy/native-v2216/compose.yml up -d --no-deps app app-cotti
 ```
 
-当前镜像：`lobehub:lingshu-v2216-topic-freeze-20260910-r2`。通用构建脚本见[build.sh](build.sh)，以独立标签构建，不覆盖现有镜像标签：
+当前镜像：`lobehub:lingshu-v2216-image25-flare-20260911`。通用构建脚本见[build.sh](build.sh)，以独立标签构建，不覆盖现有镜像标签：
 
 ```bash
 COTTI_IMAGE_TAG=lobehub:your-new-release-tag bash src/_custom/deploy/native-v2216/build.sh
@@ -27,7 +27,7 @@ QStash 只有一个正式调度。不要随应用发布重建或重启 qstash-lo
 
 ## 验证与回退
 
-发布后检查两个容器的镜像 SHA、默认网关、首页 / 会话接口、两个容器的 Market 推荐接口，以及 OIDC 发现文档。用户登录态结果另见验收清单。
+发布后检查两个容器的镜像 SHA、默认网关、首页 / 会话接口（`/api/auth/get-session`，旧 `/api/auth/session` 返回 404）、两个容器的 Market 推荐接口，以及 OIDC 发现文档。用户登录态结果另见验收清单。
 
 回退使用发布前记录的镜像 SHA / 标签，两个应用统一切换；保留各自环境和 gw\_priority。不回退数据库，不以旧库覆盖新数据。回退镜像属于运维备份，不在主文档维护历代版本表。
 
