@@ -78,15 +78,6 @@ export const useMenu = () => {
               </WorkspaceLink>
             ),
           },
-          {
-            key: 'cotti-overview',
-            icon: <Icon icon={Settings2} />,
-            label: (
-              <WorkspaceLink escape to="/overview">
-                {t('overview.title', { ns: 'topic' })}
-              </WorkspaceLink>
-            ),
-          },
         ]
       : []),
     {
