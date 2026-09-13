@@ -1,0 +1,958 @@
+{
+  "configurations": [
+    {
+      "id": "CFG-001",
+      "name": "原生部署基础",
+      "currentBehavior": "v2.2.16源码与Docker PG部署",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-002",
+      "name": "普通飞书登录",
+      "currentBehavior": "普通飞书Provider与现有授权配置",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-003",
+      "name": "chatdev入口",
+      "currentBehavior": "chatdev.cotticoffee.com → app:3230",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-004",
+      "name": "模型连接与目录",
+      "currentBehavior": "沿用模型连接、可见列表和默认值；SYSTEM_AGENT 的 topic 单项设为 vertexai/gemini-3.5-flash-lite，自动命名及换题判断共用；其他辅助配置不变",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-005",
+      "name": "OSS同源访问",
+      "currentBehavior": "同源文件转发及签名Host约束",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-006",
+      "name": "Embedding默认值",
+      "currentBehavior": "azure/text-embedding-3-small",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-007",
+      "name": "异步文件签名",
+      "currentBehavior": "独立JWKS配置，密钥仅在运行环境",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-008",
+      "name": "正式历史库",
+      "currentBehavior": "lobehub_history与原加密密钥、独立缓存前缀",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-009",
+      "name": "SearXNG",
+      "currentBehavior": "保留独立容器和原生搜索优先策略",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-010",
+      "name": "Market专用WARP接入",
+      "currentBehavior": "沿用用户确认由社区建议的现有专用出口",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-011",
+      "name": "共享QStash",
+      "currentBehavior": "唯一正式*/10分钟调度至chat.cotti.ai",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-012",
+      "name": "双域名认证",
+      "currentBehavior": "同镜像/同库的两个容器，各自APP_URL与认证入口",
+      "firstImplemented": "2026-09-07"
+    },
+    {
+      "id": "CFG-013",
+      "name": "门户准入",
+      "currentBehavior": "门户成员与聊天准入规则已对齐",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-014",
+      "name": "Sol迁移Terra",
+      "currentBehavior": "已迁移指定Agent、话题及未结束任务，不改历史费用",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-015",
+      "name": "Node内存参数",
+      "currentBehavior": "8GiB老生代、ipv4first、系统CA",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-016",
+      "name": "Composio服务端",
+      "currentBehavior": "两个应用共用已授权配置",
+      "firstImplemented": "2026-09-08"
+    },
+    {
+      "id": "CFG-017",
+      "name": "默认网关优先级",
+      "currentBehavior": "app-cotti default.gw_priority=100，认证网络0",
+      "firstImplemented": "2026-09-09"
+    },
+    {
+      "id": "CFG-018",
+      "name": "邮件登录与发件显示名",
+      "currentBehavior": "双入口复用SMTP，显示名灵枢AI；AUTH_ENABLE_EMAIL_OTP=1，AUTH_ENABLE_MAGIC_LINK=0，邮箱验证开启；Portal入口保留",
+      "firstImplemented": "2026-09-09"
+    }
+  ],
+  "date": "2026-09-13",
+  "fileComparisonCounts": {
+    "official-changed": 127,
+    "official-unchanged": 600,
+    "already-identical": 60,
+    "official-identical": 1
+  },
+  "minimal": "7324da2c0c",
+  "official": "787e3d20aa",
+  "oldBase": "v2.2.16",
+  "oldCustom": "e6e4c774fb",
+  "sourceCount": 55,
+  "sourceCustomizations": [
+    {
+      "id": "DEV-001",
+      "name": "PDF解析",
+      "decision": "回填",
+      "note": "PDF Loader 仍传 Buffer；保留 Uint8Array 兼容修复及原回归测试。",
+      "sourceReferences": [
+        {
+          "path": "src/libs/document-loaders/loaders/pdf/index.ts",
+          "line": 10
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-002",
+      "name": "人员管理",
+      "decision": "补齐",
+      "note": "最小版已有权限/额度表和底层守卫；缺人员管理单行编辑、路由和完整 Agent 权限接线。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/cotti/peopleManagement.ts",
+          "line": 58
+        },
+        {
+          "path": "src/features/CottiPlatformManagement/PeopleManagementSettings/UserManagementSettings.tsx",
+          "line": 1
+        },
+        {
+          "path": "packages/database/src/models/cottiUserPolicy.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/userModelAccess.ts",
+          "line": 1
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-003",
+      "name": "蓝版飞书",
+      "decision": "已保留",
+      "note": "普通/蓝版 Provider 工厂已在最小版，无需重复搬运；蓝版真人登录仍独立验收。",
+      "sourceReferences": [
+        {
+          "path": "src/libs/better-auth/sso/providers/feishu.ts",
+          "line": 177
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-004",
+      "name": "搜索路由",
+      "decision": "适配回填",
+      "note": "官方只是改为 model-bank/utils 导入；没有旧版自动优先模型搜索及 searchRoute 选择规则。",
+      "sourceReferences": [
+        {
+          "path": "src/helpers/getSearchConfig.ts",
+          "line": 40
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-005",
+      "name": "模式模型池/面板",
+      "decision": "回填",
+      "note": "原生模型选择器不能替代平台模式目录、显示名、VIP 和即时保存；保留官方话题级推理设置。",
+      "sourceReferences": [
+        {
+          "path": "src/hooks/useEnabledChatModels.ts",
+          "line": 9
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-006",
+      "name": "成本修复",
+      "decision": "补齐",
+      "note": "最小版已有 Gemini 定价和话题费用汇总；usage/cost 的分档与缓存拆分、普通回复模型归属仍缺。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/usage/cost.ts",
+          "line": 48
+        },
+        {
+          "path": "src/store/chat/slices/agentRun/actions/entries/conversationLifecycle.ts",
+          "line": 1828
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-007",
+      "name": "平台统计",
+      "decision": "回填",
+      "note": "官方没有此平台级跨用户人民币费用统计页面；保留旧版收敛布局及按需加载。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/cotti/platformAnalytics.ts",
+          "line": 26
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-008",
+      "name": "内容审计",
+      "decision": "回填",
+      "note": "官方没有此管理员内容审计、风险标签和查看记录。保留管理员鉴权及数据访问范围。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/cotti/platformAudit.ts",
+          "line": 22
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-009",
+      "name": "会话总览",
+      "decision": "补齐",
+      "note": "最小版仅有话题策略 schema；缺全用户检索、真实只读详情、累计费用、模型明细、冻结/解冻和临时额度 UI/API。",
+      "sourceReferences": [
+        {
+          "path": "src/hooks/useNavLayout.ts",
+          "line": 84
+        },
+        {
+          "path": "apps/server/src/services/cotti/topicOverview/index.ts",
+          "line": 110
+        },
+        {
+          "path": "src/features/CottiTopicOverview/TopicManagement.tsx",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/topicOverview/management.ts",
+          "line": 1
+        },
+        {
+          "path": "packages/database/src/schemas/cottiTopicPolicy.ts",
+          "line": 1
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-010",
+      "name": "首页通知",
+      "decision": "回填",
+      "note": "官方没有这套平台首页通知配置与消费者。",
+      "sourceReferences": [
+        {
+          "path": "src/features/CottiPlatformManagement/HomeNotificationSettings.tsx",
+          "line": 16
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-011",
+      "name": "飞书资料连接器",
+      "decision": "适配回填",
+      "note": "官方新增机器人 readDocument；不覆盖个人 OAuth 资料连接器及创建文档、搜索资料、表格和个人聊天查询。保留原生机器人代码。",
+      "sourceReferences": [
+        {
+          "path": "src/const/connectorPresets.ts",
+          "line": 1
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-012",
+      "name": "首页Chat/Agent/Task",
+      "decision": "回填",
+      "note": "保留用户确认的 Chat/Agent/Task 入口语义和默认 Chat、权限过滤；复用官方发送与运行机制。",
+      "sourceReferences": [
+        {
+          "path": "src/features/Home/InputArea/EditorInput.tsx",
+          "line": 31
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-013",
+      "name": "连续未查看暂停",
+      "decision": "回填",
+      "note": "官方未含 pauseForUnviewedResults；补回连续三次未查看暂停、显式查看确认及调度/心跳消费者。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/taskRunner/unviewedResults.ts",
+          "line": 21
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-014",
+      "name": "话题分享",
+      "decision": "适配回填",
+      "note": "官方分享与访问校验保留；个人部署新建分享入口仍受商业开关控制，仅回填入口策略及附件减重。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/shareChat.ts",
+          "line": 163
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-015",
+      "name": "PDF导出",
+      "decision": "回填",
+      "note": "官方 PDF 导出已实测成功，但旧版 base64/data URL 解码兼容、预览及下载释放补丁没有被上游覆盖；不重写导出器。",
+      "sourceReferences": [
+        {
+          "path": "src/features/ShareModal/SharePdf/usePdfGeneration.ts",
+          "line": 22
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-016",
+      "name": "附件与知识分离",
+      "decision": "回填",
+      "note": "普通附件与 Agent 知识绑定分离、已有文件直接附加、大表格转工具处理仍为二开；保持官方新增上传大小校验。",
+      "sourceReferences": [
+        {
+          "path": "src/store/file/slices/chat/action.ts",
+          "line": 24
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-017",
+      "name": "联系管理员",
+      "decision": "适配回填",
+      "note": "官方 HomePortrait 无联系管理员链接；仅接回旧链接校验与入口，不启用机器人。",
+      "sourceReferences": [
+        {
+          "path": "src/features/Home/HomePortrait.tsx",
+          "line": 60
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-018",
+      "name": "任务模型迁移",
+      "decision": "回填",
+      "note": "运行时守卫已在最小版；管理员下线确认、选择替代模型和迁移受影响任务事务/UI 尚缺。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/cotti/modelDisplay.ts",
+          "line": 84
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-019",
+      "name": "QStash注册控制",
+      "decision": "配置条件项",
+      "note": "独立 QStash 已原生运行；旧双实例注册禁用/前缀不是当前必需修复。不得沿用旧调度目标或创建共享调度。",
+      "sourceReferences": [
+        {
+          "path": "scripts/serverLauncher/startServer.js",
+          "line": 187
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-020",
+      "name": "双域名认证",
+      "decision": "配置条件项",
+      "note": "chat.cotti.ai 专属 SSO 路由仍是二开，但该域名本轮保持旧版；不据此修改 chatdev 登录流、域名或账号关联。",
+      "sourceReferences": [
+        {
+          "path": "src/libs/cotti-ai-sso/route-handler.ts",
+          "line": 43
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-021",
+      "name": "社区清空",
+      "decision": "回填",
+      "note": "官方未含旧版 tokenStorage 清理实现；与 DEV-042 一起恢复，失败可重试。",
+      "sourceReferences": [
+        {
+          "path": "src/layout/AuthProvider/MarketAuth/tokenStorage.ts",
+          "line": 16
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-022",
+      "name": "首页保存时序",
+      "decision": "适配回填",
+      "note": "官方改进元信息缓存刷新，但没有等待配置保存和延后旧快照覆盖；保留必要时序补丁及新缓存作用域保护。",
+      "sourceReferences": [
+        {
+          "path": "src/store/agent/slices/agent/action.ts",
+          "line": 358
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-023",
+      "name": "目标Chat工具隔离",
+      "decision": "适配回填",
+      "note": "官方新增 AUV 环境过滤，未覆盖目标 Agent 快照和显式工具选择隔离；不可整文件覆盖官方过滤。",
+      "sourceReferences": [
+        {
+          "path": "src/helpers/toolEngineering/index.ts",
+          "line": 220
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-024",
+      "name": "追问队列同步",
+      "decision": "回填",
+      "note": "gateway 文件上游未变，无网关追问轮询仍缺；保留超时、取消与完成状态处理。",
+      "sourceReferences": [
+        {
+          "path": "src/store/chat/slices/agentRun/actions/transports/gateway/gateway.ts",
+          "line": 1104
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-025",
+      "name": "沙箱文件指纹",
+      "decision": "适配回填",
+      "note": "官方只新增沙箱重建状态反馈；附件集合指纹仍缺，需与官方反馈并存。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/sandbox/service.ts",
+          "line": 90
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-026",
+      "name": "Agent配置减重",
+      "decision": "回填",
+      "note": "AgentModel 上游未变，配置接口按需省去文件全文仍需；同时迁入模型输入补读消费者。",
+      "sourceReferences": [
+        {
+          "path": "packages/database/src/models/agent.ts",
+          "line": 785
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-027",
+      "name": "消息附件减重",
+      "decision": "适配回填",
+      "note": "官方消息/上下文引擎有其他变动，但未包含旧按需 hydrateRuntimeFileContent；必须成套恢复，不能仅剔除正文。",
+      "sourceReferences": [
+        {
+          "path": "src/services/chat/mecha/hydrateRuntimeFileContent.ts",
+          "line": 100
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-028",
+      "name": "OSS批删",
+      "decision": "配置条件项",
+      "note": "OSS 批删 Content-MD5 上游未覆盖；当前隔离存储是 RustFS。列为 OSS 兼容项，不以此为由切换存储或操作原 OSS。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/modules/S3/index.ts",
+          "line": 109
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-029",
+      "name": "参考图超限反馈",
+      "decision": "回填",
+      "note": "参考图 hook 上游未变；超限文件反馈仍需，保留官方服务端上传校验。",
+      "sourceReferences": [
+        {
+          "path": "src/routes/(main)/(create)/features/GenerationInput/useReferenceImageUpload.ts",
+          "line": 7
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-030",
+      "name": "Portal准入",
+      "decision": "已保留",
+      "note": "Portal 准入兼容和白名单已在最小版；不扩大允许注册范围。",
+      "sourceReferences": [
+        {
+          "path": "src/libs/better-auth/plugins/email-whitelist.ts",
+          "line": 58
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-031",
+      "name": "资料重复删除",
+      "decision": "回填",
+      "note": "ResourceService 上游未变；仅对明确 NOT_FOUND 幂等处理，权限/网络错误继续失败。",
+      "sourceReferences": [
+        {
+          "path": "src/services/resource/index.ts",
+          "line": 271
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-032",
+      "name": "全局下线与引用迁移",
+      "decision": "补齐",
+      "note": "ModelRuntime 下线守卫与替代解析已保留；完整管理员引用迁移和目录 UI 与 DEV-018/005 一起补。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/cotti/modelRetirement.ts",
+          "line": 12
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-033",
+      "name": "长话题提醒",
+      "decision": "回填",
+      "note": "原生 Token 显示存在；成本提醒与用户确认的新建话题弹框接线仍缺，与 DEV-051 合并维护。",
+      "sourceReferences": [
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/contextWarning.ts",
+          "line": 2
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-034",
+      "name": "任务面板延迟挂载",
+      "decision": "回填",
+      "note": "官方冷标签页延迟优化未改 AgentTaskManager；首次打开才挂载、关闭保留状态的补丁仍独立。",
+      "sourceReferences": [
+        {
+          "path": "src/features/AgentTaskManager/index.tsx",
+          "line": 34
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-035",
+      "name": "导入/内置模型归一",
+      "decision": "回填",
+      "note": "官方没有企业模型目录归一策略；补回导入、群组和内置 task-agent 的有效模型解析，解决已见禁用默认模型。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/services/cotti/agentModelNormalization.ts",
+          "line": 20
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-036",
+      "name": "普通用户设置隐藏",
+      "decision": "回填",
+      "note": "普通用户隐藏管理设置及渠道配置的 gate 上游未覆盖；菜单限制与 API 鉴权分别核验。",
+      "sourceReferences": [
+        {
+          "path": "src/features/Settings/features/SettingsContent.tsx",
+          "line": 160
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-037",
+      "name": "灵枢AI品牌",
+      "decision": "回填",
+      "note": "原生品牌仍为 LobeHub/Lobe AI；恢复灵枢AI平台及默认助理，包括桌面消费者，不批改历史用户内容。",
+      "sourceReferences": [
+        {
+          "path": "packages/business/const/src/branding.ts",
+          "line": 7
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-038",
+      "name": "首页快捷入口",
+      "decision": "适配回填",
+      "note": "快捷模型与启用目录过滤仍二开；基于官方懒加载实现保留快速、Terra、GPT Image 2.5 Flare。",
+      "sourceReferences": [
+        {
+          "path": "src/features/Home/NewModelShortcuts/starterModels.ts",
+          "line": 4
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-039",
+      "name": "runtime模型裁剪",
+      "decision": "回填",
+      "note": "AiInfraRepos 上游未变；运行时只暴露有效服务商/已启用模型的裁剪仍缺。",
+      "sourceReferences": [
+        {
+          "path": "packages/database/src/repositories/aiInfra/index.ts",
+          "line": 232
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-040",
+      "name": "话题模型加载",
+      "decision": "适配回填",
+      "note": "官方新增话题级推理参数和分离标签；仍无旧话题模型未加载时的选择保护，保留双方行为。",
+      "sourceReferences": [
+        {
+          "path": "src/features/ChatInput/ActionBar/Model/index.tsx",
+          "line": 42
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-041",
+      "name": "流式工具状态",
+      "decision": "回填",
+      "note": "StreamingHandler 上游未变；工具最终状态同步和 UI 节流分离仍需。",
+      "sourceReferences": [
+        {
+          "path": "src/store/chat/agents/StreamingHandler.ts",
+          "line": 305
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-042",
+      "name": "社区账户恢复",
+      "decision": "回填",
+      "note": "社区用户菜单上游未变；恢复退出/重新授权入口，失败保留会话，不处理出口配置。",
+      "sourceReferences": [
+        {
+          "path": "src/routes/(main)/community/features/UserAvatar/index.tsx",
+          "line": 58
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-043",
+      "name": "Composio入口/同步",
+      "decision": "回填",
+      "note": "Composio action 上游未变；个人快照替换、保留 Agent 专属连接及主动拉取仍需。",
+      "sourceReferences": [
+        {
+          "path": "src/store/tool/slices/composioStore/action.ts",
+          "line": 366
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-044",
+      "name": "定向诊断/临时文件",
+      "decision": "拆分处理",
+      "note": "临时文件共享监听保留；定向事故诊断不是默认全量日志要求，不复制旧 DEBUG 配置。不得记录请求正文/密钥。",
+      "sourceReferences": [
+        {
+          "path": "packages/trpc/src/lambda/index.ts",
+          "line": 29
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-045",
+      "name": "安全提示/记忆/推理默认",
+      "decision": "适配回填",
+      "note": "保留安全提醒、关闭记忆默认值、Chat低/Agent中缺省推理；官方新增 GPT-6、千问3.8及话题推理优先级不能被覆盖。",
+      "sourceReferences": [
+        {
+          "path": "packages/model-runtime/src/utils/modelExtendParams.ts",
+          "line": 66
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-046",
+      "name": "图片单张/隐藏视频",
+      "decision": "适配回填",
+      "note": "官方仍允许多张和视频；补回客户端/服务端单张约束、隐藏/跳转视频。保留官方新增媒体能力检查。",
+      "sourceReferences": [
+        {
+          "path": "apps/server/src/routers/lambda/image/index.ts",
+          "line": 53
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-047",
+      "name": "SSE空数据",
+      "decision": "回填",
+      "note": "SSE transformer 上游未变；null/undefined chunk 与有效 JSON 处理仍需，不能破坏终止事件校验。",
+      "sourceReferences": [
+        {
+          "path": "packages/model-runtime/src/core/streams/protocol.ts",
+          "line": 435
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-048",
+      "name": "小人像/气泡",
+      "decision": "官方部分覆盖",
+      "note": "官方已把气泡和人像放在共同 speech 布局，并按容器宽度适配；不回填旧绝对定位结构，只保留小人像/8px间距并做宽窄屏验收。",
+      "sourceReferences": [
+        {
+          "path": "src/features/Home/index.tsx",
+          "line": 71
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-049",
+      "name": "推荐错误/重试",
+      "decision": "回填",
+      "note": "推荐 hook 上游未变，错误仍 hidden；恢复错误态与重试，不把网络失败当空推荐。",
+      "sourceReferences": [
+        {
+          "path": "src/features/RecommendTaskTemplates/useDailyBriefRecommendationsUI.ts",
+          "line": 309
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-050",
+      "name": "邮箱验证码登录",
+      "decision": "已保留",
+      "note": "邮箱输入框复用验证码、错误/重发处理已在最小版；不另造登录页。",
+      "sourceReferences": [
+        {
+          "path": "src/features/Auth/SignIn/useEmailOtpSignIn.ts",
+          "line": 8
+        },
+        {
+          "path": "src/features/Auth/SignIn/SignInEmailStep.tsx",
+          "line": 173
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-051",
+      "name": "上下文成本保护与摘要续聊",
+      "decision": "补齐",
+      "note": "费用守卫/价表已保留；命名同次生成描述、限长换题判断、默认新建弹框、摘要续聊及回复后累计展示仍缺。官方原生压缩不回填。",
+      "sourceReferences": [
+        {
+          "path": "src/_custom/registry/contextCostPolicy.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/contextCostGuard.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/useTopicContinuation.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/hooks/useChatInputDraft.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/topicSwitchSuggestion.ts",
+          "line": 1
+        },
+        {
+          "path": "packages/prompts/src/chains/summaryTitle.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/systemAgent/index.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/Conversation/ChatInput/topicSwitchCheck.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/ActionBar/Token/topicChoiceModal.tsx",
+          "line": 1
+        },
+        {
+          "path": "src/features/Conversation/Messages/components/Extras/Usage/TopicTokenUsage.tsx",
+          "line": 14
+        },
+        {
+          "path": "packages/database/src/models/topic.ts",
+          "line": 807
+        },
+        {
+          "path": "packages/model-runtime/src/utils/cottiGeminiPricing.ts",
+          "line": 1
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-052",
+      "name": "话题强制成本冻结",
+      "decision": "补齐",
+      "note": "预算/冻结底层已保留；前端冻结状态、管理员预算设置和解冻/续聊接口仍需。保持原先并发非原子预占边界，不声称绝对不超支。",
+      "sourceReferences": [
+        {
+          "path": "packages/database/src/schemas/topicCostFreeze.ts",
+          "line": 1
+        },
+        {
+          "path": "packages/database/src/models/topicCostFreeze.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/contextCostGuard.ts",
+          "line": 1
+        },
+        {
+          "path": "apps/server/src/services/cotti/topicContinuation.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/ChatInput/TopicCostFreezeLoader.tsx",
+          "line": 1
+        },
+        {
+          "path": "packages/database/src/models/cottiTopicBudget.ts",
+          "line": 1
+        },
+        {
+          "path": "src/features/CottiPlatformManagement/TopicBudgetSettings.tsx",
+          "line": 1
+        }
+      ],
+      "validation": "合并后定向回归及必要端到端；本轮仅源码比较"
+    },
+    {
+      "id": "DEV-053",
+      "name": "GPT Image 2.5 Flare",
+      "decision": "回填",
+      "note": "官方 OpenAI 模型目录未含该 ID；保留服务商已开通的型号卡片与首页入口，不复制旧 Key 或覆盖原生模型目录。",
+      "sourceReferences": [
+        {
+          "path": "packages/model-bank/src/aiModels/openai.ts"
+        },
+        {
+          "path": "src/features/Home/NewModelShortcuts/starterModels.ts"
+        }
+      ],
+      "validation": "合并后回归和浏览器宽窄屏/刷新/排序验证"
+    },
+    {
+      "id": "DEV-054",
+      "name": "生成图与对话图片紧凑预览",
+      "decision": "回填",
+      "note": "旧最终提交含生成页长边320px，以及对话 Markdown 图片上限；官方未覆盖。两条展示路径都纳入，不改原图或存储。",
+      "sourceReferences": [
+        {
+          "path": "src/features/Conversation/Markdown/index.tsx"
+        },
+        {
+          "path": "src/routes/(main)/(create)/image/features/GenerationFeed/GenerationItem/utils.ts"
+        }
+      ],
+      "validation": "合并后回归和浏览器宽窄屏/刷新/排序验证"
+    },
+    {
+      "id": "DEV-055",
+      "name": "全览刷新保持与日期倒序",
+      "decision": "回填",
+      "note": "旧清单后续新增；官方只补 /a 分享路由，未补 /overview。保留全览刷新与按更新日期倒序选项，不覆盖官方新路由。",
+      "sourceReferences": [
+        {
+          "path": "src/proxy.ts"
+        },
+        {
+          "path": "src/features/CottiTopicOverview/routeMeta.ts"
+        },
+        {
+          "path": "src/features/CottiTopicOverview/TopicListPanel.tsx"
+        },
+        {
+          "path": "apps/server/src/services/cotti/topicOverview/index.ts"
+        }
+      ],
+      "validation": "合并后回归和浏览器宽窄屏/刷新/排序验证"
+    }
+  ],
+  "status": "pre-merge-source-audit"
+}
