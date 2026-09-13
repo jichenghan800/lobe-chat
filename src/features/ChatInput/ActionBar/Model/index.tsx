@@ -37,9 +37,15 @@ const ModelSwitch = memo(() => {
   // column). Display the topic's pinned model when present, else the agent
   // default; a switch pins to the active topic, otherwise updates the agent
   // (via selectModel, which honors workspace member overrides).
-  const activeTopicId = useChatStore((s) => s.activeTopicId);
-  const topicModel = useChatStore(topicSelectors.activeTopicModel);
-  const isTopicModelLoading = useChatStore(topicSelectors.isActiveTopicModelLoading);
+  // Home creates a new conversation even when the chat store retains the
+  // previously visited topic. Keep model and effort reads/writes in this scope.
+  const topicModelScope = useChatInputStore((s) => s.topicModelScope !== false);
+  const storedTopicId = useChatStore((s) => s.activeTopicId);
+  const storedTopicModel = useChatStore(topicSelectors.activeTopicModel);
+  const storedTopicLoading = useChatStore(topicSelectors.isActiveTopicModelLoading);
+  const activeTopicId = topicModelScope ? storedTopicId : undefined;
+  const topicModel = topicModelScope ? storedTopicModel : undefined;
+  const isTopicModelLoading = topicModelScope && storedTopicLoading;
   const updateTopicModel = useChatStore((s) => s.updateTopicModel);
   const model = topicModel?.model ?? agentModel;
   const provider = topicModel?.model ? topicModel.provider : agentProvider;

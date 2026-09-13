@@ -39,9 +39,10 @@ export const useSwitchModelDisplayScope = () => {
   const activeTopicId = useChatStore((s) => s.activeTopicId);
   const activeTopicModel = useChatStore(topicSelectors.activeTopicModel);
   const updateTopicModel = useChatStore((s) => s.updateTopicModel);
-  const currentModel = activeTopicModel?.model
-    ? activeTopicModel
-    : { model: selectedModel, provider: selectedProvider };
+  const currentModel =
+    topicModelScope && activeTopicModel?.model
+      ? activeTopicModel
+      : { model: selectedModel, provider: selectedProvider };
 
   return useCallback(
     async (targetScope: ModelDisplayScope) => {
