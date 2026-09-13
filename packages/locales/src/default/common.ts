@@ -53,7 +53,7 @@ export default {
   'batchDelete': 'Batch Delete',
   'blog': 'Product Blog',
   'messengerBanner.dismiss': 'Dismiss',
-  'messengerBanner.title': 'Talk to Lobe AI on your favorite messaging apps',
+  'messengerBanner.title': 'Talk to 灵枢AI on your favorite messaging apps',
   'branching': 'Create Subtopic',
   'branchingDisable':
     'The "Sub-topic" feature is unavailable in the current mode. To use this feature, please switch to Postgres/Pglite DB mode or use LobeHub Cloud.',
@@ -147,7 +147,7 @@ export default {
   'cmdk.askAIHeadingEmpty': 'Choose an AI feature',
   'cmdk.askAgentHeading': 'Ask Agent',
   'cmdk.askAgentPlaceholder': 'Ask {{agent}} something...',
-  'cmdk.askLobeAI': 'Ask Lobe AI',
+  'cmdk.askLobeAI': 'Ask 灵枢AI',
   'cmdk.community': 'Community',
   'cmdk.communitySupport': 'Community Support',
   'cmdk.contactUs': 'Contact Us',
@@ -587,7 +587,7 @@ export default {
   'taskTemplate.action.connect.short': 'Connect',
   'taskTemplate.action.connecting': 'Waiting for authorization…',
   'taskTemplate.action.create.error': 'Failed to create task. Please try again.',
-  'taskTemplate.action.create.success': 'Scheduled task added. Find it in Lobe AI.',
+  'taskTemplate.action.create.success': 'Scheduled task added. Find it in 灵枢AI.',
   'taskTemplate.action.createButton': 'Add task',
   'taskTemplate.action.creating': 'Creating...',
   'taskTemplate.action.dismiss.error': 'Failed to dismiss. Please try again.',
@@ -598,6 +598,8 @@ export default {
   'taskTemplate.schedule.editableAfterCreateTooltip':
     'You can adjust the schedule after creating the task.',
   'taskTemplate.schedule.weekly': 'Every {{weekday}} at {{time}}',
+  'taskTemplate.recommendations.unavailable':
+    'Task recommendations are temporarily unavailable. Please try again later.',
   'taskTemplate.section.title': 'Try these scheduled tasks',
   'tab.image': 'Image',
   'tab.audio': 'Audio',

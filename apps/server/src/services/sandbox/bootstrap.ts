@@ -25,9 +25,14 @@ const shellQuote = (value: string): string => `'${value.replaceAll("'", String.r
  * Downloads are best-effort: a single failed fetch does not abort the rest, and
  * the marker is always written so the sync is not retried on every tool call.
  */
-export const buildSandboxFilesInitCommand = (downloads: SandboxInitDownload[]): string => {
+export const buildSandboxFilesInitCommand = (
+  downloads: SandboxInitDownload[],
+  fingerprint?: string,
+): string => {
   const dir = shellQuote(SANDBOX_UPLOADED_FILES_DIR);
-  const marker = shellQuote(SANDBOX_FILES_INIT_MARKER);
+  const marker = shellQuote(
+    fingerprint ? `${SANDBOX_FILES_INIT_MARKER}-${fingerprint}` : SANDBOX_FILES_INIT_MARKER,
+  );
 
   const seen = new Set<string>();
   const curls: string[] = [];

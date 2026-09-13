@@ -1,3 +1,4 @@
+import { DEFAULT_ASSISTANT_NAME } from '@lobechat/business-const';
 import { type MetaData } from '@lobechat/types';
 import { useMemo } from 'react';
 
@@ -6,7 +7,7 @@ import { agentSelectors } from '@/store/agent/selectors';
 
 import { contextSelectors, useConversationStore } from '../store';
 
-const LOBE_AI_TITLE = 'Lobe AI';
+const LOBE_AI_TITLE = DEFAULT_ASSISTANT_NAME;
 
 /**
  * Hook to get agent meta data for a specific agent or the current conversation.
@@ -21,7 +22,12 @@ export const useAgentMeta = (messageAgentId?: string | null): MetaData => {
   const contextAgentId = useConversationStore(contextSelectors.agentId);
   // Use message's agentId if provided, otherwise fallback to context agentId
   const agentId = messageAgentId || contextAgentId;
-  const agentMeta = useAgentStore(agentSelectors.getAgentMetaById(agentId));
+  const storedAgentMeta = useAgentStore(agentSelectors.getAgentMetaById(agentId));
+  // Read-only admin transcripts supply metadata without mutating the viewer's global agent store.
+  const scopedAgentMeta = useConversationStore(
+    (s) => (s.context.metadata?.agentMetas as Record<string, MetaData> | undefined)?.[agentId],
+  );
+  const agentMeta = scopedAgentMeta ?? storedAgentMeta;
   const builtinAgentIdMap = useAgentStore((s) => s.builtinAgentIdMap);
 
   return useMemo(() => {

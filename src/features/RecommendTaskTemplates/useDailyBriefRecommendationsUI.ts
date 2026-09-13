@@ -28,6 +28,7 @@ const nextRefreshSeed = createNanoId(8);
 
 export type DailyBriefRecommendationsUIState =
   | { mode: 'hidden' }
+  | { isRetrying: boolean; mode: 'error'; onRetry: () => Promise<void> }
   | { mode: 'skeleton'; skeletonCount: number }
   | {
       isValidating: boolean;
@@ -229,6 +230,14 @@ export function useDailyBriefRecommendationsUI(
     if (error) console.error('[taskTemplate:listDailyRecommend]', error);
   }, [error]);
 
+  const handleRetry = useCallback(async () => {
+    try {
+      await mutate();
+    } catch {
+      // SWR retains the error and the retryable card remains visible.
+    }
+  }, [mutate]);
+
   const handleRefresh = useCallback(() => {
     setRefreshSeed(nextRefreshSeed());
   }, [setRefreshSeed]);
@@ -296,7 +305,8 @@ export function useDailyBriefRecommendationsUI(
     isValidating,
     isWaitingForInterestsFetch: interestKeys !== null && waitedForInterestsRef.current,
   });
-  if (error) return { mode: 'hidden' };
+  if (error && templates.length === 0)
+    return { isRetrying: isValidating, mode: 'error', onRetry: handleRetry };
   if (displayMode === 'hidden') return { mode: 'hidden' };
   if (displayMode === 'skeleton') return { mode: 'skeleton', skeletonCount: recommendationCount };
 

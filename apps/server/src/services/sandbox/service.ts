@@ -85,7 +85,10 @@ export class SandboxMiddlewareService implements SandboxService {
 
       if (downloads.length === 0) return;
 
-      const command = buildSandboxFilesInitCommand(downloads);
+      // Stable identities, not expiring preview URLs: a later attachment set must
+      // sync again even when this sandbox already has the old session marker.
+      const fingerprint = sha256(JSON.stringify(files.map(({ id, name }) => [id, name]).sort()));
+      const command = buildSandboxFilesInitCommand(downloads, fingerprint);
       const result = await this.provider.callTool('runCommand', {
         command,
         timeout: SANDBOX_INIT_TIMEOUT_MS,

@@ -1,8 +1,15 @@
 import type { ToolManifest } from '@lobechat/types';
 
+import {
+  getConnectorRuntimeName,
+  isFeishuDocumentsConnector,
+  isFeishuDocumentsToolAuthorized,
+} from '@/const/connectorPresets';
 import type { DecryptedConnector } from '@/database/models/connector';
 import type { UserConnectorToolItem } from '@/database/schemas';
 import { ConnectorToolPermission } from '@/database/schemas';
+
+import { buildConnectorHttpTransport } from './connectorTransport';
 
 /**
  * Convert connector DB rows into ToolManifest entries suitable for
@@ -29,7 +36,11 @@ export function buildConnectorManifests(
   for (const connector of connectors) {
     if (!connector.isEnabled) continue;
 
-    const connectorTools = toolsByConnector.get(connector.id) ?? [];
+    const connectorTools = (toolsByConnector.get(connector.id) ?? []).filter(
+      (tool) =>
+        !isFeishuDocumentsConnector(connector) ||
+        isFeishuDocumentsToolAuthorized(connector, tool.toolName),
+    );
 
     // Include ALL tools in the manifest so the AI is aware of their existence.
     // Disabled tools get a blocking description so the AI knows not to call them.
@@ -66,6 +77,7 @@ export function buildConnectorManifests(
     });
 
     const mcpParams = buildMcpParams(connector);
+    const connectorName = getConnectorRuntimeName(connector);
 
     manifests.push({
       api,
@@ -74,8 +86,8 @@ export function buildConnectorManifests(
       mcpParams,
       meta: {
         avatar: 'MCP_AVATAR',
-        description: `${connector.name} connector with ${api.length} tools`,
-        title: connector.name,
+        description: `${connectorName} connector with ${api.length} tools`,
+        title: connectorName,
       },
       type: 'mcp' as any,
     });
@@ -95,47 +107,13 @@ function buildMcpParams(connector: DecryptedConnector) {
     };
   }
 
-  const { auth, headers } = buildHttpAuthFromCredentials(connector.credentials);
-  // Custom headers live in `metadata.customHeaders` (independent of the
-  // single-kind `credentials` column) so they can coexist with bearer/no-auth.
-  // Merge them on top of any header-type credential headers (legacy rows), to
-  // mirror the sync/callTool path in services/connector/sync.ts.
-  const customHeaders = connector.metadata?.customHeaders as Record<string, string> | undefined;
-  const mergedHeaders =
-    headers || customHeaders ? { ...headers, ...customHeaders } : undefined;
+  const { auth, headers } = buildConnectorHttpTransport(connector);
 
   return {
     auth,
-    headers: mergedHeaders,
+    headers,
     name: connector.identifier,
     type: 'http' as const,
     url: connector.mcpServerUrl ?? '',
   };
-}
-
-/**
- * Map stored credentials into the HTTP MCP client's auth + custom headers.
- * bearer/apikey become bearer auth (Authorization: Bearer …); header is passed
- * through verbatim. OAuth2 only needs the access token at request time.
- */
-function buildHttpAuthFromCredentials(creds: DecryptedConnector['credentials']) {
-  if (!creds) return {};
-
-  switch (creds.type) {
-    case 'oauth2': {
-      return { auth: { accessToken: creds.accessToken, type: 'oauth2' as const } };
-    }
-    case 'bearer': {
-      return { auth: { token: creds.token, type: 'bearer' as const } };
-    }
-    case 'apikey': {
-      return { auth: { token: creds.apiKey, type: 'bearer' as const } };
-    }
-    case 'header': {
-      return { headers: creds.headers };
-    }
-    default: {
-      return {};
-    }
-  }
 }

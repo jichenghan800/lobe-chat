@@ -5,6 +5,7 @@ import { type CSSProperties, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAgentShareSupported } from '@/features/AgentShareSettings/useAgentShareSupported';
+import { useManagedSettingsAccess } from '@/features/CottiPlatformManagement/useManagedSettingsAccess';
 import { useResourceAccess } from '@/features/ResourcePermission/useResourceAccess';
 import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 import { usePermission } from '@/hooks/usePermission';
@@ -55,6 +56,7 @@ interface AgentProfileTabsProps {
  * URL rather than holding local state: deep links and back/forward keep working.
  */
 const AgentProfileTabs = memo<AgentProfileTabsProps>(({ active, agentId }) => {
+  const { canManage } = useManagedSettingsAccess();
   const { t } = useTranslation(['chat', 'common', 'spend']);
   const navigate = useWorkspaceAwareNavigate();
 
@@ -85,8 +87,8 @@ const AgentProfileTabs = memo<AgentProfileTabsProps>(({ active, agentId }) => {
           statistics: t('usageStats.title', { ns: 'spend' }),
         },
         shareSupported: shareVisible === true,
-      }),
-    [active, canConfigure, channelsSupported, shareVisible, t],
+      }).filter((option) => canManage || option.value !== 'channel'),
+    [canManage, active, canConfigure, channelsSupported, shareVisible, t],
   );
 
   // A lone segment is a label, not a switcher.

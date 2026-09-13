@@ -4,7 +4,7 @@ import { type VoiceMessageRecording } from '@lobechat/types';
 import { type SlashOptions } from '@lobehub/editor';
 import { type ChatInputActionsProps } from '@lobehub/editor/react';
 import { Flexbox, type MenuProps } from '@lobehub/ui';
-import { Alert } from '@lobehub/ui/base-ui';
+import { Alert, toast } from '@lobehub/ui/base-ui';
 import { type ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,10 +15,16 @@ import {
 } from '@/business/client/hooks/useBusinessChatInputSendAreaPrefix';
 import type { ActionKeys, ChatInputFeature } from '@/features/ChatInput';
 import { ChatInputProvider, DesktopChatInput } from '@/features/ChatInput';
+import { chooseTopic } from '@/features/ChatInput/ActionBar/Token/topicChoiceModal';
+import { removeDraft, saveDraft } from '@/features/ChatInput/draftStorage';
+import { useEffectiveAgentMode } from '@/features/ChatInput/hooks/useEffectiveAgentMode';
 import {
   type SendButtonHandler,
   type SendButtonProps,
 } from '@/features/ChatInput/store/initialState';
+import { useQueryRoute } from '@/hooks/useQueryRoute';
+import { useSingleton } from '@/hooks/useSingleton';
+import { topicService } from '@/services/topic';
 import { useAgentStore } from '@/store/agent';
 import { chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
@@ -41,6 +47,7 @@ import InputCompletionErrorAlert from './InputCompletionErrorAlert';
 import OpStatusTray from './OpStatusTray';
 import QueueTray from './QueueTray';
 import { sendVoiceMessage } from './sendVoiceMessage';
+import { createTopicSwitchCheck } from './topicSwitchCheck';
 import {
   getContextWindowMessages,
   getConversationChatInputUiState,
@@ -183,12 +190,22 @@ const ChatInput = memo<ChatInputProps>(
     skipScrollMarginWithList,
   }) => {
     const { t } = useTranslation('chat');
+    const router = useQueryRoute();
+    const topicSwitchCheck = useSingleton(createTopicSwitchCheck);
+    const sendPending = useRef(false);
+    const sendEpoch = useRef(0);
 
     // ConversationStore state
     const storeApi = useConversationStoreApi();
     const dbMessages = useConversationStore(dataSelectors.dbMessages);
     const context = useConversationStore((s) => s.context);
     const contextKey = useMemo(() => messageMapKey(context), [context]);
+    useEffect(() => {
+      sendEpoch.current += 1;
+      return () => {
+        sendEpoch.current += 1;
+      };
+    }, [contextKey]);
     const canRecordVoiceMessage = useCanSendVoiceMessage(context);
     const [agentId, inputMessage, sendMessage, stopGenerating] = useConversationStore((s) => [
       s.context.agentId,
@@ -196,6 +213,7 @@ const ChatInput = memo<ChatInputProps>(
       s.sendMessage,
       s.stopGenerating,
     ]);
+    const { isAgentRuntimeMode } = useEffectiveAgentMode(agentId || '');
     const [enableHistoryCount, historyCount] = useAgentStore((s) => [
       chatConfigByIdSelectors.getEnableHistoryCountById(agentId || '')(s),
       chatConfigByIdSelectors.getHistoryCountById(agentId || '')(s),
@@ -262,6 +280,7 @@ const ChatInput = memo<ChatInputProps>(
     const fileList = useFileStore(fileChatSelectors.chatUploadFileList);
     const contextList = useFileStore(fileChatSelectors.chatContextSelections(contextKey));
     const isUploadingFiles = useFileStore(fileChatSelectors.isUploadingFiles);
+    const hasAgentModeRequiredFiles = useFileStore(fileChatSelectors.hasAgentModeRequiredFiles);
 
     // Queue state
     const hasQueuedMessages = useChatStore(
@@ -297,7 +316,11 @@ const ChatInput = memo<ChatInputProps>(
     // When disableQueue is set (e.g. onboarding), block sending while loading.
     // disableSend hard-blocks regardless of content (host surface is read-only).
     const disabled =
-      isInputEmpty || isUploadingFiles || (!!disableQueue && isInputQueueBlocked) || !!disableSend;
+      isInputEmpty ||
+      isUploadingFiles ||
+      (hasAgentModeRequiredFiles && !isAgentRuntimeMode) ||
+      (!!disableQueue && isInputQueueBlocked) ||
+      !!disableSend;
 
     // `disabled` above lags the editor: `inputMessage` mirrors content through
     // the editor's debounced onChange, so a fast type→Enter arrives while the
@@ -311,6 +334,8 @@ const ChatInput = memo<ChatInputProps>(
 
       const fileStore = useFileStore.getState();
       if (fileChatSelectors.isUploadingFiles(fileStore)) return true;
+      if (!isAgentRuntimeMode && fileChatSelectors.hasAgentModeRequiredFiles(fileStore))
+        return true;
 
       const { context: liveContext, editor } = storeApi.getState();
       if (
@@ -324,7 +349,7 @@ const ChatInput = memo<ChatInputProps>(
       const hasContextSelections =
         fileChatSelectors.chatContextSelections(messageMapKey(liveContext))(fileStore).length > 0;
       return !hasText && !hasFiles && !hasContextSelections;
-    }, [customDisabled, disableQueue, disableSend, storeApi]);
+    }, [customDisabled, disableQueue, disableSend, isAgentRuntimeMode, storeApi]);
     const shouldUsePlainSendButton = !showSendMenu && !!sendMenu;
     const businessAlerts = useBusinessChatInputAlerts();
     const businessSendAreaPrefix = getBusinessChatInputSendAreaPrefix(sendAreaPrefix);
@@ -336,6 +361,7 @@ const ChatInput = memo<ChatInputProps>(
         // just the grayed-out button.
         if (disableSend) return;
 
+        if (sendPending.current) return;
         // Get instant values from stores at trigger time
         const fileStore = useFileStore.getState();
         const currentFileList = fileChatSelectors.chatUploadFileList(fileStore);
@@ -343,6 +369,7 @@ const ChatInput = memo<ChatInputProps>(
         const currentContextList = fileChatSelectors.chatContextSelections(contextKey)(fileStore);
 
         if (currentIsUploading) return;
+        if (!isAgentRuntimeMode && currentFileList.some((item) => item.requiresAgentMode)) return;
 
         // Onboarding-style surfaces opt out of message queuing — pressing Enter
         // while the agent is streaming should be a no-op rather than enqueue.
@@ -376,7 +403,64 @@ const ChatInput = memo<ChatInputProps>(
           return;
         }
 
-        // Clear content immediately for responsive UX
+        let targetContext = storeApi.getState().context;
+        const sourceKey = messageMapKey(targetContext);
+        const epoch = sendEpoch.current;
+        const stillCurrent = () =>
+          sendEpoch.current === epoch &&
+          messageMapKey(storeApi.getState().context) === sourceKey &&
+          getMarkdownContent() === message;
+        // Only direct user submissions in an idle, ordinary topic. No job/tool loop checks.
+        if (
+          targetContext.topicId &&
+          targetContext.agentId &&
+          !targetContext.threadId &&
+          !targetContext.groupId &&
+          !isInputQueueBlocked
+        ) {
+          sendPending.current = true;
+          try {
+            const unrelated = await topicSwitchCheck(targetContext.topicId, message);
+            if (!stillCurrent()) return;
+            if (unrelated) {
+              const choice = await chooseTopic();
+              if (choice === 'cancel' || !stillCurrent()) return;
+              if (choice === 'new') {
+                const detail = await topicService.getTopicDetail(targetContext.topicId);
+                if (!stillCurrent()) return;
+                const newId = await topicService.createTopic({
+                  agentId: targetContext.agentId,
+                  title: '',
+                  model: detail?.model || undefined,
+                  provider: detail?.provider || undefined,
+                });
+                if (!stillCurrent()) {
+                  await topicService.removeTopic(newId);
+                  return;
+                }
+                const nextContext = { ...targetContext, topicId: newId };
+                if (editorData && saveDraft(messageMapKey(nextContext), editorData) === undefined) {
+                  await topicService.removeTopic(newId);
+                  throw new Error('Could not preserve draft');
+                }
+                targetContext = nextContext;
+                await useChatStore.getState().refreshTopic();
+                await useChatStore.getState().switchTopic(newId);
+                router.push(
+                  `/agent/${encodeURIComponent(targetContext.agentId!)}/${encodeURIComponent(newId)}`,
+                );
+              }
+            }
+          } catch (error) {
+            console.error('[TopicSwitch] Could not prepare topic', error);
+            toast.error(t('topicChoice.failed'));
+            return;
+          } finally {
+            sendPending.current = false;
+          }
+        }
+
+        // Clear only after the user has chosen; dismissal preserves the draft.
         clearComposer();
 
         const { contextSelections, pageSelections } =
@@ -384,17 +468,33 @@ const ChatInput = memo<ChatInputProps>(
 
         // Fire and forget - send with captured message
         await sendMessage({
+          conversationContext: targetContext,
           contextSelections,
           editorData,
           files: currentFileList,
           message,
+          onMessageAccepted: () => {
+            if (messageMapKey(targetContext) !== sourceKey)
+              removeDraft(messageMapKey(targetContext));
+          },
           onPreflightFailure: () => {
             useFileStore.getState().restoreChatContextSelections(contextKey, currentContextList);
           },
           pageSelections,
         });
       },
-      [contextKey, sendMessage, storeApi, disableQueue, disableSend, isInputQueueBlocked],
+      [
+        contextKey,
+        router,
+        t,
+        topicSwitchCheck,
+        sendMessage,
+        storeApi,
+        disableQueue,
+        disableSend,
+        isAgentRuntimeMode,
+        isInputQueueBlocked,
+      ],
     );
 
     const sendButtonProps: SendButtonProps = {
@@ -449,6 +549,11 @@ const ChatInput = memo<ChatInputProps>(
             </Flexbox>
           )}
           {businessAlerts}
+          {hasAgentModeRequiredFiles && !isAgentRuntimeMode && (
+            <Flexbox paddingBlock={'0 6px'} paddingInline={12}>
+              <Alert title={t('attachment.agentModeRequired')} type={'warning'} />
+            </Flexbox>
+          )}
           <Flexbox
             paddingInline={12}
             ref={overlayRef}

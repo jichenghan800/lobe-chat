@@ -36,6 +36,7 @@ import { GROUP_MEMBER_ROLES } from '@/database/utils/groupMembership';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { AgentGroupService } from '@/server/services/agentGroup';
+import { createAgentModelNormalizer } from '@/server/services/cotti/agentModelNormalization';
 import { EditLockService } from '@/server/services/editLock';
 import { publishResourceEvent } from '@/server/services/resourceEvents';
 import {
@@ -259,8 +260,9 @@ export const agentGroupRouter = router({
         });
       }
       // Batch create virtual agents
+      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB);
       const agentConfigs = input.agents.map((agent) => ({
-        ...agent,
+        ...normalizeModel(agent),
         // `agentModel.batchCreate`'s config type is still `plugins?: string[]`
         // (widening deferred to the tri-state rollout's final phase); the
         // zod schema above already allows the tri-state object shape through.
@@ -458,8 +460,10 @@ export const agentGroupRouter = router({
       const groupVisibility = input.groupConfig?.visibility ?? folderVisibility ?? undefined;
 
       // 1. Batch create virtual member agents
+      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB);
+      const normalizedSupervisor = normalizeModel(input.supervisorConfig ?? {});
       const memberConfigs = input.members.map((member) => ({
-        ...member,
+        ...normalizeModel(member),
         // See the `batchCreateAgentsInGroup` cast above for why this bridges
         // to `string[]` instead of failing type-check.
         plugins: member.plugins as unknown as string[] | undefined,
@@ -473,9 +477,9 @@ export const agentGroupRouter = router({
 
       // 2. Create group with supervisor and member agents
       // Filter out null/undefined values from supervisorConfig
-      const supervisorConfig = input.supervisorConfig
-        ? Object.fromEntries(Object.entries(input.supervisorConfig).filter(([_, v]) => v != null))
-        : undefined;
+      const supervisorConfig = Object.fromEntries(
+        Object.entries(normalizedSupervisor).filter(([_, v]) => v != null),
+      );
 
       const normalizedConfig = ctx.agentGroupService.normalizeGroupConfig(
         input.groupConfig.config as ChatGroupConfig | null,

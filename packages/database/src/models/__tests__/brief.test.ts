@@ -687,6 +687,20 @@ describe('BriefModel', () => {
     });
   });
 
+  describe('findByIds', () => {
+    it('returns only requested briefs owned by the current user', async () => {
+      const model = new BriefModel(serverDB, userId);
+      const otherModel = new BriefModel(serverDB, userId2);
+      const first = await model.create({ summary: 'A', title: 'First', type: 'result' });
+      await model.create({ summary: 'B', title: 'Second', type: 'result' });
+      const foreign = await otherModel.create({ summary: 'X', title: 'Foreign', type: 'result' });
+
+      const found = await model.findByIds([first.id, foreign.id]);
+
+      expect(found.map((brief) => brief.id)).toEqual([first.id]);
+    });
+  });
+
   describe('resolve', () => {
     it('should mark brief as resolved and read', async () => {
       const model = new BriefModel(serverDB, userId);

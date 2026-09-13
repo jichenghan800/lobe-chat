@@ -2,6 +2,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/../../../.."
 : "${LINGSHU_IMAGE_TAG:?Set LINGSHU_IMAGE_TAG to a new immutable acceptance image tag}"
+if docker image inspect "$LINGSHU_IMAGE_TAG" >/dev/null 2>&1; then
+  echo "Choose an unused image tag." >&2
+  exit 1
+fi
+export NEXT_PUBLIC_COTTI_SHOW_PLATFORM_ANALYTICS=1
+export NEXT_PUBLIC_COTTI_FEISHU_SUPPORT_URL='https://applink.feishu.cn/client/chat/open?openId=ou_2f3bf7b5efa5fd9b70d5d5993b3a2e82'
 export APP_URL=http://app.com
 export DATABASE_DRIVER=node
 export DATABASE_URL=postgres://postgres:build-only@127.0.0.1:1/build

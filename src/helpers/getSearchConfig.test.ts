@@ -175,3 +175,11 @@ describe('getSearchConfig', () => {
     });
   });
 });
+
+it('uses the resolved target search configuration instead of the global agent', () => {
+  vi.mocked(chatConfigByIdSelectors.getChatConfigById).mockReturnValue(
+    () => ({ searchMode: 'on' }) as never,
+  );
+  const result = getSearchConfig('gpt-4', 'openai', 'target-chat', { searchMode: 'off' });
+  expect(result.enabledSearch).toBe(false);
+});

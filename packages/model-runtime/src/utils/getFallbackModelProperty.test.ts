@@ -264,3 +264,28 @@ describe('getModelPropertyWithFallback', () => {
     });
   });
 });
+
+describe('COTTI Vertex Gemini 3.8 pricing', () => {
+  it('fills only the missing Vertex price, without fabricating capabilities or overriding a native price', async () => {
+    loadModelsMock.mockResolvedValue([]);
+    const pricing = await getModelPropertyWithFallback<{ units: unknown[] }>(
+      'gemini-3.8-flash',
+      'pricing',
+      'vertexai',
+    );
+    expect(pricing.units).toHaveLength(6);
+    expect(
+      await getModelPropertyWithFallback('gemini-3.8-flash', 'abilities', 'vertexai'),
+    ).toBeUndefined();
+    expect(
+      await getModelPropertyWithFallback('gemini-3.8-flash', 'pricing', 'google'),
+    ).toBeUndefined();
+    const native = { units: [] };
+    loadModelsMock.mockResolvedValue([
+      { id: 'gemini-3.8-flash', providerId: 'vertexai', pricing: native },
+    ]);
+    expect(await getModelPropertyWithFallback('gemini-3.8-flash', 'pricing', 'vertexai')).toBe(
+      native,
+    );
+  });
+});

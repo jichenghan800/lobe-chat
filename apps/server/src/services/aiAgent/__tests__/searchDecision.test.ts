@@ -70,6 +70,25 @@ describe('resolveServerSearchDecision', () => {
     expect(result.useApplicationBuiltinSearchTool).toBe(false);
   });
 
+  it('prefers Azure GPT-5.6 native search for a legacy auto config', () => {
+    const result = resolveServerSearchDecision({
+      builtinModels: [
+        {
+          abilities: { search: true },
+          id: 'gpt-5.6-sol',
+          providerId: 'azure',
+          settings: { searchImpl: 'params' },
+        },
+      ],
+      chatConfig: { searchMode: 'auto', useModelBuiltinSearch: false },
+      model: 'gpt-5.6-sol',
+      provider: 'azure',
+    });
+
+    expect(result.useModelSearch).toBe(true);
+    expect(result.useApplicationBuiltinSearchTool).toBe(false);
+  });
+
   it('infers internal search for a remotely discovered model', () => {
     const result = resolveServerSearchDecision({
       builtinModels: [],

@@ -1,9 +1,19 @@
 import { isLocalOrPrivateUrl } from '@lobechat/utils';
 
+import {
+  isFeishuDocumentsConnector,
+  isFeishuDocumentsToolAuthorized,
+} from '@/const/connectorPresets';
 import { ConnectorMcpConnectionType, ConnectorToolPermission } from '@/database/schemas';
 import { deviceGateway } from '@/server/services/deviceGateway';
 import { mcpService } from '@/server/services/mcp';
 
+import {
+  callFeishuMessageTool,
+  FeishuMessageToolError,
+  isFeishuMessageTool,
+} from './feishuMessages';
+import { callFeishuSheetTool, FeishuSheetToolError, isFeishuSheetTool } from './feishuSheets';
 import { buildLastSyncedAtMap, scheduleStaleConnectorToolsRefresh } from './refresh';
 import { buildConnectorMcpParams, type ConnectorToolSyncContext } from './sync';
 import { ensureFreshConnectorToken } from './tokens';
@@ -41,6 +51,21 @@ export const callConnectorToolById = async (
   }
   if (!connector.isEnabled) {
     throw new ConnectorToolCallError('FORBIDDEN', 'Connector is disabled');
+  }
+  if (
+    isFeishuDocumentsConnector(connector) &&
+    !isFeishuDocumentsToolAuthorized(connector, params.toolName)
+  ) {
+    throw new ConnectorToolCallError(
+      'FORBIDDEN',
+      params.toolName === 'create-doc'
+        ? 'Reauthorize Feishu Documents to enable document creation'
+        : isFeishuMessageTool(params.toolName)
+          ? 'Reauthorize Feishu Documents to enable chat history access'
+          : isFeishuSheetTool(params.toolName)
+            ? 'Reauthorize Feishu Documents to enable spreadsheet reading'
+            : 'This tool is not enabled for the Feishu Documents preset',
+    );
   }
 
   // The tool MUST be present in the synced list — this is the single source of
@@ -101,6 +126,42 @@ export const callConnectorToolById = async (
   }
 
   const fresh = await ensureFreshConnectorToken(connector, ctx.connectorModel);
+
+  if (isFeishuDocumentsConnector(fresh) && isFeishuMessageTool(params.toolName)) {
+    if (!isFeishuDocumentsToolAuthorized(fresh, params.toolName)) {
+      throw new ConnectorToolCallError(
+        'FORBIDDEN',
+        'Reauthorize Feishu Documents to enable chat history access',
+      );
+    }
+
+    try {
+      return await callFeishuMessageTool(fresh, params.toolName, params.args);
+    } catch (error) {
+      if (error instanceof FeishuMessageToolError) {
+        throw new ConnectorToolCallError('BAD_REQUEST', error.message);
+      }
+      throw error;
+    }
+  }
+
+  if (isFeishuDocumentsConnector(fresh) && isFeishuSheetTool(params.toolName)) {
+    if (!isFeishuDocumentsToolAuthorized(fresh, params.toolName)) {
+      throw new ConnectorToolCallError(
+        'FORBIDDEN',
+        'Reauthorize Feishu Documents to enable spreadsheet reading',
+      );
+    }
+
+    try {
+      return await callFeishuSheetTool(fresh, params.toolName, params.args);
+    } catch (error) {
+      if (error instanceof FeishuSheetToolError) {
+        throw new ConnectorToolCallError('BAD_REQUEST', error.message);
+      }
+      throw error;
+    }
+  }
 
   return mcpService.callTool({
     argsStr: params.args ?? '{}',

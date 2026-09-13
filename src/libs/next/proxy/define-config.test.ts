@@ -3,8 +3,11 @@
  */
 import { readFile } from 'node:fs/promises';
 
+import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server';
 import { NextRequest } from 'next/server';
 import { describe, expect, it, vi } from 'vitest';
+
+import { config } from '@/proxy';
 
 import { defineConfig } from './define-config';
 
@@ -130,5 +133,20 @@ describe('Acceptance installation guide', () => {
     expect(guide).toContain('lh login');
     expect(guide).toContain('lh acceptance install');
     expect(guide).toContain('.agents/skills/acceptance/SKILL.md');
+  });
+});
+
+describe('overview hard refresh routing', () => {
+  it.each([
+    '/overview',
+    '/overview/',
+    '/overview?q=weather&page=2&status=all',
+    '/overview/tpc_example?q=weather&page=2&status=all',
+  ])('serves the SPA without losing the overview URL: %s', async (path) => {
+    const url = `http://localhost:3010${path}`;
+    expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true);
+    const rewritten = new URL((await run(url))!);
+    expect(rewritten.pathname).toMatch(/^\/spa\/[^/]+\/overview(?:\/.*)?$/);
+    expect(rewritten.search).toBe(new URL(url).search);
   });
 });

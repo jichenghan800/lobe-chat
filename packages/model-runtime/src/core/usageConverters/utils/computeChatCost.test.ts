@@ -1674,3 +1674,25 @@ describe('computeChatPricing', () => {
     });
   });
 });
+
+describe('configured Terra token prices', () => {
+  it.each([
+    [200000, 50000, 0.372],
+    [300000, 150000, 1.138],
+  ])(
+    'uses whole-prompt tier at %d tokens, including cache write and cache read once',
+    (totalInputTokens, inputCacheMissTokens, expected) => {
+      const pricing = openaiChatModels.find((m) => m.id === 'gpt-5.6-terra')?.pricing;
+      expect(pricing).toBeDefined();
+      expect(
+        computeChatCost(pricing, {
+          totalInputTokens,
+          inputCacheMissTokens,
+          inputCachedTokens: 50000,
+          inputWriteCacheTokens: 100000,
+          outputTextTokens: 1000,
+        })?.totalCost,
+      ).toBeCloseTo(expected, 6);
+    },
+  );
+});

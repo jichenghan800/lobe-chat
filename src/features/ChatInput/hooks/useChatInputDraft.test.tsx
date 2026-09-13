@@ -38,6 +38,28 @@ describe('useChatInputDraft', () => {
     vi.restoreAllMocks();
   });
 
+  it('publishes restored text to the new conversation even when both drafts are identical', async () => {
+    const editor = createFakeEditor();
+    const onMarkdownContentChange = vi.fn();
+    const store = createStore({
+      draftKey: 'main_agent_source',
+      editor,
+      markdownContent: 'same draft',
+      onMarkdownContentChange,
+    });
+    saveDraft('main_agent_target', { text: 'same draft' });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <Provider createStore={() => store}>{children}</Provider>
+    );
+    renderHook(() => useChatInputDraft(), { wrapper });
+    await act(async () => {
+      store.setState({ draftKey: 'main_agent_target' });
+      await Promise.resolve();
+    });
+    expect(onMarkdownContentChange).toHaveBeenCalledWith('same draft');
+    expect(store.getState().isContentEmpty).toBe(false);
+  });
+
   it('flushes the pending debounced draft save on unmount', () => {
     const draftJson = { root: { children: [{ text: 'latest edit' }] } };
     const editor = {

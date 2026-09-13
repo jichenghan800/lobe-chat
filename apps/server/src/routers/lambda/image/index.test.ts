@@ -209,7 +209,7 @@ describe('imageRouter', () => {
               returning: vi.fn().mockImplementation(function () {
                 insertCallCount++;
                 if (insertCallCount === 1) return [mockBatch];
-                if (insertCallCount === 2) return mockGenerations;
+                if (insertCallCount === 2) return mockGenerations.slice(0, value.length);
                 // For async tasks, return one at a time
                 const taskIndex = insertCallCount - 3;
                 return [mockAsyncTasks[taskIndex] || mockAsyncTasks[0]];
@@ -235,6 +235,21 @@ describe('imageRouter', () => {
   });
 
   describe('createImage', () => {
+    it.each([4, 8, 50])(
+      'normalizes a stale client request for %s images before charging and fanout',
+      async (imageNum) => {
+        const result = await imageRouter
+          .createCaller(createMockCtx())
+          .createImage(createDefaultInput({ imageNum }));
+        expect(mockInsertValues[1]).toHaveLength(1);
+        expect(result.data.generations).toHaveLength(1);
+        expect(mockChargeBeforeGenerate).toHaveBeenCalledWith(
+          expect.objectContaining({ imageNum: 1 }),
+        );
+        expect(mockAsyncCallerCreateImage).toHaveBeenCalledTimes(1);
+      },
+    );
+
     it('should create image generation batch and generations successfully', async () => {
       const ctx = createMockCtx();
       const input = createDefaultInput();
@@ -245,7 +260,7 @@ describe('imageRouter', () => {
       expect(result.success).toBe(true);
       expect(result.data.batch).toBeDefined();
       expect(result.data.batch.id).toBe('batch-1');
-      expect(result.data.generations).toHaveLength(2);
+      expect(result.data.generations).toHaveLength(1);
       expect(mockServerDB.transaction).toHaveBeenCalled();
     });
 
@@ -447,7 +462,7 @@ describe('imageRouter', () => {
       expect(mockChargeBeforeGenerate).toHaveBeenCalledWith(
         expect.objectContaining({
           generationTopicId: 'topic-1',
-          imageNum: 2,
+          imageNum: 1,
           model: 'stable-diffusion',
           provider: 'test-provider',
           userId: mockUserId,
@@ -457,7 +472,7 @@ describe('imageRouter', () => {
 
     it('threads per-generation prechargeItems into each asyncTask metadata', async () => {
       mockChargeBeforeGenerate.mockResolvedValue({
-        prechargeItems: [{ reservationKey: 'k-1' }, { reservationKey: 'k-2' }],
+        prechargeItems: [{ reservationKey: 'k-1' }],
       });
 
       const ctx = createMockCtx();
@@ -466,13 +481,11 @@ describe('imageRouter', () => {
       const caller = imageRouter.createCaller(ctx);
       await caller.createImage(input);
 
-      // insertValues: [0] batch, [1] generations[], [2] task#1, [3] task#2
+      // insertValues: [0] batch, [1] one generation, [2] one task
       expect(mockInsertValues[2]).toEqual(
         expect.objectContaining({ metadata: { precharge: { reservationKey: 'k-1' } } }),
       );
-      expect(mockInsertValues[3]).toEqual(
-        expect.objectContaining({ metadata: { precharge: { reservationKey: 'k-2' } } }),
-      );
+      expect(mockInsertValues).toHaveLength(3);
     });
 
     it('forwards the caller spend attribution to the charge and every asyncTask', async () => {
@@ -480,7 +493,7 @@ describe('imageRouter', () => {
       // origin must reach both the reserve-time charge and the async settle —
       // otherwise the spend escapes the per-agent monthly cap.
       mockChargeBeforeGenerate.mockResolvedValue({
-        prechargeItems: [{ reservationKey: 'k-1' }, { reservationKey: 'k-2' }],
+        prechargeItems: [{ reservationKey: 'k-1' }],
       });
       const spendOrigin = {
         agentShare: { agentId: 'agent-1', shareId: 'share-1', visitorUserId: 'visitor-1' },
@@ -498,11 +511,7 @@ describe('imageRouter', () => {
           metadata: { precharge: { reservationKey: 'k-1' }, spendOrigin },
         }),
       );
-      expect(mockInsertValues[3]).toEqual(
-        expect.objectContaining({
-          metadata: { precharge: { reservationKey: 'k-2' }, spendOrigin },
-        }),
-      );
+      expect(mockInsertValues).toHaveLength(3);
     });
 
     it('stores spend attribution on the asyncTask even without a precharge handle', async () => {
@@ -552,7 +561,7 @@ describe('imageRouter', () => {
         expect.arrayContaining([expect.objectContaining({ workspaceId: 'workspace-1' })]),
       );
       expect(mockInsertValues[2]).toEqual(expect.objectContaining({ workspaceId: 'workspace-1' }));
-      expect(mockInsertValues[3]).toEqual(expect.objectContaining({ workspaceId: 'workspace-1' }));
+      expect(mockInsertValues).toHaveLength(3);
       expect(mockAsyncCallerCreateImage).toHaveBeenCalledWith(
         expect.objectContaining({ workspaceId: 'workspace-1' }),
       );
@@ -576,7 +585,7 @@ describe('imageRouter', () => {
     it('reconciles per-generation billing handles when async startup fails', async () => {
       mockCreateAsyncCaller.mockRejectedValue(new Error('Caller creation failed'));
       mockChargeBeforeGenerate.mockResolvedValue({
-        prechargeItems: [{ reservationKey: 'k-1' }, { reservationKey: 'k-2' }],
+        prechargeItems: [{ reservationKey: 'k-1' }],
       });
 
       const ctx = createMockCtx();
@@ -587,17 +596,11 @@ describe('imageRouter', () => {
 
       // The async router never runs for these tasks, so the billing handles
       // must be reconciled here — one isError charge per generation.
-      expect(mockChargeAfterGenerate).toHaveBeenCalledTimes(2);
+      expect(mockChargeAfterGenerate).toHaveBeenCalledTimes(1);
       expect(mockChargeAfterGenerate).toHaveBeenCalledWith(
         expect.objectContaining({
           isError: true,
           prechargeResult: { reservationKey: 'k-1' },
-        }),
-      );
-      expect(mockChargeAfterGenerate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          isError: true,
-          prechargeResult: { reservationKey: 'k-2' },
         }),
       );
     });
@@ -625,7 +628,7 @@ describe('imageRouter', () => {
       await caller.createImage(input);
 
       // Should update both tasks to error status
-      expect(mockAsyncTaskModelUpdate).toHaveBeenCalledTimes(2);
+      expect(mockAsyncTaskModelUpdate).toHaveBeenCalledTimes(1);
       expect(mockAsyncTaskModelUpdate).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({

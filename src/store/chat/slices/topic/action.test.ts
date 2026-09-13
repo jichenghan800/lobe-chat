@@ -1,5 +1,5 @@
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from '@lobechat/business-const';
-import { TOPIC_TITLE_JSON_SCHEMA } from '@lobechat/prompts';
+import { TOPIC_METADATA_JSON_SCHEMA } from '@lobechat/prompts';
 import type { LobeUser, UIChatMessage } from '@lobechat/types';
 import { toast } from '@lobehub/ui/base-ui';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -3261,8 +3261,25 @@ describe('topic action', () => {
 
         expect(completionSpy).not.toHaveBeenCalled();
         expect(generateSpy.mock.calls[0][0]).toMatchObject({
-          schema: TOPIC_TITLE_JSON_SCHEMA,
+          schema: TOPIC_METADATA_JSON_SCHEMA,
           tracing: { scenario: 'topic_title', topicId },
+        });
+      });
+
+      it('saves a bounded description from the same naming request', async () => {
+        const result = await seedTopic('');
+        const update = vi.spyOn(result.current, 'internal_updateTopic');
+        const generate = vi.spyOn(aiChatService, 'generateJSON').mockResolvedValue({
+          data: { title: '模型价格对比', description: '价格'.repeat(80) },
+          tracingId: 'trace',
+        } as any);
+        await act(async () => {
+          await result.current.summaryTopicTitle(topicId, messages);
+        });
+        expect(generate).toHaveBeenCalledTimes(1);
+        expect(update).toHaveBeenCalledWith(topicId, {
+          title: '模型价格对比',
+          description: '价格'.repeat(50),
         });
       });
 

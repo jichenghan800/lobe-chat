@@ -1,6 +1,7 @@
-import { type TableProps } from 'antd';
+import type { TableProps } from 'antd';
 import { ConfigProvider, Table } from 'antd';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
+import type { ReactElement } from 'react';
 import { memo } from 'react';
 
 const prefixCls = 'ant';
@@ -42,30 +43,43 @@ const styles = createStaticStyles(({ css }) => ({
   `,
 }));
 
-const InlineTable = memo<TableProps & { hoverToActive?: boolean }>(
-  ({ hoverToActive, className, ...rest }) => {
-    return (
-      <ConfigProvider
-        theme={{
-          components: {
-            Table: {
-              headerBg: cssVar.colorFillQuaternary,
-              headerBorderRadius: 0,
-            },
-          },
-        }}
-      >
-        <Table
-          bordered={false}
-          className={cx(styles.table, hoverToActive && styles.hoverToActive, className)}
-          pagination={false}
-          scroll={{ x: 'max-content' }}
-          size={'small'}
-          {...rest}
-        />
-      </ConfigProvider>
-    );
-  },
-);
+interface InlineTableExtraProps {
+  hoverToActive?: boolean;
+}
 
-export default InlineTable;
+interface InlineTableProps<RecordType> extends InlineTableExtraProps, TableProps<RecordType> {}
+
+const InlineTable = <RecordType,>({
+  hoverToActive,
+  className,
+  ...rest
+}: InlineTableProps<RecordType>) => {
+  return (
+    <ConfigProvider
+      theme={{
+        components: {
+          Table: {
+            headerBg: cssVar.colorFillQuaternary,
+            headerBorderRadius: 0,
+          },
+        },
+      }}
+    >
+      <Table<RecordType>
+        bordered={false}
+        className={cx(styles.table, hoverToActive && styles.hoverToActive, className)}
+        pagination={false}
+        scroll={{ x: 'max-content' }}
+        size={'small'}
+        {...rest}
+      />
+    </ConfigProvider>
+  );
+};
+
+interface InlineTableComponent {
+  (props: InlineTableExtraProps & TableProps): ReactElement;
+  <RecordType>(props: InlineTableProps<RecordType>): ReactElement;
+}
+
+export default memo(InlineTable) as InlineTableComponent;

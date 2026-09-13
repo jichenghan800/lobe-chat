@@ -11,6 +11,7 @@ import type {
   AuthorizationServerMetadata,
   OAuthClientInformationFull,
   OAuthClientInformationMixed,
+  OAuthClientMetadata,
   OAuthTokens,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 import debug from 'debug';
@@ -38,6 +39,21 @@ export interface DiscoveredOAuth {
   authorizationServerUrl: string;
   metadata: AuthorizationServerMetadata;
 }
+
+export const selectDynamicClientAuthMethod = (
+  metadata: AuthorizationServerMetadata,
+): OAuthClientMetadata['token_endpoint_auth_method'] => {
+  const supported = metadata.token_endpoint_auth_methods_supported ?? [];
+
+  // MCP OAuth uses PKCE, so prefer a public client whenever the authorization
+  // server explicitly supports it. Feishu's DCR endpoint only accepts `none`.
+  if (supported.includes('none')) return 'none';
+  if (supported.includes('client_secret_post')) return 'client_secret_post';
+  if (supported.includes('client_secret_basic')) return 'client_secret_basic';
+
+  // Preserve the previous behavior for servers that omit RFC 8414 metadata.
+  return 'client_secret_post';
+};
 
 /**
  * Discover the OAuth authorization server backing a remote MCP resource.
@@ -100,7 +116,7 @@ export const registerDynamicClient = async (params: {
       redirect_uris: [params.redirectUri],
       response_types: ['code'],
       scope: params.scopes?.join(' '),
-      token_endpoint_auth_method: 'client_secret_post',
+      token_endpoint_auth_method: selectDynamicClientAuthMethod(params.metadata),
     },
     metadata: params.metadata,
     scope: params.scopes?.join(' '),

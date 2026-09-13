@@ -239,6 +239,11 @@ export class AgentOwnedByGroupError extends Error {
   }
 }
 
+export interface AgentKnowledgeOptions {
+  fileContentIds?: string[];
+  includeFileContent?: boolean;
+}
+
 export class AgentModel {
   private userId: string;
   private db: LobeChatDatabase;
@@ -448,14 +453,14 @@ export class AgentModel {
     }
   };
 
-  getAgentConfigById = async (id: string) => {
+  getAgentConfigById = async (id: string, options: AgentKnowledgeOptions = {}) => {
     const agent = await this.db.query.agents.findFirst({
       where: and(eq(agents.id, id), this.ownership()),
     });
 
     if (!agent) return null;
 
-    return this.enrichAgentWithKnowledge(agent);
+    return this.enrichAgentWithKnowledge(agent, options);
   };
 
   /**
@@ -767,20 +772,29 @@ export class AgentModel {
   /**
    * Enrich agent with knowledge base and files data
    */
-  private enrichAgentWithKnowledge = async (agent: AgentItem) => {
+  private enrichAgentWithKnowledge = async (
+    agent: AgentItem,
+    options: AgentKnowledgeOptions = {},
+  ) => {
     const knowledge = await this.getAgentAssignedKnowledge(agent.id);
     const normalizedAgent = normalizeInboxAgentMeta(agent, { slug: agent.slug });
 
-    // Fetch document content for enabled files
-    const enabledFileIds = knowledge.files
-      .filter((f) => f.enabled)
-      .map((f) => f.id)
-      .filter((id) => id !== undefined);
     let files: Array<(typeof knowledge.files)[number] & { content?: string | null }> =
       knowledge.files;
 
+    if (options.includeFileContent === false) return { ...normalizedAgent, ...knowledge, files };
+
+    // Fetch document content for enabled files
+    const enabledFileIds = knowledge.files
+      .filter(
+        (f) => f.enabled && (!options.fileContentIds || options.fileContentIds.includes(f.id!)),
+      )
+      .map((f) => f.id)
+      .filter((id) => id !== undefined);
+
     if (enabledFileIds.length > 0) {
       const documentsData = await this.db.query.documents.findMany({
+        columns: { content: true, fileId: true },
         where: and(this.documentsOwnership(), inArray(documents.fileId, enabledFileIds)),
       });
 

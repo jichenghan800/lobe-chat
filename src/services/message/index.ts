@@ -36,7 +36,9 @@ interface MessageReadQueryContext {
   agentId?: string | null;
   /** Agent-share visitor surface — routes the read through `shareChat.getMessages`. */
   agentShareId?: string;
+  fileContentIds?: string[];
   groupId?: string | null;
+  includeFileContent?: boolean;
   /**
    * Skip the Work-summary assembly on the server — set by mid-stream
    * refetches (tool_end / step_complete) so each tool round doesn't re-run

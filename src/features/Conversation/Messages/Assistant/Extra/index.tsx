@@ -13,6 +13,7 @@ import ExtraContainer from '../../components/Extras/ExtraContainer';
 import Translate from '../../components/Extras/Translate';
 import TTS from '../../components/Extras/TTS';
 import Usage from '../../components/Extras/Usage';
+import TopicTokenUsage from '../../components/Extras/Usage/TopicTokenUsage';
 
 interface AssistantMessageExtraProps {
   content: string;
@@ -28,6 +29,14 @@ interface AssistantMessageExtraProps {
 export const AssistantMessageExtra = memo<AssistantMessageExtraProps>(
   ({ extra, id, content, performance, usage, tools, provider, model }) => {
     const loading = useConversationStore(messageStateSelectors.isMessageGenerating(id));
+    const showTopicUsage = useConversationStore(
+      (s) =>
+        !!s.context.topicId &&
+        !s.context.topicShareId &&
+        !s.context.threadId &&
+        s.displayMessages.at(-1)?.id === id &&
+        !s.operationState.isAIGenerating,
+    );
     const isLogin = useUserStore(authSelectors.isLogin);
     const isDevMode = useUserStore((s) => userGeneralSettingsSelectors.config(s).isDevMode);
 
@@ -44,10 +53,11 @@ export const AssistantMessageExtra = memo<AssistantMessageExtraProps>(
     const showTts = isLogin && !!extra?.tts;
     const showTranslate = isLogin && !!extra?.translate;
 
-    if (!showUsage && !showTts && !showTranslate) return null;
+    if (!showUsage && !showTts && !showTranslate && !showTopicUsage) return null;
 
     return (
       <Flexbox gap={8} style={{ marginTop: !!tools?.length ? 8 : 4 }}>
+        <TopicTokenUsage messageId={id} />
         {showUsage && (
           <Usage model={model!} performance={performance} provider={provider!} usage={usage} />
         )}

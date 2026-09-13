@@ -95,8 +95,15 @@ export class MessageService {
   private fileService: FileService;
   private compressionRepository: CompressionRepository;
 
-  constructor(db: LobeChatDatabase, userId: string, workspaceId?: string) {
-    this.messageModel = new MessageModel(db, userId, workspaceId);
+  constructor(
+    db: LobeChatDatabase,
+    userId: string,
+    workspaceId?: string,
+    includeFileContent = true,
+  ) {
+    this.messageModel = new MessageModel(db, userId, workspaceId, undefined, {
+      includeFileContent,
+    });
     this.fileService = new FileService(db, userId, workspaceId);
     this.compressionRepository = new CompressionRepository(db, userId, workspaceId);
   }

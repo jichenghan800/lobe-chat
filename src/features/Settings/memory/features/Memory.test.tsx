@@ -42,11 +42,17 @@ describe('MemorySetting', () => {
     memorySettingsMock.value = {};
   });
 
-  it('shows memory as enabled when the setting has not been persisted', () => {
+  it('shows memory as disabled when the setting has not been persisted', () => {
     render(<MemorySetting />);
 
     const toggle = screen.getByRole('switch');
-    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('preserves a user who explicitly enabled memory', () => {
+    memorySettingsMock.value = { enabled: true };
+    render(<MemorySetting />);
+    expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true');
   });
 
   it('persists toggle changes', () => {

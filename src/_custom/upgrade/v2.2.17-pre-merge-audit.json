@@ -110,6 +110,13 @@
     }
   ],
   "date": "2026-09-13",
+  "execution": {
+    "branch": "upgrade/v2.2.17-customizations",
+    "minimalTag": "milestone/v2.2.17-minimal-accepted-20260913",
+    "feishuBot": "Not enabled; no bot onboarding or external messages in scope",
+    "migration": "0163_lingshu_remaining_customizations",
+    "status": "source merged; chatdev full image deployed; browser smoke passed; full end-to-end acceptance in progress"
+  },
   "fileComparisonCounts": {
     "official-changed": 127,
     "official-unchanged": 600,

@@ -21,6 +21,12 @@ const MarkdownMessage = memo<MarkdownProps>(({ children, componentProps, ...rest
           theme: highlighterTheme,
           ...componentProps?.highlight,
         },
+        img: {
+          maxHeight: 320,
+          maxWidth: 'min(100%, 320px)',
+          objectFit: 'contain',
+          ...componentProps?.img,
+        },
         mermaid: { fullFeatured: false, theme: mermaidTheme, ...componentProps?.mermaid },
       }}
       {...rest}

@@ -8,6 +8,6 @@ COPY --chown=1001:1001 migrations/ /app/migrations/
 COPY --chown=1001:1001 shared/ /app/scripts/_shared/
 COPY --chown=1001:1001 startServer.js docker.cjs errorHint.js /app/
 RUN test ! -e /app/.env && test ! -e /app/.env.local && test ! -e /app/.records
-LABEL com.cotti.upstream.version="2.2.17" com.cotti.upgrade.phase="minimal-acceptance"
+LABEL com.cotti.upstream.version="2.2.17" com.cotti.upgrade.phase="customization-acceptance"
 USER nextjs
 WORKDIR /app

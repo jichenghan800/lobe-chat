@@ -1,5 +1,6 @@
 'use client';
 
+import { DEFAULT_ASSISTANT_NAME } from '@lobechat/business-const';
 import { agentDisplayName } from '@lobechat/types';
 import { Button, Popover, Text } from '@lobehub/ui/base-ui';
 import { createStaticStyles } from 'antd-style';
@@ -70,7 +71,7 @@ const AgentSelect = memo(() => {
   const displayMeta = showInboxFallback ? inboxMeta : (sidebarItem ?? agentMapMeta);
   const displayTitle = agentDisplayName(
     displayMeta,
-    showInboxFallback ? 'Lobe AI' : t('defaultSession', { ns: 'common' }),
+    showInboxFallback ? DEFAULT_ASSISTANT_NAME : t('defaultSession', { ns: 'common' }),
   );
   const displayAvatar =
     (typeof displayMeta?.avatar === 'string' ? displayMeta.avatar : undefined) ||

@@ -227,6 +227,10 @@ export interface UpdateClientTaskThreadStatusParams {
 }
 
 class AiAgentService {
+  async getOperationStatus(operationId: string, signal?: AbortSignal) {
+    return lambdaClient.aiAgent.getOperationStatus.query({ operationId }, { signal });
+  }
+
   async getServerDefaultHeterogeneousCapability() {
     return await lambdaClient.aiAgent.getServerDefaultHeterogeneousCapability.query();
   }

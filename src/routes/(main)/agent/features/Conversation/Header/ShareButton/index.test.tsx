@@ -30,11 +30,10 @@ vi.mock('@lobehub/ui/base-ui', async (importOriginal) => {
   };
 });
 
-vi.mock('next/dynamic', () => ({
-  default: () =>
-    function DynamicComponent({ children }: { children?: ReactNode }) {
-      return <div data-testid="share-popover">{children}</div>;
-    },
+vi.mock('@/features/SharePopover/lazy', () => ({
+  LazySharePopover: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="share-popover">{children}</div>
+  ),
 }));
 
 vi.mock('@/components/withSuspense', () => ({
@@ -89,5 +88,12 @@ describe('Conversation ShareButton', () => {
       }),
     );
     expect(queryByTestId('share-popover')).toBeNull();
+  });
+  it('shows COTTI topic link sharing when upstream business features are disabled', () => {
+    mocks.enableBusinessFeatures = false;
+
+    const { getByTestId, getByRole } = render(<ShareButton />);
+
+    expect(getByTestId('share-popover')).toContainElement(getByRole('button'));
   });
 });

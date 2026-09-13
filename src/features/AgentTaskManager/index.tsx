@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 import { PortalContent } from '@/features/Portal/router';
 import RightPanel from '@/features/RightPanel';
@@ -24,6 +24,14 @@ const AgentTaskManager = memo<AgentTaskManagerProps>(({ preferredAgentId, viewed
   const portalView = useChatStore(chatPortalSelectors.currentViewType);
   const showAcceptance =
     portalView === PortalViewType.Acceptance || portalView === PortalViewType.AcceptanceCheck;
+  const [hasOpened, setHasOpened] = useState(false);
+
+  useEffect(() => {
+    if (expand) setHasOpened(true);
+  }, [expand]);
+
+  // Defer initial setup, then retain the selected agent, draft and live conversation on collapse.
+  const shouldMountContent = expand || hasOpened;
 
   return (
     <RightPanel
@@ -34,13 +42,14 @@ const AgentTaskManager = memo<AgentTaskManagerProps>(({ preferredAgentId, viewed
       width={portalView === PortalViewType.AcceptanceCheck ? 640 : undefined}
       onExpandChange={(next) => toggleTaskAgentPanel(next)}
     >
-      {showAcceptance ? (
-        <PortalContent />
-      ) : (
-        <TaskAgentProvider preferredAgentId={preferredAgentId} viewedTaskId={viewedTaskId}>
-          <Conversation />
-        </TaskAgentProvider>
-      )}
+      {shouldMountContent &&
+        (showAcceptance ? (
+          <PortalContent />
+        ) : (
+          <TaskAgentProvider preferredAgentId={preferredAgentId} viewedTaskId={viewedTaskId}>
+            <Conversation />
+          </TaskAgentProvider>
+        ))}
     </RightPanel>
   );
 });

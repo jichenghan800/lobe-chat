@@ -7,6 +7,7 @@ import { RefreshCw } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { DailyBriefRecommendationsView } from '@/features/RecommendTaskTemplates/DailyBriefRecommendationsView';
 import { TaskTemplateCard } from '@/features/RecommendTaskTemplates/TaskTemplateCard';
 import { TaskTemplateCardSkeleton } from '@/features/RecommendTaskTemplates/TaskTemplateCardSkeleton';
 import { useDailyBriefRecommendationsUI } from '@/features/RecommendTaskTemplates/useDailyBriefRecommendationsUI';
@@ -79,23 +80,27 @@ const EmptyState = memo<EmptyStateProps>(({ agentId, projectId }) => {
               </Flexbox>
             )}
           </Flexbox>
-          <div className={styles.grid}>
-            {templatesState.mode === 'skeleton'
-              ? Array.from({ length: templatesState.skeletonCount }).map((_, i) => (
-                  <TaskTemplateCardSkeleton
-                    descriptionRows={2}
-                    key={`task-template-skeleton-${i}`}
-                  />
-                ))
-              : templatesState.templates.map((tmpl) => (
-                  <TaskTemplateCard
-                    key={tmpl.id}
-                    template={tmpl}
-                    onCreated={templatesState.onCreated}
-                    onDismiss={templatesState.onDismiss}
-                  />
-                ))}
-          </div>
+          {templatesState.mode === 'error' ? (
+            <DailyBriefRecommendationsView state={templatesState} />
+          ) : (
+            <div className={styles.grid}>
+              {templatesState.mode === 'skeleton'
+                ? Array.from({ length: templatesState.skeletonCount }).map((_, i) => (
+                    <TaskTemplateCardSkeleton
+                      descriptionRows={2}
+                      key={`task-template-skeleton-${i}`}
+                    />
+                  ))
+                : templatesState.templates.map((tmpl) => (
+                    <TaskTemplateCard
+                      key={tmpl.id}
+                      template={tmpl}
+                      onCreated={templatesState.onCreated}
+                      onDismiss={templatesState.onDismiss}
+                    />
+                  ))}
+            </div>
+          )}
         </Flexbox>
       )}
     </WideScreenContainer>

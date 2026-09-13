@@ -645,6 +645,8 @@ export interface ChatTopic extends Omit<BaseDataModel, 'meta'> {
    * `metadata.model` (measured dominant model from the usage roll-up).
    */
   model?: string | null;
+  /** Recorded model-only estimates in USD; missing calls are not zero-cost calls. */
+  modelCost?: { calls: number; pricedCalls: number; totalUSD: number | null };
   provider?: string | null;
   sessionId?: string;
   /**
@@ -659,6 +661,10 @@ export interface ChatTopic extends Omit<BaseDataModel, 'meta'> {
   title: string;
   /** Server-side mock until real token aggregation lands. */
   tokenUsage?: number | null;
+  totalInputTokens?: number | null;
+  totalOutputTokens?: number | null;
+  /** Native persisted usage rollup; null means usage has not been recorded. */
+  totalTokens?: number | null;
   trigger?: string | null;
   userId?: string;
 }
@@ -700,6 +706,8 @@ export interface RecentTopic {
 }
 
 export interface CreateTopicParams {
+  /** Agent context; sessionId is reserved for a persisted legacy session. */
+  agentId?: string;
   favorite?: boolean;
   groupId?: string | null;
   messages?: string[];

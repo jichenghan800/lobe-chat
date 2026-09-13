@@ -9,6 +9,7 @@ import { tasks } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
 
 import { TaskRunnerService } from './index';
+import { pauseForUnviewedResults } from './unviewedResults';
 
 const log = debug('task-runner:schedule-tick');
 
@@ -26,7 +27,8 @@ export type ScheduleTickSkipReason =
   | 'no-pattern'
   | 'not-found'
   | 'paused'
-  | 'terminal';
+  | 'terminal'
+  | 'unviewed-results';
 
 /**
  * Run a schedule tick — invoked by the QStash `/schedule-execute` HTTP handler
@@ -70,6 +72,11 @@ export async function runScheduleTick(
   if (task.status === 'paused') {
     log('skip task=%s reason=paused', taskId);
     return { ran: false, reason: 'paused' };
+  }
+
+  if (await pauseForUnviewedResults({ db, task, userId, workspaceId: wsId })) {
+    log('skip task=%s reason=unviewed-results', taskId);
+    return { ran: false, reason: 'unviewed-results' };
   }
 
   const briefModel = new BriefModel(db, userId, wsId);

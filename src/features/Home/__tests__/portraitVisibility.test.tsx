@@ -110,6 +110,12 @@ describe('Home portrait visibility', () => {
 
     expect(screen.getByTestId('home-portrait')).toBeInTheDocument();
     expect(screen.getByTestId('portrait-bubble')).toBeInTheDocument();
+    expect(screen.getByTestId('home-portrait-slot')).toContainElement(
+      screen.getByTestId('home-portrait'),
+    );
+    expect(screen.getByTestId('home-portrait-slot')).toContainElement(
+      screen.getByTestId('portrait-bubble'),
+    );
   }, 20000);
 
   it('keeps the portrait when the preference is explicitly on', async () => {
@@ -160,6 +166,7 @@ describe('Home portrait visibility', () => {
     await renderHome();
 
     expect(screen.getByTestId('home-input-area')).toHaveAttribute('data-mode', 'chat');
+    expect(screen.getByTestId('home-safety-reminder')).toBeInTheDocument();
     expect(screen.getByTestId('home-mode-content')).toHaveAttribute('data-mode', 'chat');
     expect(screen.getByTestId('new-model-shortcuts')).toBeInTheDocument();
   }, 20000);
@@ -170,6 +177,7 @@ describe('Home portrait visibility', () => {
     expect(screen.getByTestId('home-input-area')).toHaveAttribute('data-mode', 'task');
     expect(screen.getByTestId('home-mode-content')).toHaveAttribute('data-mode', 'task');
     expect(screen.queryByTestId('new-model-shortcuts')).not.toBeInTheDocument();
+    expect(screen.getByTestId('home-safety-reminder')).toBeInTheDocument();
     expect(window.location.search).toBe('');
   }, 20000);
 

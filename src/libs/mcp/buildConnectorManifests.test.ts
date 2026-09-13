@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import {
+  FEISHU_DOCUMENTS_ALLOWED_TOOLS_HEADER,
+  FEISHU_DOCUMENTS_CONNECTOR_PRESET,
+  FEISHU_DOCUMENTS_CREATE_SCOPES,
+} from '@/const/connectorPresets';
 import type { DecryptedConnector } from '@/database/models/connector';
 import type { ConnectorCredentials, UserConnectorToolItem } from '@/database/schemas';
 
@@ -22,7 +27,7 @@ const httpConnector = (
     oidcConfig: null,
   }) as any;
 
-const tool = (): UserConnectorToolItem =>
+const tool = (overrides: Partial<UserConnectorToolItem> = {}): UserConnectorToolItem =>
   ({
     crudType: 'read',
     id: 't1',
@@ -30,10 +35,15 @@ const tool = (): UserConnectorToolItem =>
     permission: 'auto',
     toolName: 'doThing',
     userConnectorId: 'c1',
+    ...overrides,
   }) as any;
 
 const mcpParamsOf = (connector: DecryptedConnector) => {
-  const [manifest] = buildConnectorManifests([connector], [tool()]);
+  const connectorTool =
+    connector.identifier === FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier
+      ? tool({ toolName: 'fetch-doc' })
+      : tool();
+  const [manifest] = buildConnectorManifests([connector], [connectorTool]);
   // mcpParams is a runtime-only field not in the public ToolManifest type.
   return (manifest as any).mcpParams as { auth?: unknown; headers?: Record<string, string> };
 };
@@ -71,5 +81,62 @@ describe('buildConnectorManifests mcpParams headers', () => {
 
     expect(params.auth).toEqual({ token: 'tok', type: 'bearer' });
     expect(params.headers).toBeUndefined();
+  });
+
+  it('uses the per-user Feishu token only as the official UAT header', () => {
+    const params = mcpParamsOf({
+      ...httpConnector({
+        accessToken: 'user-a-uat',
+        scope: FEISHU_DOCUMENTS_CREATE_SCOPES.join(' '),
+        type: 'oauth2',
+      }),
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      mcpServerUrl: FEISHU_DOCUMENTS_CONNECTOR_PRESET.mcpServerUrl,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    });
+
+    expect(params.auth).toBeUndefined();
+    expect(params.headers).toEqual({
+      'X-Lark-MCP-Allowed-Tools': FEISHU_DOCUMENTS_ALLOWED_TOOLS_HEADER,
+      'X-Lark-MCP-UAT': 'user-a-uat',
+    });
+  });
+
+  it('normalizes a legacy English Feishu row to the Chinese runtime title', () => {
+    const [manifest] = buildConnectorManifests(
+      [
+        {
+          ...httpConnector({ accessToken: 'user-a-uat', type: 'oauth2' }),
+          identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+          mcpServerUrl: FEISHU_DOCUMENTS_CONNECTOR_PRESET.mcpServerUrl,
+          metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+          name: 'Feishu Documents',
+        },
+      ],
+      [tool({ toolName: 'fetch-doc' })],
+    );
+
+    expect(manifest.identifier).toBe('feishu-documents');
+    expect(manifest.meta?.title).toBe('飞书资料');
+  });
+
+  it('omits a stale create-doc row until the user grants the write scopes', () => {
+    const connector = {
+      ...httpConnector({
+        accessToken: 'legacy-user-uat',
+        scope: 'search:docs:read docx:document:readonly',
+        type: 'oauth2',
+      }),
+      identifier: FEISHU_DOCUMENTS_CONNECTOR_PRESET.identifier,
+      mcpServerUrl: FEISHU_DOCUMENTS_CONNECTOR_PRESET.mcpServerUrl,
+      metadata: { presetId: FEISHU_DOCUMENTS_CONNECTOR_PRESET.presetId },
+    };
+
+    const [manifest] = buildConnectorManifests(
+      [connector],
+      [tool({ toolName: 'fetch-doc' }), tool({ id: 't2', toolName: 'create-doc' })],
+    );
+
+    expect(manifest.api.map((item) => item.name)).toEqual(['fetch-doc']);
   });
 });

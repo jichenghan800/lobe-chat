@@ -149,6 +149,10 @@ const getTopicModelById =
     return { model: topic.model, provider: topic.provider || '' };
   };
 
+/** Distinguish an unloaded topic from a loaded legacy topic with no pinned model. */
+const isActiveTopicModelLoading = (s: ChatStoreState): boolean =>
+  !!s.activeTopicId && !getTopicById(s.activeTopicId)(s);
+
 /**
  * The model/provider pinned to the active topic, or undefined when there is no
  * active topic or it has no model recorded.
@@ -463,6 +467,7 @@ const agentTopicsViewLoadMoreError = (s: ChatStoreState): unknown =>
 export const topicSelectors = {
   activeTopicHeteroPin,
   activeTopicModel,
+  isActiveTopicModelLoading,
   agentTopicsViewHasMore,
   agentTopicsViewIsLoadingMore,
   agentTopicsViewLoadMoreError,

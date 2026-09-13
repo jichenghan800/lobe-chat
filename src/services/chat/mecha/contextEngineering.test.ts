@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as isCanUseFCModule from '@/helpers/isCanUseFC';
 import { agentService } from '@/services/agent';
 import { agentDocumentService } from '@/services/agentDocument';
+import { messageService } from '@/services/message';
 import { useAgentStore } from '@/store/agent';
 
 import * as helpers from '../helper';
@@ -289,6 +290,38 @@ describe('contextEngineering', () => {
       content: expect.stringContaining('Current model: Fable 5 (claude-fable-5)'),
       role: 'system',
     });
+  });
+
+  it('loads metadata-only Chat attachments into model input without changing the UI snapshot', async () => {
+    const message = {
+      id: 'metadata-message',
+      role: 'user',
+      content: 'Read the attached note',
+      topicId: 'metadata-topic',
+      createdAt: 1,
+      updatedAt: 1,
+      fileList: [
+        {
+          id: 'metadata-file',
+          name: 'note.txt',
+          fileType: 'text/plain',
+          size: 32,
+          url: '/note.txt',
+        },
+      ],
+    } as UIChatMessage;
+    vi.spyOn(messageService, 'getMessages').mockResolvedValue([
+      { ...message, fileList: [{ ...message.fileList![0], content: 'COTTI_RUNTIME_FILE_MARKER' }] },
+    ]);
+    const output = await contextEngineering({
+      messages: [message],
+      enableAgentMode: false,
+      model: 'gpt-4o',
+      provider: 'openai',
+      topicId: 'metadata-topic',
+    });
+    expect(JSON.stringify(output)).toContain('COTTI_RUNTIME_FILE_MARKER');
+    expect(message.fileList?.[0].content).toBeUndefined();
   });
 
   describe('handle with files content in server mode', () => {

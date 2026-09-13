@@ -106,6 +106,21 @@ describe('fileChatSelectors', () => {
     });
   });
 
+  describe('hasAgentModeRequiredFiles', () => {
+    it('returns true only when a draft contains an Agent-only attachment', () => {
+      expect(
+        fileChatSelectors.hasAgentModeRequiredFiles({
+          chatUploadFileList: [{ id: '1' }, { id: '2', requiresAgentMode: true }],
+        } as FilesStoreState),
+      ).toBe(true);
+      expect(
+        fileChatSelectors.hasAgentModeRequiredFiles({
+          chatUploadFileList: [{ id: '1' }],
+        } as FilesStoreState),
+      ).toBe(false);
+    });
+  });
+
   describe('isUploadingFiles', () => {
     it('should return true if any file is in uploading status', () => {
       const state = {

@@ -12,6 +12,7 @@ import { chargeBeforeGenerate } from '@/business/server/image-generation/chargeB
 import { checkFileStorageUsage } from '@/business/server/trpc-middlewares/lambda';
 import { withScopedPermission } from '@/business/server/trpc-middlewares/rbacPermission';
 import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceAuth';
+import { COTTI_FIXED_IMAGE_GENERATION_COUNT } from '@/const/cottiGeneration';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { GenerationTopicModel } from '@/database/models/generationTopic';
 import { UserModel } from '@/database/models/user';
@@ -56,7 +57,7 @@ const imageCreateProcedure = imageProcedure
 
 const createImageInputSchema = z.object({
   generationTopicId: z.string(),
-  imageNum: z.number(),
+  imageNum: z.number().transform((): number => COTTI_FIXED_IMAGE_GENERATION_COUNT),
   model: z.string(),
   params: z
     .object({

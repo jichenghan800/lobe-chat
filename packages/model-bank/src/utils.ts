@@ -9,6 +9,7 @@ export interface ResolveSearchDecisionInput {
   modelSearchImpl?: ModelSearchImplementType | null;
   providerSearchMode?: ModelSearchImplementType | null;
   searchMode?: 'auto' | 'off' | 'on';
+  searchRoute?: 'application' | 'model';
   useModelBuiltinSearch?: boolean;
 }
 
@@ -27,6 +28,7 @@ export const resolveSearchDecision = ({
   modelSearchImpl,
   providerSearchMode,
   searchMode,
+  searchRoute,
   useModelBuiltinSearch,
 }: ResolveSearchDecisionInput): SearchDecision => {
   const enabledSearch = searchMode !== 'off';
@@ -34,10 +36,17 @@ export const resolveSearchDecision = ({
   const isProviderHasBuiltinSearch = !!providerSearchMode;
   const isBuiltinSearchInternal =
     modelSearchImpl === 'internal' || providerSearchMode === 'internal';
+  // `searchRoute` records an explicit choice. Without it, auto mode follows the
+  // native-first policy. The legacy boolean remains compatible with callers
+  // that use `searchMode: on` to make an explicit route selection.
+  const preferModelSearch =
+    searchRoute === 'model' ||
+    (searchRoute !== 'application' &&
+      ((searchMode ?? 'auto') === 'auto' || useModelBuiltinSearch === true));
   const useModelSearch =
     enabledSearch &&
     (isBuiltinSearchInternal ||
-      ((isModelHasBuiltinSearch || isProviderHasBuiltinSearch) && !!useModelBuiltinSearch));
+      ((isModelHasBuiltinSearch || isProviderHasBuiltinSearch) && preferModelSearch));
 
   return {
     enabledSearch,

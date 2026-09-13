@@ -28,6 +28,35 @@ describe('resolveSearchDecision', () => {
       name: 'uses application search when model search is not selected',
     },
     {
+      expected: { application: false, model: true },
+      input: {
+        modelSearchImpl: 'params' as const,
+        searchMode: 'auto' as const,
+        useModelBuiltinSearch: false,
+      },
+      name: 'prefers model search in auto mode for legacy configs',
+    },
+    {
+      expected: { application: true, model: false },
+      input: {
+        modelSearchImpl: 'params' as const,
+        searchMode: 'auto' as const,
+        searchRoute: 'application' as const,
+        useModelBuiltinSearch: true,
+      },
+      name: 'honors an explicit application search route',
+    },
+    {
+      expected: { application: false, model: true },
+      input: {
+        modelSearchImpl: 'params' as const,
+        searchMode: 'on' as const,
+        searchRoute: 'model' as const,
+        useModelBuiltinSearch: false,
+      },
+      name: 'honors an explicit model search route',
+    },
+    {
       expected: { application: true, model: false },
       input: { searchMode: 'on' as const, useModelBuiltinSearch: true },
       name: 'falls back to application search when native search is unsupported',

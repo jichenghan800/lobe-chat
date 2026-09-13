@@ -6,7 +6,7 @@
  * and falls back to user setting when agent config is absent.
  */
 import type { LobeChatDatabase } from '@lobechat/database';
-import { agents, userSettings } from '@lobechat/database/schemas';
+import { agents, cottiUserPolicies, userSettings } from '@lobechat/database/schemas';
 import { getTestDB } from '@lobechat/database/test-utils';
 import { eq } from 'drizzle-orm';
 import OpenAI from 'openai';
@@ -71,6 +71,10 @@ beforeEach(async () => {
   serverDB = await getTestDB();
   testDB = serverDB;
   userId = await createTestUser(serverDB);
+  // This suite tests memory selection with a mocked expensive model, not the default budget.
+  await serverDB
+    .insert(cottiUserPolicies)
+    .values({ userId, agentEnabled: true, topicLimitFen: 10000 });
   mockResponsesCreate = vi.spyOn(OpenAI.Responses.prototype, 'create');
   mockResponsesCreate.mockResolvedValue(createMockResponsesAPIStream('Hello') as any);
 });
@@ -105,7 +109,8 @@ describe('execAgent - memory enabled priority', () => {
 
     const caller = aiAgentRouter.createCaller(createTestContext());
     const result = await caller.execAgent({ agentId: agent.id, prompt: 'Hello' });
-    await waitForOperationComplete(inMemoryAgentStateManager, result.operationId);
+    const state = await waitForOperationComplete(inMemoryAgentStateManager, result.operationId);
+    expect(state.status, JSON.stringify(state.error)).toBe('done');
 
     const callArgs = mockResponsesCreate.mock.calls[0][0] as { tools?: any[] };
     expect(hasMemoryTools(callArgs.tools ?? [])).toBe(false);
@@ -117,7 +122,8 @@ describe('execAgent - memory enabled priority', () => {
 
     const caller = aiAgentRouter.createCaller(createTestContext());
     const result = await caller.execAgent({ agentId: agent.id, prompt: 'Hello' });
-    await waitForOperationComplete(inMemoryAgentStateManager, result.operationId);
+    const state = await waitForOperationComplete(inMemoryAgentStateManager, result.operationId);
+    expect(state.status, JSON.stringify(state.error)).toBe('done');
 
     const callArgs = mockResponsesCreate.mock.calls[0][0] as { tools?: any[] };
     expect(hasMemoryTools(callArgs.tools ?? [])).toBe(true);
@@ -129,20 +135,22 @@ describe('execAgent - memory enabled priority', () => {
 
     const caller = aiAgentRouter.createCaller(createTestContext());
     const result = await caller.execAgent({ agentId: agent.id, prompt: 'Hello' });
-    await waitForOperationComplete(inMemoryAgentStateManager, result.operationId);
+    const state = await waitForOperationComplete(inMemoryAgentStateManager, result.operationId);
+    expect(state.status, JSON.stringify(state.error)).toBe('done');
 
     const callArgs = mockResponsesCreate.mock.calls[0][0] as { tools?: any[] };
     expect(hasMemoryTools(callArgs.tools ?? [])).toBe(false);
   });
 
-  it('should enable memory by default when neither agent nor user configures it', async () => {
+  it('should disable memory by default when neither agent nor user configures it', async () => {
     const agent = await createTestAgent();
 
     const caller = aiAgentRouter.createCaller(createTestContext());
     const result = await caller.execAgent({ agentId: agent.id, prompt: 'Hello' });
-    await waitForOperationComplete(inMemoryAgentStateManager, result.operationId);
+    const state = await waitForOperationComplete(inMemoryAgentStateManager, result.operationId);
+    expect(state.status, JSON.stringify(state.error)).toBe('done');
 
     const callArgs = mockResponsesCreate.mock.calls[0][0] as { tools?: any[] };
-    expect(hasMemoryTools(callArgs.tools ?? [])).toBe(true);
+    expect(hasMemoryTools(callArgs.tools ?? [])).toBe(false);
   });
 });

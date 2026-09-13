@@ -14,6 +14,7 @@ import { GatewayActionImpl } from '../transports/gateway/gateway';
 
 vi.mock('@/services/aiAgent', () => ({
   aiAgentService: {
+    getOperationStatus: vi.fn(),
     execAgentTask: vi.fn(),
     interruptTask: vi.fn(),
     refreshGatewayToken: vi.fn(),
@@ -617,6 +618,44 @@ describe('GatewayActionImpl', () => {
 
     afterEach(() => {
       delete (globalThis as any).window;
+    });
+
+    it('polls the submitted server operation when this queue deployment has no Gateway URL', async () => {
+      const { action, state, connectToGateway } = createExecuteTestAction();
+      const controller = new AbortController();
+      state.getOperationAbortSignal = () => controller.signal;
+      window.global_serverConfigStore!.getState().serverConfig.agentGatewayUrl = undefined;
+      // The fixture returns a fresh config on each read.
+      vi.spyOn(window.global_serverConfigStore!, 'getState').mockReturnValue({
+        serverConfig: {},
+      } as ReturnType<typeof window.global_serverConfigStore.getState>);
+      vi.mocked(aiAgentService.getOperationStatus).mockResolvedValue(null);
+      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
+        agentId: 'agent-1',
+        assistantMessageId: 'ast-1',
+        autoStarted: true,
+        createdAt: new Date().toISOString(),
+        message: 'ok',
+        operationId: 'queue-op-1',
+        status: 'created',
+        success: true,
+        timestamp: new Date().toISOString(),
+        topicId: 'topic-1',
+        userMessageId: 'usr-1',
+      });
+      try {
+        await action.executeGatewayAgent({
+          context: { agentId: 'agent-1', topicId: 'topic-1' },
+          message: 'synthetic follow-up',
+        });
+        expect(aiAgentService.getOperationStatus).toHaveBeenCalledWith(
+          'queue-op-1',
+          expect.any(AbortSignal),
+        );
+        expect(connectToGateway).not.toHaveBeenCalled();
+      } finally {
+        controller.abort();
+      }
     });
 
     it('should forward parentMessageId to execAgentTask for regeneration', async () => {

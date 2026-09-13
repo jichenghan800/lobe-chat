@@ -1,13 +1,16 @@
 import { Flexbox } from '@lobehub/ui';
+import { Alert } from '@lobehub/ui/base-ui';
 import { createStaticStyles } from 'antd-style';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useUploadFiles } from '@/components/DragUploadZone';
+import { useManagedSettingsAccess } from '@/features/CottiPlatformManagement/useManagedSettingsAccess';
 import { useHomeDailyBrief } from '@/hooks/useHomeDailyBrief';
 import { useInitAgentConfig } from '@/hooks/useInitAgentConfig';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
+import { fileChatSelectors, useFileStore } from '@/store/file';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 
@@ -44,6 +47,8 @@ const InputArea = ({
   showNewModelShortcuts,
 }: InputAreaProps) => {
   const { t } = useTranslation('home');
+  const { t: tChat } = useTranslation('chat');
+  const hasAgentModeRequiredFiles = useFileStore(fileChatSelectors.hasAgentModeRequiredFiles);
   const { agentId, contextSelectionKey, loading, send } = useSend(mode);
   // Subscribe to the SWR key so `internal_refreshAgentConfig`'s `mutate(...)`
   // has a listener after toggleFile / toggleKnowledgeBase — otherwise the
@@ -61,7 +66,8 @@ const InputArea = ({
   const isStatusInit = useGlobalStore(systemStatusSelectors.isStatusInit);
   const chatInputRef = useRef<HTMLDivElement>(null);
 
-  const showInputBanners = mode === 'chat' && isStatusInit;
+  const { canManage } = useManagedSettingsAccess();
+  const showInputBanners = mode !== 'task' && isStatusInit;
 
   // Get agent's model info for vision support check. Falls back to an empty
   // id while the agent id resolves; the selectors return DEFAULT_MODEL /
@@ -77,7 +83,7 @@ const InputArea = ({
   const { currentPair } = useHomeDailyBrief();
   const dailyHint = currentPair?.hint ? stripMarkdownLinks(currentPair.hint) : undefined;
   const placeholder =
-    mode === 'chat'
+    mode !== 'task'
       ? dailyHint || t('dashboard.placeholder.chat')
       : t(`dashboard.placeholder.${mode}`);
 
@@ -100,8 +106,11 @@ const InputArea = ({
 
   return (
     <Flexbox>
+      {mode === 'chat' && hasAgentModeRequiredFiles && (
+        <Alert title={tChat('attachment.agentModeRequiredHome')} type={'warning'} />
+      )}
       <Flexbox ref={chatInputRef}>
-        {mode === 'chat' ? (
+        {mode !== 'task' ? (
           <InputDragUpload
             radius={20}
             style={{ position: 'relative', zIndex: 1 }}
@@ -119,9 +128,11 @@ const InputArea = ({
                 <NewModelShortcuts />
               </InputBannerSegment>
             )}
-            <InputBannerSegment dismissId={MESSENGER_BANNER_ID}>
-              <MessengerBanner />
-            </InputBannerSegment>
+            {canManage && (
+              <InputBannerSegment dismissId={MESSENGER_BANNER_ID}>
+                <MessengerBanner />
+              </InputBannerSegment>
+            )}
           </InputBannerQueue>
         )}
       </Flexbox>

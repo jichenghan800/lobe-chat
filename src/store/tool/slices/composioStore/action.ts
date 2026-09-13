@@ -363,11 +363,13 @@ export class ComposioStoreActionImpl {
         onSuccess: (data) => {
           this.#set(
             produce((draft: ComposioStoreState) => {
-              if (data.length > 0) {
-                const existingIdentifiers = new Set(draft.composioServers.map((s) => s.identifier));
-                const newServers = data.filter((s) => !existingIdentifiers.has(s.identifier));
-                draft.composioServers = [...draft.composioServers, ...newServers];
-              }
+              // The endpoint returns the canonical personal snapshot, including
+              // status changes and removals. Agent-scoped connections are not
+              // returned by it and must remain untouched.
+              draft.composioServers = [
+                ...data,
+                ...draft.composioServers.filter((server) => !!server.agentId),
+              ];
               draft.isComposioServersInit = true;
             }),
             false,

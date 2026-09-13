@@ -6,6 +6,7 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ModelIcon } from '@/components/LobeIcons';
 import type { EnabledProviderWithModels } from '@/types/aiProvider';
 import { getModelDescriptionI18nKey } from '@/utils/modelDescriptionI18n';
 
@@ -39,6 +40,31 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     line-height: 1.5;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+  `,
+  header: css`
+    padding-block: 12px 4px;
+    padding-inline: 8px;
+  `,
+  modelId: css`
+    overflow: hidden;
+
+    font-family: ${cssVar.fontFamilyCode};
+    font-size: 11px;
+    color: ${cssVar.colorTextTertiary};
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  modelName: css`
+    overflow: hidden;
+
+    margin: 0;
+
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: ${cssVar.colorText};
+    text-overflow: ellipsis;
+    white-space: nowrap;
   `,
   radarClickable: css`
     cursor: pointer;
@@ -178,8 +204,23 @@ const ModelDetailPanel: FC<ModelDetailPanelProps> = memo(
         ).trim()
       : undefined;
 
+    const displayName = model.displayName || model.id;
+
     return (
       <Flexbox className={styles.container}>
+        <Flexbox horizontal align={'center'} className={styles.header} gap={10}>
+          <ModelIcon model={model.id} size={28} />
+          <Flexbox flex={1} gap={1} style={{ minWidth: 0 }}>
+            <Text as={'h3'} className={styles.modelName} title={displayName}>
+              {displayName}
+            </Text>
+            {displayName !== model.id && (
+              <span className={styles.modelId} title={model.id}>
+                {model.id}
+              </span>
+            )}
+          </Flexbox>
+        </Flexbox>
         {description && (
           <Text as={'p'} className={styles.description} fontSize={12} type={'secondary'}>
             {description}

@@ -1,8 +1,10 @@
 'use client';
 
 import { Flexbox } from '@lobehub/ui';
+import { Text } from '@lobehub/ui/base-ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { lazy, memo, Suspense, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useHomeUsageWidgetActive } from '@/business/client/features/HomeUsageWidget';
 import { useHomePromoLine } from '@/business/client/features/useHomePromoLine';
@@ -72,7 +74,7 @@ const RAIL_EXIT_OFFSET = 24;
 const RAIL_TRANSITION_DURATION = 220;
 const RAIL_RECLAIMED_WIDTH = RAIL_CARD_WIDTH + RAIL_GUTTER + RAIL_COLUMN_GAP;
 /** Portrait width plus its inline inset and the gap it keeps from the text. */
-const PORTRAIT_LANE = HOME_PORTRAIT_WIDTH + HOME_PORTRAIT_INSET + 16;
+const PORTRAIT_LANE = HOME_PORTRAIT_WIDTH + HOME_PORTRAIT_INSET + 8;
 /** Reclaim the artwork's full lane so collapsing never narrows the text above. */
 const COLLAPSED_CONTENT_GAIN = PORTRAIT_LANE;
 const COLLAPSED_CONTENT_OFFSET = (RAIL_RECLAIMED_WIDTH - COLLAPSED_CONTENT_GAIN) / 2;
@@ -83,7 +85,7 @@ const SPEECH_RESERVED_WIDTH =
   COLLAPSED_CONTENT_OFFSET * 2 + SPEECH_GREETING_GAP + SPEECH_BUBBLE_MIN + PORTRAIT_LANE;
 /** Use the tighter rail state so its animation cannot switch rows or rewrap text. */
 const SPEECH_INLINE_MIN = SPEECH_RESERVED_WIDTH + SPEECH_GREETING_MIN;
-const COMPACT_PORTRAIT_HEIGHT = 150;
+const COMPACT_PORTRAIT_HEIGHT = HOME_PORTRAIT_HEIGHT;
 const COMPACT_PORTRAIT_WIDTH =
   HOME_PORTRAIT_WIDTH * (COMPACT_PORTRAIT_HEIGHT / HOME_PORTRAIT_HEIGHT);
 const COMPACT_PORTRAIT_OVERLAP = getHomePortraitOverlap(COMPACT_PORTRAIT_HEIGHT);
@@ -193,7 +195,7 @@ const styles = createStaticStyles(({ css }) => ({
     --home-portrait-overlap: -${COMPACT_PORTRAIT_OVERLAP}px;
 
     display: flex;
-    gap: 16px;
+    gap: 8px;
     align-items: flex-end;
     justify-self: end;
 
@@ -326,6 +328,12 @@ const styles = createStaticStyles(({ css }) => ({
 }));
 
 const Home = memo(() => {
+  const { t } = useTranslation('home');
+  const safetyReminder = (
+    <Text data-testid="home-safety-reminder" fontSize={12} type="secondary">
+      {t('safetyReminder')}
+    </Text>
+  );
   const isLogin = useUserStore(authSelectors.isLogin);
   const showHomeRail = useGlobalStore(systemStatusSelectors.showHomeRail);
   const showHomePortrait = useGlobalStore(systemStatusSelectors.showHomePortrait);
@@ -386,6 +394,7 @@ const Home = memo(() => {
             onModeChange={setMode}
           />
         </div>
+        {safetyReminder}
       </Flexbox>
     );
 
@@ -402,7 +411,11 @@ const Home = memo(() => {
           <HomeHeader />
         </div>
         {portraitVisible && (
-          <div className={styles.speech} data-collapsed={railCollapsed}>
+          <div
+            className={styles.speech}
+            data-collapsed={railCollapsed}
+            data-testid="home-portrait-slot"
+          >
             {/* Keep the agent's line and artwork together in both header layouts. */}
             <div className={styles.bubbleSlot}>
               <PortraitBubble promo={promo} />
@@ -427,6 +440,7 @@ const Home = memo(() => {
             onInputValueChange={handleInputValueChange}
             onModeChange={setMode}
           />
+          {safetyReminder}
         </Flexbox>
         <HomeModeContent
           inlineRail={railCollapsed && isLogin}

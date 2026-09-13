@@ -161,6 +161,22 @@ describe('Home sidebar body', () => {
     expect(children[5]).toHaveTextContent('Resource');
   });
 
+  it('inserts the restored Overview before generation for existing sidebar preferences', () => {
+    mocks.navLayout = {
+      bottomMenuItems: [
+        { key: 'overview', title: 'Overview', url: '/overview' },
+        { key: 'image', title: 'Image', url: '/image' },
+      ],
+      topNavItems: [],
+    };
+    mocks.globalState.status.sidebarItems = ['recents', 'agent', '__spacer__', 'image'];
+    render(<Body />);
+    const children = Array.from(screen.getByTestId('sidebar-body').children);
+    const index = children.findIndex((child) => child.textContent === 'Overview');
+    expect(index).toBeGreaterThanOrEqual(0);
+    expect(children[index + 1]).toHaveTextContent('Image');
+  });
+
   it('keeps a top item that was dragged past the spacer in its new position', () => {
     mocks.navLayout = {
       bottomMenuItems: [{ key: 'image', title: 'Image', url: '/image' }],

@@ -94,7 +94,7 @@ export const useKnowledgeMenuItems = ({
         })),
       ],
       key: 'relativeFilesOrLibraries',
-      label: t('knowledgeBase.relativeFilesOrLibraries'),
+      label: t('attachment.addAsKnowledge'),
       type: 'group',
     });
   }

@@ -18,6 +18,8 @@ export * from './asyncTask';
 export * from './betterAuth';
 export * from './chatGroup';
 export * from './connector';
+export * from './cottiAudit';
+export * from './cottiHomeNotification';
 export * from './cottiModelDisplay';
 export * from './cottiPeople';
 export * from './cottiTopicBudget';

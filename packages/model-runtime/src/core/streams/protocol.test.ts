@@ -1425,3 +1425,69 @@ describe('createCallbacksTransformer', () => {
     });
   });
 });
+
+describe('SSE sparse chunk compatibility', () => {
+  const encode = async (chunks: unknown[], requireTerminalEvent = false) => {
+    const stream = new ReadableStream({
+      start(controller) {
+        for (const chunk of chunks) controller.enqueue(chunk);
+        controller.close();
+      },
+    }).pipeThrough(
+      createSSEProtocolTransformer((chunk) => chunk, { id: 'test' }, { requireTerminalEvent }),
+    );
+    const reader = stream.getReader();
+    let result = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) return result;
+      result += value;
+    }
+  };
+
+  it('serializes missing event data as JSON null', async () => {
+    const result = await encode([{ id: 'test', type: 'text', data: undefined }]);
+    expect(result).toBe('id: test\nevent: text\ndata: null\n\n');
+    expect(JSON.parse(result.split('data: ')[1].trim())).toBeNull();
+  });
+
+  it('skips absent transformer results without dropping following text and stop events', async () => {
+    const text = { id: 'test', type: 'text', data: 'hello' };
+    const stop = { id: 'test', type: 'stop', data: 'stop' };
+    expect(await encode([undefined, null, text, stop], true)).toBe(
+      await encode([text, stop], true),
+    );
+  });
+
+  it('skips absent entries in chunk arrays', async () => {
+    const text = { id: 'test', type: 'text', data: 'hello' };
+    expect(await encode([[undefined, text, null]])).toBe(await encode([text]));
+  });
+
+  it('keeps empty strings, null, usage, stop and error payloads unchanged', async () => {
+    const chunks = [
+      { id: 'test', type: 'text', data: '' },
+      { id: 'test', type: 'data', data: null },
+      { id: 'test', type: 'usage', data: { totalTokens: 7 } },
+      { id: 'test', type: 'stop', data: 'stop' },
+      { id: 'test', type: 'error', data: { message: 'provider error' } },
+    ];
+    expect(await encode(chunks, true)).toBe(
+      chunks
+        .map(({ id, type, data }) => `id: ${id}\nevent: ${type}\ndata: ${JSON.stringify(data)}\n\n`)
+        .join(''),
+    );
+  });
+
+  it('retains missing-terminal detection after ignoring sparse chunks', async () => {
+    const result = await encode([undefined, []], true);
+    expect(result).toContain('event: error\n');
+    expect(result).toContain('unexpected_end');
+    expect(result).not.toContain('data: undefined');
+  });
+
+  it('uses JSON null when serialization produces no JSON value', async () => {
+    const result = await encode([{ id: 'test', type: 'data', data: { toJSON: () => undefined } }]);
+    expect(result).toBe('id: test\nevent: data\ndata: null\n\n');
+  });
+});

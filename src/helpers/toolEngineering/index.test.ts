@@ -3,6 +3,8 @@ import type * as ConstModule from '@lobechat/const';
 import { type ToolManifest } from '@lobechat/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { AgentStoreState } from '@/store/agent/initialState';
+
 import { createAgentToolsEngine, createToolsEngine, getEnabledTools } from './index';
 
 const desktopEnv = vi.hoisted(() => ({ enabled: false }));
@@ -180,7 +182,8 @@ vi.mock('@/store/agent/selectors', () => ({
     hasEnabledKnowledgeBases: () => false,
   },
   agentChatConfigSelectors: {
-    currentChatConfig: () => mockCurrentChatConfig,
+    currentChatConfig: (state: AgentStoreState) =>
+      state.agentMap?.[state.activeAgentId || '']?.chatConfig ?? mockCurrentChatConfig,
     isCloudSandboxEnabled: () => false,
     isLocalSystemEnabled: () => desktopEnv.enabled,
     isMemoryToolEnabled: () => false,
@@ -254,6 +257,53 @@ describe('toolEngineering', () => {
         toolIds: [longNamedPlugin.identifier],
       })![0].function.name;
     };
+
+    it('should enable only the tool explicitly selected for the current chat turn', () => {
+      mockCurrentChatConfig = { enableAgentMode: false };
+      mockInstalledPluginManifestList = () => [
+        {
+          api: [
+            {
+              description: 'Create a Feishu document',
+              name: 'create-doc',
+              parameters: { properties: {}, required: [], type: 'object' },
+            },
+          ],
+          identifier: 'feishu-documents',
+          meta: { avatar: '📄', title: '飞书资料' },
+          type: 'default',
+        } as unknown as ToolManifest,
+        {
+          api: [
+            {
+              description: 'A pinned tool that was not selected this turn',
+              name: 'run',
+              parameters: { properties: {}, required: [], type: 'object' },
+            },
+          ],
+          identifier: 'pinned-agent-tool',
+          meta: { avatar: '🔒', title: 'Pinned Agent Tool' },
+          type: 'default',
+        } as unknown as ToolManifest,
+      ];
+
+      const toolsEngine = createAgentToolsEngine(
+        { model: 'gemini-3.6-flash', provider: 'vertexai' },
+        ['pinned-agent-tool', 'feishu-documents'],
+        undefined,
+        ['feishu-documents'],
+      );
+
+      const result = toolsEngine.generateToolsDetailed({
+        model: 'gemini-3.6-flash',
+        provider: 'vertexai',
+        toolIds: ['pinned-agent-tool', 'feishu-documents'],
+      });
+
+      expect(result.enabledToolIds).toContain('feishu-documents');
+      expect(result.enabledToolIds).not.toContain('pinned-agent-tool');
+      expect(result.enabledToolIds).not.toContain('lobe-image-generation');
+    });
 
     it('should compress names past the default 64 chars', () => {
       expect(generateLongToolName()).toContain('MD5HASH_');
@@ -764,5 +814,33 @@ describe('Computer Use activation', () => {
         context: { isExplicitActivation: true },
       }).enabledToolIds,
     ).not.toContain(AuvManifest.identifier);
+  });
+});
+
+describe('target Agent tool isolation', () => {
+  it.each([true, undefined])(
+    'uses target Chat config when global enableAgentMode is %s',
+    (mode) => {
+      mockCurrentChatConfig = { enableAgentMode: mode };
+      const workingModel = { model: 'gpt-4', provider: 'openai' };
+      const engine = createAgentToolsEngine(workingModel, ['lobe-agent'], undefined, undefined, {
+        agentId: 'target-chat',
+        config: { chatConfig: { enableAgentMode: false } },
+      });
+      expect(
+        engine.generateToolsDetailed({ ...workingModel, toolIds: ['lobe-agent'] }).enabledToolIds,
+      ).not.toContain('lobe-agent');
+    },
+  );
+  it('preserves explicitly selected tools in target Chat mode', () => {
+    mockCurrentChatConfig = { enableAgentMode: true };
+    const workingModel = { model: 'gpt-4', provider: 'openai' };
+    const engine = createAgentToolsEngine(workingModel, ['lobe-agent'], undefined, ['lobe-agent'], {
+      agentId: 'target-chat',
+      config: { chatConfig: { enableAgentMode: false } },
+    });
+    expect(
+      engine.generateToolsDetailed({ ...workingModel, toolIds: ['lobe-agent'] }).enabledToolIds,
+    ).toContain('lobe-agent');
   });
 });

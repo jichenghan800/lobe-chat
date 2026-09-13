@@ -1,6 +1,6 @@
 import { Flexbox } from '@lobehub/ui';
 import { type ComponentType, type FC } from 'react';
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useBusinessModelListGuard } from '@/business/client/hooks/useBusinessModelListGuard';
@@ -8,7 +8,6 @@ import { useEnabledChatModels } from '@/hooks/useEnabledChatModels';
 import { useSingleton } from '@/hooks/useSingleton';
 import type { EnabledProviderWithModels } from '@/types/aiProvider';
 
-import { FOOTER_HEIGHT, ITEM_HEIGHT, MAX_PANEL_HEIGHT, TOOLBAR_HEIGHT } from '../../const';
 import { useBuildListItems } from '../../hooks/useBuildListItems';
 import { useModelAndProvider } from '../../hooks/useModelAndProvider';
 import { usePanelHandlers } from '../../hooks/usePanelHandlers';
@@ -22,6 +21,7 @@ import { ListItemRenderer } from './ListItemRenderer';
 interface ListProps {
   enabledList?: EnabledProviderWithModels[];
   groupMode: GroupMode;
+  maxHeight?: string;
   model?: string;
   ModelItemComponent?: ComponentType<any>;
   onModelChange?: (params: { model: string; provider: string }) => Promise<void>;
@@ -35,6 +35,7 @@ export const List: FC<ListProps> = ({
   ModelItemComponent,
   enabledList: enabledListProp,
   groupMode,
+  maxHeight,
   model: modelProp,
   onModelChange: onModelChangeProp,
   onOpenChange,
@@ -57,14 +58,6 @@ export const List: FC<ListProps> = ({
   });
   const listItems = useBuildListItems(enabledList, groupMode, searchKeyword, sortModelLast);
 
-  const panelHeight = useMemo(
-    () =>
-      enabledList.length === 0
-        ? TOOLBAR_HEIGHT + ITEM_HEIGHT['no-provider'] + FOOTER_HEIGHT
-        : MAX_PANEL_HEIGHT,
-    [enabledList.length],
-  );
-
   const activeKey = menuKey(provider, model);
 
   // Set initial scroll position to keep active model centered
@@ -75,8 +68,6 @@ export const List: FC<ListProps> = ({
   const activeItemRef = useCallback((node: HTMLDivElement | null) => {
     activeNodeRef.current = node;
   }, []);
-
-  const listHeight = panelHeight - TOOLBAR_HEIGHT - FOOTER_HEIGHT;
 
   const scrollListeners = useSingleton(() => new Set<() => void>());
   const subscribeScroll = useCallback(
@@ -103,16 +94,14 @@ export const List: FC<ListProps> = ({
       activeNode.offsetTop - (container.clientHeight - activeNode.offsetHeight) / 2;
     container.scrollTop = Math.max(0, targetScrollTop);
     hasInitializedPositionRef.current = true;
-  }, [listHeight, activeKey]);
+  }, [activeKey, listItems.length]);
 
   return (
     <Flexbox
       className={styles.list}
-      flex={1}
+      flex={'none'}
       ref={listRef}
-      // No fixed height: flex-shrink within the height-capped panel so the list
-      // scrolls internally on short viewports while the toolbar stays pinned.
-      style={{ minHeight: 0 }}
+      style={{ maxHeight, minHeight: 0 }}
       onScroll={handleListScroll}
     >
       {listItems.map((item, index) => {
