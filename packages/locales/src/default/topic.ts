@@ -41,9 +41,9 @@ export default {
   'overview.manage.cacheRead': 'Cache read',
   'overview.manage.cacheWrite': 'Cache write',
   'overview.manage.coverage': 'Cost recorded: {{priced}} / {{total}} responses',
-  'overview.manage.filter.active': 'Not frozen \u00B7 highest cost first',
-  'overview.manage.filter.frozen': 'Frozen \u00B7 highest cost first',
-  'overview.manage.filter.all': 'All \u00B7 highest cost first',
+  'overview.manage.filter.active': 'Not frozen',
+  'overview.manage.filter.frozen': 'Frozen',
+  'overview.manage.filter.all': 'All',
 
   'overview.actualModels': 'Actual model: {{models}}',
   'overview.modelNotRecorded': 'Not recorded',
