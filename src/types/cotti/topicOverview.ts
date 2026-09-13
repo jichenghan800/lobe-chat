@@ -6,6 +6,7 @@ export interface CottiTopicOverviewQuery {
   page?: number;
   pageSize?: 20 | 50;
   q?: string;
+  sort?: 'cost' | 'updated';
   status?: 'active' | 'frozen' | 'all';
 }
 

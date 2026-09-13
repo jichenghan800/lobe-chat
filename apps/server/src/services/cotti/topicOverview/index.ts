@@ -18,6 +18,7 @@ import type {
 const MAX_TOPIC_MESSAGES = 5000;
 
 export const cottiTopicOverviewQuerySchema = z.object({
+  sort: z.enum(['cost', 'updated']).default('cost'),
   status: z.enum(['active', 'frozen', 'all']).default('active'),
   page: z.number().int().min(1).max(10_000).default(1),
   pageSize: z.union([z.literal(20), z.literal(50)]).default(50),
@@ -127,16 +128,20 @@ export class CottiTopicOverviewService {
   async list(input?: CottiTopicOverviewQuery): Promise<CottiTopicOverviewList> {
     const query = cottiTopicOverviewQuerySchema.parse(input ?? {});
     const offset = (query.page - 1) * query.pageSize;
+    const order =
+      query.sort === 'updated'
+        ? sql`"updatedAt" DESC, id DESC`
+        : sql`"costUsd" DESC NULLS LAST, "updatedAt" DESC, id DESC`;
     const result = await this.db.execute(sql`
       ${this.buildTopicRowsQuery({ q: query.q, status: query.status })}
       ${this.buildPageRowsQuery(sql`
         SELECT *, COUNT(*) OVER() AS total
         FROM filtered_topics
-        ORDER BY "costUsd" DESC NULLS LAST, "updatedAt" DESC, id DESC
+        ORDER BY ${order}
         LIMIT ${query.pageSize}
         OFFSET ${offset}
       `)}
-      ORDER BY "costUsd" DESC NULLS LAST, "updatedAt" DESC, id DESC
+      ORDER BY ${order}
     `);
     const rows = result.rows as unknown as TopicOverviewRow[];
     // An empty out-of-range page has no window-count row; preserve the real total.

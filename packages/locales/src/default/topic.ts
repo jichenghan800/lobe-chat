@@ -1,4 +1,7 @@
 export default {
+  'overview.sort.label': 'Sort topics',
+  'overview.sort.cost': 'Highest cost',
+  'overview.sort.updated': 'Recently updated',
   'overview.manage.confirm': 'Confirm',
   'overview.manage.cancel': 'Cancel',
   'overview.manage.title': 'Manage topic',

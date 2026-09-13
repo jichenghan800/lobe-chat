@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { cottiLoginAccessRules, topics, users } from '@lobechat/database/schemas';
+import { cottiLoginAccessRules, topicCostFreezes, topics, users } from '@lobechat/database/schemas';
 import { getTestDB } from '@lobechat/database/test-utils';
 import { inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -80,5 +80,52 @@ describe('administrator overview includes every account', () => {
     const result = await service.list({ q: '100%_literal' });
     expect(result.total).toBe(1);
     expect(result.items[0].title).toBe(`${prefix} 100%_literal`);
+  });
+
+  it('orders all topics by update date across pages, independent of cost and freeze state', async () => {
+    const title = `${prefix}-date-sort`;
+    const rows = Array.from({ length: 21 }, (_, i) => ({
+      id: `${prefix}-sort-${String(i).padStart(2, '0')}`,
+      userId: ids[0],
+      title,
+      cost: { llm: { total: 100 - i } },
+      updatedAt: new Date(Date.UTC(2026, 0, i + 1)),
+    }));
+    await db.insert(topics).values(rows);
+    try {
+      await db.insert(topicCostFreezes).values({
+        topicId: rows[20].id,
+        reason: 'manual',
+        model: 'test',
+        provider: 'test',
+        estimatedInputTokens: 0,
+        inputTokenLimit: 0,
+      });
+      const first = await service.list({ q: title, sort: 'updated', status: 'all', pageSize: 20 });
+      const second = await service.list({
+        q: title,
+        sort: 'updated',
+        status: 'all',
+        pageSize: 20,
+        page: 2,
+      });
+      expect([...first.items, ...second.items].map((item) => item.id)).toEqual(
+        rows.map((row) => row.id).reverse(),
+      );
+      expect(first.items[0].frozen).toBe(true);
+      expect(first.total).toBe(21);
+      const active = await service.list({ q: title, sort: 'updated', status: 'active' });
+      expect(active.items[0].id).toBe(rows[19].id);
+      expect(active.total).toBe(20);
+      const byCost = await service.list({ q: title, status: 'all' });
+      expect(byCost.items[0].id).toBe(rows[0].id);
+    } finally {
+      await db.delete(topics).where(
+        inArray(
+          topics.id,
+          rows.map((row) => row.id),
+        ),
+      );
+    }
   });
 });

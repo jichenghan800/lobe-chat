@@ -35,7 +35,8 @@ export const TopicListPanel = memo(() => {
   const { i18n, t } = useTranslation('topic');
   const { topicId } = useParams<{ topicId: string }>();
   const location = useLocation();
-  const { queryInput, setStatus, setPage, setQueryInput, state, swr } = useCottiTopicOverviewList();
+  const { queryInput, setSort, setStatus, setPage, setQueryInput, state, swr } =
+    useCottiTopicOverviewList();
   const data = swr.data;
   const pageCount = Math.max(1, Math.ceil((data?.total ?? 0) / 50));
   const dateFormatter = useMemo(
@@ -54,14 +55,27 @@ export const TopicListPanel = memo(() => {
             {data ? t('overview.total', { count: data.total }) : undefined}
           </Text>
         </Flexbox>
-        <Select
-          value={state.status}
-          options={(['active', 'frozen', 'all'] as const).map((value) => ({
-            value,
-            label: t(`overview.manage.filter.${value}`),
-          }))}
-          onChange={(value) => setStatus(value as 'active' | 'frozen' | 'all')}
-        />
+        <Flexbox horizontal gap={8}>
+          <Select
+            style={{ flex: 1, minWidth: 0 }}
+            value={state.status}
+            options={(['active', 'frozen', 'all'] as const).map((value) => ({
+              value,
+              label: t(`overview.manage.filter.${value}`),
+            }))}
+            onChange={(value) => setStatus(value as 'active' | 'frozen' | 'all')}
+          />
+          <Select
+            aria-label={t('overview.sort.label')}
+            style={{ flex: 1, minWidth: 0 }}
+            value={state.sort}
+            options={(['cost', 'updated'] as const).map((value) => ({
+              value,
+              label: t(`overview.sort.${value}`),
+            }))}
+            onChange={(value) => setSort(value as 'cost' | 'updated')}
+          />
+        </Flexbox>
         <SearchBar
           allowClear
           maxLength={100}

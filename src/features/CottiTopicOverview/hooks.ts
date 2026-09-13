@@ -15,6 +15,7 @@ export const useCottiTopicOverviewList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const state = useMemo(
     () => ({
+      sort: searchParams.get('sort') === 'updated' ? ('updated' as const) : ('cost' as const),
       page: parsePage(searchParams.get('page')),
       q: searchParams.get('q')?.trim() ?? '',
       status: (['active', 'frozen', 'all'].includes(searchParams.get('status') ?? '')
@@ -26,6 +27,7 @@ export const useCottiTopicOverviewList = () => {
   const [queryInput, setQueryInput] = useState(state.q);
   const debouncedQuery = useDebounce(queryInput, { wait: 300 });
   const query = {
+    sort: state.sort,
     status: state.status,
     page: state.page,
     pageSize: 50,
@@ -47,12 +49,28 @@ export const useCottiTopicOverviewList = () => {
   }, [debouncedQuery, searchParams, setSearchParams, state.q]);
 
   const swr = useClientDataSWR(
-    ['cotti', 'topic-overview', 'list', query.q ?? '', query.page, query.pageSize, query.status],
+    [
+      'cotti',
+      'topic-overview',
+      'list',
+      query.q ?? '',
+      query.page,
+      query.pageSize,
+      query.status,
+      query.sort,
+    ],
     () => cottiTopicOverviewService.list(query),
     { keepPreviousData: true, revalidateOnFocus: false },
   );
 
   return {
+    setSort: (sort: 'cost' | 'updated') => {
+      const next = new URLSearchParams(searchParams);
+      next.set('sort', sort);
+      next.delete('page');
+      if (sort === 'updated') next.set('status', 'all');
+      setSearchParams(next);
+    },
     setStatus: (status: 'active' | 'frozen' | 'all') => {
       const next = new URLSearchParams(searchParams);
       next.set('status', status);
