@@ -1,10 +1,12 @@
 /**
  * @vitest-environment node
  */
+import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server';
 import { NextRequest } from 'next/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import { auth } from '@/auth';
+import { config } from '@/proxy';
 
 import { defineConfig } from './define-config';
 
@@ -131,5 +133,20 @@ describe('Cotti AI domain isolation', () => {
       }),
     );
     expect(new URL(res!.headers.get('location')!).origin).toBe('https://chat.cotti.ai');
+  });
+});
+
+describe('overview hard refresh routing', () => {
+  it.each([
+    '/overview',
+    '/overview/',
+    '/overview?q=weather&page=2&status=all',
+    '/overview/tpc_example?q=weather&page=2&status=all',
+  ])('serves the SPA without losing the overview URL: %s', async (path) => {
+    const url = `http://localhost:3010${path}`;
+    expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true);
+    const rewritten = new URL((await run(url))!);
+    expect(rewritten.pathname).toMatch(/^\/spa\/[^/]+\/overview(?:\/.*)?$/);
+    expect(rewritten.search).toBe(new URL(url).search);
   });
 });

@@ -30,6 +30,8 @@ export const config = {
     '/group(.*)',
     '/changelog(.*)',
     '/settings(.*)',
+    '/overview',
+    '/overview/(.*)',
     '/image',
     '/video',
     '/resource',
