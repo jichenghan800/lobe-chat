@@ -1,6 +1,6 @@
 import { toast } from '@lobehub/ui/base-ui';
 import { Form } from 'antd';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 
@@ -18,10 +18,15 @@ import {
 } from '@/utils/onboardingRedirect';
 
 import { EMAIL_REGEX, USERNAME_REGEX } from './SignInEmailStep';
+import { useEmailOtpSignIn } from './useEmailOtpSignIn';
+
+const COTTI_AI_CHAT_HOST = 'chat.cotti.ai';
+const resolveSignInCallbackUrl = (requestedUrl: string | null, hostname: string) =>
+  hostname === COTTI_AI_CHAT_HOST ? '/' : requestedUrl || '/';
 
 const LAST_AUTH_PROVIDER_KEY = 'lobehub:auth:last-provider:v1';
 
-type Step = 'email' | 'password' | 'emailSent';
+type Step = 'email' | 'password' | 'emailSent' | 'emailOtp';
 
 type SentEmailType = 'magicLink' | 'resetPassword';
 
@@ -52,11 +57,15 @@ export const useSignIn = () => {
   const enableBusinessFeatures = useAuthServerConfigStore(
     (s) => s.serverConfig.enableBusinessFeatures || false,
   );
+  const enableEmailOtp = useAuthServerConfigStore((s) => s.serverConfig.enableEmailOtp || false);
+  const otp = useEmailOtpSignIn(searchParams.get('callbackUrl') || '/');
   const [form] = Form.useForm<SignInFormValues>();
   const [loading, setLoading] = useState(false);
   // Locks the email-dispatch actions (magic link / password reset / resend) so a
   // slow network can't be double-clicked into multiple emails.
   const [sending, setSending] = useState(false);
+  const autoCottiAiSsoStartedRef = useRef(false);
+  const checkUserLocked = useRef(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -160,10 +169,12 @@ export const useSignIn = () => {
   };
 
   const handleCheckUser = async (values: Pick<SignInFormValues, 'email'>) => {
+    if (checkUserLocked.current) return;
+    checkUserLocked.current = true;
     setLoading(true);
-    await trackLoginOrSignupClicked({ spm: 'signin.email_step.submit' });
 
     try {
+      await trackLoginOrSignupClicked({ spm: 'signin.email_step.submit' });
       const resolvedEmail = await resolveEmailFromIdentifier(values.email);
       if (!resolvedEmail) return;
 
@@ -193,6 +204,10 @@ export const useSignIn = () => {
       }
 
       setEmail(targetEmail);
+      if (enableEmailOtp) {
+        if (await otp.send(targetEmail)) setStep('emailOtp');
+        return;
+      }
       if (data.hasPassword) {
         setStep('password');
         return;
@@ -209,6 +224,7 @@ export const useSignIn = () => {
       console.error('Error checking user:', error);
       toast.error(t('betterAuth.signin.error'));
     } finally {
+      checkUserLocked.current = false;
       setLoading(false);
     }
   };
@@ -260,62 +276,69 @@ export const useSignIn = () => {
     }
   };
 
-  const handleSocialSignIn = async (provider: string) => {
-    setSocialLoading(provider);
-    const normalizedProvider = normalizeProviderId(provider);
-    await trackLoginOrSignupClicked({
-      provider: normalizedProvider,
-      spm: 'signin.social.click',
-    });
-
-    try {
-      if (enableBusinessFeatures && !(await preSocialSigninCheck())) {
-        setSocialLoading(null);
-        return;
-      }
+  const handleSocialSignIn = useCallback(
+    async (provider: string) => {
+      setSocialLoading(provider);
+      const normalizedProvider = normalizeProviderId(provider);
+      await trackLoginOrSignupClicked({
+        provider: normalizedProvider,
+        spm: 'signin.social.click',
+      });
 
       try {
-        localStorage.setItem(LAST_AUTH_PROVIDER_KEY, provider);
-      } catch {
-        // Ignore localStorage errors (e.g., quota exceeded, private mode)
+        if (enableBusinessFeatures && !(await preSocialSigninCheck())) {
+          setSocialLoading(null);
+          return;
+        }
+
+        try {
+          localStorage.setItem(LAST_AUTH_PROVIDER_KEY, provider);
+        } catch {
+          // Ignore localStorage errors (e.g., quota exceeded, private mode)
+        }
+
+        const callbackUrl = resolveSignInCallbackUrl(
+          searchParams.get('callbackUrl'),
+          window.location.hostname,
+        );
+        // First-time OAuth users are signups — land them on onboarding first
+        const authOrigin = window.location.origin;
+        const callbackURL = toAbsoluteAuthCallbackUrl(callbackUrl, authOrigin);
+        const newUserCallbackURL = toAbsoluteAuthCallbackUrl(
+          buildOnboardingRedirectUrl(callbackUrl),
+          authOrigin,
+        );
+        const additionalData = await getAdditionalData();
+        const signInWithAdditionalData = async () =>
+          isBuiltinProvider(normalizedProvider)
+            ? await signIn.social({
+                additionalData,
+                callbackURL,
+                newUserCallbackURL,
+                provider: normalizedProvider,
+              })
+            : await signIn.oauth2({
+                additionalData,
+                callbackURL,
+                newUserCallbackURL,
+                providerId: normalizedProvider,
+              });
+
+        const result = await signInWithAdditionalData();
+
+        if (result && 'error' in result && result.error) throw result.error;
+      } catch (error) {
+        console.error(`${normalizedProvider} sign in error:`, error);
+        toast.error(t('betterAuth.signin.socialError'));
+      } finally {
+        setSocialLoading(null);
       }
-
-      const callbackUrl = searchParams.get('callbackUrl') || '/';
-      // First-time OAuth users are signups — land them on onboarding first
-      const authOrigin = window.location.origin;
-      const callbackURL = toAbsoluteAuthCallbackUrl(callbackUrl, authOrigin);
-      const newUserCallbackURL = toAbsoluteAuthCallbackUrl(
-        buildOnboardingRedirectUrl(callbackUrl),
-        authOrigin,
-      );
-      const additionalData = await getAdditionalData();
-      const signInWithAdditionalData = async () =>
-        isBuiltinProvider(normalizedProvider)
-          ? await signIn.social({
-              additionalData,
-              callbackURL,
-              newUserCallbackURL,
-              provider: normalizedProvider,
-            })
-          : await signIn.oauth2({
-              additionalData,
-              callbackURL,
-              newUserCallbackURL,
-              providerId: normalizedProvider,
-            });
-
-      const result = await signInWithAdditionalData();
-
-      if (result && 'error' in result && result.error) throw result.error;
-    } catch (error) {
-      console.error(`${normalizedProvider} sign in error:`, error);
-      toast.error(t('betterAuth.signin.socialError'));
-    } finally {
-      setSocialLoading(null);
-    }
-  };
+    },
+    [enableBusinessFeatures, getAdditionalData, preSocialSigninCheck, searchParams, t],
+  );
 
   const handleBackToEmail = () => {
+    otp.reset();
     setStep('email');
     setEmail('');
     setIsSocialOnly(false);
@@ -398,9 +421,30 @@ export const useSignIn = () => {
       })
     : resolvedProviders;
 
+  useEffect(() => {
+    const effectiveServerConfigInit = enableBusinessFeatures ? true : serverConfigInit;
+    const shouldAutoStart =
+      effectiveServerConfigInit &&
+      window.location.hostname === COTTI_AI_CHAT_HOST &&
+      !searchParams.get('error') &&
+      resolvedProviders.includes('generic-oidc');
+
+    if (!shouldAutoStart || autoCottiAiSsoStartedRef.current) return;
+
+    autoCottiAiSsoStartedRef.current = true;
+    void handleSocialSignIn('generic-oidc');
+  }, [
+    enableBusinessFeatures,
+    handleSocialSignIn,
+    resolvedProviders,
+    searchParams,
+    serverConfigInit,
+  ]);
+
   return {
     disableEmailPassword,
     email,
+    enableEmailOtp,
     form,
     handleBackFromSent,
     handleBackToEmail,
@@ -414,6 +458,7 @@ export const useSignIn = () => {
     lastAuthProvider,
     loading,
     oAuthSSOProviders: sortedProviders,
+    otp,
     sending,
     sessionExpired,
     sentInfo,

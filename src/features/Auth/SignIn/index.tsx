@@ -10,6 +10,7 @@ const SignIn = () => {
   const {
     disableEmailPassword,
     email,
+    enableEmailOtp,
     form,
     handleBackFromSent,
     handleBackToEmail,
@@ -23,6 +24,7 @@ const SignIn = () => {
     lastAuthProvider,
     loading,
     oAuthSSOProviders,
+    otp,
     sending,
     sessionExpired,
     sentInfo,
@@ -64,6 +66,9 @@ const SignIn = () => {
         lastAuthProvider={lastAuthProvider}
         loading={loading}
         oAuthSSOProviders={oAuthSSOProviders}
+        otp={enableEmailOtp ? otp : undefined}
+        otpEmail={email}
+        otpSent={step === 'emailOtp'}
         serverConfigInit={serverConfigInit}
         sessionExpired={sessionExpired}
         socialLoading={socialLoading}

@@ -1,5 +1,6 @@
 import type { AiFullModelCard, AiModelType, LobeDefaultAiModelListItem } from 'model-bank';
 
+import { cottiGemini38Pricing } from './cottiGeminiPricing';
 import { EMBEDDING_MODEL_KEYWORDS } from './modelTypeKeywords';
 
 interface BusinessModelConfigModule {
@@ -47,6 +48,11 @@ export const getModelPropertyWithFallback = async <T>(
   if (fallbackMatch && fallbackMatch[propertyName] !== undefined) {
     return fallbackMatch[propertyName] as T;
   }
+
+  // COTTI: pricing-only bridge until the native catalog includes Vertex Gemini 3.8.
+  // Do not infer capabilities or apply Vertex prices to other providers.
+  if (propertyName === 'pricing' && providerId === 'vertexai' && modelId === 'gemini-3.8-flash')
+    return cottiGemini38Pricing as T;
 
   // Step 3: Return a default value
   return (propertyName === 'type' ? getDefaultModelType(modelId) : undefined) as T;

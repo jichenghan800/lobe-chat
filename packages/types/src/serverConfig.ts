@@ -106,6 +106,7 @@ export interface GlobalServerConfig {
    * @deprecated
    */
   enabledOAuthSSO?: boolean;
+  enableEmailOtp?: boolean;
   enableEmailVerification?: boolean;
   /**
    * Whether Gateway mode is available for app-level agent execution.
