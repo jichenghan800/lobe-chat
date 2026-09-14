@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import type * as React from 'react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -6,11 +7,17 @@ import ModelSwitch from './index';
 
 const mocks = vi.hoisted(() => ({
   scope: false,
+  mode: 'chat' as 'chat' | 'agent',
+  topicId: 'old-topic',
   loading: false,
   selectModel: vi.fn(),
   updateTopicModel: vi.fn(),
   effort: vi.fn(() => ({ hasReasoningParams: true, effortValue: 'low' })),
   sync: vi.fn(async () => true),
+}));
+vi.mock('react', async (importOriginal) => ({
+  ...(await importOriginal<typeof React>()),
+  memo: (component: unknown) => component,
 }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('@lobehub/ui', () => ({ Tooltip: ({ children }: { children: ReactNode }) => children }));
@@ -25,7 +32,7 @@ vi.mock('@/store/chat', () => ({
       activeTopicId: string;
       updateTopicModel: typeof mocks.updateTopicModel;
     }) => unknown,
-  ) => selector({ activeTopicId: 'old-topic', updateTopicModel: mocks.updateTopicModel }),
+  ) => selector({ activeTopicId: mocks.topicId, updateTopicModel: mocks.updateTopicModel }),
 }));
 vi.mock('@/store/chat/slices/topic/selectors', () => ({
   topicSelectors: {
@@ -39,7 +46,7 @@ vi.mock('@/store/aiInfra', () => ({
 }));
 vi.mock('../../hooks/useAgentId', () => ({ useAgentId: () => 'agent' }));
 vi.mock('../../hooks/useEffectiveAgentMode', () => ({
-  useEffectiveAgentMode: () => ({ currentMode: 'chat' }),
+  useEffectiveAgentMode: () => ({ currentMode: mocks.mode }),
 }));
 vi.mock('../../hooks/useAgentModelSelection', () => ({
   useAgentModelSelection: () => ({
@@ -76,6 +83,9 @@ describe('model selection scope', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.scope = false;
+    mocks.mode = 'chat';
+    mocks.topicId = 'old-topic';
+    mocks.sync = vi.fn(async () => true);
     mocks.loading = false;
   });
   it('home edits the new-conversation model and effort without modifying the previous topic', () => {
@@ -100,5 +110,44 @@ describe('model selection scope', () => {
     });
     expect(mocks.selectModel).not.toHaveBeenCalled();
     expect(mocks.effort).toHaveBeenCalledWith('professional', 'provider', 'old-topic');
+  });
+  it('reconciles a topic against the inherited Agent mode without an explicit home scope', () => {
+    mocks.scope = true;
+    mocks.mode = 'agent';
+    render(<ModelSwitch />);
+    expect(mocks.sync).toHaveBeenCalledWith('agent');
+  });
+
+  it('does not undo the intermediate model write during a manual mode switch', () => {
+    mocks.scope = true;
+    const { rerender } = render(<ModelSwitch />);
+    expect(mocks.sync).toHaveBeenCalledWith('chat');
+    // Changing the model rebuilds the hook callback before the mode is saved.
+    mocks.sync = vi.fn(async () => true);
+    rerender(<ModelSwitch />);
+    expect(mocks.sync).not.toHaveBeenCalled();
+    mocks.mode = 'agent';
+    rerender(<ModelSwitch />);
+    expect(mocks.sync).toHaveBeenCalledWith('agent');
+  });
+
+  it('rechecks a different topic of the same Agent', () => {
+    mocks.scope = true;
+    mocks.mode = 'agent';
+    const { rerender } = render(<ModelSwitch />);
+    mocks.sync.mockClear();
+    mocks.topicId = 'another-topic';
+    rerender(<ModelSwitch />);
+    expect(mocks.sync).toHaveBeenCalledWith('agent');
+  });
+
+  it('waits for the topic pin before reconciling', () => {
+    mocks.scope = true;
+    mocks.loading = true;
+    const { rerender } = render(<ModelSwitch />);
+    expect(mocks.sync).not.toHaveBeenCalled();
+    mocks.loading = false;
+    rerender(<ModelSwitch />);
+    expect(mocks.sync).toHaveBeenCalledWith('chat');
   });
 });

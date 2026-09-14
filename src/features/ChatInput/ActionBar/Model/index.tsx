@@ -1,5 +1,5 @@
 import { Tooltip } from '@lobehub/ui';
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
@@ -51,10 +51,34 @@ const ModelSwitch = memo(() => {
   const provider = topicModel?.model ? topicModel.provider : agentProvider;
 
   const switchModelDisplayScope = useSwitchModelDisplayScope();
+  const reconciledContext = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (!explicitScope || !canSelectModel || !agentId || isTopicModelLoading) return;
-    void switchModelDisplayScope(explicitScope).catch(console.error);
-  }, [agentId, canSelectModel, explicitScope, isTopicModelLoading, switchModelDisplayScope]);
+    if (!canSelectModel || !agentId || isTopicModelLoading) return;
+    // Mode belongs to the Agent, but each topic pins its own model. Reconcile
+    // when entering a topic or changing mode, including an inherited mode.
+    // Do not react to the intermediate model write of a manual mode change:
+    // its mode flag is saved afterwards and the old pool must not undo it.
+    const context = JSON.stringify([agentId, activeTopicId, modelDisplayScope]);
+    if (!explicitScope && reconciledContext.current === context) return;
+    reconciledContext.current = context;
+    void switchModelDisplayScope(modelDisplayScope)
+      .then((applied) => {
+        if (!applied && reconciledContext.current === context)
+          reconciledContext.current = undefined;
+      })
+      .catch((error) => {
+        if (reconciledContext.current === context) reconciledContext.current = undefined;
+        console.error('[ModelSwitch] Failed to reconcile the mode model', error);
+      });
+  }, [
+    activeTopicId,
+    agentId,
+    canSelectModel,
+    explicitScope,
+    isTopicModelLoading,
+    modelDisplayScope,
+    switchModelDisplayScope,
+  ]);
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
   const displayName = enabledModel?.displayName || model;

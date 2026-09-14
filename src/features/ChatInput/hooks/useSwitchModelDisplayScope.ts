@@ -38,6 +38,7 @@ export const useSwitchModelDisplayScope = () => {
   } = useAgentModelSelection(agentId);
   const activeTopicId = useChatStore((s) => s.activeTopicId);
   const activeTopicModel = useChatStore(topicSelectors.activeTopicModel);
+  const isTopicModelLoading = useChatStore(topicSelectors.isActiveTopicModelLoading);
   const updateTopicModel = useChatStore((s) => s.updateTopicModel);
   const currentModel =
     topicModelScope && activeTopicModel?.model
@@ -46,6 +47,7 @@ export const useSwitchModelDisplayScope = () => {
 
   return useCallback(
     async (targetScope: ModelDisplayScope) => {
+      if (topicModelScope && isTopicModelLoading) return false;
       let resolvedModelDisplayConfig = modelDisplayConfig;
       if (!resolvedModelDisplayConfig) {
         try {
@@ -61,7 +63,8 @@ export const useSwitchModelDisplayScope = () => {
       if (!resolvedModelDisplayConfig) return false;
 
       const availableModels = applyModelDisplayConfig(
-        enabledChatModelList,
+        // Provider hydration may finish while the display config request is in flight.
+        useAiInfraStore.getState().enabledChatModelList || enabledChatModelList,
         resolvedModelDisplayConfig[targetScope],
       );
       const targetModel = resolveModelDisplayTargetModel({
@@ -82,6 +85,7 @@ export const useSwitchModelDisplayScope = () => {
     },
     [
       activeTopicId,
+      isTopicModelLoading,
       topicModelScope,
       canSelectModel,
       currentModel,
