@@ -783,15 +783,6 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
           onClick={() => void handleSelect('none')}
         />
       )}
-      {isHetero ? null : (
-        <OptionRow
-          active={isActive('auto')}
-          desc={t('heteroAgent.executionTarget.autoDesc')}
-          icon={<ExecutionTargetIcon target={'auto'} />}
-          label={t('heteroAgent.executionTarget.auto')}
-          onClick={() => void handleSelect('auto')}
-        />
-      )}
       {/* `local` pins this desktop's personal `deviceId`. Available in both
           personal and workspace modes now : a workspace-agent
           `local` pick lands in `users.preference.agentDeviceOverrides` — my
@@ -871,6 +862,24 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
         )}
         onClick={() => void handleSelect('sandbox')}
       />
+      <OptionRow
+        disabled
+        active={false}
+        desc={t('heteroAgent.executionTarget.selfHostedPendingDesc')}
+        icon={<ExecutionTargetIcon target={'sandbox'} />}
+        label={t('heteroAgent.executionTarget.selfHosted')}
+        tag={t('heteroAgent.executionTarget.notConnected')}
+        onClick={() => {}}
+      />
+      {isHetero ? null : (
+        <OptionRow
+          active={isActive('auto')}
+          desc={t('heteroAgent.executionTarget.autoDesc')}
+          icon={<ExecutionTargetIcon target={'auto'} />}
+          label={t('heteroAgent.executionTarget.auto')}
+          onClick={() => void handleSelect('auto')}
+        />
+      )}
       {deviceRows.length > 0 ? (
         <div className={styles.deviceList}>
           {showDeviceGroups ? (
