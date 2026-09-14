@@ -96,6 +96,8 @@ const styles = createStaticStyles(({ css }) => ({
 
     font-size: 11px;
     color: ${cssVar.colorTextDescription};
+    overflow-wrap: anywhere;
+    white-space: normal;
   `,
   extra: css`
     display: flex;
