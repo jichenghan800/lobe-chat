@@ -1,11 +1,7 @@
-"""Read-only deployment checks for the isolated v2.2.17 acceptance environment."""
-import hashlib
+"""Read-only checks for the two domain entrances of the shared v2.2.17 service."""
 import json
 import subprocess
-from pathlib import Path
 from urllib.parse import urlsplit
-
-APP = 'lingshu-v2217-app-dev'
 
 
 def inspect(name):
@@ -13,25 +9,32 @@ def inspect(name):
 
 
 def main():
-    app = inspect(APP)
-    env = dict(item.split('=', 1) for item in app['Config']['Env'])
+    dev = inspect('lingshu-v2217-app-dev')
+    cotti = inspect('cotti-v2216-native-app-cotti-1')
+    dev_env = dict(item.split('=', 1) for item in dev['Config']['Env'])
+    cotti_env = dict(item.split('=', 1) for item in cotti['Config']['Env'])
+    shared_keys = [
+        'DATABASE_URL', 'REDIS_URL', 'QSTASH_URL', 'INTERNAL_APP_URL',
+        'S3_ENDPOINT', 'S3_BUCKET', 'S3_PUBLIC_DOMAIN', 'S3_ACCESS_KEY_ID',
+        'S3_SECRET_ACCESS_KEY', 'KEY_VAULTS_SECRET', 'AUTH_SECRET',
+        'ONLYBOXES_BASE_URL', 'ONLYBOXES_ENABLED', 'ONLYBOXES_JIT_ISSUER',
+        'ONLYBOXES_JIT_SIGNING_KEY',
+    ]
     checks = {
-        'application_running': app['State']['Running'],
-        'public_origin': env.get('APP_URL') == 'https://chatdev.cotticoffee.com',
-        'completion_callback_isolated': env.get('INTERNAL_APP_URL') == f'http://{APP}:3210',
-        'database_isolated': urlsplit(env.get('DATABASE_URL', '')).hostname == 'lingshu-v2217-pg',
-        'redis_isolated': urlsplit(env.get('REDIS_URL', '')).hostname == 'lingshu-v2217-redis',
-        'queue_isolated': urlsplit(env.get('QSTASH_URL', '')).hostname == 'lingshu-v2217-qstash',
-        'storage_isolated': env.get('S3_BUCKET') == 'lobe-v2217',
-        'storage_region': env.get('S3_REGION') == 'us-east-1',
-        'storage_signed_access': env.get('S3_SET_ACL') == '0',
-        'no_legacy_application_reference': not any('cotti-v2216-native-app' in value for value in env.values()),
-        'old_cotti_running': inspect('cotti-v2216-native-app-cotti-1')['State']['Running'],
+        'both_applications_running': dev['State']['Running'] and cotti['State']['Running'],
+        'same_image': dev['Image'] == cotti['Image'],
+        'chatdev_origin': dev_env.get('APP_URL') == 'https://chatdev.cotticoffee.com',
+        'cotti_origin': cotti_env.get('APP_URL') == 'https://chat.cotti.ai',
+        'shared_backend': all(dev_env.get(key) == cotti_env.get(key) for key in shared_keys),
+        'shared_database': urlsplit(dev_env.get('DATABASE_URL', '')).hostname == 'lingshu-v2217-pg',
+        'shared_storage': dev_env.get('S3_BUCKET') == 'sg-pre-lobechat',
+        'shared_queue': urlsplit(dev_env.get('QSTASH_URL', '')).hostname == 'lingshu-v2217-qstash',
+        'shared_callback': dev_env.get('INTERNAL_APP_URL') == 'http://lingshu-v2217-app-dev:3210',
+        'both_use_application_gateway': all(
+            app['NetworkSettings']['Networks']['cotti-v2216-native_default'].get('GwPriority') == 100
+            for app in [dev, cotti]
+        ),
     }
-    baseline = Path('.records/v2217-minimal/cotti-nginx-before.sha256')
-    if baseline.exists():
-        digest = hashlib.sha256(Path('/etc/nginx/conf.d/chat.cotti.ai.conf').read_bytes()).hexdigest()
-        checks['old_cotti_nginx_unchanged'] = digest in baseline.read_text()
     print(json.dumps(checks, indent=2))
     if not all(checks.values()):
         raise SystemExit(1)

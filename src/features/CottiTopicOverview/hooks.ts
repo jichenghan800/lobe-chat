@@ -6,6 +6,8 @@ import { useClientDataSWR } from '@/libs/swr';
 import { cottiTopicOverviewService } from '@/services/cottiTopicOverview';
 import type { CottiTopicOverviewQuery } from '@/types/cotti/topicOverview';
 
+import { getOverviewTopicId } from './topicLink';
+
 const parsePage = (value: string | null) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
@@ -31,7 +33,7 @@ export const useCottiTopicOverviewList = () => {
     status: state.status,
     page: state.page,
     pageSize: 50,
-    q: state.q || undefined,
+    q: getOverviewTopicId(state.q) ?? (state.q || undefined),
   } as const satisfies CottiTopicOverviewQuery;
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export const useCottiTopicOverviewList = () => {
     if (normalizedQuery) next.set('q', normalizedQuery);
     else next.delete('q');
     next.delete('page');
+    if (normalizedQuery) next.set('status', 'all');
     setSearchParams(next, { replace: true });
   }, [debouncedQuery, searchParams, setSearchParams, state.q]);
 

@@ -81,17 +81,11 @@ export const TopicListPanel = memo(() => {
         </Flexbox>
         <SearchBar
           allowClear
-          maxLength={100}
+          maxLength={2048}
           placeholder={t('overview.searchPlaceholder')}
           value={queryInput}
           variant={'filled'}
           onInputChange={setQueryInput}
-          onPaste={(event) => {
-            const id = getOverviewTopicId(event.clipboardData.getData('text/plain'));
-            if (!id) return;
-            event.preventDefault();
-            navigate(`/overview/${id}${location.search}`);
-          }}
           onPressEnter={() => {
             const id = getOverviewTopicId(queryInput);
             if (id) navigate(`/overview/${id}${location.search}`);

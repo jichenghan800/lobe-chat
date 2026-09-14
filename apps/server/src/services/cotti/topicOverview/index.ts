@@ -22,7 +22,7 @@ export const cottiTopicOverviewQuerySchema = z.object({
   status: z.enum(['active', 'frozen', 'all']).default('active'),
   page: z.number().int().min(1).max(10_000).default(1),
   pageSize: z.union([z.literal(20), z.literal(50)]).default(50),
-  q: z.string().trim().max(100).optional(),
+  q: z.string().trim().max(2048).optional(),
 });
 
 interface TopicOverviewRow {

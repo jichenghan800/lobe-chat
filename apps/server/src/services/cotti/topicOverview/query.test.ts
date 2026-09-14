@@ -4,9 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
 
-import { CottiTopicOverviewService } from './index';
+import { cottiTopicOverviewQuerySchema, CottiTopicOverviewService } from './index';
 
 describe('topic overview query boundaries', () => {
+  it('accepts longer search input while retaining a bounded query size', () => {
+    expect(cottiTopicOverviewQuerySchema.parse({ q: 'x'.repeat(2048) }).q).toHaveLength(2048);
+    expect(cottiTopicOverviewQuerySchema.safeParse({ q: 'x'.repeat(2049) }).success).toBe(false);
+  });
   it('excludes soft-deleted topics from both list and detail selection', async () => {
     const execute = vi.fn().mockResolvedValue({ rows: [] });
     const service = new CottiTopicOverviewService({ execute } as unknown as LobeChatDatabase);
