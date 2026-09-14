@@ -17,11 +17,13 @@ import AsyncBoundary from '@/components/AsyncBoundary';
 import AsyncError from '@/components/AsyncError';
 import NavItem from '@/features/NavPanel/components/NavItem';
 import { SkeletonList } from '@/features/NavPanel/components/SkeletonList';
+import { useWorkspaceAwareNavigate } from '@/features/Workspace/useWorkspaceAwareNavigate';
 import WorkspaceLink from '@/features/Workspace/WorkspaceLink';
 import type { CottiTopicOverviewMode } from '@/types/cotti/topicOverview';
 
 import { useCottiTopicOverviewList } from './hooks';
 import { styles } from './style';
+import { getOverviewTopicId } from './topicLink';
 import { topicCny } from './TopicManagement';
 import { TopicModeTag } from './TopicModeTag';
 
@@ -35,6 +37,7 @@ export const TopicListPanel = memo(() => {
   const { i18n, t } = useTranslation('topic');
   const { topicId } = useParams<{ topicId: string }>();
   const location = useLocation();
+  const navigate = useWorkspaceAwareNavigate();
   const { queryInput, setSort, setStatus, setPage, setQueryInput, state, swr } =
     useCottiTopicOverviewList();
   const data = swr.data;
@@ -83,6 +86,16 @@ export const TopicListPanel = memo(() => {
           value={queryInput}
           variant={'filled'}
           onInputChange={setQueryInput}
+          onPaste={(event) => {
+            const id = getOverviewTopicId(event.clipboardData.getData('text/plain'));
+            if (!id) return;
+            event.preventDefault();
+            navigate(`/overview/${id}${location.search}`);
+          }}
+          onPressEnter={() => {
+            const id = getOverviewTopicId(queryInput);
+            if (id) navigate(`/overview/${id}${location.search}`);
+          }}
         />
       </Flexbox>
 

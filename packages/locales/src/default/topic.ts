@@ -70,7 +70,7 @@ export default {
   'overview.questionTime': 'Asked at {{time}}',
   'overview.searchEmptyDesc': 'Try another topic title, user, or assistant name.',
   'overview.searchEmptyTitle': 'No matching topics',
-  'overview.searchPlaceholder': 'Search topics or users…',
+  'overview.searchPlaceholder': 'Search topics/users or paste a topic link…',
   'overview.selectDescription': 'Select a topic from the list to review its complete conversation.',
   'overview.selectTitle': 'Select a topic',
   'overview.title': 'Overview',
