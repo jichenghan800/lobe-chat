@@ -19,6 +19,8 @@ def main():
         'S3_SECRET_ACCESS_KEY', 'KEY_VAULTS_SECRET', 'AUTH_SECRET',
         'ONLYBOXES_BASE_URL', 'ONLYBOXES_ENABLED', 'ONLYBOXES_JIT_ISSUER',
         'ONLYBOXES_JIT_SIGNING_KEY',
+        'OPENAI_PROXY_URL', 'OPENAI_API_KEY', 'OPENAI_MODEL_LIST',
+        'AZURE_MODEL_LIST', 'VERTEXAI_MODEL_LIST',
     ]
     checks = {
         'both_applications_running': dev['State']['Running'] and cotti['State']['Running'],

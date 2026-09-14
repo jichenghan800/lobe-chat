@@ -21,7 +21,9 @@ import { useTranslation } from 'react-i18next';
 
 import InstantSwitch from '@/components/InstantSwitch';
 import { DOWNLOAD_URL } from '@/const/url';
+import { useEffectiveAgentModePreference } from '@/features/ChatInput/hooks/effectiveAgentModePreference';
 import { useChatInputResourceAccess } from '@/features/ChatInput/hooks/useChatInputResourceAccess';
+import { useDefaultAgentSandbox } from '@/features/ChatInput/hooks/useDefaultAgentSandbox';
 import { useLocalSandboxCapability } from '@/features/ChatInput/hooks/useLocalSandboxCapability';
 import { useSandboxSelection } from '@/features/ChatInput/hooks/useSandboxSelection';
 import { useSelectExecutionTarget } from '@/features/ChatInput/hooks/useSelectExecutionTarget';
@@ -534,6 +536,20 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
   }, [agentId, commitWorkingDirectory, configuredWorkingDirectory]);
 
   const selectExecutionTarget = useSelectExecutionTarget(agentId);
+  const agentModePreference = useEffectiveAgentModePreference(agentId);
+  useDefaultAgentSandbox(
+    agentId,
+    {
+      enabled: agentModePreference.enableAgentMode,
+      isDesktop,
+      isHetero,
+      canSelect: canShowExecutionTargetSelector,
+      loading: isWorkspacePreferenceLoading || agentModePreference.isPreferenceLoading,
+      target: agencyConfig?.executionTarget,
+      boundDeviceId,
+    },
+    selectExecutionTarget,
+  );
   const handleSelect = useCallback(
     async (target: DeviceExecutionTarget, deviceId?: string, localSandbox?: boolean) => {
       setOpen(false);

@@ -11,12 +11,24 @@ const testState = vi.hoisted(() => ({
   agent: {
     current: undefined as { visibility?: 'private' | 'public'; workspaceId?: string } | undefined,
   },
+  execution: {
+    agencyConfig: { executionTarget: 'none' as string | undefined },
+    canSelectExecutionTarget: true,
+    isPreferenceLoading: false,
+  },
+  selectTarget: vi.fn(async () => true),
   switchScope: vi.fn(async () => true),
   businessCanEnable: true,
   updateAgentChatConfig: vi.fn(),
   updateWorkspaceUserPreference: vi.fn(),
 }));
 
+vi.mock('@/hooks/useEffectiveAgencyConfig', () => ({
+  useEffectiveAgencyConfig: () => testState.execution,
+}));
+vi.mock('./useSelectExecutionTarget', () => ({
+  useSelectExecutionTarget: () => testState.selectTarget,
+}));
 vi.mock('@/business/client/hooks/useBusinessAgentMode', () => ({
   useBusinessCanEnableAgentMode: () => testState.businessCanEnable,
 }));
@@ -61,6 +73,11 @@ describe('useToggleAgentMode', () => {
     testState.access.isAccessLoading = false;
     testState.agent.current = undefined;
     testState.businessCanEnable = true;
+    testState.execution.agencyConfig.executionTarget = 'none';
+    testState.execution.canSelectExecutionTarget = true;
+    testState.execution.isPreferenceLoading = false;
+    testState.selectTarget.mockClear();
+    testState.selectTarget.mockResolvedValue(true);
     testState.switchScope.mockResolvedValue(true);
     testState.updateAgentChatConfig = vi.fn();
     testState.updateWorkspaceUserPreference = vi.fn();
@@ -108,5 +125,29 @@ describe('useToggleAgentMode', () => {
 
     expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
     expect(testState.updateWorkspaceUserPreference).not.toHaveBeenCalled();
+  });
+
+  it('persists a cloud sandbox before enabling native web Agent mode from no device', async () => {
+    const { result } = renderHook(() => useToggleAgentMode());
+    await act(() => result.current(true));
+    expect(testState.selectTarget).toHaveBeenCalledWith('sandbox');
+  });
+  it('does not enable Agent when saving the sandbox fails', async () => {
+    testState.selectTarget.mockResolvedValue(false);
+    const { result } = renderHook(() => useToggleAgentMode());
+    await act(async () => {
+      expect(await result.current(true)).toBe(false);
+    });
+    expect(testState.updateAgentChatConfig).not.toHaveBeenCalled();
+  });
+
+  it('preserves an existing sandbox target and does not enable execution for Chat', async () => {
+    testState.execution.agencyConfig.executionTarget = 'sandbox';
+    const { result } = renderHook(() => useToggleAgentMode());
+    await act(() => result.current(true));
+    expect(testState.selectTarget).not.toHaveBeenCalled();
+    testState.execution.agencyConfig.executionTarget = 'none';
+    await act(() => result.current(false));
+    expect(testState.selectTarget).not.toHaveBeenCalled();
   });
 });
