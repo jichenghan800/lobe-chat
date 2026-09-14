@@ -686,6 +686,14 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
       : t('heteroAgent.executionTarget.workspaceGroup');
   }
 
+  // Web exposes only environments this deployment can actually provide. Keep
+  // unsupported historical selections unmodified, but let users choose a
+  // supported environment rather than advertising a computer-only option.
+  if (!isDesktop && chipExecutionTarget !== 'sandbox' && canShowExecutionTargetSelector) {
+    chipIcon = <ExecutionTargetIcon target={'sandbox'} />;
+    chipLabel = t('heteroAgent.executionTarget.title');
+  }
+
   const isActive = (target: DeviceExecutionTarget, deviceId?: string) => {
     if (target === 'device') return executionTarget === 'device' && boundDeviceId === deviceId;
     // The two local rows share one target and are told apart by the sandbox
@@ -741,7 +749,23 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
     );
   };
 
-  const content = (
+  const sandboxOption = (
+    <OptionRow
+      active={isActive('sandbox')}
+      disabled={!supportsSandbox}
+      icon={<ExecutionTargetIcon target={'sandbox'} />}
+      label={t('heteroAgent.executionTarget.sandbox')}
+      desc={t(
+        supportsSandbox
+          ? 'heteroAgent.executionTarget.sandboxDesc'
+          : 'heteroAgent.executionTarget.sandboxUnsupported',
+        { name: heteroType ? HETEROGENEOUS_TYPE_LABELS[heteroType] : undefined },
+      )}
+      onClick={() => void handleSelect('sandbox')}
+    />
+  );
+
+  const content = isDesktop ? (
     <Flexbox gap={6} style={{ maxWidth: 320, minWidth: 280 }}>
       <div className={styles.header}>
         <Flexbox horizontal align={'center'} gap={4}>
@@ -851,28 +875,7 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
           onClick={() => void handleSelect('local', undefined, true)}
         />
       ) : null}
-      <OptionRow
-        active={isActive('sandbox')}
-        disabled={!supportsSandbox}
-        icon={<ExecutionTargetIcon target={'sandbox'} />}
-        label={t('heteroAgent.executionTarget.sandbox')}
-        desc={t(
-          supportsSandbox
-            ? 'heteroAgent.executionTarget.sandboxDesc'
-            : 'heteroAgent.executionTarget.sandboxUnsupported',
-          { name: heteroType ? HETEROGENEOUS_TYPE_LABELS[heteroType] : undefined },
-        )}
-        onClick={() => void handleSelect('sandbox')}
-      />
-      <OptionRow
-        disabled
-        active={false}
-        desc={t('heteroAgent.executionTarget.selfHostedPendingDesc')}
-        icon={<ExecutionTargetIcon target={'sandbox'} />}
-        label={t('heteroAgent.executionTarget.selfHosted')}
-        tag={t('heteroAgent.executionTarget.notConnected')}
-        onClick={() => {}}
-      />
+      {sandboxOption}
       {isHetero ? null : (
         <OptionRow
           active={isActive('auto')}
@@ -947,6 +950,13 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
       {hasNoDevices && !isLoading && isDesktop && !isWorkspaceAgent ? (
         <div className={styles.empty}>{t('heteroAgent.executionTarget.noDevices')}</div>
       ) : null}
+    </Flexbox>
+  ) : (
+    <Flexbox gap={6} style={{ maxWidth: 320, minWidth: 280 }}>
+      <div className={styles.header}>
+        <span className={styles.headerTitle}>{t('heteroAgent.executionTarget.title')}</span>
+      </div>
+      {sandboxOption}
     </Flexbox>
   );
 

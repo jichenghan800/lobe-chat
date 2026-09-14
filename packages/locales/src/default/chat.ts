@@ -1,8 +1,4 @@
 export default {
-  'heteroAgent.executionTarget.selfHostedPendingDesc':
-    'Run on the platform server; available after setup',
-  'heteroAgent.executionTarget.notConnected': 'Not connected',
-  'heteroAgent.executionTarget.selfHosted': 'Self-hosted sandbox',
   'goalExperiment.continuedFrom': 'Continued exploration',
   'goalExperiment.drill': 'Explore inside',
   'goalExperiment.drillNamed': 'Explore inside: {{title}}',
@@ -685,8 +681,9 @@ export default {
   'heteroAgent.cloudRepo.multiSelected': '{{count}} repos selected',
   'heteroAgent.executionTarget.sandboxUnsupported':
     '{{name}} currently runs only on a local or connected device',
-  'heteroAgent.executionTarget.auto': 'Auto-select computer',
-  'heteroAgent.executionTarget.autoDesc': 'Choose an online computer; does not switch to a sandbox',
+  'heteroAgent.executionTarget.auto': 'Auto',
+  'heteroAgent.executionTarget.autoDesc':
+    'Use an online device automatically, picking one when several are available',
   'heteroAgent.executionTarget.fixedTip':
     'The execution environment is fixed in the Agent Profile and cannot be switched while chatting.',
   'heteroAgent.executionTarget.infoTooltip':
@@ -706,13 +703,13 @@ export default {
   'heteroAgent.executionTarget.localSandboxNetworkTip':
     'Let sandboxed commands reach package registries and source forges — npm, PyPI, crates.io, RubyGems, Go, GitHub, GitLab. Every other domain stays blocked; the sandbox cannot open the network entirely.',
   'heteroAgent.executionTarget.localSandboxUnavailable': 'Not available on this device: {{reason}}',
-  'heteroAgent.executionTarget.manage': 'Manage devices',
+  'heteroAgent.executionTarget.manage': 'Manage',
   'heteroAgent.executionTarget.noDevices':
     'No remote devices yet. Run `lh connect` on another machine to add one.',
   'heteroAgent.executionTarget.noWorkspaceDevices':
     'No workspace devices yet. Run `{{cmd}}` on a machine to enroll it for every member.',
-  'heteroAgent.executionTarget.none': 'No execution environment',
-  'heteroAgent.executionTarget.noneDesc': 'Do not connect a computer or use a sandbox',
+  'heteroAgent.executionTarget.none': 'No device',
+  'heteroAgent.executionTarget.noneDesc': 'No device enabled',
   'heteroAgent.executionTarget.offline': 'Offline',
   'heteroAgent.executionTarget.online': 'Online',
   'heteroAgent.executionTarget.onlineConnections_one': 'Online · {{count}} connection',
@@ -722,7 +719,7 @@ export default {
     'Could not reconnect this device. Make sure the desktop app is running, then try again.',
   'heteroAgent.executionTarget.personalGroup': 'Private Devices',
   'heteroAgent.executionTarget.sandbox': 'Cloud Sandbox',
-  'heteroAgent.executionTarget.sandboxDesc': 'Run in a temporary sandbox hosted by LobeHub',
+  'heteroAgent.executionTarget.sandboxDesc': 'Run in an ephemeral cloud sandbox',
   'heteroAgent.executionTarget.workspaceGroup': 'Workspace Devices',
   'heteroAgent.executionTarget.downloadDesktop': 'Get Desktop App',
   'heteroAgent.executionTarget.downloadDesktopDesc': 'Run agents with access to your computer',
