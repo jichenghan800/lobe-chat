@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
-import { and, count, eq, gt, lte, sql } from 'drizzle-orm';
+import { and, count, eq, gt, isNull, lte, sql } from 'drizzle-orm';
 
-import { cottiSandboxReservations, cottiSandboxSettings } from '../schemas';
+import { cottiSandboxReservations, cottiSandboxSettings, topics } from '../schemas';
 import type { LobeChatDatabase } from '../type';
 
 const SETTINGS_ID = 'default';
@@ -10,6 +10,19 @@ export const DEFAULT_SANDBOX_MAX_SESSIONS = 2;
 
 export class CottiSandboxModel {
   constructor(private db: LobeChatDatabase) {}
+
+  async getTopicProvider(userId: string, topicId: string) {
+    const [topic] = await this.db
+      .select({ metadata: topics.metadata })
+      .from(topics)
+      .where(and(eq(topics.id, topicId), eq(topics.userId, userId), isNull(topics.deletedAt)));
+    if (!topic) throw new Error('Sandbox topic not found or access denied');
+    const provider = topic.metadata?.sandboxProvider;
+    if (provider !== undefined && provider !== 'market' && provider !== 'onlyboxes') {
+      throw new Error('Unsupported topic sandbox provider');
+    }
+    return provider;
+  }
 
   async getConfig() {
     const [config] = await this.db

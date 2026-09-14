@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { CottiSandboxModel } from '@/database/models/cottiSandbox';
 import { sandboxEnv } from '@/envs/sandbox';
-import { router } from '@/libs/trpc/lambda';
+import { authedProcedure, router } from '@/libs/trpc/lambda';
 
 import { cottiAdminProcedure } from './procedure';
 
@@ -13,9 +13,20 @@ const procedure = cottiAdminProcedure.use(async (opts) =>
 );
 
 export const cottiSandboxRouter = router({
+  availability: authedProcedure.query(() => ({
+    selfHostedAvailable: Boolean(
+      sandboxEnv.ONLYBOXES_ENABLED &&
+      sandboxEnv.ONLYBOXES_BASE_URL &&
+      sandboxEnv.ONLYBOXES_JIT_SIGNING_KEY,
+    ),
+  })),
   detail: procedure.query(async ({ ctx }) => ({
     ...(await ctx.sandboxModel.getConfig()),
-    active: sandboxEnv.SANDBOX_PROVIDER === 'onlyboxes',
+    active: Boolean(
+      sandboxEnv.ONLYBOXES_ENABLED &&
+      sandboxEnv.ONLYBOXES_BASE_URL &&
+      sandboxEnv.ONLYBOXES_JIT_SIGNING_KEY,
+    ),
   })),
   update: procedure
     .input(z.object({ maxSessions: z.number().int().min(1).max(100) }))
@@ -23,7 +34,11 @@ export const cottiSandboxRouter = router({
       await ctx.sandboxModel.updateConfig(input.maxSessions, ctx.platformAdmin.userId);
       return {
         ...(await ctx.sandboxModel.getConfig()),
-        active: sandboxEnv.SANDBOX_PROVIDER === 'onlyboxes',
+        active: Boolean(
+          sandboxEnv.ONLYBOXES_ENABLED &&
+          sandboxEnv.ONLYBOXES_BASE_URL &&
+          sandboxEnv.ONLYBOXES_JIT_SIGNING_KEY,
+        ),
       };
     }),
 });

@@ -57,6 +57,7 @@ import {
   chatConfigByIdSelectors,
 } from '@/store/agent/selectors';
 import { agentGroupByIdSelectors, getChatGroupStoreState } from '@/store/agentGroup';
+import { getPendingSandboxProvider } from '@/store/chat/pendingSandboxProvider';
 import { getPendingTopicRepos } from '@/store/chat/pendingTopicRepos';
 import {
   dbMessageSelectors,
@@ -1211,9 +1212,13 @@ export class ConversationLifecycleActionImpl {
             }
           : undefined;
     /** First-send persistence bypasses turnSetup, so both runtime paths must carry the effort snapshot. */
-    const optimisticTopicMetadata = newTopicReasoningSnapshot
-      ? { ...workingDirectoryMetadata, ...newTopicReasoningSnapshot }
-      : workingDirectoryMetadata;
+    const optimisticTopicMetadata: ChatTopicMetadata = {
+      ...workingDirectoryMetadata,
+      ...newTopicReasoningSnapshot,
+      ...(willCreateNewTopic && operationContext.agentId
+        ? { sandboxProvider: getPendingSandboxProvider(operationContext.agentId) }
+        : {}),
+    };
 
     // The sidebar row was already inserted (title + model) before the awaits
     // above; the cwd/repos metadata only resolves here, so patch it on now.

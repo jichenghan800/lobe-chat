@@ -641,7 +641,7 @@ export class GatewayActionImpl {
     // it — the server can't read client-local state, and without this a
     // workspace hetero run's first send would fall back to the device default
     // cwd instead of the member's pick.
-    const initialTopicMetadata =
+    const workingDirectoryMetadata =
       pendingRepos.length > 0
         ? {
             repos: pendingRepos,
@@ -655,6 +655,13 @@ export class GatewayActionImpl {
               workingDirectoryConfig: optimisticTopic.metadata.workingDirectoryConfig,
             }
           : undefined;
+
+    const initialTopicMetadata = isCreateNewTopic
+      ? {
+          ...workingDirectoryMetadata,
+          sandboxProvider: optimisticTopic?.metadata?.sandboxProvider,
+        }
+      : undefined;
 
     // Honour user-initiated cancel during phase-1 init: while we await the
     // execAgentTask round-trip the caller's loading state (e.g. `sendMessage`)

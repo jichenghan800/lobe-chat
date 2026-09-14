@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { getTestDB } from '../../core/getTestDB';
-import { cottiSandboxReservations, cottiSandboxSettings } from '../../schemas';
+import { cottiSandboxReservations, cottiSandboxSettings, topics, users } from '../../schemas';
 import { CottiSandboxModel } from '../cottiSandbox';
 
 const db = await getTestDB();
@@ -66,5 +66,26 @@ describe('sandbox admission', () => {
     for (const limit of [0, -1, 1.5, 101, NaN])
       await expect(model.updateConfig(limit, 'admin')).rejects.toThrow();
     expect((await model.getConfig()).maxSessions).toBe(1);
+  });
+  it('resolves the persisted topic provider and enforces ownership and deletion', async () => {
+    await db.insert(users).values([{ id: 'sandbox-owner' }, { id: 'sandbox-other' }]);
+    try {
+      await db.insert(topics).values([
+        { id: 'sandbox-self', userId: 'sandbox-owner', metadata: { sandboxProvider: 'onlyboxes' } },
+        { id: 'sandbox-legacy', userId: 'sandbox-owner' },
+        { id: 'sandbox-deleted', userId: 'sandbox-owner', deletedAt: new Date() },
+      ]);
+      expect(await model.getTopicProvider('sandbox-owner', 'sandbox-self')).toBe('onlyboxes');
+      expect(await model.getTopicProvider('sandbox-owner', 'sandbox-legacy')).toBeUndefined();
+      await expect(model.getTopicProvider('sandbox-other', 'sandbox-self')).rejects.toThrow(
+        'access denied',
+      );
+      await expect(model.getTopicProvider('sandbox-owner', 'sandbox-deleted')).rejects.toThrow(
+        'not found',
+      );
+    } finally {
+      await db.delete(users).where(eq(users.id, 'sandbox-owner'));
+      await db.delete(users).where(eq(users.id, 'sandbox-other'));
+    }
   });
 });

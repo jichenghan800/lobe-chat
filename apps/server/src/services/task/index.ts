@@ -20,6 +20,7 @@ import type {
 import { TRPCError } from '@trpc/server';
 
 import { AgentModel } from '@/database/models/agent';
+import { CottiSandboxModel } from '@/database/models/cottiSandbox';
 import { ProjectModel } from '@/database/models/project';
 import { RbacModel } from '@/database/models/rbac';
 import {
@@ -159,6 +160,13 @@ export class TaskService {
       const parent = await this.resolveOrThrow(createData.parentTaskId);
       createData.parentTaskId = parent.id;
       parentVisibility = parent.visibility;
+      const parentConfig = parent.config as Record<string, unknown> | null;
+      if (
+        parentConfig?.sandboxProvider === 'onlyboxes' ||
+        parentConfig?.sandboxProvider === 'market'
+      ) {
+        createData.config = { ...createData.config, sandboxProvider: parentConfig.sandboxProvider };
+      }
       if (createData.projectId && createData.projectId !== parent.projectId) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -172,6 +180,16 @@ export class TaskService {
       const project = await this.projectModel.findManageableById(createData.projectId);
       if (!project) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
       createData.identifierPrefix ??= project.identifier;
+    }
+
+    // Pin the origin's execution environment so scheduled runs do not silently
+    // move to cloud, even after the source conversation is removed.
+    if (input.context?.origin?.topicId) {
+      const sandboxProvider = await new CottiSandboxModel(this.db).getTopicProvider(
+        this.userId,
+        input.context.origin.topicId,
+      );
+      createData.config = { ...createData.config, sandboxProvider: sandboxProvider ?? 'market' };
     }
 
     // Pull the model/provider snapshot and the agent's visibility in a single

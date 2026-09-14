@@ -5,6 +5,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SendButtonHandler } from '@/features/ChatInput/store/initialState';
+import { setPendingSandboxProvider } from '@/store/chat/pendingSandboxProvider';
 
 import { useSend } from './useSend';
 
@@ -176,6 +177,7 @@ vi.mock('@/store/task', () => ({
 
 describe('Home InputArea useSend', () => {
   beforeEach(() => {
+    setPendingSandboxProvider('agt_custom', 'market');
     routerMock.push.mockReset();
     routerMock.replace.mockReset();
     sendMessageMock.mockReset();
@@ -201,41 +203,46 @@ describe('Home InputArea useSend', () => {
     activeWorkspaceIdMock.value = null;
   });
 
-  it('creates and starts a private workspace task with the selected Agent', async () => {
-    activeWorkspaceIdMock.value = 'workspace-1';
-    globalState.systemStatus.homeSelectedAgentId = 'agt_custom';
-    homeState.ungroupedAgents = [{ id: 'agt_custom', type: 'agent' }];
-    agentState.agentMap.agt_custom = {};
-    createTaskMock.mockResolvedValue({
-      assigneeAgentId: 'agt_custom',
-      identifier: 'T-26',
-    });
-    runTaskMock.mockResolvedValue({ topicId: 'tpc-26' });
-    const { result } = renderHook(() => useSend('task'));
-    const params: Parameters<SendButtonHandler>[0] = {
-      clearContent: vi.fn(),
-      editor: {} as Parameters<SendButtonHandler>[0]['editor'],
-      getEditorData: () => ({ type: 'doc' }),
-      getMarkdownContent: () => 'Prepare the weekly report',
-    };
+  it.each(['market', 'onlyboxes'] as const)(
+    'creates a task with the selected %s sandbox',
+    async (sandboxProvider) => {
+      setPendingSandboxProvider('agt_custom', sandboxProvider);
+      activeWorkspaceIdMock.value = 'workspace-1';
+      globalState.systemStatus.homeSelectedAgentId = 'agt_custom';
+      homeState.ungroupedAgents = [{ id: 'agt_custom', type: 'agent' }];
+      agentState.agentMap.agt_custom = {};
+      createTaskMock.mockResolvedValue({
+        assigneeAgentId: 'agt_custom',
+        identifier: 'T-26',
+      });
+      runTaskMock.mockResolvedValue({ topicId: 'tpc-26' });
+      const { result } = renderHook(() => useSend('task'));
+      const params: Parameters<SendButtonHandler>[0] = {
+        clearContent: vi.fn(),
+        editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+        getEditorData: () => ({ type: 'doc' }),
+        getMarkdownContent: () => 'Prepare the weekly report',
+      };
 
-    await act(async () => {
-      await result.current.send(params);
-    });
+      await act(async () => {
+        await result.current.send(params);
+      });
 
-    expect(createTaskMock).toHaveBeenCalledWith({
-      assigneeAgentId: 'agt_custom',
-      editorData: { type: 'doc' },
-      instruction: 'Prepare the weekly report',
-      name: 'Prepare the weekly report',
-      visibility: 'private',
-    });
-    expect(runTaskMock).toHaveBeenCalledWith('T-26', undefined, { throwOnError: true });
-    expect(sendMessageMock).not.toHaveBeenCalled();
-    expect(toggleTaskAgentPanelMock).toHaveBeenCalledWith(true);
-    expect(routerMock.push).toHaveBeenCalledWith('/tasks?agentId=agt_custom&topicId=tpc-26');
-    expect(clearContentMock).toHaveBeenCalledTimes(1);
-  });
+      expect(createTaskMock).toHaveBeenCalledWith({
+        assigneeAgentId: 'agt_custom',
+        config: { sandboxProvider },
+        editorData: { type: 'doc' },
+        instruction: 'Prepare the weekly report',
+        name: 'Prepare the weekly report',
+        visibility: 'private',
+      });
+      expect(runTaskMock).toHaveBeenCalledWith('T-26', undefined, { throwOnError: true });
+      expect(sendMessageMock).not.toHaveBeenCalled();
+      expect(toggleTaskAgentPanelMock).toHaveBeenCalledWith(true);
+      expect(routerMock.push).toHaveBeenCalledWith('/tasks?agentId=agt_custom&topicId=tpc-26');
+      expect(clearContentMock).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('keeps the complete draft when the task row could not be created', async () => {
     createTaskMock.mockResolvedValue(null);

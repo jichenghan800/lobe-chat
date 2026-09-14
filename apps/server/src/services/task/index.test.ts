@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AgentModel } from '@/database/models/agent';
 import { BriefModel } from '@/database/models/brief';
+import { CottiSandboxModel } from '@/database/models/cottiSandbox';
 import { RbacModel } from '@/database/models/rbac';
 import { TaskModel } from '@/database/models/task';
 import { TaskTopicModel } from '@/database/models/taskTopic';
@@ -20,6 +21,8 @@ const { cancelScheduled, scheduleNextTopic } = vi.hoisted(() => ({
 vi.mock('@/database/models/agent', () => ({
   AgentModel: vi.fn(),
 }));
+
+vi.mock('@/database/models/cottiSandbox', () => ({ CottiSandboxModel: vi.fn() }));
 
 vi.mock('@/database/models/task', () => ({
   TaskModel: vi.fn(),
@@ -1691,6 +1694,26 @@ describe('TaskService', () => {
         seq: 1,
       }));
     });
+
+    it.each(['market', 'onlyboxes'] as const)(
+      'pins %s from the originating topic',
+      async (sandboxProvider) => {
+        const getTopicProvider = vi.fn().mockResolvedValue(sandboxProvider);
+        vi.mocked(CottiSandboxModel).mockImplementation(function () {
+          return { getTopicProvider } as unknown as CottiSandboxModel;
+        });
+        await new TaskService(db, userId).createTask({
+          instruction: 'sandbox regression',
+          context: { origin: { topicId: 'origin-topic' } },
+        });
+        expect(getTopicProvider).toHaveBeenCalledWith(userId, 'origin-topic');
+        expect(mockTaskModel.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            config: expect.objectContaining({ sandboxProvider }),
+          }),
+        );
+      },
+    );
 
     it('rejects creating a public task with a private agent', async () => {
       mockAgentModel.existsById.mockResolvedValue(true);

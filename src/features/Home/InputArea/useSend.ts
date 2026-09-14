@@ -16,6 +16,7 @@ import { agentService } from '@/services/agent';
 import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
+import { getPendingSandboxProvider } from '@/store/chat/pendingSandboxProvider';
 import { fileChatSelectors, useFileStore } from '@/store/file';
 import { useGlobalStore } from '@/store/global';
 import { useHomeStore } from '@/store/home';
@@ -164,6 +165,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
           if (!taskRun) {
             const created = await createTask({
               assigneeAgentId: selectedAgentId,
+              config: { sandboxProvider: getPendingSandboxProvider(selectedAgentId) },
               editorData,
               instruction: message,
               name: taskNameFromMessage(message),

@@ -12,6 +12,7 @@ import { messageService } from '@/services/message';
 import * as agentGroupStore from '@/store/agentGroup';
 import { useAiInfraStore } from '@/store/aiInfra';
 import { aiModelSelectors } from '@/store/aiInfra/slices/aiModel/selectors';
+import { setPendingSandboxProvider } from '@/store/chat/pendingSandboxProvider';
 import { setPendingTopicRepos } from '@/store/chat/pendingTopicRepos';
 import { operationSelectors } from '@/store/chat/slices/operation/selectors';
 import { topicSelectors } from '@/store/chat/slices/topic/selectors';
@@ -103,6 +104,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  setPendingSandboxProvider(TEST_IDS.SESSION_ID, 'market');
   executeHeterogeneousAgentMock.mockReset();
   mockConstEnv.isDesktop = false;
   setPendingTopicRepos(TEST_IDS.SESSION_ID, []);
@@ -1557,72 +1559,79 @@ describe('ConversationLifecycle actions', () => {
         ).toBe(false);
       });
 
-      it('should snapshot the agent model onto the newTopic (top-level) when the send creates the topic', async () => {
-        const { result } = renderHook(() => useChatStore());
-        const agentId = TEST_IDS.SESSION_ID;
-        vi.spyOn(aiModelSelectors, 'isModelHasReasoningExtendParams').mockReturnValue(() => true);
-        let loaded = false;
-        vi.spyOn(aiModelSelectors, 'isModelReasoningConfigLoaded').mockReturnValue(() => loaded);
-        vi.spyOn(useAiInfraStore.getState(), 'ensureModelReasoningConfig').mockImplementation(
-          async () => {
-            await Promise.resolve();
-            loaded = true;
-          },
-        );
-        vi.spyOn(aiModelSelectors, 'modelReasoningConfig').mockReturnValue(() => ({
-          reasoningEffort: 'high',
-        }));
-        const newTopicId = TEST_IDS.NEW_TOPIC_ID;
+      it.each(['market', 'onlyboxes'] as const)(
+        'should snapshot the model and %s sandbox onto a new topic',
+        async (sandboxProvider) => {
+          const { result } = renderHook(() => useChatStore());
+          const agentId = TEST_IDS.SESSION_ID;
+          setPendingSandboxProvider(agentId, sandboxProvider);
+          vi.spyOn(aiModelSelectors, 'isModelHasReasoningExtendParams').mockReturnValue(() => true);
+          let loaded = false;
+          vi.spyOn(aiModelSelectors, 'isModelReasoningConfigLoaded').mockReturnValue(() => loaded);
+          vi.spyOn(useAiInfraStore.getState(), 'ensureModelReasoningConfig').mockImplementation(
+            async () => {
+              await Promise.resolve();
+              loaded = true;
+            },
+          );
+          vi.spyOn(aiModelSelectors, 'modelReasoningConfig').mockReturnValue(() => ({
+            reasoningEffort: 'high',
+          }));
+          const newTopicId = TEST_IDS.NEW_TOPIC_ID;
 
-        act(() => {
-          useChatStore.setState({
-            activeAgentId: agentId,
-            activeTopicId: undefined,
-            executeClientAgent: vi.fn().mockResolvedValue(undefined),
-            summaryTopicTitle: vi.fn().mockResolvedValue(undefined),
+          act(() => {
+            useChatStore.setState({
+              activeAgentId: agentId,
+              activeTopicId: undefined,
+              executeClientAgent: vi.fn().mockResolvedValue(undefined),
+              summaryTopicTitle: vi.fn().mockResolvedValue(undefined),
+            });
           });
-        });
 
-        const sendMessageInServerSpy = vi
-          .spyOn(aiChatService, 'sendMessageInServer')
-          .mockResolvedValue({
-            assistantMessageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
-            isCreateNewTopic: true,
-            messages: [
-              createMockMessage({
-                id: TEST_IDS.USER_MESSAGE_ID,
-                role: 'user',
-                topicId: newTopicId,
-              }),
-              createMockMessage({
-                id: TEST_IDS.ASSISTANT_MESSAGE_ID,
-                role: 'assistant',
-                topicId: newTopicId,
-              }),
-            ],
-            topicId: newTopicId,
-            topics: { items: [{ id: newTopicId, title: 'Server Topic' }], total: 1 },
-            userMessageId: TEST_IDS.USER_MESSAGE_ID,
-          } as any);
+          const sendMessageInServerSpy = vi
+            .spyOn(aiChatService, 'sendMessageInServer')
+            .mockResolvedValue({
+              assistantMessageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+              isCreateNewTopic: true,
+              messages: [
+                createMockMessage({
+                  id: TEST_IDS.USER_MESSAGE_ID,
+                  role: 'user',
+                  topicId: newTopicId,
+                }),
+                createMockMessage({
+                  id: TEST_IDS.ASSISTANT_MESSAGE_ID,
+                  role: 'assistant',
+                  topicId: newTopicId,
+                }),
+              ],
+              topicId: newTopicId,
+              topics: { items: [{ id: newTopicId, title: 'Server Topic' }], total: 1 },
+              userMessageId: TEST_IDS.USER_MESSAGE_ID,
+            } as any);
 
-        await act(async () => {
-          await result.current.sendMessage({
-            context: { agentId, threadId: null, topicId: null },
-            message: TEST_CONTENT.USER_MESSAGE,
+          await act(async () => {
+            await result.current.sendMessage({
+              context: { agentId, threadId: null, topicId: null },
+              message: TEST_CONTENT.USER_MESSAGE,
+            });
           });
-        });
 
-        expect(sendMessageInServerSpy).toHaveBeenCalledWith(
-          expect.objectContaining({
-            newTopic: expect.objectContaining({
-              metadata: expect.objectContaining({ reasoningConfig: { reasoningEffort: 'high' } }),
-              model: expect.any(String),
-              provider: expect.any(String),
+          expect(sendMessageInServerSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+              newTopic: expect.objectContaining({
+                metadata: expect.objectContaining({
+                  reasoningConfig: { reasoningEffort: 'high' },
+                  sandboxProvider,
+                }),
+                model: expect.any(String),
+                provider: expect.any(String),
+              }),
             }),
-          }),
-          expect.any(AbortController),
-        );
-      });
+            expect.any(AbortController),
+          );
+        },
+      );
 
       it('should stop the sidebar spinner after a gateway send creates the topic', async () => {
         const { result } = renderHook(() => useChatStore());
@@ -1932,6 +1941,7 @@ describe('ConversationLifecycle actions', () => {
             model: expect.any(String),
             provider: expect.any(String),
             metadata: {
+              sandboxProvider: 'market',
               repos: [selectedRepo],
               workingDirectory: selectedRepo,
               workingDirectoryConfig: { path: selectedRepo, repoType: 'github' },
@@ -1944,6 +1954,7 @@ describe('ConversationLifecycle actions', () => {
               model: expect.any(String),
               provider: expect.any(String),
               metadata: {
+                sandboxProvider: 'market',
                 repos: [selectedRepo],
                 workingDirectory: selectedRepo,
                 workingDirectoryConfig: { path: selectedRepo, repoType: 'github' },
@@ -2033,6 +2044,7 @@ describe('ConversationLifecycle actions', () => {
         // run executes in); the config keeps the SOURCE repo, which is what
         // By-Project groups on.
         const expectedMetadata = {
+          sandboxProvider: 'market',
           workingDirectory: worktreePath,
           workingDirectoryConfig: {
             git: { activeWorktree: worktreePath },
@@ -2099,6 +2111,7 @@ describe('ConversationLifecycle actions', () => {
           expect.objectContaining({
             optimisticTopic: expect.objectContaining({
               metadata: {
+                sandboxProvider: 'market',
                 workingDirectory: '/repo/default',
                 workingDirectoryConfig: { path: '/repo/default' },
               },
@@ -2152,6 +2165,7 @@ describe('ConversationLifecycle actions', () => {
           expect.objectContaining({
             newTopic: expect.objectContaining({
               metadata: {
+                sandboxProvider: 'market',
                 workingDirectory: '/repo/lobehub',
                 workingDirectoryConfig: { path: '/repo/lobehub' },
               },
@@ -2204,7 +2218,7 @@ describe('ConversationLifecycle actions', () => {
 
         expect(executeGatewayAgentSpy).toHaveBeenCalledWith(
           expect.objectContaining({
-            optimisticTopic: expect.not.objectContaining({ metadata: expect.anything() }),
+            optimisticTopic: expect.objectContaining({ metadata: { sandboxProvider: 'market' } }),
           }),
         );
       });
@@ -2299,6 +2313,7 @@ describe('ConversationLifecycle actions', () => {
             expect.objectContaining({
               newTopic: expect.objectContaining({
                 metadata: {
+                  sandboxProvider: 'market',
                   workingDirectory: '/repo/device-default',
                   workingDirectoryConfig: { path: '/repo/device-default' },
                 },

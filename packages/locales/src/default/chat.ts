@@ -1,4 +1,12 @@
 export default {
+  'heteroAgent.executionTarget.selfHosted': 'Self-hosted sandbox',
+  'heteroAgent.executionTarget.selfHostedDesc': 'Run in a temporary sandbox on the platform server',
+  'heteroAgent.executionTarget.switchTitle': 'Start a new topic to switch sandbox?',
+  'heteroAgent.executionTarget.switchDesc':
+    'The current topic and its files will stay in their original sandbox.',
+  'heteroAgent.executionTarget.newTopic': 'New topic',
+  'heteroAgent.executionTarget.selectFailed':
+    'Could not change the execution environment. Please retry.',
   'goalExperiment.continuedFrom': 'Continued exploration',
   'goalExperiment.drill': 'Explore inside',
   'goalExperiment.drillNamed': 'Explore inside: {{title}}',

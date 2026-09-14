@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 
 import type { SandboxCallToolResult } from '@lobechat/builtin-tool-cloud-sandbox';
 import { isRecord } from '@lobechat/utils';
@@ -16,6 +16,11 @@ import type {
   SandboxProviderFileExportResult,
   SandboxServiceOptions,
 } from '../types';
+import {
+  backgroundCommand,
+  cancelBackgroundCommand,
+  parseBackgroundCommandId,
+} from './onlyboxesBackground';
 
 const log = debug('lobe-server:sandbox:onlyboxes');
 
@@ -333,12 +338,13 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     }
 
     if (params.background === true) {
+      const runId = randomUUID();
       const task = await this.submitTask(
         'terminalExec',
         {
-          command,
+          command: backgroundCommand(command, runId),
           create_if_missing: true,
-          lease_ttl_sec: this.leaseTTLSec,
+          lease_ttl_sec: this.leaseForTimeout(this.timeout(params)),
           session_id: this.sessionId,
         },
         { mode: 'async', timeoutMs: this.timeout(params) },
@@ -352,8 +358,8 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
 
       return {
         result: {
-          commandId: task.task_id,
-          shell_id: task.task_id,
+          commandId: `${task.task_id}~${runId}`,
+          shell_id: `${task.task_id}~${runId}`,
         },
         success: true,
       };
@@ -537,9 +543,13 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     const commandId = String(params.commandId || '');
     if (!commandId) return this.errorResult('commandId is required');
 
-    const task = await this.request<OnlyboxesTaskResponse>(`/api/v1/tasks/${commandId}`, {
-      method: 'GET',
-    });
+    const taskId = parseBackgroundCommandId(commandId)?.taskId ?? commandId;
+    const task = await this.request<OnlyboxesTaskResponse>(
+      `/api/v1/tasks/${encodeURIComponent(taskId)}`,
+      {
+        method: 'GET',
+      },
+    );
 
     const running =
       task.status === 'running' || task.status === 'pending' || task.status === 'dispatched';
@@ -563,22 +573,13 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
   }
 
   private async killCommand(params: Record<string, unknown>): Promise<SandboxCallToolResult> {
-    const commandId = String(params.commandId || '');
-    if (!commandId) return this.errorResult('commandId is required');
-
-    const task = await this.request<OnlyboxesTaskResponse>(`/api/v1/tasks/${commandId}/cancel`, {
-      method: 'POST',
-    });
-
-    return {
-      error: task.error
-        ? { message: task.error.message || task.error.code || 'Failed to cancel task' }
-        : undefined,
-      result: {
-        success: !task.error,
-      },
-      success: !task.error,
-    };
+    const command = parseBackgroundCommandId(String(params.commandId || ''));
+    if (!command) return this.errorResult('This command has no managed background process to stop');
+    const stopped = await this.execTerminal(cancelBackgroundCommand(command.runId), 15_000);
+    if (stopped.exit_code !== 0) {
+      return this.errorResult(stopped.stderr || 'Failed to stop the background process');
+    }
+    return { result: { success: true }, success: true };
   }
 
   private async runJsonScript(
@@ -622,12 +623,18 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     }
   }
 
+  private leaseForTimeout(timeoutMs: number) {
+    // Every command renews the idle lease. Keep it beyond the command deadline,
+    // including background dispatch, so the lease cannot interrupt active work.
+    return Math.max(this.leaseTTLSec, Math.ceil(timeoutMs / 1000) + 60);
+  }
+
   private async execTerminal(command: string, timeoutMs = DEFAULT_TIMEOUT_MS) {
     return this.request<TerminalExecResult>('/api/v1/commands/terminal', {
       body: JSON.stringify({
         command,
         create_if_missing: true,
-        lease_ttl_sec: this.leaseTTLSec,
+        lease_ttl_sec: this.leaseForTimeout(timeoutMs),
         session_id: this.sessionId,
         timeout_ms: timeoutMs,
       }),
@@ -677,7 +684,10 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
       createsSession && this.capacity
         ? await this.capacity.run(
             {
-              leaseTtlMs: this.leaseTTLSec * 1000,
+              leaseTtlMs:
+                this.leaseForTimeout(
+                  typeof payload?.timeout_ms === 'number' ? payload.timeout_ms : DEFAULT_TIMEOUT_MS,
+                ) * 1000,
               sessionKey: sha256(
                 JSON.stringify([this.baseUrl, this.jitIssuer, this.options.userId, this.sessionId]),
               ),

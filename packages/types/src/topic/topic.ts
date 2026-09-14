@@ -113,6 +113,8 @@ export interface OnboardingSessionSnapshot {
   version: number;
 }
 
+export type TopicSandboxProvider = 'market' | 'onlyboxes';
+
 export interface ChatTopicMetadata {
   /** Watermark written by the background topic-summary workflow. */
   autoSummary?: {
@@ -303,6 +305,8 @@ export interface ChatTopicMetadata {
     startedAt?: string;
     threadId?: string | null;
   } | null;
+  /** Fixed at creation: temporary files must never silently move between providers. */
+  sandboxProvider?: TopicSandboxProvider;
   /**
    * A deferred agent run on this topic. Present iff the topic status is
    * `scheduled`. Set to `null` to clear it (same clear-convention as
@@ -588,10 +592,12 @@ export const chatTopicMetadataUpdateSchema = z.object({
  * Metadata a client may seed when creating a topic: the pinned reasoning
  * snapshot taken alongside the pinned model (see `snapshotAgentModel`).
  */
-export const chatTopicCreateMetadataSchema = chatTopicMetadataUpdateSchema.pick({
-  heteroEffort: true,
-  reasoningConfig: true,
-});
+export const chatTopicCreateMetadataSchema = chatTopicMetadataUpdateSchema
+  .pick({
+    heteroEffort: true,
+    reasoningConfig: true,
+  })
+  .extend({ sandboxProvider: z.enum(['market', 'onlyboxes']).optional() });
 
 export interface ChatTopicSummary {
   content: string;

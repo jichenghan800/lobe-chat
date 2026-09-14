@@ -265,7 +265,15 @@ export class TaskRunnerService {
         title: extraPrompt ? extraPrompt.slice(0, 100) : task.name || task.identifier,
         trigger: TopicTrigger.RunTask,
         userInterventionConfig: { approvalMode: 'headless' },
-        ...(continueTopicId && { appContext: { topicId: continueTopicId } }),
+        ...(continueTopicId
+          ? { appContext: { topicId: continueTopicId } }
+          : taskConfig.sandboxProvider === 'market' || taskConfig.sandboxProvider === 'onlyboxes'
+            ? {
+                appContext: {
+                  initialTopicMetadata: { sandboxProvider: taskConfig.sandboxProvider },
+                },
+              }
+            : {}),
       });
 
       if (!result.success) {

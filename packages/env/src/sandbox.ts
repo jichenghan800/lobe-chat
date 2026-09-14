@@ -6,6 +6,7 @@ const emptyStringToUndefined = (value: unknown) => (value === '' ? undefined : v
 export const getSandboxConfig = () => {
   return createEnv({
     runtimeEnv: {
+      ONLYBOXES_ENABLED: process.env.ONLYBOXES_ENABLED,
       ONLYBOXES_BASE_URL: process.env.ONLYBOXES_BASE_URL,
       ONLYBOXES_JIT_ISSUER: process.env.ONLYBOXES_JIT_ISSUER,
       ONLYBOXES_JIT_SIGNING_KEY: process.env.ONLYBOXES_JIT_SIGNING_KEY,
@@ -14,6 +15,10 @@ export const getSandboxConfig = () => {
       SANDBOX_PROVIDER: process.env.SANDBOX_PROVIDER,
     },
     server: {
+      ONLYBOXES_ENABLED: z
+        .string()
+        .optional()
+        .transform((value) => value === '1'),
       ONLYBOXES_BASE_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
       ONLYBOXES_JIT_ISSUER: z.preprocess(emptyStringToUndefined, z.string().optional()),
       ONLYBOXES_JIT_SIGNING_KEY: z.preprocess(emptyStringToUndefined, z.string().optional()),

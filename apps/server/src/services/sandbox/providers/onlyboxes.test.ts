@@ -47,6 +47,46 @@ describe('OnlyboxesSandboxProvider', () => {
     vi.useRealTimers();
   });
 
+  it('stops a managed background process in its sandbox instead of only cancelling the Console record', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ task_id: 'task-1', status: 'pending' })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ exit_code: 0, stdout: 'stopped' })));
+    vi.stubGlobal('fetch', fetchMock);
+    const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+    const provider = new OnlyboxesSandboxProvider({
+      marketService: {} as MarketService,
+      topicId: 'topic',
+      userId: 'user',
+    });
+    const started = await provider.callTool('runCommand', {
+      command: 'sleep 10',
+      background: true,
+    });
+    const commandId = (started.result as { commandId: string }).commandId;
+    expect(commandId).toMatch(/^task-1~[a-f\d-]{36}$/);
+    expect((await provider.callTool('killCommand', { commandId })).success).toBe(true);
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      'https://onlyboxes.example.com/api/v1/commands/terminal',
+    );
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(body.session_id).toBe('lobe-user-topic');
+    expect(body.command).toContain(commandId.split('~')[1]);
+  });
+
+  it('does not claim to stop an unmanaged legacy command', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+    const provider = new OnlyboxesSandboxProvider({
+      marketService: {} as MarketService,
+      topicId: 'topic',
+      userId: 'user',
+    });
+    expect((await provider.callTool('killCommand', { commandId: 'task-1' })).success).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it.each(['runCommand', 'executeCode', 'writeLocalFile', 'readLocalFile'])(
     'returns a structured capacity error without sending %s to OnlyBoxes',
     async (tool) => {
@@ -112,7 +152,7 @@ describe('OnlyboxesSandboxProvider', () => {
         body: JSON.stringify({
           command: 'echo ok',
           create_if_missing: true,
-          lease_ttl_sec: 120,
+          lease_ttl_sec: 180,
           session_id: 'lobe-user-1-topic-1',
           timeout_ms: 120_000,
         }),

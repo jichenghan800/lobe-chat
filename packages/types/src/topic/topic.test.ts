@@ -173,3 +173,17 @@ describe('parseTopicScheduledRun', () => {
     expect(parseTopicScheduledRun(null)).toBeNull();
   });
 });
+
+describe('sandbox selection is pinned at topic creation', () => {
+  it('accepts a valid creation choice but excludes it from subsequent metadata updates', () => {
+    expect(chatTopicCreateMetadataSchema.parse({ sandboxProvider: 'onlyboxes' })).toEqual({
+      sandboxProvider: 'onlyboxes',
+    });
+    expect(chatTopicMetadataUpdateSchema.parse({ sandboxProvider: 'market' })).not.toHaveProperty(
+      'sandboxProvider',
+    );
+    expect(chatTopicCreateMetadataSchema.safeParse({ sandboxProvider: 'other' }).success).toBe(
+      false,
+    );
+  });
+});

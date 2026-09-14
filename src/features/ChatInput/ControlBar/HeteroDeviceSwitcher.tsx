@@ -23,6 +23,7 @@ import InstantSwitch from '@/components/InstantSwitch';
 import { DOWNLOAD_URL } from '@/const/url';
 import { useChatInputResourceAccess } from '@/features/ChatInput/hooks/useChatInputResourceAccess';
 import { useLocalSandboxCapability } from '@/features/ChatInput/hooks/useLocalSandboxCapability';
+import { useSandboxSelection } from '@/features/ChatInput/hooks/useSandboxSelection';
 import { useSelectExecutionTarget } from '@/features/ChatInput/hooks/useSelectExecutionTarget';
 import { useDeviceList } from '@/features/DeviceManager/useDeviceList';
 import {
@@ -537,7 +538,7 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
     async (target: DeviceExecutionTarget, deviceId?: string, localSandbox?: boolean) => {
       setOpen(false);
       if (localSandbox) await ensureSandboxWorkingDirectory();
-      await selectExecutionTarget(target, deviceId, { localSandbox });
+      return selectExecutionTarget(target, deviceId, { localSandbox });
     },
     [ensureSandboxWorkingDirectory, selectExecutionTarget],
   );
@@ -604,6 +605,10 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
     canShowExecutionTargetSelector,
     isWorkspacePreferenceLoading,
   ]);
+
+  const sandboxSelection = useSandboxSelection(agentId, async () => {
+    return handleSelect('sandbox');
+  });
 
   if (!canShowExecutionTarget) return null;
 
@@ -694,6 +699,14 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
     chipLabel = t('heteroAgent.executionTarget.title');
   }
 
+  if (
+    !isDesktop &&
+    chipExecutionTarget === 'sandbox' &&
+    sandboxSelection.provider === 'onlyboxes'
+  ) {
+    chipLabel = t('heteroAgent.executionTarget.selfHosted');
+  }
+
   const isActive = (target: DeviceExecutionTarget, deviceId?: string) => {
     if (target === 'device') return executionTarget === 'device' && boundDeviceId === deviceId;
     // The two local rows share one target and are told apart by the sandbox
@@ -751,7 +764,7 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
 
   const sandboxOption = (
     <OptionRow
-      active={isActive('sandbox')}
+      active={isActive('sandbox') && (isDesktop || sandboxSelection.provider === 'market')}
       disabled={!supportsSandbox}
       icon={<ExecutionTargetIcon target={'sandbox'} />}
       label={t('heteroAgent.executionTarget.sandbox')}
@@ -761,7 +774,7 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
           : 'heteroAgent.executionTarget.sandboxUnsupported',
         { name: heteroType ? HETEROGENEOUS_TYPE_LABELS[heteroType] : undefined },
       )}
-      onClick={() => void handleSelect('sandbox')}
+      onClick={() => (isDesktop ? void handleSelect('sandbox') : sandboxSelection.select('market'))}
     />
   );
 
@@ -957,6 +970,16 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
         <span className={styles.headerTitle}>{t('heteroAgent.executionTarget.title')}</span>
       </div>
       {sandboxOption}
+      {sandboxSelection.selfHostedAvailable ? (
+        <OptionRow
+          active={isActive('sandbox') && sandboxSelection.provider === 'onlyboxes'}
+          desc={t('heteroAgent.executionTarget.selfHostedDesc')}
+          disabled={!supportsSandbox}
+          icon={<ExecutionTargetIcon target={'sandbox'} />}
+          label={t('heteroAgent.executionTarget.selfHosted')}
+          onClick={() => sandboxSelection.select('onlyboxes')}
+        />
+      ) : null}
     </Flexbox>
   );
 

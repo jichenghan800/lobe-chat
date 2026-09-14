@@ -1,0 +1,10 @@
+[Unit]
+Description=LingShu OnlyBoxes isolated networks
+After=docker.service
+Requires=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/lobechat-v2.2.17/src/_custom/deploy/onlyboxes-dev/network.py
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target

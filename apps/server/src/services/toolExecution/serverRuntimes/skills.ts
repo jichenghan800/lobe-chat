@@ -231,7 +231,7 @@ class SkillServerRuntimeService implements SkillRuntimeService {
     }
 
     try {
-      const sandboxService = createSandboxService({
+      const sandboxService = await createSandboxService({
         fileService: this.fileService,
         marketService: this.marketService,
         serverDB: this.serverDB,
@@ -564,7 +564,7 @@ class SkillServerRuntimeService implements SkillRuntimeService {
         );
       }
 
-      const sandboxService = createSandboxService({
+      const sandboxService = await createSandboxService({
         fileService: this.fileService,
         marketService: this.marketService,
         serverDB: this.serverDB,
@@ -612,7 +612,7 @@ class SkillServerRuntimeService implements SkillRuntimeService {
     }
 
     try {
-      const sandboxService = createSandboxService({
+      const sandboxService = await createSandboxService({
         fileService: this.fileService,
         marketService: this.marketService,
         topicId: this.topicId,

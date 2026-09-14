@@ -517,7 +517,7 @@ describe('useSelectExecutionTarget', () => {
       };
       const { result } = renderHook(() => useSelectExecutionTarget('agent-id'));
 
-      await result.current('sandbox');
+      expect(await result.current('sandbox')).toBe(false);
 
       expect(testState.agent.updateAgentConfigById).toHaveBeenCalledTimes(1);
       expect(testState.user.updateWorkspaceUserPreference).not.toHaveBeenCalled();
