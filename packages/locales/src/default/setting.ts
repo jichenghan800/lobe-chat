@@ -1,4 +1,6 @@
 export default {
+  'platformManagement.users.group': 'User group',
+  'platformManagement.users.defaultGroup': 'Default group',
   'platformManagement.sections.sandbox': 'Sandboxes',
   'platformManagement.sandbox.title': 'Self-hosted sandbox capacity',
   'platformManagement.sandbox.limit': 'Maximum retained sessions',

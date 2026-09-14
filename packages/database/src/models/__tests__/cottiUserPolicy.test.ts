@@ -22,18 +22,21 @@ afterEach(async () => {
 describe('administrator-owned user policy', () => {
   it('defaults to ordinary Chat and inherited budget, isolates users and supports independent fields', async () => {
     expect(await model.get(ids[0])).toEqual({
+      groupId: null,
       agentEnabled: false,
       vip: false,
       topicLimitFen: null,
     });
     await model.update(ids[0], { agentEnabled: true, vip: false, topicLimitFen: 500 }, 'admin');
     expect(await model.get(ids[1])).toEqual({
+      groupId: null,
       agentEnabled: false,
       vip: false,
       topicLimitFen: null,
     });
     await model.update(ids[0], { agentEnabled: false, vip: true, topicLimitFen: null }, 'admin');
     expect(await model.get(ids[0])).toEqual({
+      groupId: null,
       agentEnabled: false,
       vip: true,
       topicLimitFen: null,
@@ -48,11 +51,22 @@ describe('administrator-owned user policy', () => {
       model.update(ids[0], { vip: true }, 'admin-a'),
       model.update(ids[0], { topicLimitFen: 1200 }, 'admin-b'),
     ]);
-    expect(await model.get(ids[0])).toEqual({ agentEnabled: true, vip: true, topicLimitFen: 1200 });
+    expect(await model.get(ids[0])).toEqual({
+      groupId: null,
+      agentEnabled: true,
+      vip: true,
+      topicLimitFen: 1200,
+    });
     await model.update(ids[0], { topicLimitFen: null }, 'admin');
-    expect(await model.get(ids[0])).toEqual({ agentEnabled: true, vip: true, topicLimitFen: null });
+    expect(await model.get(ids[0])).toEqual({
+      groupId: null,
+      agentEnabled: true,
+      vip: true,
+      topicLimitFen: null,
+    });
     await model.update(ids[1], { vip: true }, 'admin');
     expect(await model.get(ids[1])).toEqual({
+      groupId: null,
       agentEnabled: false,
       vip: true,
       topicLimitFen: null,

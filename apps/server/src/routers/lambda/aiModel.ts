@@ -190,7 +190,7 @@ export const aiModelRouter = router({
         input.id,
         options,
         (scopedOptions) => ctx.aiInfraRepos.getAiProviderModelList(input.id, scopedOptions),
-        () => ctx.cottiModelDisplayModel.getConfig(),
+        () => ctx.cottiModelDisplayModel.getUserConfig(ctx.userId),
       );
     }),
 

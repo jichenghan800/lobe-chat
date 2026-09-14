@@ -20,8 +20,12 @@ export interface ModelDisplayDefaults {
 
 export interface ModelDisplayConfig {
   agent: ModelDisplayItem[];
+  allowedImageModels?: string[];
+  /** Server-resolved user-group boundaries, never accepted by settings mutations. */
+  allowedProvider?: string;
   chat: ModelDisplayItem[];
   defaults?: ModelDisplayDefaults;
+  excludedProviders?: string[];
   /** Administrator-approved global retirements; never supplied by ordinary list edits. */
   retirements?: Array<{
     at: string;

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CottiUserGroupModel } from '@/database/models/cottiUserGroup';
 import { CottiUserPolicyModel } from '@/database/models/cottiUserPolicy';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
@@ -15,6 +16,7 @@ const member = authedProcedure
     opts.next({ ctx: { userPolicyModel: new CottiUserPolicyModel(opts.ctx.serverDB) } }),
   );
 export const cottiUsersRouter = router({
+  groups: admin.query(({ ctx }) => new CottiUserGroupModel(ctx.serverDB).list()),
   list: admin
     .input(
       z.object({
@@ -32,12 +34,14 @@ export const cottiUsersRouter = router({
       z
         .object({
           userId: z.string().min(1),
+          groupId: z.string().min(1).max(100).nullable().optional(),
           vip: z.boolean().optional(),
           agentEnabled: z.boolean().optional(),
           topicLimitFen: z.number().int().min(1).max(100_000_000).nullable().optional(),
         })
         .refine(
           (value) =>
+            value.groupId !== undefined ||
             value.vip !== undefined ||
             value.agentEnabled !== undefined ||
             value.topicLimitFen !== undefined,

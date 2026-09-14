@@ -260,7 +260,7 @@ export const agentGroupRouter = router({
         });
       }
       // Batch create virtual agents
-      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB);
+      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB, ctx.userId);
       const agentConfigs = input.agents.map((agent) => ({
         ...normalizeModel(agent),
         // `agentModel.batchCreate`'s config type is still `plugins?: string[]`
@@ -460,7 +460,7 @@ export const agentGroupRouter = router({
       const groupVisibility = input.groupConfig?.visibility ?? folderVisibility ?? undefined;
 
       // 1. Batch create virtual member agents
-      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB);
+      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB, ctx.userId);
       const normalizedSupervisor = normalizeModel(input.supervisorConfig ?? {});
       const memberConfigs = input.members.map((member) => ({
         ...normalizeModel(member),

@@ -8,7 +8,6 @@ import { ArrowDownIcon, ArrowUpIcon, SparklesIcon } from 'lucide-react';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCottiModelDisplayConfig } from '@/_custom/hooks/useCottiModelDisplayConfig';
 import { isCottiProfessionalChannel } from '@/_custom/registry/modelDisplayConfig';
 import { isVipModel, setModelVip } from '@/_custom/registry/userModelAccess';
 import AsyncError from '@/components/AsyncError';
@@ -100,7 +99,11 @@ const ModelDisplaySettings = memo(() => {
   const [scope, setScope] = useState<ModelDisplayScope>('chat');
   const [selectedOptionKey, setSelectedOptionKey] = useState<string>();
   const [retirementSource, setRetirementSource] = useState<string>();
-  const configSWR = useCottiModelDisplayConfig(true, true);
+  const configSWR = useClientDataSWR(
+    ['cotti', 'admin-model-display-config'],
+    () => cottiModelDisplayService.getAdminConfig(),
+    { revalidateOnFocus: true },
+  );
   const optionsSWR = useClientDataSWR(
     ['cotti', 'model-display-options'],
     () => cottiModelDisplayService.getOptions(),

@@ -9,6 +9,8 @@ import type {
 } from '@/types/modelDisplay';
 
 class CottiModelDisplayService {
+  getAdminConfig = async (): Promise<ModelDisplayConfig> =>
+    (await lambdaClient.cotti.modelDisplay.adminDetail.query()).data;
   previewTaskMigration = async (source: ModelDisplayModelRef) =>
     (await lambdaClient.cotti.modelDisplay.taskMigrationPreview.query(source)).data;
 

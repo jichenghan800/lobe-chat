@@ -177,7 +177,7 @@ export const aiProviderRouter = router({
       const state = await getCottiScopedAiProviderRuntimeState(
         ctx.userId,
         () => ctx.aiInfraRepos.getAiProviderRuntimeState(KeyVaultsGateKeeper.getUserKeyVaults),
-        () => ctx.cottiModelDisplayModel.getConfig(),
+        () => ctx.cottiModelDisplayModel.getUserConfig(ctx.userId),
       );
       const providerBindingAgentTypes = resolveProviderBindingAgentTypes(state);
 
@@ -214,7 +214,7 @@ export const aiProviderRouter = router({
       const state = await getCottiScopedAiProviderRuntimeState(
         ctx.userId,
         () => ctx.aiInfraRepos.getAiProviderRuntimeState(KeyVaultsGateKeeper.getUserKeyVaults),
-        () => ctx.cottiModelDisplayModel.getConfig(),
+        () => ctx.cottiModelDisplayModel.getUserConfig(ctx.userId),
       );
       const enabled = state.enabledAiProviders.some(({ id }) => id === input.id);
       const runtimeConfig = state.runtimeConfig[input.id];

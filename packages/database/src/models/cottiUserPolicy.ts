@@ -5,6 +5,7 @@ import type { LobeChatDatabase, Transaction } from '../type';
 
 export interface CottiUserPolicyInput {
   agentEnabled: boolean;
+  groupId?: string | null;
   topicLimitFen: number | null;
   vip: boolean;
 }
@@ -19,6 +20,7 @@ export class CottiUserPolicyModel {
       .where(eq(cottiUserPolicies.userId, userId))
       .limit(1);
     return {
+      groupId: row?.groupId ?? null,
       agentEnabled: row?.agentEnabled ?? false,
       topicLimitFen: row?.topicLimitFen ?? null,
       vip: row?.vip ?? false,
@@ -80,6 +82,7 @@ export class CottiUserPolicyModel {
       total: total.count,
       items: rows.map(({ policy, ...user }) => ({
         ...user,
+        groupId: policy?.groupId ?? null,
         vip: policy?.vip ?? false,
         agentEnabled: policy?.agentEnabled ?? false,
         topicLimitFen: policy?.topicLimitFen ?? null,

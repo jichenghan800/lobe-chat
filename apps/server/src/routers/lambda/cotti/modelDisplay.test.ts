@@ -54,6 +54,7 @@ beforeEach(() => {
   mocks.CottiModelDisplayModel.mockImplementation(function () {
     return {
       getConfig: mocks.getConfig,
+      getUserConfig: mocks.getConfig,
       getProfessionalModelStatus: mocks.getProfessionalModelStatus,
       switchProfessionalModel: mocks.switchProfessionalModel,
       updateConfig: mocks.updateConfig,

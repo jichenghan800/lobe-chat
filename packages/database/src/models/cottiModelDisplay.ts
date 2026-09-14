@@ -20,6 +20,7 @@ import type {
 import type { CottiModelDisplaySettingsItem, NewCottiModelDisplaySettings } from '../schemas';
 import { agents, cottiModelDisplaySettings } from '../schemas';
 import type { LobeChatDatabase } from '../type';
+import { CottiUserGroupModel } from './cottiUserGroup';
 
 const SETTINGS_ID = 'default';
 
@@ -112,6 +113,10 @@ export const getEnabledModelDisplayItems = (config: ModelDisplayConfig): ModelDi
 };
 
 export class CottiModelDisplayModel {
+  async getUserConfig(userId?: string) {
+    return new CottiUserGroupModel(this.db).modelDisplay(await this.getConfig(), userId);
+  }
+
   private db: LobeChatDatabase;
 
   constructor(db: LobeChatDatabase) {

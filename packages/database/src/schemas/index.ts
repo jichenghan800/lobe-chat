@@ -25,6 +25,7 @@ export * from './cottiPeople';
 export * from './cottiSandbox';
 export * from './cottiTopicBudget';
 export * from './cottiTopicPolicy';
+export * from './cottiUserGroup';
 export * from './cottiUserPolicy';
 export * from './device';
 export * from './documentComment';

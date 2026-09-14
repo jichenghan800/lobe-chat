@@ -135,6 +135,10 @@ export const UserManagementSettings = () => {
     () => cottiUsersService.list(input),
     { revalidateOnFocus: false },
   );
+  const { data: groups, error: groupsError } = useClientDataSWR(
+    ['cotti', 'userGroups'],
+    cottiUsersService.groups,
+  );
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
   const savingIds = useSingleton(() => new Set<string>());
   const saveField = async (
@@ -227,6 +231,25 @@ export const UserManagementSettings = () => {
               key: 'identity',
               width: 280,
               render: (_, user) => <UserIdentity user={user} />,
+            },
+            {
+              title: t('platformManagement.users.group'),
+              key: 'group',
+              width: 160,
+              render: (_, user) => (
+                <Select
+                  aria-label={t('platformManagement.users.group')}
+                  disabled={!groups || !!groupsError || pendingIds.has(user.id)}
+                  value={user.groupId || '__default__'}
+                  options={[
+                    { label: t('platformManagement.users.defaultGroup'), value: '__default__' },
+                    ...(groups || []).map((group) => ({ label: group.name, value: group.id })),
+                  ]}
+                  onChange={(value) =>
+                    void saveField(user.id, { groupId: value === '__default__' ? null : value })
+                  }
+                />
+              ),
             },
             {
               title: 'VIP',

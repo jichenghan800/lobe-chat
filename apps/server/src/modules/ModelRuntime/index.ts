@@ -37,6 +37,7 @@ import { DEFAULT_MODEL_PROVIDER_LIST } from 'model-bank/modelProviders';
 import { loadModels } from '@/business/client/model-bank/loadModels';
 import { getBusinessModelRuntimeHooks } from '@/business/server/model-runtime';
 import { AiProviderModel } from '@/database/models/aiProvider';
+import { CottiUserGroupModel } from '@/database/models/cottiUserGroup';
 import { type LobeChatDatabase } from '@/database/type';
 import { getLLMConfig } from '@/envs/llm';
 import { getServerGlobalConfig } from '@/server/globalConfig';
@@ -493,10 +494,14 @@ export const initModelRuntimeFromDB = async (
   const aiProviderModel = new AiProviderModel(db, userId, workspaceId);
 
   // Use getAiProviderById with KeyVaultsGateKeeper.getUserKeyVaults as decryptor
-  const providerConfig = await aiProviderModel.getAiProviderById(
+  const { group: channelGroup } = await new CottiUserGroupModel(db).resolve(userId);
+  const storedProviderConfig = await aiProviderModel.getAiProviderById(
     provider,
     KeyVaultsGateKeeper.getUserKeyVaults,
   );
+
+  // Restricted groups use the platform channel credentials, never personal endpoint/key overrides.
+  const providerConfig = channelGroup ? undefined : storedProviderConfig;
 
   // 2. Resolve the runtime provider for custom providers
   // For custom providers, use sdkType from settings (defaults to 'openai')

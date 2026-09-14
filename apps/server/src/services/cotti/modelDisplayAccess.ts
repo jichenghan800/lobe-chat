@@ -38,7 +38,16 @@ const applyModelDisplayItem = <T extends DisplayableModel>(
   providerId: string,
   model: T,
   displayItems: ReadonlyMap<string, ModelDisplayItem>,
+  config: ModelDisplayConfig,
 ): T | undefined => {
+  if (config.excludedProviders?.includes(providerId)) return;
+  if (config.allowedProvider) {
+    if (config.allowedProvider !== providerId) return;
+    if (model.type !== 'chat')
+      return model.type === 'image' && config.allowedImageModels?.includes(model.id)
+        ? model
+        : undefined;
+  }
   if (model.type !== 'chat') return model;
 
   const displayItem = displayItems.get(normalizeModelKey(providerId, model.id));
@@ -76,7 +85,7 @@ export const getCottiScopedAiProviderModelList = async (
   ]);
   const displayItems = createEnabledModelDisplayMap(config);
   const visibleModels = models
-    .map((model) => applyModelDisplayItem(providerId, model, displayItems))
+    .map((model) => applyModelDisplayItem(providerId, model, displayItems, config))
     .filter((model): model is AiProviderModelListItem => model !== undefined);
 
   return applyPagination(visibleModels, options);
@@ -93,7 +102,7 @@ export const getCottiScopedAiProviderRuntimeState = async (
   ]);
   const displayItems = createEnabledModelDisplayMap(config);
   const enabledAiModels = runtimeState.enabledAiModels
-    .map((model) => applyModelDisplayItem(model.providerId, model, displayItems))
+    .map((model) => applyModelDisplayItem(model.providerId, model, displayItems, config))
     .filter(
       (model): model is AiProviderRuntimeState['enabledAiModels'][number] => model !== undefined,
     );

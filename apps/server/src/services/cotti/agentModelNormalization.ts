@@ -52,9 +52,11 @@ export const resolveImportedAgentModel = (
 };
 
 /** One policy/deployment snapshot per batch; never issue one config query per member. */
-export const createAgentModelNormalizer = async (db: LobeChatDatabase) => {
+export const createAgentModelNormalizer = async (db: LobeChatDatabase, userId?: string) => {
   const [config, deployed] = await Promise.all([
-    new CottiModelDisplayModel(db).getConfig(),
+    userId
+      ? new CottiModelDisplayModel(db).getUserConfig(userId)
+      : new CottiModelDisplayModel(db).getConfig(),
     getDeployedModelOptions(),
   ]);
   return <T extends AgentModelInput>(input: T) => ({

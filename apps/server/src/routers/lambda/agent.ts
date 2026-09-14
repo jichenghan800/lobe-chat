@@ -212,7 +212,7 @@ export const agentRouter = router({
           message: `A ${input.visibility} agent cannot be created in a ${folderVisibility} folder`,
         });
 
-      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB);
+      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB, ctx.userId);
       const agent = await ctx.agentModel.create({
         ...normalizeModel(input.config ?? {}),
         // The DB-layer AgentItem (packages/database/src/schemas/agent.ts) is
@@ -486,7 +486,7 @@ export const agentRouter = router({
       }
 
       // Create the agent entity only (no session)
-      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB);
+      const normalizeModel = await createAgentModelNormalizer(ctx.serverDB, ctx.userId);
       const agent = await ctx.agentModel.create(normalizeModel(input.config ?? {}));
 
       // Add the agent to the group

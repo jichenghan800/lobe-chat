@@ -104,7 +104,7 @@ export class AgentService {
   ) {
     const slug = (config as { slug?: string | null }).slug ?? fallbackSlug;
     if (slug !== 'task-agent') return config;
-    const normalizeModel = await createAgentModelNormalizer(this.db);
+    const normalizeModel = await createAgentModelNormalizer(this.db, this.userId);
     return normalizeModel(config);
   }
 

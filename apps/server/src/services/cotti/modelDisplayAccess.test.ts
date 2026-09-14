@@ -221,3 +221,30 @@ describe('Agent-only runtime visibility', () => {
     expect(list).toEqual([{ ...models[0], displayName: '千问3.8-Max' }]);
   });
 });
+
+it('restricts group image models and removes all other channels before pagination', async () => {
+  const scoped = { ...config, allowedProvider: 'openai', allowedImageModels: ['group-image'] };
+  const load = vi.fn().mockResolvedValue([
+    { id: 'other-image', type: 'image' },
+    { id: 'group-image', type: 'image' },
+    { id: 'other-video', type: 'video' },
+  ]);
+  expect(
+    await getCottiScopedAiProviderModelList(
+      'member',
+      'openai',
+      { limit: 1 },
+      load,
+      async () => scoped,
+    ),
+  ).toEqual([{ id: 'group-image', type: 'image' }]);
+  expect(
+    await getCottiScopedAiProviderModelList('member', 'azure', {}, load, async () => scoped),
+  ).toEqual([]);
+  expect(
+    await getCottiScopedAiProviderModelList('default', 'openai', {}, load, async () => ({
+      ...config,
+      excludedProviders: ['openai'],
+    })),
+  ).toEqual([]);
+});

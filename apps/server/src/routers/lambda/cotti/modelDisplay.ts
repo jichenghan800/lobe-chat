@@ -83,6 +83,10 @@ const cottiModelDisplayAdminProcedure = cottiAdminProcedure.use(async (opts) => 
 });
 
 export const cottiModelDisplayRouter = router({
+  adminDetail: cottiModelDisplayAdminProcedure.query(async ({ ctx }) => ({
+    data: await ctx.modelDisplayModel.getConfig(),
+    success: true,
+  })),
   taskMigrationPreview: cottiModelDisplayAdminProcedure
     .input(modelDisplayModelRefSchema)
     .query(async ({ ctx, input }) => ({
@@ -124,7 +128,7 @@ export const cottiModelDisplayRouter = router({
 
   detail: cottiModelDisplayProcedure.query(async ({ ctx }) => {
     try {
-      const data = await ctx.modelDisplayModel.getConfig();
+      const data = await ctx.modelDisplayModel.getUserConfig(ctx.userId ?? undefined);
 
       return { data, success: true };
     } catch (error) {
