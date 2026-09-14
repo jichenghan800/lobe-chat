@@ -1,7 +1,8 @@
 export type CottiPlatformManagementSection =
-  'agent-access' | 'audit' | 'home-notification' | 'models' | 'overview';
+  'agent-access' | 'audit' | 'home-notification' | 'models' | 'overview' | 'sandbox';
 
 const SECTIONS = new Set<CottiPlatformManagementSection>([
+  'sandbox',
   'agent-access',
   'audit',
   'home-notification',

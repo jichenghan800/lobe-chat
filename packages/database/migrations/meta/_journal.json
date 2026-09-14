@@ -1148,6 +1148,13 @@
       "when": 1789274150816,
       "tag": "0163_lingshu_remaining_customizations",
       "breakpoints": true
+    },
+    {
+      "idx": 164,
+      "version": "7",
+      "when": 1789355015023,
+      "tag": "0164_lingshu_sandbox_capacity",
+      "breakpoints": true
     }
   ],
   "version": "6"

@@ -8,6 +8,7 @@ import { sha256 } from 'js-sha256';
 import { appEnv } from '@/envs/app';
 import { sandboxEnv } from '@/envs/sandbox';
 
+import type { SandboxCapacityService } from '../capacity';
 import type {
   SandboxProvider,
   SandboxProviderCapabilities,
@@ -64,7 +65,10 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
   private readonly leaseTTLSec: number;
   private readonly options: SandboxServiceOptions;
 
-  constructor(options: SandboxServiceOptions) {
+  constructor(
+    options: SandboxServiceOptions,
+    private readonly capacity?: SandboxCapacityService,
+  ) {
     this.options = options;
     this.baseUrl = (sandboxEnv.ONLYBOXES_BASE_URL || '').replace(/\/+$/, '');
     this.jitIssuer = sandboxEnv.ONLYBOXES_JIT_ISSUER || appEnv.APP_URL || 'lobehub';
@@ -84,83 +88,83 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     try {
       switch (toolName) {
         case 'runCommand': {
-          return this.runCommand(params);
+          return await this.runCommand(params);
         }
 
         case 'getCommandOutput': {
-          return this.getCommandOutput(params);
+          return await this.getCommandOutput(params);
         }
 
         case 'killCommand': {
-          return this.killCommand(params);
+          return await this.killCommand(params);
         }
 
         case 'executeCode': {
-          return this.executeCode(params);
+          return await this.executeCode(params);
         }
 
         case 'execScript': {
-          return this.execScript(params);
+          return await this.execScript(params);
         }
 
         case 'listLocalFiles': {
-          return this.runJsonScript(listFilesScript, params);
+          return await this.runJsonScript(listFilesScript, params);
         }
 
         case 'listFiles': {
-          return this.runJsonScript(listFilesScript, params);
+          return await this.runJsonScript(listFilesScript, params);
         }
 
         case 'readLocalFile': {
-          return this.runJsonScript(readFileScript, params);
+          return await this.runJsonScript(readFileScript, params);
         }
 
         case 'readFile': {
-          return this.runJsonScript(readFileScript, params);
+          return await this.runJsonScript(readFileScript, params);
         }
 
         case 'writeLocalFile': {
-          return this.writeLocalFile(params);
+          return await this.writeLocalFile(params);
         }
 
         case 'writeFile': {
-          return this.writeLocalFile(params);
+          return await this.writeLocalFile(params);
         }
 
         case 'editLocalFile': {
-          return this.runJsonScript(editFileScript, params);
+          return await this.runJsonScript(editFileScript, params);
         }
 
         case 'editFile': {
-          return this.runJsonScript(editFileScript, params);
+          return await this.runJsonScript(editFileScript, params);
         }
 
         case 'searchLocalFiles': {
-          return this.runJsonScript(searchFilesScript, params);
+          return await this.runJsonScript(searchFilesScript, params);
         }
 
         case 'searchFiles': {
-          return this.runJsonScript(searchFilesScript, params);
+          return await this.runJsonScript(searchFilesScript, params);
         }
 
         case 'moveLocalFiles': {
-          return this.runJsonScript(moveFilesScript, params);
+          return await this.runJsonScript(moveFilesScript, params);
         }
 
         case 'moveFiles': {
-          return this.runJsonScript(moveFilesScript, params);
+          return await this.runJsonScript(moveFilesScript, params);
         }
 
         case 'grepContent': {
-          return this.runJsonScript(grepContentScript, params);
+          return await this.runJsonScript(grepContentScript, params);
         }
 
         case 'globLocalFiles': {
-          return this.runJsonScript(globFilesScript, params);
+          return await this.runJsonScript(globFilesScript, params);
         }
 
         case 'globFiles': {
-          return this.runJsonScript(globFilesScript, params);
+          return await this.runJsonScript(globFilesScript, params);
         }
 
         default: {
@@ -657,10 +661,34 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     headers.set('Authorization', `Bearer ${this.createJITToken()}`);
     headers.set('Content-Type', 'application/json');
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
-      headers,
-    });
+    const parsed: unknown = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
+    const payload =
+      parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : undefined;
+    const createsSession =
+      path === '/api/v1/commands/terminal' ||
+      (path === '/api/v1/tasks' && payload?.capability === 'terminalExec');
+    const execute = (signal?: AbortSignal) =>
+      fetch(`${this.baseUrl}${path}`, {
+        ...init,
+        headers,
+        ...(signal ? { signal } : {}),
+      });
+    const response =
+      createsSession && this.capacity
+        ? await this.capacity.run(
+            {
+              leaseTtlMs: this.leaseTTLSec * 1000,
+              sessionKey: sha256(
+                JSON.stringify([this.baseUrl, this.jitIssuer, this.options.userId, this.sessionId]),
+              ),
+              timeoutMs:
+                typeof payload?.timeout_ms === 'number' && Number.isFinite(payload.timeout_ms)
+                  ? payload.timeout_ms
+                  : DEFAULT_TIMEOUT_MS,
+            },
+            execute,
+          )
+        : await execute();
     const body = await response.text();
     const json = body ? JSON.parse(body) : {};
 

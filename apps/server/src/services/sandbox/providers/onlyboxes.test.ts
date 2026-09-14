@@ -47,6 +47,38 @@ describe('OnlyboxesSandboxProvider', () => {
     vi.useRealTimers();
   });
 
+  it.each(['runCommand', 'executeCode', 'writeLocalFile', 'readLocalFile'])(
+    'returns a structured capacity error without sending %s to OnlyBoxes',
+    async (tool) => {
+      const { SandboxCapacityService, SandboxCapacityError } = await import('../capacity');
+      const capacity = new SandboxCapacityService(async () => {
+        throw new Error('unused');
+      });
+      vi.spyOn(capacity, 'run').mockRejectedValue(new SandboxCapacityError());
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+      const provider = new OnlyboxesSandboxProvider(
+        {
+          marketService: {} as MarketService,
+          topicId: 't',
+          userId: 'u',
+        },
+        capacity,
+      );
+      const result = await provider.callTool(tool, {
+        command: 'echo ok',
+        code: 'print(42)',
+        language: 'python',
+        path: '/tmp/test.txt',
+        content: 'test',
+      });
+      expect(result.success).toBe(false);
+      expect(JSON.stringify(result)).toContain('SandboxCapacityFull');
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
   it('maps runCommand to the terminal command endpoint with a persistent session', async () => {
     const fetchMock = vi.fn(async () => {
       return new Response(

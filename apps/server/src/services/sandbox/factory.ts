@@ -1,5 +1,6 @@
 import { sandboxEnv } from '@/envs/sandbox';
 
+import { SandboxCapacityService } from './capacity';
 import { MarketSandboxProvider } from './providers/market';
 import { OnlyboxesSandboxProvider } from './providers/onlyboxes';
 import { SandboxMiddlewareService } from './service';
@@ -17,7 +18,15 @@ export const getSandboxProviderKind = (): SandboxProviderKind => {
 const createSandboxProvider = (options: SandboxServiceOptions): SandboxProvider => {
   switch (getSandboxProviderKind()) {
     case 'onlyboxes': {
-      return new OnlyboxesSandboxProvider(options);
+      return new OnlyboxesSandboxProvider(
+        options,
+        new SandboxCapacityService(async () => {
+          const { CottiSandboxModel } = await import('@/database/models/cottiSandbox');
+          const db =
+            options.serverDB ?? (await (await import('@/database/core/db-adaptor')).getServerDB());
+          return new CottiSandboxModel(db);
+        }),
+      );
     }
 
     case 'market': {

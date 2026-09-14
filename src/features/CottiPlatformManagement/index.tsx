@@ -26,6 +26,7 @@ import { useCottiPlatformAdminAccess } from '../CottiPlatformAnalytics/hooks';
 import HomeNotificationSettings from './HomeNotificationSettings';
 import ModelDisplaySettings from './ModelDisplaySettings';
 import PeopleManagementSettings from './PeopleManagementSettings';
+import { SandboxSettings } from './SandboxSettings';
 import {
   type CottiPlatformManagementSection,
   parseCottiPlatformManagementSection,
@@ -86,6 +87,11 @@ const CottiPlatformManagement = memo(() => {
               key: 'home-notification',
               label: t('platformManagement.sections.homeNotification'),
             },
+            {
+              icon: <Settings2Icon size={16} />,
+              key: 'sandbox',
+              label: t('platformManagement.sections.sandbox'),
+            },
           ]}
           onChange={(key) => {
             setSection(key as CottiPlatformManagementSection);
@@ -102,6 +108,8 @@ const CottiPlatformManagement = memo(() => {
           </Flexbox>
         ) : section === 'audit' ? (
           <CottiPlatformAudit />
+        ) : section === 'sandbox' ? (
+          <SandboxSettings />
         ) : section === 'agent-access' ? (
           <PeopleManagementSettings />
         ) : (

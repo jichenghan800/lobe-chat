@@ -1,4 +1,17 @@
 export default {
+  'platformManagement.sections.sandbox': 'Sandboxes',
+  'platformManagement.sandbox.title': 'Self-hosted sandbox capacity',
+  'platformManagement.sandbox.limit': 'Maximum retained sessions',
+  'platformManagement.sandbox.inactive':
+    'Self-hosted sandboxes are not enabled in this environment. This limit will apply when connected.',
+  'platformManagement.sandbox.invalid': 'Enter a whole number from 1 to 100.',
+  'platformManagement.sandbox.usage':
+    'Occupied slots (including reservations): {{count}} / {{limit}}',
+  'platformManagement.sandbox.note':
+    'Changes apply to new sessions immediately. Lowering the limit preserves existing sessions. Cloud sandboxes are unaffected.',
+  'platformManagement.sandbox.reservationNote':
+    'Slots include idle sessions and pending creation. Uncertain requests retain a slot temporarily to avoid exceeding capacity.',
+
   'marketSubmission.entry': 'Publish',
   'marketSubmission.title': 'Publish to Market',
   'marketSubmission.submit': 'Publish',

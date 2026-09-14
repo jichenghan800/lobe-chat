@@ -6,11 +6,13 @@ import { cottiModelDisplayRouter } from './modelDisplay';
 import { cottiPeopleManagementRouter } from './peopleManagement';
 import { cottiPlatformAnalyticsRouter } from './platformAnalytics';
 import { cottiPlatformAuditRouter } from './platformAudit';
+import { cottiSandboxRouter } from './sandbox';
 import { cottiTopicBudgetRouter } from './topicBudget';
 import { cottiTopicOverviewRouter } from './topicOverview';
 import { cottiUsersRouter } from './users';
 
 export const cottiRouter = router({
+  sandbox: cottiSandboxRouter,
   admin: cottiAdminRouter,
   users: cottiUsersRouter,
   topicBudget: cottiTopicBudgetRouter,

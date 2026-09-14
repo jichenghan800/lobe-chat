@@ -22,6 +22,7 @@ export * from './cottiAudit';
 export * from './cottiHomeNotification';
 export * from './cottiModelDisplay';
 export * from './cottiPeople';
+export * from './cottiSandbox';
 export * from './cottiTopicBudget';
 export * from './cottiTopicPolicy';
 export * from './cottiUserPolicy';
