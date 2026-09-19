@@ -216,8 +216,10 @@ export class MessageService {
   };
 
   updateMessageError = async (id: string, value: ChatMessageError, ctx?: MessageQueryContext) => {
+    // SuperJSON serializes Error instances without their custom properties.
+    // Persist a plain object so runtime errors retain type and business details.
     const error = value.type
-      ? value
+      ? { ...value, message: value.message, type: value.type }
       : { body: value, message: value.message, type: 'ApplicationRuntimeError' };
 
     return lambdaClient.message.update.mutate({

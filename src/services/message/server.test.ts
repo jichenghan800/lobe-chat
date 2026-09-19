@@ -1,3 +1,5 @@
+import { ChatMessageErrorSchema } from '@lobechat/types';
+import superjson from 'superjson';
 import { describe, expect, it, vi } from 'vitest';
 
 import { lambdaClient } from '@/libs/trpc/client';
@@ -7,6 +9,7 @@ import { MessageService } from './index';
 vi.mock('@/libs/trpc/client', () => ({
   lambdaClient: {
     message: {
+      update: { mutate: vi.fn() },
       createMessage: { mutate: vi.fn() },
       getMessages: { query: vi.fn() },
       removeMessagesByAssistant: { mutate: vi.fn() },
@@ -107,5 +110,37 @@ describe('MessageService', () => {
         topicId: 'topic-1',
       });
     });
+  });
+});
+
+describe('message error persistence across the tRPC transport', () => {
+  it('preserves a frozen-topic Error instance after real SuperJSON serialization', async () => {
+    const service = new MessageService();
+    const detail = { code: 'TOPIC_COST_FROZEN', message: '此话题预算不足，已冻结。' };
+    const error = Object.assign(new Error('Bad Request'), {
+      type: 400 as const,
+      body: { error: detail, provider: 'openai' },
+    });
+    const mutate = vi.mocked(lambdaClient.message.update.mutate);
+    mutate.mockImplementationOnce(async (input) => {
+      const received = superjson.parse<typeof input>(superjson.stringify(input));
+      const persisted = ChatMessageErrorSchema.parse(received.value.error);
+      expect(persisted).toMatchObject({
+        type: 400,
+        message: 'Bad Request',
+        body: { error: detail },
+      });
+      return {} as never;
+    });
+    await service.updateMessageError('message', error, { topicId: 'topic' });
+  });
+
+  it('preserves ordinary error objects and their retry metadata', async () => {
+    const service = new MessageService();
+    const error = { type: 429 as const, message: 'Try later', retryable: true };
+    await service.updateMessageError('message', error);
+    const input = vi.mocked(lambdaClient.message.update.mutate).mock.lastCall![0];
+    const received = superjson.parse<typeof input>(superjson.stringify(input));
+    expect(ChatMessageErrorSchema.parse(received.value.error)).toEqual(error);
   });
 });

@@ -24,7 +24,7 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
 
 ## 镜像与验收
 
-- 两个入口均为 `lobehub:lingshu-v2217-attachment-send-20260916-r1`，digest `sha256:f821f5c69957b6f138c194d2f44aad6b25cc6ef494f5afe6c4f32a697e84197d`。
+- 两个入口均为 `lobehub:lingshu-v2217-freeze-error-20260919-r1`，digest `sha256:8464e2504b917b5bf29ba33abb8d2b1e95297df697d5e64d010cd5f57dfdeb10`。
 - 全览搜索框保留粘贴的完整 URL，提取话题 ID 查询共享数据库；回车打开管理员详情。新输入名称或链接时自动包含冻结话题，之后仍可手动调整筛选。
 - 仍使用管理员接口和查看审计，不访问粘贴链接指向的外部网站，不增加非管理员权限。
 - 回归测试确认修复前失败、修复后通过；相关检查 5 项、lint、全仓类型检查及正式构建通过。
@@ -107,3 +107,12 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
 - 回退容器 `lingshu-dev-before-sandbox-switch-20260918` / `lingshu-cotti-before-sandbox-switch-20260918`，均停止并关闭自动重启；数据库备份 `/opt/backups/lingshu-sandbox-switch-20260918/before-cutover.dump` 已通过列举校验。
 - 临时配置 `COTTI_TOOL_TRACE_TOPIC_ID` 已在两个入口指定待排查话题。只记录请求工具名；问题定位后移除该环境变量以关闭。没有代发消息或自动续跑用户任务，浏览器切换与实际生成验收待用户操作。
 - 证据 `.records/sandbox-switch-20260918/`；首轮 32 项、补充 107 项测试及全仓类型检查通过。不能用旧 runtimeEnv 字段推断当前有效执行环境。
+
+## 2026-09-19 13:30：消息错误序列化最小补丁
+
+- 双开发域同步发布 `lobehub:lingshu-v2217-freeze-error-20260919-r1`，digest `sha256:8464e2504b917b5bf29ba33abb8d2b1e95297df697d5e64d010cd5f57dfdeb10`。服务健康、共享后端和两项调度恢复校验通过。生产不变。
+- 运行时代码仅一行，详情与移除条件见 `src/_custom/upgrade/message-error-serialization.md`。真实 SuperJSON 回归旧代码失败、新代码 7 项通过，全仓类型与构建通过。没有新增 schema / 金额配置，未额外调用模型。
+- 153 MB 数据库备份 `/opt/backups/lingshu-freeze-error-20260919/before-cutover.dump` 已列举验证；回退容器 `lingshu-dev-before-freeze-error-20260919` / `lingshu-cotti-before-freeze-error-20260919` 停止且关闭自启。
+- 为已确认的一条历史空白助手消息补回结构化预算冻结提示，条件更新并写入审计，额度和冻结状态未改。私有记录 `.records/freeze-error-20260919/`。
+- 上轮指定话题工具名诊断已取得两次真实工具列表，本轮移除 `COTTI_TOOL_TRACE_TOPIC_ID` 关闭临时记录。原 15:58 请求未录制，不能由后续请求倒推。
+- 浏览器视觉验收及该用户解冻后完整文件生成未执行，不等于已完成用户任务。
