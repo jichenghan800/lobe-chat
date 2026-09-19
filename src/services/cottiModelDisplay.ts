@@ -9,15 +9,17 @@ import type {
 } from '@/types/modelDisplay';
 
 class CottiModelDisplayService {
-  getAdminConfig = async (): Promise<ModelDisplayConfig> =>
-    (await lambdaClient.cotti.modelDisplay.adminDetail.query()).data;
-  previewTaskMigration = async (source: ModelDisplayModelRef) =>
-    (await lambdaClient.cotti.modelDisplay.taskMigrationPreview.query(source)).data;
+  getAdminConfig = async (groupId?: string): Promise<ModelDisplayConfig> =>
+    (await lambdaClient.cotti.modelDisplay.adminDetail.query(groupId ? { groupId } : undefined))
+      .data;
+  previewTaskMigration = async (source: ModelDisplayModelRef, groupId?: string) =>
+    (await lambdaClient.cotti.modelDisplay.taskMigrationPreview.query({ ...source, groupId })).data;
 
   retireAndMigrateTasks = async (input: {
     source: ModelDisplayModelRef;
     target: ModelDisplayModelRef;
     revision: string;
+    groupId?: string;
   }) => (await lambdaClient.cotti.modelDisplay.retireAndMigrateTasks.mutate(input)).data;
 
   getConfig = async (): Promise<ModelDisplayConfig> => {
@@ -26,8 +28,10 @@ class CottiModelDisplayService {
     return response.data;
   };
 
-  getOptions = async (): Promise<ModelDisplayOption[]> => {
-    const response = await lambdaClient.cotti.modelDisplay.options.query();
+  getOptions = async (groupId?: string): Promise<ModelDisplayOption[]> => {
+    const response = await lambdaClient.cotti.modelDisplay.options.query(
+      groupId ? { groupId } : undefined,
+    );
 
     return response.data;
   };
@@ -48,8 +52,11 @@ class CottiModelDisplayService {
     return response.data;
   };
 
-  updateConfig = async (config: ModelDisplayConfig): Promise<ModelDisplayConfig> => {
-    const response = await lambdaClient.cotti.modelDisplay.update.mutate(config);
+  updateConfig = async (
+    config: ModelDisplayConfig,
+    groupId?: string,
+  ): Promise<ModelDisplayConfig> => {
+    const response = await lambdaClient.cotti.modelDisplay.update.mutate({ ...config, groupId });
 
     return response.data.config;
   };

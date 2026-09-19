@@ -153,3 +153,25 @@ describe('fileChatSelectors', () => {
     });
   });
 });
+
+describe('attachment send readiness', () => {
+  it.each(['pending', 'uploading', 'processing', 'error', 'cancelled'] as const)(
+    'blocks %s drafts even when no upload request is active',
+    (status) => {
+      const state = { chatUploadFileList: [{ id: 'screenshot.png', status }] } as FilesStoreState;
+      expect(fileChatSelectors.hasUnreadyChatFiles(state)).toBe(true);
+    },
+  );
+  it('allows completed uploads and an empty draft', () => {
+    expect(
+      fileChatSelectors.hasUnreadyChatFiles({
+        chatUploadFileList: [],
+      } as unknown as FilesStoreState),
+    ).toBe(false);
+    expect(
+      fileChatSelectors.hasUnreadyChatFiles({
+        chatUploadFileList: [{ id: 'file-ready', status: 'success' }],
+      } as FilesStoreState),
+    ).toBe(false);
+  });
+});

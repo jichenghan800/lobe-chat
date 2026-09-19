@@ -4633,6 +4633,48 @@ describe('ConversationLifecycle actions', () => {
       });
     });
 
+    it('forwards selected connector IDs to client execution without reinjecting persisted context', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const send = vi.spyOn(aiChatService, 'sendMessageInServer').mockResolvedValue({
+        isCreateNewTopic: false,
+        topicId: TEST_IDS.TOPIC_ID,
+        messages: [
+          createMockMessage({ id: TEST_IDS.USER_MESSAGE_ID, role: 'user' }),
+          createMockMessage({ id: TEST_IDS.ASSISTANT_MESSAGE_ID, role: 'assistant' }),
+        ],
+        assistantMessageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+        userMessageId: TEST_IDS.USER_MESSAGE_ID,
+      });
+      await act(async () => {
+        await result.current.sendMessage({
+          context: createTestContext(),
+          message: '<tool name="feishu-documents" label="飞书资料" /> Read this document',
+          editorData: {
+            root: {
+              type: 'root',
+              children: [
+                {
+                  type: 'paragraph',
+                  children: [
+                    {
+                      type: 'action-tag',
+                      actionCategory: 'tool',
+                      actionLabel: '飞书资料',
+                      actionType: 'feishu-documents',
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        });
+      });
+      const call = vi.mocked(result.current.executeClientAgent).mock.calls[0]?.[0];
+      expect(call?.selectedToolIds).toEqual(['feishu-documents']);
+      expect(call?.initialContext?.initialContext?.selectedTools).toBeUndefined();
+      expect(send.mock.calls[0][0].newUserMessage.content).toContain('<selected_tool_context>');
+    });
+
     describe('@agent mention delegation', () => {
       it('should NOT set isSupervisor on assistant message when @agent uses supervisor path in non-group chat', async () => {
         const { result } = renderHook(() => useChatStore());

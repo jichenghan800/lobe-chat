@@ -2,6 +2,7 @@ import { and, count, desc, eq, ilike, isNull, or } from 'drizzle-orm';
 
 import { cottiUserPolicies, users } from '../schemas';
 import type { LobeChatDatabase, Transaction } from '../type';
+import { reconcileTopicBudgetFreezes } from '../utils/reconcileTopicBudgetFreezes';
 
 export interface CottiUserPolicyInput {
   agentEnabled: boolean;
@@ -104,6 +105,7 @@ export class CottiUserPolicyModel {
         target: cottiUserPolicies.userId,
         set: { ...policy, updatedBy, updatedAt: new Date() },
       });
+    if ('topicLimitFen' in policy) await reconcileTopicBudgetFreezes(this.db, { userId });
     return this.get(userId);
   }
 }

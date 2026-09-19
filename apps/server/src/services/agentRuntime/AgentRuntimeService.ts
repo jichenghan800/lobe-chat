@@ -852,7 +852,11 @@ export class AgentRuntimeService {
    */
   async createOperation(params: OperationCreationParams): Promise<OperationCreationResult> {
     if (params.modelRuntimeConfig?.model && params.modelRuntimeConfig.provider) {
-      const target = await resolveCottiRuntimeModel(this.serverDB, params.modelRuntimeConfig);
+      const target = await resolveCottiRuntimeModel(
+        this.serverDB,
+        params.modelRuntimeConfig,
+        this.userId,
+      );
       params = {
         ...params,
         modelRuntimeConfig: { ...params.modelRuntimeConfig, ...target },
@@ -1607,7 +1611,11 @@ export class AgentRuntimeService {
         const currentModelConfig =
           agentState.modelRuntimeConfig ?? agentState.metadata?.modelRuntimeConfig;
         if (currentModelConfig?.model && currentModelConfig.provider) {
-          const target = await resolveCottiRuntimeModel(this.serverDB, currentModelConfig);
+          const target = await resolveCottiRuntimeModel(
+            this.serverDB,
+            currentModelConfig,
+            this.userId,
+          );
           agentState.modelRuntimeConfig = { ...currentModelConfig, ...target };
           agentState.metadata = {
             ...agentState.metadata,

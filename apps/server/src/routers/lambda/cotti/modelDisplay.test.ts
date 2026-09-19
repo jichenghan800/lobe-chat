@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   previewTaskMigration: vi.fn(),
   migrateTasks: vi.fn(),
   getConfig: vi.fn(),
+  groups: vi.fn(),
+  getGroup: vi.fn(),
+  updateGroup: vi.fn(),
   getEnabledModelDisplayItems: vi.fn(),
   getProfessionalModelStatus: vi.fn(),
   getServerGlobalConfig: vi.fn(),
@@ -25,6 +28,14 @@ vi.mock('@/database/core/db-adaptor', () => ({
 vi.mock('@/database/models/cottiModelDisplay', () => ({
   CottiModelDisplayModel: mocks.CottiModelDisplayModel,
   getEnabledModelDisplayItems: mocks.getEnabledModelDisplayItems,
+}));
+
+vi.mock('@/database/models/cottiUserGroup', () => ({
+  CottiUserGroupModel: class {
+    list = mocks.groups;
+    get = mocks.getGroup;
+    updateConfig = mocks.updateGroup;
+  },
 }));
 
 vi.mock('@/database/models/cottiTaskModelMigration', () => ({
@@ -50,6 +61,7 @@ const config = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.groups.mockResolvedValue([]);
   mocks.previewTaskMigration.mockResolvedValue({ taskCount: 0 });
   mocks.CottiModelDisplayModel.mockImplementation(function () {
     return {
@@ -362,5 +374,51 @@ describe('task model migration administration', () => {
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT' });
     expect(mocks.updateConfig).not.toHaveBeenCalled();
+  });
+});
+
+it('loads the selected group configuration rather than the administrator own group or global config', async () => {
+  mockAdminAccess();
+  mocks.getGroup.mockResolvedValue({
+    id: 'pressure',
+    provider: 'openai',
+    modelDisplay: { chat: [], agent: [] },
+  });
+  const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+  expect((await caller.modelDisplay.adminDetail({ groupId: 'pressure' })).data).toEqual({
+    chat: [],
+    agent: [],
+  });
+  expect(mocks.getConfig).not.toHaveBeenCalled();
+});
+
+it('filters options by channel and saves group settings without writing global settings', async () => {
+  mockAdminAccess();
+  const group = { id: 'pressure', provider: 'openai' };
+  mocks.groups.mockResolvedValue([group]);
+  mocks.getGroup.mockResolvedValue(group);
+  mocks.getServerGlobalConfig.mockResolvedValue({
+    aiProvider: {
+      openai: { enabled: true, serverModelLists: [{ id: 'group-model', type: 'chat' }] },
+      azure: { enabled: true, serverModelLists: [{ id: 'default-model', type: 'chat' }] },
+    },
+  });
+  const caller = cottiRouter.createCaller({ userId: 'admin-user' });
+  expect(
+    (await caller.modelDisplay.options({ groupId: 'pressure' })).data.map((r) => r.provider),
+  ).toEqual(['openai']);
+  expect((await caller.modelDisplay.options()).data.map((r) => r.provider)).toEqual(['azure']);
+  const ref = { model: 'group-model', provider: 'openai', enabled: true };
+  const groupConfig = { chat: [ref], agent: [ref], defaults: { chat: ref, agent: ref } };
+  mocks.updateGroup.mockResolvedValue(groupConfig);
+  await caller.modelDisplay.update({ ...groupConfig, groupId: 'pressure' });
+  expect(mocks.updateGroup).toHaveBeenCalledWith(
+    'pressure',
+    expect.objectContaining({ chat: [ref], agent: [ref] }),
+    'admin-user',
+  );
+  expect(mocks.updateConfig).not.toHaveBeenCalled();
+  await expect(caller.modelDisplay.update(groupConfig)).rejects.toMatchObject({
+    code: 'BAD_REQUEST',
   });
 });

@@ -17,6 +17,8 @@ const username = (s: UserStore) => {
 };
 
 export const userProfileSelectors = {
+  accountIdentifier: (s: UserStore): string =>
+    s.isSignedIn ? s.user?.email || s.user?.fullName || username(s) || '' : '',
   displayUserName: (s: UserStore): string => s.user?.fullName || username(s) || s.user?.email || '',
   email: (s: UserStore): string => s.user?.email || '',
   fullName: (s: UserStore): string => s.user?.fullName || '',

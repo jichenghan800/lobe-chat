@@ -1002,6 +1002,7 @@
   "heteroAgent.executionTarget.selfHosted": "Self-hosted sandbox",
   "heteroAgent.executionTarget.selfHostedDesc": "Run in a temporary sandbox on the platform server",
   "heteroAgent.executionTarget.switchDesc": "The current topic and its files will stay in their original sandbox.",
+  "heteroAgent.executionTarget.switchRunning": "Wait for the current task to finish before switching sandbox.",
   "heteroAgent.executionTarget.switchTitle": "Start a new topic to switch sandbox?",
   "heteroAgent.executionTarget.title": "Execution Environment",
   "heteroAgent.executionTarget.unknownDevice": "Unknown device",

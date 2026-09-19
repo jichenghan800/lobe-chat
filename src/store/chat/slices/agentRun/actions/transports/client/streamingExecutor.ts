@@ -134,6 +134,7 @@ export class StreamingExecutorActionImpl {
     modelOverride,
     modelDisplayConfig,
     chatConfigOverride,
+    selectedToolIds: requestedToolIds,
   }: {
     messages: UIChatMessage[];
     parentMessageId: string;
@@ -144,6 +145,8 @@ export class StreamingExecutorActionImpl {
     operationId?: string;
     initialState?: AgentState;
     initialContext?: AgentRuntimeContext;
+    /** Turn-scoped tools; prompt context may already be persisted in the user message. */
+    selectedToolIds?: string[];
     /**
      * Sub Agent ID - behavior depends on scope
      * - scope: 'group' | 'group_agent': Used for agent config and changes message ownership
@@ -235,9 +238,9 @@ export class StreamingExecutorActionImpl {
         : resolvedAgentConfig;
 
     const { agentConfig: agentConfigData, plugins: pluginIds } = agentConfig;
-    const selectedToolIds = initialContext?.initialContext?.selectedTools?.map(
-      (tool) => tool.identifier,
-    );
+    const selectedToolIds =
+      requestedToolIds ??
+      initialContext?.initialContext?.selectedTools?.map((tool) => tool.identifier);
 
     if (!agentConfigData || !agentConfigData.model) {
       throw new Error(
@@ -536,6 +539,7 @@ export class StreamingExecutorActionImpl {
     context: ConversationContext;
     disableTools?: boolean;
     initialContext?: AgentRuntimeContext;
+    selectedToolIds?: string[];
     initialState?: AgentState;
     inPortalThread?: boolean;
     metadata?: Pick<MessageMetadata, 'trigger'>;
@@ -685,6 +689,7 @@ export class StreamingExecutorActionImpl {
       threadId: threadId ?? undefined,
       initialState: params.initialState,
       initialContext: params.initialContext,
+      selectedToolIds: params.selectedToolIds,
       operationId,
       subAgentId, // Pass subAgentId for agent config retrieval (behavior depends on scope)
       isSubAgent, // Pass isSubAgent to filter out lobe-agent tool in sub-agent context

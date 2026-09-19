@@ -86,7 +86,9 @@ export class UserAuthActionImpl {
           clearUserDisplaySnapshot(signingOutUserId);
           // Use window.location.href to trigger a full page reload
           // This ensures all client-side state (React, Zustand, cache) is cleared
-          window.location.href = options?.redirectTo || '/signin';
+          window.location.href =
+            options?.redirectTo ||
+            (window.location.hostname === 'chat.cotti.ai' ? '/signin?reason=signedOut' : '/signin');
         },
       },
     });

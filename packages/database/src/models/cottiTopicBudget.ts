@@ -9,6 +9,7 @@ import {
 } from '../schemas';
 import type { LobeChatDatabase, Transaction } from '../type';
 import { notCopiedTranscript } from '../utils/copiedTranscript';
+import { reconcileTopicBudgetFreezes } from '../utils/reconcileTopicBudgetFreezes';
 import { CottiUserPolicyModel } from './cottiUserPolicy';
 
 /** Same fixed display conversion as the topic cost footer; excludes promotional credits. */
@@ -34,6 +35,7 @@ export class CottiTopicBudgetModel {
         target: cottiTopicBudgetSettings.id,
         set: { ...config, updatedBy, updatedAt: new Date() },
       });
+    await reconcileTopicBudgetFreezes(this.db);
     return this.getConfig();
   }
 

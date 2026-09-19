@@ -73,3 +73,24 @@ it('resolves auxiliary settings to the group channel without changing stored pre
     topic: { model: 'legacy-fast', provider: 'vertexai' },
   });
 });
+
+it('saves group display settings without changing another group and rejects cross-channel or silent retirement', async () => {
+  const next = { ...config, chat: [{ ...ref, displayName: 'Group Fast', vip: true }] };
+  await groups.updateConfig('pressure-test', next, 'admin');
+  expect((await groups.get('pressure-test')).modelDisplay.chat[0]).toMatchObject({
+    displayName: 'Group Fast',
+    vip: true,
+  });
+  expect((await groups.get('pressure-test')).imageModels).toEqual(['gpt-image-2.5-flare']);
+  await expect(
+    groups.updateConfig(
+      'pressure-test',
+      { ...next, chat: [{ ...ref, provider: 'azure' }] },
+      'admin',
+    ),
+  ).rejects.toThrow('channel');
+  await expect(
+    groups.updateConfig('pressure-test', { ...next, agent: [{ ...ref, enabled: false }] }, 'admin'),
+  ).rejects.toThrow('migration');
+  expect((await groups.get('pressure-test')).modelDisplay.chat[0].displayName).toBe('Group Fast');
+});

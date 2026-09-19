@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { topicCostFreezes, topics } from '../schemas';
 import type { LobeChatDatabase } from '../type';
+import { reconcileTopicBudgetFreezes } from '../utils/reconcileTopicBudgetFreezes';
 
 export class TopicCostFreezeModel {
   constructor(
@@ -10,6 +11,7 @@ export class TopicCostFreezeModel {
   ) {}
 
   async get(topicId: string) {
+    await reconcileTopicBudgetFreezes(this.db, { topicId, userId: this.userId });
     const [row] = await this.db
       .select({ freeze: topicCostFreezes })
       .from(topics)

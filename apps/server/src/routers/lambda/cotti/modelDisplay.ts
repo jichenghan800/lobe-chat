@@ -14,6 +14,7 @@ import {
   CottiTaskModelMigrationError,
   CottiTaskModelMigrationModel,
 } from '@/database/models/cottiTaskModelMigration';
+import { CottiUserGroupModel } from '@/database/models/cottiUserGroup';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getDeployedModelOptions } from '@/server/services/cotti/deployedModels';
@@ -21,6 +22,7 @@ import type { ModelDisplayScope } from '@/types/modelDisplay';
 
 import { cottiAdminProcedure } from './procedure';
 
+const groupScopeSchema = z.object({ groupId: z.string().min(1).max(100).optional() });
 const MODEL_DISPLAY_NAME_MAX_LENGTH = 100;
 const MODEL_ID_MAX_LENGTH = 200;
 const MODEL_ITEMS_MAX_LENGTH = 50;
@@ -68,6 +70,7 @@ const cottiModelDisplayProcedure = publicProcedure.use(serverDatabase).use(async
   return opts.next({
     ctx: {
       modelDisplayModel: new CottiModelDisplayModel(ctx.serverDB),
+      userGroupModel: new CottiUserGroupModel(ctx.serverDB),
     },
   });
 });
@@ -78,19 +81,27 @@ const cottiModelDisplayAdminProcedure = cottiAdminProcedure.use(async (opts) => 
   return opts.next({
     ctx: {
       modelDisplayModel: new CottiModelDisplayModel(ctx.serverDB),
+      userGroupModel: new CottiUserGroupModel(ctx.serverDB),
     },
   });
 });
 
 export const cottiModelDisplayRouter = router({
-  adminDetail: cottiModelDisplayAdminProcedure.query(async ({ ctx }) => ({
-    data: await ctx.modelDisplayModel.getConfig(),
-    success: true,
-  })),
-  taskMigrationPreview: cottiModelDisplayAdminProcedure
-    .input(modelDisplayModelRefSchema)
+  adminDetail: cottiModelDisplayAdminProcedure
+    .input(groupScopeSchema.optional())
     .query(async ({ ctx, input }) => ({
-      data: await new CottiTaskModelMigrationModel(ctx.serverDB).preview(input),
+      data: input?.groupId
+        ? (await ctx.userGroupModel.get(input.groupId)).modelDisplay
+        : await ctx.modelDisplayModel.getConfig(),
+      success: true,
+    })),
+  taskMigrationPreview: cottiModelDisplayAdminProcedure
+    .input(modelDisplayModelRefSchema.extend({ groupId: z.string().min(1).optional() }))
+    .query(async ({ ctx, input }) => ({
+      data: await new CottiTaskModelMigrationModel(ctx.serverDB, input.groupId).preview({
+        model: input.model,
+        provider: input.provider,
+      }),
       success: true,
     })),
 
@@ -100,6 +111,7 @@ export const cottiModelDisplayRouter = router({
         source: modelDisplayModelRefSchema,
         target: modelDisplayModelRefSchema,
         revision: z.string().length(64),
+        groupId: z.string().min(1).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -112,7 +124,7 @@ export const cottiModelDisplayRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: '替代模型未部署，请重新选择' });
       }
       try {
-        const data = await new CottiTaskModelMigrationModel(ctx.serverDB).migrate(
+        const data = await new CottiTaskModelMigrationModel(ctx.serverDB, input.groupId).migrate(
           input.source,
           input.target,
           input.revision,
@@ -141,20 +153,27 @@ export const cottiModelDisplayRouter = router({
     }
   }),
 
-  options: cottiModelDisplayAdminProcedure.query(async () => {
-    try {
-      const data = await getDeployedModelOptions();
+  options: cottiModelDisplayAdminProcedure
+    .input(groupScopeSchema.optional())
+    .query(async ({ ctx, input }) => {
+      try {
+        const deployed = await getDeployedModelOptions();
+        const groups = await ctx.userGroupModel.list();
+        const group = input?.groupId ? await ctx.userGroupModel.get(input.groupId) : undefined;
+        const data = deployed.filter((r) =>
+          group ? r.provider === group.provider : !groups.some((g) => g.provider === r.provider),
+        );
 
-      return { data, success: true };
-    } catch (error) {
-      console.error('[cottiModelDisplay:options]', error);
-      throw new TRPCError({
-        cause: error,
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to load the COTTI model display options',
-      });
-    }
-  }),
+        return { data, success: true };
+      } catch (error) {
+        console.error('[cottiModelDisplay:options]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to load the COTTI model display options',
+        });
+      }
+    }),
 
   professionalModel: cottiModelDisplayAdminProcedure.query(async ({ ctx }) => {
     try {
@@ -222,10 +241,48 @@ export const cottiModelDisplayRouter = router({
     }),
 
   update: cottiModelDisplayAdminProcedure
-    .input(modelDisplayConfigSchema)
+    .input(modelDisplayConfigSchema.and(groupScopeSchema))
     .mutation(async ({ ctx, input }) => {
       try {
+        const { groupId, ...config } = input;
+        if (groupId) {
+          const deployed = await getDeployedModelOptions();
+          if (
+            [...config.chat, ...config.agent].some(
+              (r) =>
+                r.enabled &&
+                !deployed.some((o) => o.provider === r.provider && o.model === r.model),
+            )
+          )
+            throw new TRPCError({ code: 'BAD_REQUEST', message: '模型未部署，请重新选择' });
+          try {
+            const saved = await ctx.userGroupModel.updateConfig(
+              groupId,
+              config,
+              ctx.platformAdmin.userId,
+            );
+            return {
+              data: { config: saved, visibleModels: getEnabledModelDisplayItems(saved) },
+              success: true,
+            };
+          } catch (error) {
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: error instanceof Error ? error.message : '用户组模型保存失败',
+            });
+          }
+        }
         const previous = await ctx.modelDisplayModel.getConfig();
+        const groups = await ctx.userGroupModel.list();
+        if (
+          [...config.chat, ...config.agent].some(
+            (r) => r.enabled && groups.some((g) => g.provider === r.provider),
+          )
+        )
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: '专属渠道模型请在对应用户组页签配置',
+          });
         // A scope switch-off is a global retirement, even if another list still enables it.
         for (const scope of ['agent', 'chat'] as const) {
           for (const source of previous[scope].filter((r) => r.enabled)) {

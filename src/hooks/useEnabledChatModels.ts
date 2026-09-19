@@ -8,7 +8,7 @@ import { useAiInfraStore } from '@/store/aiInfra';
 import { type EnabledProviderWithModels } from '@/types/aiProvider';
 import type { ModelDisplayScope } from '@/types/modelDisplay';
 
-export const useEnabledChatModels = (scope?: ModelDisplayScope): EnabledProviderWithModels[] => {
+export const useEnabledChatModelsState = (scope?: ModelDisplayScope) => {
   const enabledChatModelList = useAiInfraStore((s) => s.enabledChatModelList, isEqual);
   const { data: modelDisplayConfig } = useCottiModelDisplayConfig(true, true);
   const { data: policy } = useCottiUserPolicy();
@@ -31,5 +31,11 @@ export const useEnabledChatModels = (scope?: ModelDisplayScope): EnabledProvider
     scope ? modelDisplayConfig?.[scope] : undefined,
   );
 
-  return configuredList ?? enabledList;
+  return {
+    isReady: Boolean(modelDisplayConfig && policy),
+    models: configuredList ?? enabledList,
+  };
 };
+
+export const useEnabledChatModels = (scope?: ModelDisplayScope): EnabledProviderWithModels[] =>
+  useEnabledChatModelsState(scope).models;

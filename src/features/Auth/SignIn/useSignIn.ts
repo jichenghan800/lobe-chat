@@ -427,6 +427,7 @@ export const useSignIn = () => {
       effectiveServerConfigInit &&
       window.location.hostname === COTTI_AI_CHAT_HOST &&
       !searchParams.get('error') &&
+      searchParams.get('reason') !== 'signedOut' &&
       resolvedProviders.includes('generic-oidc');
 
     if (!shouldAutoStart || autoCottiAiSsoStartedRef.current) return;
@@ -442,6 +443,10 @@ export const useSignIn = () => {
   ]);
 
   return {
+    signedOut:
+      typeof window !== 'undefined' &&
+      window.location.hostname === COTTI_AI_CHAT_HOST &&
+      searchParams.get('reason') === 'signedOut',
     disableEmailPassword,
     email,
     enableEmailOtp,

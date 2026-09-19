@@ -437,6 +437,32 @@ describe('useSignIn', () => {
       );
     });
 
+    it('stays signed out until an explicit SSO click', async () => {
+      mockEnableBusinessFeatures = true;
+      mockBusinessSignin.ssoProviders = ['generic-oidc'];
+      mockSearchParamsGet.mockImplementation((key: string) =>
+        key === 'reason' ? 'signedOut' : null,
+      );
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: {
+          ...originalLocation,
+          hostname: 'chat.cotti.ai',
+          origin: 'https://chat.cotti.ai',
+          href: '',
+        },
+      });
+      mockSignInOauth2.mockResolvedValue({ url: 'https://auth.cotti.ai/oauth2/authorize' });
+      const { result } = renderHook(() => useSignIn());
+      expect(mockSignInOauth2).not.toHaveBeenCalled();
+      expect(result.current.signedOut).toBe(true);
+      await act(async () => {
+        await result.current.handleSocialSignIn('generic-oidc');
+      });
+      expect(mockSignInOauth2).toHaveBeenCalledTimes(1);
+    });
+
     it('should not automatically start Cotti AI SSO on the legacy host', async () => {
       mockEnableBusinessFeatures = true;
       mockBusinessSignin.ssoProviders = ['generic-oidc'];

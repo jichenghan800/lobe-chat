@@ -1,4 +1,6 @@
 export default {
+  'cotti.signedOut': 'You have signed out. Use the sign-in button to continue.',
+  'cotti.signOutPortal': 'Sign out of the portal · Switch account',
   'otp.send': 'Get code',
   'otp.cooldownShort': '{{seconds}}s',
   'otp.sentInline': 'Code sent to {{email}}. Valid for 5 minutes.',

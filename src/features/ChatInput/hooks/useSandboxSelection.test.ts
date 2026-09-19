@@ -14,6 +14,9 @@ const state = vi.hoisted(() => ({
   activeTopicId: 'old-topic' as string | undefined,
   metadata: { sandboxProvider: 'market' },
   switchTopic: vi.fn(),
+  refreshTopic: vi.fn(),
+  switchUnusedTopic: vi.fn(),
+  running: false,
   confirm: vi.fn(),
   error: vi.fn(),
 }));
@@ -24,12 +27,15 @@ vi.mock('@/store/chat', () => ({
   useChatStore: (selector: (s: typeof state) => unknown) => selector(state),
 }));
 vi.mock('@/store/chat/selectors', () => ({
+  operationSelectors: { isTopicVisiblyRunning: () => (s: typeof state) => s.running },
   topicSelectors: { currentTopicMetadata: (s: typeof state) => s.metadata },
 }));
 vi.mock('@/libs/swr', () => ({
   useClientDataSWR: () => ({ data: { selfHostedAvailable: true } }),
 }));
-vi.mock('@/services/cottiSandbox', () => ({ cottiSandboxService: { getAvailability: vi.fn() } }));
+vi.mock('@/services/cottiSandbox', () => ({
+  cottiSandboxService: { getAvailability: vi.fn(), switchUnusedTopic: state.switchUnusedTopic },
+}));
 vi.mock('@lobehub/ui/base-ui', () => ({
   confirmModal: state.confirm,
   toast: { error: state.error },
@@ -39,6 +45,9 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => k
 describe('sandbox selection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    state.running = false;
+    state.switchUnusedTopic.mockResolvedValue({ status: 'new_topic_required' });
+    state.refreshTopic.mockResolvedValue(undefined);
     state.topicModelScope = true;
     state.activeAgentId = 'agent';
     state.activeTopicId = 'old-topic';
@@ -59,8 +68,8 @@ describe('sandbox selection', () => {
 
   it('requires a new topic before changing an existing cloud topic', async () => {
     const { result } = renderHook(() => useSandboxSelection('agent', async () => true));
-    act(() => {
-      result.current.select('onlyboxes');
+    await act(async () => {
+      await result.current.select('onlyboxes');
     });
     expect(getPendingSandboxProvider('agent')).toBe('market');
     expect(state.switchTopic).not.toHaveBeenCalled();
@@ -81,4 +90,30 @@ describe('sandbox selection', () => {
     expect(getPendingSandboxProvider('agent')).toBe('market');
     expect(state.error).toHaveBeenCalledOnce();
   });
+});
+
+it('keeps the existing topic after a permitted switch', async () => {
+  state.running = false;
+  state.activeTopicId = 'old-topic';
+  state.switchUnusedTopic.mockResolvedValue({ status: 'switched' });
+  state.confirm.mockClear();
+  state.switchTopic.mockClear();
+  const { result } = renderHook(() => useSandboxSelection('agent', async () => true));
+  await act(async () => {
+    await result.current.select('onlyboxes');
+  });
+  expect(state.refreshTopic).toHaveBeenCalled();
+  expect(state.confirm).not.toHaveBeenCalled();
+  expect(state.switchTopic).not.toHaveBeenCalled();
+});
+it('blocks switching during a locally running turn', async () => {
+  state.running = true;
+  state.switchUnusedTopic.mockClear();
+  const enable = vi.fn(async () => true);
+  const { result } = renderHook(() => useSandboxSelection('agent', enable));
+  await act(async () => {
+    await result.current.select('onlyboxes');
+  });
+  expect(enable).not.toHaveBeenCalled();
+  expect(state.switchUnusedTopic).not.toHaveBeenCalled();
 });

@@ -53,6 +53,35 @@ describe('createAuthSlice', () => {
   });
 
   describe('logout', () => {
+    it('marks Cotti sign-out redirects and preserves explicit destinations', async () => {
+      const original = Object.getOwnPropertyDescriptor(window, 'location');
+      const location = { hostname: 'chat.cotti.ai', href: '' };
+      Object.defineProperty(window, 'location', { configurable: true, value: location });
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
+      mockBetterAuthClient.signOut.mockImplementation(async ({ fetchOptions }) =>
+        fetchOptions?.onSuccess?.(),
+      );
+      try {
+        const { result } = renderHook(() => useUserStore());
+        await act(async () => {
+          await result.current.logout();
+        });
+        expect(location.href).toBe('/signin?reason=signedOut');
+        await act(async () => {
+          await result.current.logout({ redirectTo: '/custom' });
+        });
+        expect(location.href).toBe('/custom');
+        location.hostname = 'chatdev.cotticoffee.com';
+        await act(async () => {
+          await result.current.logout();
+        });
+        expect(location.href).toBe('/signin');
+      } finally {
+        if (original) Object.defineProperty(window, 'location', original);
+        mockBetterAuthClient.signOut.mockResolvedValue({});
+      }
+    });
+
     it('clears the captured user snapshot after successful sign-out', async () => {
       writeUserDisplaySnapshot('user-a', { avatar: 'avatar-a' });
       writeUserDisplaySnapshot('user-b', { avatar: 'avatar-b' });

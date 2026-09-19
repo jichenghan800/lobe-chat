@@ -10,6 +10,7 @@ import {
   topics,
 } from '@/database/schemas';
 import type { LobeChatDatabase, Transaction } from '@/database/type';
+import { reconcileTopicBudgetFreezes } from '@/database/utils/reconcileTopicBudgetFreezes';
 import type { CottiTopicManagementInput } from '@/types/cotti/topicOverview';
 
 /** Same persisted cost sources and ownership as the request budget guard. */
@@ -52,6 +53,7 @@ export class CottiTopicManagementService {
   constructor(private db: LobeChatDatabase) {}
 
   async get(topicId: string) {
+    await reconcileTopicBudgetFreezes(this.db, { topicId });
     const [topic] = await this.db.select().from(topics).where(eq(topics.id, topicId)).limit(1);
     if (!topic) throw new TRPCError({ code: 'NOT_FOUND' });
     const [models, config, userPolicy, overrides, freezes] = await Promise.all([

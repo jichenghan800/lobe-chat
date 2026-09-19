@@ -14,6 +14,30 @@ afterEach(() => {
 });
 
 describe('userProfileSelectors', () => {
+  describe('accountIdentifier', () => {
+    it.each(['jichenghan@qq.com', 'jichenghan@gmail.com'])(
+      'distinguishes accounts with the same name using the full email: %s',
+      (email) => {
+        const store = {
+          isSignedIn: true,
+          user: { email, fullName: 'jichenghan', username: 'jichenghan' },
+        } as UserStore;
+        expect(userProfileSelectors.accountIdentifier(store)).toBe(email);
+        expect(userProfileSelectors.displayUserName(store)).toBe('jichenghan');
+      },
+    );
+
+    it('keeps a name fallback for accounts without email', () => {
+      const store = { isSignedIn: true, user: { fullName: 'Test User' } } as UserStore;
+      expect(userProfileSelectors.accountIdentifier(store)).toBe('Test User');
+    });
+
+    it('does not display stale account details after signing out', () => {
+      const store = { isSignedIn: false, user: { email: 'test@example.com' } } as UserStore;
+      expect(userProfileSelectors.accountIdentifier(store)).toBe('');
+    });
+  });
+
   describe('displayUserName', () => {
     it('should return user username when signed in', () => {
       const store: UserStore = {

@@ -9,8 +9,13 @@ import { CottiModelDisplayModel } from '@/database/models/cottiModelDisplay';
 import type { LobeChatDatabase } from '@/database/type';
 import type { ModelDisplayModelRef } from '@/types/modelDisplay';
 
-export const resolveCottiRuntimeModel = async (db: LobeChatDatabase, ref: ModelDisplayModelRef) => {
-  const config = await new CottiModelDisplayModel(db).getConfig();
+export const resolveCottiRuntimeModel = async (
+  db: LobeChatDatabase,
+  ref: ModelDisplayModelRef,
+  userId?: string,
+) => {
+  const model = new CottiModelDisplayModel(db);
+  const config = userId ? await model.getUserConfig(userId) : await model.getConfig();
   return resolveRetiredModel(config, ref);
 };
 
@@ -18,10 +23,11 @@ export const resolveCottiRuntimeModel = async (db: LobeChatDatabase, ref: ModelD
 export const createModelRetirementGuard = (
   db: LobeChatDatabase,
   provider: string,
+  userId?: string,
 ): ModelRuntimeHooks => {
   const check = async ({ model }: { model: string }) => {
     const requested = { model, provider };
-    const target = await resolveCottiRuntimeModel(db, requested);
+    const target = await resolveCottiRuntimeModel(db, requested, userId);
     if (!isSameModelDisplayRef(requested, target))
       throw AgentRuntimeError.createError(ChatErrorType.BadRequest, {
         message: '模型刚刚下线，请重试以使用管理员指定的替代模型',
@@ -36,6 +42,7 @@ export const withModelRetirement = (
   provider: string,
   db: LobeChatDatabase,
   createRuntime: (provider: string) => Promise<ModelRuntime>,
+  userId?: string,
 ): ModelRuntime =>
   new Proxy(runtime, {
     get(instance, property) {
@@ -47,7 +54,7 @@ export const withModelRetirement = (
         if (!isRecord(payload) || typeof payload.model !== 'string')
           throw new Error('Missing model');
         const requested = { model: payload.model, provider };
-        const target = await resolveCottiRuntimeModel(db, requested);
+        const target = await resolveCottiRuntimeModel(db, requested, userId);
         if (isSameModelDisplayRef(requested, target)) return Reflect.apply(method, instance, args);
         const replacement = await createRuntime(target.provider);
         args[0] = { ...payload, model: target.model };

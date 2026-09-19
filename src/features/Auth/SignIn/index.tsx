@@ -27,6 +27,7 @@ const SignIn = () => {
     otp,
     sending,
     sessionExpired,
+    signedOut,
     sentInfo,
     serverConfigInit,
     socialLoading,
@@ -71,6 +72,7 @@ const SignIn = () => {
         otpSent={step === 'emailOtp'}
         serverConfigInit={serverConfigInit}
         sessionExpired={sessionExpired}
+        signedOut={signedOut}
         socialLoading={socialLoading}
         onCheckUser={handleCheckUser}
         onGoToSignup={handleGoToSignup}

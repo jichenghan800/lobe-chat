@@ -1,4 +1,21 @@
 export default {
+  'platformManagement.models.groups.confirmTitle': 'Confirm group model retirement',
+  'platformManagement.models.groups.confirm':
+    'Retire {{source}} in this group and replace it with {{target}}: {{agents}} Agents, {{topics}} topics and {{count}} unfinished tasks. Cost and output quality may change. Continue?',
+  'platformManagement.models.groups.done':
+    'Group model retired; references and {{count}} tasks migrated',
+  'platformManagement.models.groups.alreadyRetired':
+    'This model is retired in this group and cannot be re-enabled.',
+
+  'platformManagement.models.groups.default': 'Default group',
+  'platformManagement.models.groups.channel':
+    'Channel: {{channel}} \u00B7 Changes apply only to this group.',
+  'platformManagement.models.groups.missing':
+    'This user group no longer exists. Return to the default group.',
+  'platformManagement.models.groups.retireTitle': 'Retire model and migrate group references',
+  'platformManagement.models.groups.retireDescription':
+    'Choose a replacement on the same channel. Only this group\u2019s Agents, topics and unfinished tasks are migrated.',
+
   'platformManagement.users.group': 'User group',
   'platformManagement.users.defaultGroup': 'Default group',
   'platformManagement.sections.sandbox': 'Sandboxes',
@@ -95,7 +112,7 @@ export default {
     'Each topic accumulates its own costs and freezes at the limit. Switching models does not reset spending.',
   'platformManagement.topicBudget.amount': 'Limit per topic (CNY)',
   'platformManagement.topicBudget.note':
-    'Uses recorded historical model costs at a fixed USD/CNY rate of 7.12. Before sending, checks the next input and output estimate (8,192 output tokens if unspecified), without assuming cache hits. Estimates and concurrent calls may still exceed the limit. Raising or disabling the limit does not unfreeze existing topics.',
+    'Uses recorded historical model costs at a fixed USD/CNY rate of 7.12. Before sending, checks the next input and output estimate (8,192 output tokens if unspecified), without assuming cache hits. Estimates and concurrent calls may still exceed the limit. Increasing the effective limit rechecks budget freezes; manual and context freezes remain. Disabling the limit does not automatically unfreeze topics.',
   'platformManagement.topicBudget.save': 'Save',
   'platformManagement.topicBudget.saved': 'Spending limit saved',
   'platformManagement.topicBudget.failed': 'Failed to save',

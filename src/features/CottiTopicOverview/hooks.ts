@@ -17,12 +17,12 @@ export const useCottiTopicOverviewList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const state = useMemo(
     () => ({
-      sort: searchParams.get('sort') === 'updated' ? ('updated' as const) : ('cost' as const),
+      sort: searchParams.get('sort') === 'cost' ? ('cost' as const) : ('updated' as const),
       page: parsePage(searchParams.get('page')),
       q: searchParams.get('q')?.trim() ?? '',
       status: (['active', 'frozen', 'all'].includes(searchParams.get('status') ?? '')
         ? searchParams.get('status')
-        : 'active') as 'active' | 'frozen' | 'all',
+        : 'all') as 'active' | 'frozen' | 'all',
     }),
     [searchParams],
   );

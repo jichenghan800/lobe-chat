@@ -46,6 +46,7 @@ import {
   createModelRetirementGuard,
   withModelRetirement,
 } from '@/server/services/cotti/modelRetirement';
+import { createTopicToolTrace } from '@/server/services/cotti/topicToolTrace';
 import { createUserModelAccessGuard } from '@/server/services/cotti/userModelAccess';
 import { createLLMGenerationTracingHook } from '@/server/services/llmGenerationTracing/hook';
 import { ensureFreshOAuthToken } from '@/server/services/oauthDeviceFlow/refresh';
@@ -435,7 +436,10 @@ export const initModelRuntimeWithUserPayload = (
   costScope?: { db: LobeChatDatabase; userId: string },
 ) => {
   const runtimeProvider = payload.runtimeProvider ?? provider;
-  hooks = mergeModelRuntimeHooks(createContextCostGuard(provider, costScope), hooks);
+  hooks = mergeModelRuntimeHooks(
+    createContextCostGuard(provider, costScope),
+    mergeModelRuntimeHooks(createTopicToolTrace(provider), hooks),
+  );
   hooks = mergeModelRuntimeHooks(createUserModelAccessGuard(provider, costScope), hooks);
 
   /**
@@ -540,7 +544,7 @@ export const initModelRuntimeFromDB = async (
   //    service is unconfigured, so OSS / self-hosted setups pay nothing for it).
   const tracingHooks = createLLMGenerationTracingHook(userId, provider, workspaceId);
   const hooks = mergeModelRuntimeHooks(
-    createModelRetirementGuard(db, provider),
+    createModelRetirementGuard(db, provider, userId),
     mergeModelRuntimeHooks(businessHooks, tracingHooks),
   );
 
@@ -552,8 +556,12 @@ export const initModelRuntimeFromDB = async (
     hooks,
     { db, userId },
   );
-  return withModelRetirement(runtime, provider, db, (targetProvider) =>
-    initModelRuntimeFromDB(db, userId, targetProvider, workspaceId),
+  return withModelRetirement(
+    runtime,
+    provider,
+    db,
+    (targetProvider) => initModelRuntimeFromDB(db, userId, targetProvider, workspaceId),
+    userId,
   );
 };
 

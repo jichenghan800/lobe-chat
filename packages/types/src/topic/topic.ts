@@ -305,7 +305,9 @@ export interface ChatTopicMetadata {
     startedAt?: string;
     threadId?: string | null;
   } | null;
-  /** Fixed at creation: temporary files must never silently move between providers. */
+  /** Server-owned execution guard; uncertain outcomes remain pinned. */
+  sandboxActivity?: { pending: string[]; used: boolean };
+  /** Fixed once execution starts: temporary files are not shared between providers. */
   sandboxProvider?: TopicSandboxProvider;
   /**
    * A deferred agent run on this topic. Present iff the topic status is

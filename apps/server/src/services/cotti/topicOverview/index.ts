@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { MessageModel } from '@/database/models/message';
 import { cottiAuditViewLogs } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
+import { normalizeInboxAgentAvatar, normalizeInboxAgentTitle } from '@/database/utils/inboxAgent';
+import { reconcileTopicBudgetFreezes } from '@/database/utils/reconcileTopicBudgetFreezes';
 import { FileService } from '@/server/services/file';
 import type {
   CottiTopicOverviewDetail,
@@ -75,6 +77,7 @@ export class CottiTopicOverviewService {
   }
 
   async getDetail(topicId: string): Promise<CottiTopicOverviewDetail | undefined> {
+    await reconcileTopicBudgetFreezes(this.db, { topicId });
     const result = await this.db.execute(sql`
       ${this.buildTopicRowsQuery({ topicId })}
       ${this.buildPageRowsQuery(sql`SELECT * FROM filtered_topics LIMIT 1`)}
@@ -102,16 +105,22 @@ export class CottiTopicOverviewService {
     );
 
     const agentRows = await this.db.execute(sql`
-      SELECT id, title, name, avatar, background_color FROM agents
+      SELECT id, title, name, slug, avatar, background_color FROM agents
       WHERE id=${item.agentId ?? null} OR id IN (SELECT DISTINCT agent_id FROM messages WHERE topic_id=${item.id})
     `);
     const agentMetas = Object.fromEntries(
       agentRows.rows.map((agent) => [
         String(agent.id),
         {
-          title: agent.title == null ? undefined : String(agent.title),
+          title:
+            normalizeInboxAgentTitle(agent.title == null ? undefined : String(agent.title), {
+              slug: agent.slug == null ? undefined : String(agent.slug),
+            }) ?? undefined,
           name: agent.name == null ? undefined : String(agent.name),
-          avatar: agent.avatar == null ? undefined : String(agent.avatar),
+          avatar:
+            normalizeInboxAgentAvatar(agent.avatar == null ? undefined : String(agent.avatar), {
+              slug: agent.slug == null ? undefined : String(agent.slug),
+            }) ?? undefined,
           backgroundColor:
             agent.background_color == null ? undefined : String(agent.background_color),
         },
@@ -126,6 +135,7 @@ export class CottiTopicOverviewService {
   }
 
   async list(input?: CottiTopicOverviewQuery): Promise<CottiTopicOverviewList> {
+    await reconcileTopicBudgetFreezes(this.db);
     const query = cottiTopicOverviewQuerySchema.parse(input ?? {});
     const offset = (query.page - 1) * query.pageSize;
     const order =

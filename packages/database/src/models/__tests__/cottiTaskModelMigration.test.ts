@@ -3,7 +3,15 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getTestDB } from '../../core/getTestDB';
-import { agents, cottiModelDisplaySettings, tasks, topics, users } from '../../schemas';
+import {
+  agents,
+  cottiModelDisplaySettings,
+  cottiUserGroups,
+  cottiUserPolicies,
+  tasks,
+  topics,
+  users,
+} from '../../schemas';
 import { CottiModelDisplayModel } from '../cottiModelDisplay';
 import { CottiTaskModelMigrationModel } from '../cottiTaskModelMigration';
 
@@ -17,6 +25,7 @@ const cleanup = async () => {
   await db.delete(agents);
   await db.delete(users);
   await db.delete(cottiModelDisplaySettings);
+  await db.delete(cottiUserGroups);
 };
 beforeEach(async () => {
   await cleanup();
@@ -158,4 +167,44 @@ describe('CottiTaskModelMigrationModel', () => {
     const p = await model.preview(source);
     await expect(model.migrate(source, source, p.revision, 'admin')).rejects.toThrow('相同');
   });
+});
+
+it('retires only group members and preserves other users and global configuration', async () => {
+  const groupTarget = { ...target, provider: source.provider };
+  const list = [
+    { ...source, enabled: true },
+    { ...groupTarget, enabled: true },
+  ];
+  await db.insert(cottiUserGroups).values({
+    id: 'scoped',
+    name: 'Scoped',
+    provider: source.provider,
+    fastModel: source.model,
+    modelDisplay: { chat: list, agent: list, defaults: { chat: source, agent: source } },
+  });
+  await db.insert(cottiUserPolicies).values({ userId: 'migration-a', groupId: 'scoped' });
+  await db.insert(topics).values({ id: 'group-topic', userId: 'migration-a', ...source });
+  const globalBefore = await new CottiModelDisplayModel(db).getConfig();
+  const scoped = new CottiTaskModelMigrationModel(db, 'scoped');
+  const preview = await scoped.preview(source);
+  expect(preview).toMatchObject({ taskCount: 2, agentCount: 1, topicCount: 1 });
+  await expect(scoped.migrate(source, target, preview.revision, 'admin')).rejects.toThrow('渠道');
+  const result = await scoped.migrate(source, groupTarget, preview.revision, 'admin');
+  expect(result).toMatchObject({ migratedCount: 2, agentCount: 1, topicCount: 1 });
+  expect(
+    (await db.query.tasks.findFirst({ where: eq(tasks.id, 'migration-2') }))?.config,
+  ).toMatchObject(source);
+  expect(
+    (await db.query.topics.findFirst({ where: eq(topics.id, 'migration-topic') }))?.model,
+  ).toBe(source.model);
+  expect((await db.query.topics.findFirst({ where: eq(topics.id, 'group-topic') }))?.model).toBe(
+    groupTarget.model,
+  );
+  expect(await new CottiModelDisplayModel(db).getConfig()).toEqual(globalBefore);
+  const saved = await db.query.cottiUserGroups.findFirst({
+    where: eq(cottiUserGroups.id, 'scoped'),
+  });
+  expect(saved?.fastModel).toBe(groupTarget.model);
+  expect(saved?.modelDisplay.defaults?.agent).toEqual(groupTarget);
+  expect(saved?.modelDisplay.retirements?.[0]).toMatchObject({ source, target: groupTarget });
 });

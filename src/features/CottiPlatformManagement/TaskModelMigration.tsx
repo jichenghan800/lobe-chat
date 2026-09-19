@@ -15,6 +15,8 @@ import { sharedStyles } from './sharedStyle';
 interface Props {
   config: ModelDisplayConfig;
   disabled: boolean;
+  embedded?: boolean;
+  groupId?: string;
   onSaved: (config: ModelDisplayConfig) => Promise<void>;
   options: ModelDisplayOption[];
   requestedSource?: string;
@@ -24,7 +26,9 @@ const modelKey = (r: { model: string; provider: string }) => JSON.stringify([r.p
 
 export default function TaskModelMigration({
   config,
+  groupId,
   disabled,
+  embedded = false,
   onSaved,
   options,
   requestedSource,
@@ -53,8 +57,8 @@ export default function TaskModelMigration({
   );
   const target = targets.find((r) => modelKey(r) === targetKey);
   const preview = useClientDataSWR(
-    source ? ['cotti', 'task-model-migration', sourceKey] : null,
-    () => cottiModelDisplayService.previewTaskMigration(source!),
+    source ? ['cotti', 'task-model-migration', groupId ?? 'default', sourceKey] : null,
+    () => cottiModelDisplayService.previewTaskMigration(source!, groupId),
     { revalidateOnFocus: false },
   );
   const label = (r: { model: string; provider: string; displayName?: string }) =>
@@ -66,11 +70,19 @@ export default function TaskModelMigration({
       const result = await cottiModelDisplayService.retireAndMigrateTasks({
         source,
         target,
+        groupId,
         revision: preview.data.revision,
       });
       await onSaved(result.config);
       await preview.mutate();
-      toast.success(t('platformManagement.models.migration.done', { count: result.migratedCount }));
+      toast.success(
+        t(
+          groupId
+            ? 'platformManagement.models.groups.done'
+            : 'platformManagement.models.migration.done',
+          { count: result.migratedCount },
+        ),
+      );
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t('platformManagement.models.migration.failed'),
@@ -82,16 +94,28 @@ export default function TaskModelMigration({
   };
   return (
     <Block
-      className={sharedStyles.card}
+      className={embedded ? undefined : sharedStyles.card}
       gap={12}
-      id="global-model-retirement"
-      padding={20}
-      variant="outlined"
+      id={embedded ? undefined : 'global-model-retirement'}
+      padding={embedded ? 0 : 20}
+      variant={embedded ? 'borderless' : 'outlined'}
     >
-      <Text className={sharedStyles.sectionTitle}>
-        {t('platformManagement.models.migration.title')}
+      {!embedded && (
+        <Text className={sharedStyles.sectionTitle}>
+          {t(
+            groupId
+              ? 'platformManagement.models.groups.retireTitle'
+              : 'platformManagement.models.migration.title',
+          )}
+        </Text>
+      )}
+      <Text>
+        {t(
+          groupId
+            ? 'platformManagement.models.groups.retireDescription'
+            : 'platformManagement.models.migration.description',
+        )}
       </Text>
-      <Text>{t('platformManagement.models.migration.description')}</Text>
       <Text>{t('platformManagement.models.migration.boundary')}</Text>
       {disabled && <Text>{t('platformManagement.models.migration.saveFirst')}</Text>}
       <Flexbox horizontal gap={12} wrap="wrap">
@@ -158,14 +182,23 @@ export default function TaskModelMigration({
         }
         onClick={() =>
           confirmModal({
-            title: t('platformManagement.models.migration.confirmTitle'),
-            content: t('platformManagement.models.migration.confirm', {
-              count: preview.data?.taskCount,
-              agents: preview.data?.agentCount,
-              topics: preview.data?.topicCount,
-              source: source && label(source),
-              target: target && label(target),
-            }),
+            title: t(
+              groupId
+                ? 'platformManagement.models.groups.confirmTitle'
+                : 'platformManagement.models.migration.confirmTitle',
+            ),
+            content: t(
+              groupId
+                ? 'platformManagement.models.groups.confirm'
+                : 'platformManagement.models.migration.confirm',
+              {
+                count: preview.data?.taskCount,
+                agents: preview.data?.agentCount,
+                topics: preview.data?.topicCount,
+                source: source && label(source),
+                target: target && label(target),
+              },
+            ),
             okText: t('platformManagement.models.migration.action'),
             cancelText: t('cancel', { ns: 'common' }),
             onOk: execute,

@@ -1,6 +1,7 @@
 /**
  * @vitest-environment happy-dom
  */
+import type { UploadFileItem } from '@lobechat/types';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -35,7 +36,7 @@ const chatState = vi.hoisted(() => ({
 
 const fileState = vi.hoisted(() => ({
   chatContextSelectionsByContext: {} as Record<string, any[]>,
-  chatUploadFileList: [],
+  chatUploadFileList: [] as Partial<UploadFileItem>[],
   clearChatContextSelections: clearChatContextSelectionsMock,
   clearChatUploadFileList: clearChatUploadFileListMock,
   restoreChatContextSelections: restoreChatContextSelectionsMock,
@@ -150,16 +151,13 @@ vi.mock('@/store/chat', () => {
   return { useChatStore };
 });
 
-vi.mock('@/store/file', () => {
+vi.mock('@/store/file', async () => {
+  const { fileChatSelectors } = await import('@/store/file/slices/chat/selectors');
   const useFileStore = (selector: (state: typeof fileState) => unknown) => selector(fileState);
   useFileStore.getState = () => fileState;
 
   return {
-    fileChatSelectors: {
-      chatContextSelections: (contextKey: string) => (state: typeof fileState) =>
-        state.chatContextSelectionsByContext[contextKey] ?? [],
-      chatUploadFileList: (state: typeof fileState) => state.chatUploadFileList,
-    },
+    fileChatSelectors,
     useFileStore,
   };
 });
@@ -312,7 +310,7 @@ describe('Home InputArea useSend', () => {
   });
 
   it('does not discard attachments that Task mode cannot persist', async () => {
-    fileState.chatUploadFileList = [{ id: 'file-1' }] as any;
+    fileState.chatUploadFileList = [{ id: 'file-1', status: 'success' }] as any;
     const { result } = renderHook(() => useSend('task'));
     const params: Parameters<SendButtonHandler>[0] = {
       clearContent: vi.fn(),
@@ -332,7 +330,7 @@ describe('Home InputArea useSend', () => {
 
   it('explains why an attachment-only Task submission cannot proceed', async () => {
     chatState.inputMessage = '';
-    fileState.chatUploadFileList = [{ id: 'file-1' }] as any;
+    fileState.chatUploadFileList = [{ id: 'file-1', status: 'success' }] as any;
     const { result } = renderHook(() => useSend('task'));
     const params: Parameters<SendButtonHandler>[0] = {
       clearContent: vi.fn(),
@@ -507,6 +505,26 @@ describe('Home InputArea useSend', () => {
     );
     expect(clearChatContextSelectionsMock).toHaveBeenCalledWith('home:chat:agt_inbox');
   });
+  it.each(['pending', 'uploading', 'error', 'cancelled'] as const)(
+    'keeps the text and attachment draft when an upload is %s',
+    async (status) => {
+      fileState.chatUploadFileList = [{ id: 'screenshot.png', status }];
+      const { result } = renderHook(() => useSend('chat'));
+      const clearContent = vi.fn();
+      await act(async () => {
+        await result.current.send({
+          clearContent,
+          editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+          getEditorData: () => undefined,
+          getMarkdownContent: () => 'review attachment',
+        });
+      });
+      expect(sendMessageMock).not.toHaveBeenCalled();
+      expect(clearContent).not.toHaveBeenCalled();
+      expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+    },
+  );
+
   it('keeps an Agent-only spreadsheet draft on Home instead of sending it through Chat', async () => {
     fileState.chatUploadFileList = [
       { id: 'file-sheet', requiresAgentMode: true, status: 'success' },

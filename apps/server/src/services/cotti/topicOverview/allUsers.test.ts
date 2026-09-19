@@ -1,7 +1,13 @@
 // @vitest-environment node
-import { cottiLoginAccessRules, topicCostFreezes, topics, users } from '@lobechat/database/schemas';
+import {
+  agents,
+  cottiLoginAccessRules,
+  topicCostFreezes,
+  topics,
+  users,
+} from '@lobechat/database/schemas';
 import { getTestDB } from '@lobechat/database/test-utils';
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
@@ -49,6 +55,29 @@ describe('administrator overview includes every account', () => {
     await db.insert(topics).values({ userId: ids[0], title: `${prefix} deleted`, isDeleted: true });
     await db.insert(topics).values({ userId: ids[0], title: `${prefix} 100%_literal` });
   }, 60_000);
+
+  it('resolves the owner inbox identity without using the viewing administrator agent store', async () => {
+    const { DEFAULT_INBOX_TITLE, DEFAULT_INBOX_AVATAR } = await import('@lobechat/const');
+    const agentId = `${prefix}-inbox`;
+    const topicId = `${prefix}-inbox-topic`;
+    await db.insert(agents).values({ id: agentId, userId: ids[0], slug: 'inbox', virtual: true });
+    await db.insert(topics).values({ id: topicId, userId: ids[0], agentId });
+    const detail = await service.getDetail(topicId);
+    expect(detail?.agentMetas?.[agentId]).toMatchObject({
+      title: DEFAULT_INBOX_TITLE,
+      avatar: DEFAULT_INBOX_AVATAR,
+    });
+    await db
+      .update(agents)
+      .set({ title: '自定义助理', name: '小韩' })
+      .where(eq(agents.id, agentId));
+    expect((await service.getDetail(topicId))?.agentMetas?.[agentId]).toMatchObject({
+      title: '自定义助理',
+      name: '小韩',
+    });
+    await db.delete(topics).where(eq(topics.id, topicId));
+    await db.delete(agents).where(eq(agents.id, agentId));
+  });
 
   afterAll(async () => {
     vi.unstubAllEnvs();

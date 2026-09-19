@@ -1,12 +1,20 @@
 import { createHash } from 'node:crypto';
 
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, sql, type SQLWrapper } from 'drizzle-orm';
 
 import type { ModelDisplayConfig, ModelDisplayModelRef } from '@/types/modelDisplay';
 
-import { agents, cottiModelDisplaySettings, tasks, topics } from '../schemas';
+import {
+  agents,
+  cottiModelDisplaySettings,
+  cottiUserGroups,
+  cottiUserPolicies,
+  tasks,
+  topics,
+} from '../schemas';
 import type { LobeChatDatabase } from '../type';
 import { CottiModelDisplayModel, normalizeModelDisplayConfig } from './cottiModelDisplay';
+import { CottiUserGroupModel } from './cottiUserGroup';
 
 const key = (ref: ModelDisplayModelRef) =>
   `${ref.provider.trim().toLowerCase()}/${ref.model.trim().toLowerCase()}`;
@@ -30,7 +38,20 @@ const matches = (ref: ModelDisplayModelRef) =>
 export class CottiTaskModelMigrationError extends Error {}
 
 export class CottiTaskModelMigrationModel {
-  constructor(private db: LobeChatDatabase) {}
+  constructor(
+    private db: LobeChatDatabase,
+    private groupId?: string,
+  ) {}
+
+  private memberScope = (owner: SQLWrapper) =>
+    this.groupId
+      ? sql`${owner} IN (SELECT ${cottiUserPolicies.userId} FROM ${cottiUserPolicies} WHERE ${cottiUserPolicies.groupId} = ${this.groupId})`
+      : undefined;
+
+  private getConfig = async () =>
+    this.groupId
+      ? (await new CottiUserGroupModel(this.db).get(this.groupId)).modelDisplay
+      : new CottiModelDisplayModel(this.db).getConfig();
 
   private rows = (source: ModelDisplayModelRef) =>
     this.db
@@ -45,18 +66,26 @@ export class CottiTaskModelMigrationModel {
       })
       .from(tasks)
       .leftJoin(agents, eq(tasks.assigneeAgentId, agents.id))
-      .where(matches(source))
+      .where(and(matches(source), this.memberScope(tasks.createdByUserId)))
       .orderBy(tasks.id);
 
   preview = async (source: ModelDisplayModelRef) => {
+    const groups = new CottiUserGroupModel(this.db);
+    if (this.groupId) {
+      if ((await groups.get(this.groupId)).provider !== source.provider)
+        throw new CottiTaskModelMigrationError('只能管理本组渠道的模型');
+    } else if ((await groups.list()).some((g) => g.provider === source.provider)) {
+      throw new CottiTaskModelMigrationError('专属渠道模型请在对应用户组页签下线');
+    }
     const [rows, config, agentRows, topicRows] = await Promise.all([
       this.rows(source),
-      new CottiModelDisplayModel(this.db).getConfig(),
+      this.getConfig(),
       this.db
         .select({ id: agents.id, updatedAt: agents.updatedAt })
         .from(agents)
         .where(
           and(
+            this.memberScope(agents.userId),
             sql`lower(trim(${agents.model})) = ${source.model.trim().toLowerCase()}`,
             sql`lower(trim(${agents.provider})) = ${source.provider.trim().toLowerCase()}`,
           ),
@@ -65,11 +94,20 @@ export class CottiTaskModelMigrationModel {
       this.db
         .select({ id: topics.id, updatedAt: topics.updatedAt })
         .from(topics)
-        .where(topicMatches(source))
+        .where(and(topicMatches(source), this.memberScope(topics.userId)))
         .orderBy(topics.id),
     ]);
     const revision = createHash('sha256')
-      .update(JSON.stringify({ source: key(source), rows, config, agentRows, topicRows }))
+      .update(
+        JSON.stringify({
+          groupId: this.groupId,
+          source: key(source),
+          rows,
+          config,
+          agentRows,
+          topicRows,
+        }),
+      )
       .digest('hex');
     return {
       revision,
@@ -93,13 +131,18 @@ export class CottiTaskModelMigrationModel {
       // Serialize configuration changes and task edits/creation during the reviewed batch.
       // No external I/O occurs while these locks are held.
       await tx.execute(
-        sql`LOCK TABLE cotti_model_display_settings, tasks, agents, topics IN SHARE ROW EXCLUSIVE MODE`,
+        sql`LOCK TABLE cotti_model_display_settings, cotti_user_groups, cotti_user_policies, tasks, agents, topics IN SHARE ROW EXCLUSIVE MODE`,
       );
-      const scoped = new CottiTaskModelMigrationModel(tx as LobeChatDatabase);
+      const scoped = new CottiTaskModelMigrationModel(tx as LobeChatDatabase, this.groupId);
       const preview = await scoped.preview(source);
       if (preview.revision !== revision)
         throw new CottiTaskModelMigrationError('任务或模型配置已变化，请重新预览后确认');
-      const config = await new CottiModelDisplayModel(tx as LobeChatDatabase).getConfig();
+      const config = await scoped.getConfig();
+      if (this.groupId) {
+        const group = await new CottiUserGroupModel(tx).get(this.groupId);
+        if (source.provider !== group.provider || target.provider !== group.provider)
+          throw new CottiTaskModelMigrationError('替换模型必须使用本组渠道');
+      }
       if (
         config.retirements?.some((r) => same(r.source, target)) ||
         !config.agent.some((r) => r.enabled && same(r, target)) ||
@@ -126,7 +169,7 @@ export class CottiTaskModelMigrationModel {
         .select({ id: tasks.id })
         .from(tasks)
         .leftJoin(agents, eq(tasks.assigneeAgentId, agents.id))
-        .where(matches(source));
+        .where(and(matches(source), this.memberScope(tasks.createdByUserId)));
       const audit = JSON.stringify({ at: at.toISOString(), by: actor, from: source, to: target });
       const changed = await tx
         .update(tasks)
@@ -142,6 +185,7 @@ export class CottiTaskModelMigrationModel {
         .set({ ...target, updatedAt: at })
         .where(
           and(
+            this.memberScope(agents.userId),
             sql`lower(trim(${agents.model})) = ${source.model.trim().toLowerCase()}`,
             sql`lower(trim(${agents.provider})) = ${source.provider.trim().toLowerCase()}`,
           ),
@@ -154,7 +198,7 @@ export class CottiTaskModelMigrationModel {
           provider: target.provider,
           updatedAt: at,
         })
-        .where(topicMatches(source))
+        .where(and(topicMatches(source), this.memberScope(topics.userId)))
         .returning({ id: topics.id });
       // Historical messages, summaries and usage aggregates remain unchanged.
       next.retirements = [
@@ -162,13 +206,25 @@ export class CottiTaskModelMigrationModel {
         { source, target, by: actor, at: at.toISOString() },
       ];
       const normalized = normalizeModelDisplayConfig(next);
-      await tx
-        .insert(cottiModelDisplaySettings)
-        .values({ id: 'default', config: normalized, updatedBy: actor })
-        .onConflictDoUpdate({
-          target: cottiModelDisplaySettings.id,
-          set: { config: normalized, updatedBy: actor, updatedAt: at },
-        });
+      if (this.groupId) {
+        const group = await new CottiUserGroupModel(tx).get(this.groupId);
+        await tx
+          .update(cottiUserGroups)
+          .set({
+            modelDisplay: normalized,
+            fastModel: group.fastModel === source.model ? target.model : group.fastModel,
+            updatedBy: actor,
+            updatedAt: at,
+          })
+          .where(eq(cottiUserGroups.id, this.groupId));
+      } else
+        await tx
+          .insert(cottiModelDisplaySettings)
+          .values({ id: 'default', config: normalized, updatedBy: actor })
+          .onConflictDoUpdate({
+            target: cottiModelDisplaySettings.id,
+            set: { config: normalized, updatedBy: actor, updatedAt: at },
+          });
       return {
         config: normalized,
         migratedCount: changed.length,

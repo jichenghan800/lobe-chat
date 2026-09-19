@@ -20,9 +20,9 @@ export interface UserInfoProps extends FlexboxProps {
 
 const UserInfo = memo<UserInfoProps>(({ avatarProps, onClick, ...rest }) => {
   const isSignedIn = useUserStore(authSelectors.isLogin);
-  const [nickname, username] = useUserStore((s) => [
+  const [nickname, accountIdentifier] = useUserStore((s) => [
     userProfileSelectors.nickName(s),
-    userProfileSelectors.displayUserName(s),
+    userProfileSelectors.accountIdentifier(s),
   ]);
 
   return (
@@ -41,9 +41,13 @@ const UserInfo = memo<UserInfoProps>(({ avatarProps, onClick, ...rest }) => {
           <Text style={{ lineHeight: 1.4 }} weight={'bold'}>
             {nickname}
           </Text>
-          {username && (
-            <Text fontSize={12} style={{ lineHeight: 1.4 }} type={'secondary'}>
-              {username}
+          {accountIdentifier && (
+            <Text
+              fontSize={12}
+              style={{ lineHeight: 1.4, overflowWrap: 'anywhere' }}
+              type={'secondary'}
+            >
+              {accountIdentifier}
             </Text>
           )}
         </Flexbox>

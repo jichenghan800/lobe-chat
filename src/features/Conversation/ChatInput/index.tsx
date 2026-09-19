@@ -279,7 +279,7 @@ const ChatInput = memo<ChatInputProps>(
     // File store - for UI state only (disabled button, etc.)
     const fileList = useFileStore(fileChatSelectors.chatUploadFileList);
     const contextList = useFileStore(fileChatSelectors.chatContextSelections(contextKey));
-    const isUploadingFiles = useFileStore(fileChatSelectors.isUploadingFiles);
+    const hasUnreadyFiles = useFileStore(fileChatSelectors.hasUnreadyChatFiles);
     const hasAgentModeRequiredFiles = useFileStore(fileChatSelectors.hasAgentModeRequiredFiles);
 
     // Queue state
@@ -317,7 +317,7 @@ const ChatInput = memo<ChatInputProps>(
     // disableSend hard-blocks regardless of content (host surface is read-only).
     const disabled =
       isInputEmpty ||
-      isUploadingFiles ||
+      hasUnreadyFiles ||
       (hasAgentModeRequiredFiles && !isAgentRuntimeMode) ||
       (!!disableQueue && isInputQueueBlocked) ||
       !!disableSend;
@@ -333,7 +333,7 @@ const ChatInput = memo<ChatInputProps>(
       if (customDisabled !== undefined) return customDisabled;
 
       const fileStore = useFileStore.getState();
-      if (fileChatSelectors.isUploadingFiles(fileStore)) return true;
+      if (fileChatSelectors.hasUnreadyChatFiles(fileStore)) return true;
       if (!isAgentRuntimeMode && fileChatSelectors.hasAgentModeRequiredFiles(fileStore))
         return true;
 
@@ -365,10 +365,10 @@ const ChatInput = memo<ChatInputProps>(
         // Get instant values from stores at trigger time
         const fileStore = useFileStore.getState();
         const currentFileList = fileChatSelectors.chatUploadFileList(fileStore);
-        const currentIsUploading = fileChatSelectors.isUploadingFiles(fileStore);
+        const currentHasUnreadyFiles = fileChatSelectors.hasUnreadyChatFiles(fileStore);
         const currentContextList = fileChatSelectors.chatContextSelections(contextKey)(fileStore);
 
-        if (currentIsUploading) return;
+        if (currentHasUnreadyFiles) return;
         if (!isAgentRuntimeMode && currentFileList.some((item) => item.requiresAgentMode)) return;
 
         // Onboarding-style surfaces opt out of message queuing — pressing Enter

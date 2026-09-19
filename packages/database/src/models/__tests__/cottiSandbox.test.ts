@@ -89,3 +89,92 @@ describe('sandbox admission', () => {
     }
   });
 });
+
+describe('switch an unused topic sandbox', () => {
+  const owner = 'sandbox-switch-owner';
+  const topicId = 'sandbox-switch-topic';
+  beforeEach(async () => {
+    await db.delete(users).where(eq(users.id, owner));
+    await db.insert(users).values({ id: owner });
+    await db.insert(topics).values({
+      id: topicId,
+      userId: owner,
+      metadata: { sandboxProvider: 'market' },
+    });
+  });
+  it('switches without losing the topic or its metadata', async () => {
+    expect(await model.switchUnusedTopic(owner, topicId, 'onlyboxes')).toEqual({
+      status: 'switched',
+    });
+    expect(await model.getTopicProvider(owner, topicId)).toBe('onlyboxes');
+    await expect(model.switchUnusedTopic('another-user', topicId, 'market')).rejects.toThrow(
+      'access denied',
+    );
+  });
+  it('blocks in-flight execution and permits a definite authentication rejection', async () => {
+    const id = await model.beginExecution(owner, topicId, 'market');
+    expect(await model.switchUnusedTopic(owner, topicId, 'onlyboxes')).toEqual({
+      status: 'running',
+    });
+    await model.finishExecution(owner, topicId, id, true);
+    expect(await model.switchUnusedTopic(owner, topicId, 'onlyboxes')).toEqual({
+      status: 'switched',
+    });
+    await expect(model.beginExecution(owner, topicId, 'market')).rejects.toThrow('Sandbox changed');
+  });
+  it('preserves successful or uncertain execution even when another call fails auth', async () => {
+    const first = await model.beginExecution(owner, topicId, 'market');
+    const second = await model.beginExecution(owner, topicId, 'market');
+    await model.finishExecution(owner, topicId, first, false);
+    expect(await model.switchUnusedTopic(owner, topicId, 'onlyboxes')).toEqual({
+      status: 'running',
+    });
+    await model.finishExecution(owner, topicId, second, true);
+    expect(await model.switchUnusedTopic(owner, topicId, 'onlyboxes')).toEqual({
+      status: 'new_topic_required',
+    });
+  });
+  it('rejects a topic with a running operation', async () => {
+    await db.update(topics).set({ status: 'running' }).where(eq(topics.id, topicId));
+    expect(await model.switchUnusedTopic(owner, topicId, 'onlyboxes')).toEqual({
+      status: 'running',
+    });
+  });
+  it.each([
+    ['MARKET_AUTH_REQUIRED', 'switched'],
+    ['Command failed with exit code 1\n\nStderr:\nMARKET_AUTH_REQUIRED', 'switched'],
+    ['Created report.docx', 'new_topic_required'],
+    ['Request timed out', 'new_topic_required'],
+    [null, 'new_topic_required'],
+  ])('checks historical tool results: %s', async (content, status) => {
+    const { messages, messagePlugins } = await import('../../schemas');
+    await db.insert(messages).values({
+      id: 'sandbox-switch-assistant',
+      userId: owner,
+      topicId,
+      role: 'assistant',
+      tools: [
+        {
+          id: 'call-switch',
+          identifier: 'lobe-cloud-sandbox',
+          apiName: 'executeCode',
+          arguments: '{}',
+          type: 'builtin',
+        },
+      ],
+    });
+    if (content !== null) {
+      await db
+        .insert(messages)
+        .values({ id: 'sandbox-switch-tool', userId: owner, topicId, role: 'tool', content });
+      await db.insert(messagePlugins).values({
+        id: 'sandbox-switch-tool',
+        userId: owner,
+        toolCallId: 'call-switch',
+        identifier: 'lobe-cloud-sandbox',
+        apiName: 'executeCode',
+      });
+    }
+    expect(await model.switchUnusedTopic(owner, topicId, 'onlyboxes')).toEqual({ status });
+  });
+});

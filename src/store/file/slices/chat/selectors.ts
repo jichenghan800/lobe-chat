@@ -30,6 +30,10 @@ const isUploadingFiles = (s: FilesStoreState) =>
       (file.tasks && !file.tasks?.finishEmbedding),
   );
 
+/** Draft placeholders (including failed/cancelled uploads) must never become attachment IDs. */
+const hasUnreadyChatFiles = (s: FilesStoreState) =>
+  s.chatUploadFileList.some((file) => file.status !== 'success') || isUploadingFiles(s);
+
 export const filesSelectors = {
   chatUploadFileList,
   isImageUploading,
@@ -42,5 +46,6 @@ export const fileChatSelectors = {
   chatUploadFileList,
   chatUploadFileListHasItem,
   hasAgentModeRequiredFiles,
+  hasUnreadyChatFiles,
   isUploadingFiles,
 };

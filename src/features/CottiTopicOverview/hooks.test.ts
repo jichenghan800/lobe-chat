@@ -56,3 +56,23 @@ describe('overview pasted link search', () => {
     });
   });
 });
+
+describe('overview default filters', () => {
+  it.each(['', 'sort=invalid&status=invalid'])(
+    'defaults to all topics ordered by recent update: %s',
+    (search) => {
+      mocks.initialSearch = search;
+      const { result } = renderHook(() => useCottiTopicOverviewList());
+      expect(result.current.state).toMatchObject({ status: 'all', sort: 'updated', page: 1 });
+      expect(mocks.list).toHaveBeenLastCalledWith(
+        expect.objectContaining({ status: 'all', sort: 'updated' }),
+      );
+    },
+  );
+
+  it('preserves explicit filters in bookmarked URLs', () => {
+    mocks.initialSearch = 'status=frozen&sort=cost&page=2';
+    const { result } = renderHook(() => useCottiTopicOverviewList());
+    expect(result.current.state).toMatchObject({ status: 'frozen', sort: 'cost', page: 2 });
+  });
+});

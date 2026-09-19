@@ -1,6 +1,5 @@
 import { countContextTokens } from '@lobechat/context-engine';
 import type * as ModelRuntime from '@lobechat/model-runtime';
-import { getModelPropertyWithFallback } from '@lobechat/model-runtime';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
@@ -23,7 +22,6 @@ vi.mock('@lobechat/model-runtime', async (importOriginal) => ({
       { name: 'textOutput', rate: 12, strategy: 'fixed', unit: 'millionTokens' },
     ],
   })),
-  getModelPropertyWithFallback: vi.fn(),
   AgentRuntimeError: {
     createError: (_type: string, body: { message: string }) => new Error(body.message),
   },
@@ -47,82 +45,47 @@ describe('final context cost guard', () => {
     vi.clearAllMocks();
     freezeStore.frozen = false;
     budgetCheck.mockReset();
-    vi.mocked(getModelPropertyWithFallback).mockImplementation(async (_model, field) =>
-      field === 'contextWindowTokens'
-        ? 1_050_000
-        : {
-            units: [
-              {
-                name: 'textInput',
-                strategy: 'tiered',
-                tiers: [
-                  { rate: 2, upTo: 272_000 },
-                  { rate: 4, upTo: 'infinity' },
-                ],
-              },
-            ],
-          },
-    );
   });
 
-  it('freezes at the early threshold and rejects later short requests and model changes', async () => {
-    const scope = { db: {} as LobeChatDatabase, userId: 'owner' };
-    vi.mocked(countContextTokens).mockReturnValue({
-      rawTotal: 152_320,
-      adjustedTotal: 190_400,
-    } as ReturnType<typeof countContextTokens>);
+  it.each([
+    ['azure', 'gpt-5.6-terra', 190_400],
+    ['vertexai', 'gemini-3.8-flash', 1_000_000],
+  ])(
+    'uses monetary reservation without length freezing for %s/%s',
+    async (provider, model, total) => {
+      const scope = { db: {} as LobeChatDatabase, userId: 'owner' };
+      vi.mocked(countContextTokens).mockReturnValue({
+        rawTotal: total / 1.25,
+        adjustedTotal: total,
+      } as ReturnType<typeof countContextTokens>);
+      const guard = createContextCostGuard(provider, scope);
+      await expect(
+        guard.beforeChat!({ model, messages: [] }, { metadata: { topicId: 'topic' } }),
+      ).resolves.toBeUndefined();
+      await expect(
+        guard.beforeGenerateObject!(
+          {
+            model,
+            messages: [],
+            schema: { name: 'summary', schema: { type: 'object', properties: {} } },
+          },
+          { tracing: { topicId: 'topic' } },
+        ),
+      ).resolves.toBeUndefined();
+      expect(freezeStore.freeze).not.toHaveBeenCalled();
+      expect(budgetCheck).toHaveBeenLastCalledWith('owner', 'topic', expect.any(Number));
+      expect(budgetCheck.mock.lastCall?.[2]).toBeGreaterThan(0);
+    },
+  );
+  it('still rejects a manually frozen topic before sending', async () => {
+    freezeStore.frozen = true;
     await expect(
-      createContextCostGuard('azure', scope).beforeChat!(
+      createContextCostGuard('azure', { db: {} as LobeChatDatabase, userId: 'owner' }).beforeChat!(
         { model: 'terra', messages: [] },
         { metadata: { topicId: 'topic' } },
       ),
     ).rejects.toThrow('冻结');
-    expect(freezeStore.freeze).toHaveBeenCalledOnce();
-    vi.mocked(countContextTokens).mockReturnValue({ rawTotal: 10, adjustedTotal: 13 } as ReturnType<
-      typeof countContextTokens
-    >);
-    await expect(
-      createContextCostGuard('azure', scope).beforeChat!(
-        { model: 'other', messages: [] },
-        { metadata: { topicId: 'topic' } },
-      ),
-    ).rejects.toThrow('冻结');
-    await expect(
-      createContextCostGuard('azure', scope).beforeGenerateObject!(
-        {
-          model: 'terra',
-          messages: [],
-          schema: { name: 'test', schema: { type: 'object', properties: {} } },
-        },
-        { tracing: { topicId: 'topic' } },
-      ),
-    ).rejects.toThrow('冻结');
-  });
-  it('allows Gemini below one million adjusted tokens and freezes at the boundary', async () => {
-    const guard = createContextCostGuard('vertexai', {
-      db: {} as LobeChatDatabase,
-      userId: 'owner',
-    });
-    const options = { metadata: { topicId: 'topic' } };
-    vi.mocked(countContextTokens).mockReturnValue({
-      rawTotal: 799_999,
-      adjustedTotal: 999_999,
-    } as ReturnType<typeof countContextTokens>);
-    await expect(
-      guard.beforeChat!({ model: 'gemini-3.8-flash', messages: [] }, options),
-    ).resolves.toBeUndefined();
-    expect(freezeStore.freeze).not.toHaveBeenCalled();
-    vi.mocked(countContextTokens).mockReturnValue({
-      rawTotal: 800_000,
-      adjustedTotal: 1_000_000,
-    } as ReturnType<typeof countContextTokens>);
-    await expect(
-      guard.beforeChat!({ model: 'gemini-3.8-flash', messages: [] }, options),
-    ).rejects.toThrow('冻结');
-    expect(freezeStore.freeze).toHaveBeenCalledWith(
-      'topic',
-      expect.objectContaining({ inputTokenLimit: 1_000_000 }),
-    );
+    expect(countContextTokens).not.toHaveBeenCalled();
   });
   it('blocks before sending when the next request would exhaust the remaining budget', async () => {
     vi.mocked(countContextTokens).mockReturnValue({
@@ -153,7 +116,7 @@ describe('final context cost guard', () => {
     ).rejects.toThrow('冻结');
     expect(countContextTokens).not.toHaveBeenCalled();
   });
-  it('retains the per-request guard for unscoped operations', async () => {
+  it('does not impose a custom length limit without a topic', async () => {
     vi.mocked(countContextTokens).mockReturnValue({
       rawTotal: 500_000,
       adjustedTotal: 625_000,
@@ -163,17 +126,17 @@ describe('final context cost guard', () => {
         model: 'terra',
         messages: [],
       }),
-    ).rejects.toThrow('上下文过大');
+    ).resolves.toBeUndefined();
     expect(freezeStore.freeze).not.toHaveBeenCalled();
   });
-  it('blocks a large final payload before any upstream request', async () => {
+  it('leaves unscoped large payloads to native context handling', async () => {
     vi.mocked(countContextTokens).mockReturnValue({
       rawTotal: 250_000,
       adjustedTotal: 312_500,
     } as ReturnType<typeof countContextTokens>);
     await expect(
       createContextCostGuard('azure').beforeChat!({ model: 'terra', messages: [] }),
-    ).rejects.toThrow('上下文过大');
+    ).resolves.toBeUndefined();
   });
   it('allows a smaller payload and accounts for tool definitions', async () => {
     vi.mocked(countContextTokens).mockReturnValue({

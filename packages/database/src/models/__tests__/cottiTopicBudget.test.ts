@@ -4,13 +4,17 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getTestDB } from '../../core/getTestDB';
 import {
+  cottiAuditViewLogs,
   cottiTopicBudgetSettings,
+  cottiTopicPolicies,
   cottiUserPolicies,
   messages,
+  topicCostFreezes,
   topics,
   users,
 } from '../../schemas';
 import { CottiTopicBudgetModel } from '../cottiTopicBudget';
+import { CottiUserPolicyModel } from '../cottiUserPolicy';
 import { TopicCostFreezeModel } from '../topicCostFreeze';
 import { recomputeTopicUsage } from '../topicUsage';
 
@@ -114,7 +118,7 @@ describe('per-topic recorded spending limit', () => {
     await budget.freezeIfExceeded('budget-owner', 'budget-topic');
     expect(await freezes.get('budget-topic')).not.toBeNull();
   });
-  it('uses per-user limits, keeps other users independent and preserves existing freezes', async () => {
+  it('reconciles historical budget freezes after the effective user limit increases', async () => {
     await db.insert(cottiUserPolicies).values({ userId: 'budget-owner', topicLimitFen: 500 });
     await db.insert(messages).values({
       id: 'budget-msg',
@@ -130,7 +134,78 @@ describe('per-topic recorded spending limit', () => {
       .set({ topicLimitFen: 5000 })
       .where(eq(cottiUserPolicies.userId, 'budget-owner'));
     await budget.freezeIfExceeded('budget-owner', 'budget-topic');
-    expect(await freezes.get('budget-topic')).toMatchObject({ reason: 'budget', limitFen: 500 });
+    expect(await freezes.get('budget-topic')).toBeNull();
+  });
+  it('releases an old budget freeze on a platform raise, audits it and still reserves the next call', async () => {
+    await db.insert(messages).values({
+      id: 'budget-msg',
+      topicId: 'budget-topic',
+      userId: 'budget-owner',
+      role: 'assistant',
+      usage: { cost: 1 },
+    });
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic', 1);
+    expect(await freezes.get('budget-topic')).not.toBeNull();
+    await budget.updateConfig({ enabled: true, limitFen: 2000 }, 'admin');
+    expect(await freezes.get('budget-topic')).toBeNull();
+    const audits = await db
+      .select()
+      .from(cottiAuditViewLogs)
+      .where(eq(cottiAuditViewLogs.targetId, 'budget-topic'));
+    expect(audits.some((r) => r.metadata?.source === 'cotti-topic-budget-reconciliation')).toBe(
+      true,
+    );
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic', 2);
+    expect(await freezes.get('budget-topic')).toMatchObject({ limitFen: 2000 });
+  });
+  it('keeps manual and context freezes when limits increase', async () => {
+    await freezes.freeze('budget-topic', {
+      reason: 'manual',
+      model: '',
+      provider: '',
+      estimatedInputTokens: 0,
+      inputTokenLimit: 0,
+    });
+    await freezes.freeze('budget-new', {
+      reason: 'context',
+      model: '',
+      provider: '',
+      estimatedInputTokens: 200000,
+      inputTokenLimit: 136000,
+    });
+    await budget.updateConfig({ enabled: true, limitFen: 5000 }, 'admin');
+    expect((await freezes.get('budget-topic'))?.reason).toBe('manual');
+    expect((await freezes.get('budget-new'))?.reason).toBe('context');
+  });
+  it('uses effective overrides and does not release a topic still above its new limit', async () => {
+    await db.insert(messages).values({
+      id: 'budget-msg',
+      topicId: 'budget-topic',
+      userId: 'budget-owner',
+      role: 'assistant',
+      usage: { cost: 3 },
+    });
+    const policies = new CottiUserPolicyModel(db);
+    await policies.update('budget-owner', { topicLimitFen: 1000 }, 'admin');
+    await budget.freezeIfExceeded('budget-owner', 'budget-topic');
+    await budget.updateConfig({ enabled: true, limitFen: 10000 }, 'admin');
+    expect(await freezes.get('budget-topic')).not.toBeNull();
+    await policies.update('budget-owner', { topicLimitFen: 2000 }, 'admin');
+    expect(await freezes.get('budget-topic')).not.toBeNull();
+    await db.insert(cottiTopicPolicies).values({ topicId: 'budget-topic', limitFen: 2000 });
+    await policies.update('budget-owner', { topicLimitFen: 5000 }, 'admin');
+    expect(await freezes.get('budget-topic')).not.toBeNull();
+    await db
+      .update(cottiTopicPolicies)
+      .set({ limitFen: 3000 })
+      .where(eq(cottiTopicPolicies.topicId, 'budget-topic'));
+    await new TopicCostFreezeModel(db, 'budget-other').get('budget-topic');
+    expect(
+      await db.query.topicCostFreezes.findFirst({
+        where: eq(topicCostFreezes.topicId, 'budget-topic'),
+      }),
+    ).toBeDefined();
+    expect(await freezes.get('budget-topic')).toBeNull();
   });
   it('excludes foreign users, copied transcripts and non-assistant costs without double counting retries', async () => {
     await db.insert(messages).values([

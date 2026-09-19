@@ -47,6 +47,7 @@ import { useAgentStore } from '@/store/agent';
 import { useElectronStore } from '@/store/electron';
 
 import { formatLockedControlTooltip } from '../utils/lockedControlTooltip';
+import { AdminDesktopDownload } from './AdminDesktopDownload';
 import { useCommitWorkingDirectory } from './useCommitWorkingDirectory';
 
 const styles = createStaticStyles(({ css }) => ({
@@ -996,6 +997,7 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
           onClick={() => sandboxSelection.select('onlyboxes')}
         />
       ) : null}
+      <AdminDesktopDownload />
     </Flexbox>
   );
 

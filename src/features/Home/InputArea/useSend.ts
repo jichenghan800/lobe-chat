@@ -99,7 +99,9 @@ export const useSend = (mode: HomeMode = 'chat') => {
       // `onChange`, so a fast type-then-Enter sequence can fire before the
       // cache catches up and the empty-message guard would bail incorrectly.
       const typed = (getMarkdownContent?.() ?? inputMessage ?? '').trim();
-      const fileList = fileChatSelectors.chatUploadFileList(useFileStore.getState());
+      const fileStore = useFileStore.getState();
+      if (fileChatSelectors.hasUnreadyChatFiles(fileStore)) return;
+      const fileList = fileChatSelectors.chatUploadFileList(fileStore);
       const contextList = fileChatSelectors.chatContextSelections(contextSelectionKey)(
         useFileStore.getState(),
       );

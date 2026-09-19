@@ -1,4 +1,6 @@
 export default {
+  'heteroAgent.executionTarget.switchRunning':
+    'Wait for the current task to finish before switching sandbox.',
   'heteroAgent.executionTarget.selfHosted': 'Self-hosted sandbox',
   'heteroAgent.executionTarget.selfHostedDesc': 'Run in a temporary sandbox on the platform server',
   'heteroAgent.executionTarget.switchTitle': 'Start a new topic to switch sandbox?',

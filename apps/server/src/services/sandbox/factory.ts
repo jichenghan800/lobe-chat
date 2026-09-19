@@ -2,6 +2,7 @@ import { CottiSandboxModel } from '@/database/models/cottiSandbox';
 import { sandboxEnv } from '@/envs/sandbox';
 
 import { SandboxCapacityService } from './capacity';
+import { guardSandboxExecution } from './executionGuard';
 import { MarketSandboxProvider } from './providers/market';
 import { OnlyboxesSandboxProvider } from './providers/onlyboxes';
 import { SandboxMiddlewareService } from './service';
@@ -58,8 +59,15 @@ export const createSandboxService = async (
       'Self-hosted sandbox is unavailable. The topic will not switch to cloud automatically.',
     );
   }
-  return new SandboxMiddlewareService(createSandboxProvider({ ...options, serverDB: db }, kind), {
-    ...options,
-    serverDB: db,
-  });
+  return new SandboxMiddlewareService(
+    guardSandboxExecution(
+      createSandboxProvider({ ...options, serverDB: db }, kind),
+      new CottiSandboxModel(db),
+      options,
+    ),
+    {
+      ...options,
+      serverDB: db,
+    },
+  );
 };

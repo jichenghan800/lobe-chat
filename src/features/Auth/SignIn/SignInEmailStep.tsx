@@ -55,6 +55,7 @@ export interface SignInEmailStepProps {
   otpSent?: boolean;
   serverConfigInit: boolean;
   sessionExpired?: boolean;
+  signedOut?: boolean;
   socialLoading: string | null;
 }
 
@@ -70,6 +71,7 @@ export const SignInEmailStep = ({
   otpSent = false,
   serverConfigInit,
   sessionExpired,
+  signedOut,
   socialLoading,
   onCheckUser,
   onGoToSignup,
@@ -106,6 +108,14 @@ export const SignInEmailStep = ({
 
   return (
     <AuthCard title={t('signin.subtitle', { appName: BRANDING_NAME })}>
+      {signedOut && (
+        <Flexbox gap={8} style={{ marginBlockEnd: 16 }}>
+          <Text>{t('cotti.signedOut')}</Text>
+          <a href="https://auth.cotti.ai/logout" style={{ color: 'var(--ant-color-primary)' }}>
+            {t('cotti.signOutPortal')}
+          </a>
+        </Flexbox>
+      )}
       {sessionExpired && (
         <Alert
           showIcon

@@ -2190,9 +2190,9 @@ export class ConversationLifecycleActionImpl {
 
           const hasInitialContext = hasMentionedAgents || !!injectedManifests;
 
-          // Note: selectedSkills and selectedTools are NOT passed here — they are
-          // persisted into the user message content above so they survive across
-          // turns without re-injection.
+          // Skill/tool descriptions are already persisted above. Pass tool IDs
+          // separately to execution so mentioning a connector enables its APIs
+          // without injecting the same prompt context twice.
           const agentRuntimeInitialContext = hasInitialContext
             ? {
                 initialContext: {
@@ -2212,6 +2212,8 @@ export class ConversationLifecycleActionImpl {
           const clientRun = executeClientAgent({
             context: execContext,
             initialContext: mergedAgentRuntimeInitialContext,
+            selectedToolIds:
+              selectedTools.length > 0 ? selectedTools.map((tool) => tool.identifier) : undefined,
             metadata: requestMetadata,
             messages: displayMessages,
             parentMessageId: data.assistantMessageId,

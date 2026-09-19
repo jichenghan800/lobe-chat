@@ -8,10 +8,11 @@ import type { ModelDisplayConfig } from '@/types/modelDisplay';
 
 import { createModelRetirementGuard, withModelRetirement } from './modelRetirement';
 
-const mocks = vi.hoisted(() => ({ getConfig: vi.fn() }));
+const mocks = vi.hoisted(() => ({ getConfig: vi.fn(), getUserConfig: vi.fn() }));
 vi.mock('@/database/models/cottiModelDisplay', () => ({
   CottiModelDisplayModel: class {
     getConfig = mocks.getConfig;
+    getUserConfig = mocks.getUserConfig;
   },
 }));
 const source = { model: 'old', provider: 'azure' };
@@ -98,4 +99,25 @@ describe('global model retirement', () => {
     await expect(runtime.chat({ model: source.model, messages: [] })).rejects.toBeDefined();
     expect(chat).not.toHaveBeenCalled();
   });
+});
+
+it('resolves cached calls with the current user group retirement policy', async () => {
+  const db = {} as LobeChatDatabase;
+  mocks.getConfig.mockResolvedValue({ chat: [], agent: [] });
+  mocks.getUserConfig.mockResolvedValue(config());
+  const oldChat = vi.fn();
+  const newChat = vi.fn(async (_payload: { model: string }) => new Response('group replacement'));
+  const runtime = new ModelRuntime({ chat: oldChat } as unknown as LobeRuntimeAI);
+  const replacement = new ModelRuntime({ chat: newChat } as unknown as LobeRuntimeAI);
+  const wrapped = withModelRetirement(
+    runtime,
+    source.provider,
+    db,
+    async () => replacement,
+    'group-user',
+  );
+  await wrapped.chat({ model: source.model, messages: [] });
+  expect(oldChat).not.toHaveBeenCalled();
+  expect(newChat.mock.calls[0]?.[0]).toMatchObject({ model: target.model });
+  expect(mocks.getUserConfig).toHaveBeenCalledWith('group-user');
 });
