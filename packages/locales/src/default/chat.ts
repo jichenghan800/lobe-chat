@@ -62,13 +62,22 @@ export default {
   'topicChoice.body': 'This looks like a new question. A new topic avoids unrelated history.',
   'topicChoice.newSend': 'New topic and send',
   'topicChoice.current': 'Send in this topic',
-  'topicChoice.frozenTitle': 'This topic is too long',
+  'topicChoice.viewHistory': 'View history',
+  'topicChoice.frozenTitle': 'This topic is frozen',
   'topicChoice.frozenBody': 'Start a new topic, or keep a summary to continue.',
   'topicChoice.new': 'New topic',
   'topicChoice.carry': 'Keep summary and continue',
   'topicChoice.frozenAction': 'Continue in a new topic',
   'topicChoice.failed': 'Could not create the topic. Your draft is kept.',
 
+  'longTopic.frozenBudget':
+    'This topic has insufficient budget and is frozen. Estimated spend \u00A5{{spent}} / limit \u00A5{{limit}}. Start a new topic or contact an administrator to increase the limit.',
+  'longTopic.frozenBudgetUnknown':
+    'This topic has insufficient budget and is frozen. Start a new topic or contact an administrator to increase the limit.',
+  'longTopic.frozenManual':
+    'This topic was frozen by an administrator. Its history is still available. Contact an administrator to unfreeze it.',
+  'longTopic.frozenContext':
+    'This topic was frozen by an earlier context limit. Its history is still available. Start a new topic or contact an administrator.',
   'longTopic.frozen':
     'This topic is frozen. You can still read its history. Continue in a new topic.',
   'longTopic.switchSuggestion':

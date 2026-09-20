@@ -4,6 +4,7 @@ import { type ChatInputProps } from '@lobehub/editor/react';
 import { type MenuProps } from '@lobehub/ui';
 
 import { type ActionKeys } from '@/features/ChatInput';
+import type { topicService } from '@/services/topic';
 
 export type SendButtonHandler = (params: {
   clearContent: () => void;
@@ -95,6 +96,7 @@ export interface PublicState {
 
 export interface State extends PublicState {
   _savedEditorState?: Record<string, any>;
+  costFreeze?: Awaited<ReturnType<typeof topicService.getCostFreeze>>;
   costFrozen?: boolean;
   editor?: IEditor;
   inputCompletionError?: InputCompletionError;

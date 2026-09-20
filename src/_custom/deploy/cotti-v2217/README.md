@@ -24,7 +24,7 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
 
 ## 镜像与验收
 
-- 两个入口均为 `lobehub:lingshu-v2217-freeze-error-20260919-r1`，digest `sha256:8464e2504b917b5bf29ba33abb8d2b1e95297df697d5e64d010cd5f57dfdeb10`。
+- 两个入口均为 `lobehub:lingshu-v2217-sandbox-auto-20260920-r3`，digest `sha256:8464e2504b917b5bf29ba33abb8d2b1e95297df697d5e64d010cd5f57dfdeb10`。
 - 全览搜索框保留粘贴的完整 URL，提取话题 ID 查询共享数据库；回车打开管理员详情。新输入名称或链接时自动包含冻结话题，之后仍可手动调整筛选。
 - 仍使用管理员接口和查看审计，不访问粘贴链接指向的外部网站，不增加非管理员权限。
 - 回归测试确认修复前失败、修复后通过；相关检查 5 项、lint、全仓类型检查及正式构建通过。
@@ -116,3 +116,18 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
 - 为已确认的一条历史空白助手消息补回结构化预算冻结提示，条件更新并写入审计，额度和冻结状态未改。私有记录 `.records/freeze-error-20260919/`。
 - 上轮指定话题工具名诊断已取得两次真实工具列表，本轮移除 `COTTI_TOOL_TRACE_TOPIC_ID` 关闭临时记录。原 15:58 请求未录制，不能由后续请求倒推。
 - 浏览器视觉验收及该用户解冻后完整文件生成未执行，不等于已完成用户任务。
+
+## 2026-09-20：沙箱旧配置与冻结弹框
+
+- 双入口镜像：`lobehub:lingshu-v2217-sandbox-auto-20260920-r3`，
+  digest `sha256:8658c951463806daec29cde99fe58ac3427112e24da2d257d99dd1db4f43e338`。
+- 网页端旧 auto 未绑定电脑时按现有保存流程恢复沙箱；不更改话题提供方。
+- 用户冻结提示改自动弹框，费用原因展示估算金额 / 额度，人工及历史上下文原因单独说明；
+  关闭可查看历史，紧凑按钮可重新打开。不更改冻结规则或额度。
+- 27 项相关回归、完整类型检查、镜像构建通过。Chrome 在当前登录用户的人工冻结话题实测自动弹出及关闭，
+  费用金额由回归验证，未制造真实费用冻结或发送模型请求。
+- 两入口健康接口 200，同镜像且 DB/OSS/Redis/QStash 配置一致；两个调度计划未暂停。
+- 备份：`/opt/backups/lingshu-freeze-modal-20260920/before-cutover.dump`；
+  上一批旧容器保留，最早本次修改前备份位于 `/opt/backups/lingshu-sandbox-auto-20260920/`。
+- 私有证据：`.records/sandbox-auto-20260920/`、`.records/freeze-modal-20260920/`。
+- 二开边界和后续委派链路待办：[sandbox-auto-compatibility.md](../../upgrade/sandbox-auto-compatibility.md)。

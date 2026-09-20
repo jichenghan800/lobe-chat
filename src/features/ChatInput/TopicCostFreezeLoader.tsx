@@ -24,8 +24,8 @@ export const TopicCostFreezeLoader = () => {
     },
   );
   useEffect(() => {
-    input.setState({ costFrozen: enabled && !!data });
-    return () => input.setState({ costFrozen: false });
+    input.setState({ costFrozen: enabled && !!data, costFreeze: enabled ? data : undefined });
+    return () => input.setState({ costFrozen: false, costFreeze: undefined });
   }, [input, enabled, data, topicId]);
   return null;
 };
