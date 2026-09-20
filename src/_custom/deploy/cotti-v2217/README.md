@@ -147,3 +147,13 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
 - 47 项回归、完整类型检查和构建通过；新增场景在旧 pipeline 上 4 项失败。没有代用户重跑业务任务，实际 Skill 选择与最终导出仍待后续真实执行验证。
 - 双入口同镜像、共享后端、公网会话接口 200、两项 QStash 计划启用均已确认。无 schema 迁移，生产 chat.cotticoffee.com 未改。
 - 备份 `/opt/backups/lingshu-delegated-sandbox-20260920/before-cutover.dump` 已通过 pg\_restore 列举检查；回退容器 `lingshu-dev-before-delegated-sandbox-20260920`、`lingshu-cotti-before-delegated-sandbox-20260920` 保留停止状态。私有证据 `.records/delegated-sandbox-20260920/`。
+
+## 2026-09-20：沙箱发送前授权及显式兜底
+
+- 双开发入口同步发布 `lobehub:lingshu-v2217-sandbox-access-20260920-r2`，digest `sha256:602979490859ecda14b2ef03e61383fdde653b3e852663da9db79356c905d5de`。共享后端及各自认证配置保留；生产没有同步此补丁。
+- 发送前授权检查、用户确认的自建沙箱兜底、容量提示、已有云端文件的新话题保护，详见 [沙箱授权最小二开](../../upgrade/sandbox-access-preflight.md)。普通 Chat / 自建沙箱不增加社区登录要求。
+- 47 项相关回归、全仓类型及完整构建通过；旧实现上两个取消授权用例失败。独立复核后补齐电脑目标识别、附件变动和导航并发保护。
+- 可见 Chrome 实测进入智能不弹框，发送时提示授权，取消保留文字和附件，取消授权后明确选择自建沙箱。真实 TXT 上传、Python 读写、文件导出和下载通过，账号未登录社区。首次相对路径导出失败、改绝对路径后成功，未扩大到文件导出逻辑修改。真实 OAuth 成功回调、满额和已用话题新开保护的端到端仍待验收；后两者及授权重检已有回归覆盖。
+- r1 备份 `/opt/backups/lingshu-sandbox-access-20260920/before-cutover.dump`；r2 备份 `/opt/backups/lingshu-sandbox-access-20260920-r2/before-cutover.dump` 均保留。r2 回退容器 `lingshu-dev-before-sandbox-access-20260920-r2` / `lingshu-cotti-before-sandbox-access-20260920-r2` 保留停止状态并禁用自启；两项 QStash 计划恢复。
+- 两域 curl 会话接口均 200。Python 默认请求 chat.cotti.ai 被 Cloudflare 1010 拒绝，单独记录；没有调整 WAF 或网络配置。此问题与生产出站访问官方 Market 的 403 分开处理。
+- r1 首次邀请用户登录早于停机备份结束，用户遇到登录失败；服务恢复后用户正常登录。r2 首次发布被近期未结束消息保护拦下，未强制中断请求，待保护窗口后再次检查切换。私有证据 `.records/sandbox-access-20260920/`。
