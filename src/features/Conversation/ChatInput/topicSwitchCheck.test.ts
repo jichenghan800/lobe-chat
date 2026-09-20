@@ -7,12 +7,23 @@ import { createTopicSwitchCheck } from './topicSwitchCheck';
 vi.mock('@/services/topic', () => ({ topicService: { checkTopicSwitch: vi.fn() } }));
 
 describe('topic switch check', () => {
-  it('does not call a model for simple continuation or an explicit topic change', async () => {
-    vi.mocked(topicService.checkTopicSwitch).mockClear();
-    const check = createTopicSwitchCheck();
-    expect(await check('t1', '继续')).toBe(false);
-    expect(await check('t1', '换个话题，查询北京天气')).toBe(true);
-    expect(topicService.checkTopicSwitch).not.toHaveBeenCalled();
+  it.each(['请重试', '继续', '还是不对', '按照第二个方案', '把刚才的结果导出', '好的，请重试。'])(
+    'sends dependent input without any classification request: %s',
+    async (message) => {
+      vi.mocked(topicService.checkTopicSwitch).mockClear();
+      expect(await createTopicSwitchCheck()('t1', message)).toBe(false);
+      expect(topicService.checkTopicSwitch).not.toHaveBeenCalled();
+    },
+  );
+  it('does not bypass independence checking for an explicit change-of-topic opening', async () => {
+    const model = vi.mocked(topicService.checkTopicSwitch).mockReset().mockResolvedValue(false);
+    expect(await createTopicSwitchCheck()('t1', '换个话题，请继续上面的分析')).toBe(false);
+    expect(model).toHaveBeenCalledOnce();
+  });
+  it('checks a mixed continuation plus a new task instead of matching its prefix', async () => {
+    const model = vi.mocked(topicService.checkTopicSwitch).mockReset().mockResolvedValue(true);
+    expect(await createTopicSwitchCheck()('t1', '继续，另外帮我查北京明天的天气')).toBe(true);
+    expect(model).toHaveBeenCalledOnce();
   });
   it('reuses the same draft decision but isolates topics and edits', async () => {
     const model = vi.mocked(topicService.checkTopicSwitch).mockReset().mockResolvedValue(true);

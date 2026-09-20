@@ -28,7 +28,7 @@ describe('bounded topic relevance', () => {
     >);
   });
   it('sends only bounded scope and new input, without history or tools', async () => {
-    generateObject.mockResolvedValue({ unrelated: true });
+    generateObject.mockResolvedValue({ standalone: true, unrelated: true });
     const service = new SystemAgentService({} as LobeChatDatabase, 'user');
     const signal = new AbortController().signal;
     expect(await service.checkTopicSwitch('s'.repeat(500), 'm'.repeat(5000), signal)).toBe(true);
@@ -45,16 +45,56 @@ describe('bounded topic relevance', () => {
       taskConfig: expect.objectContaining({ model: 'gemini-3.5-flash-lite', provider: 'vertexai' }),
     });
   });
-  it.each([{ unrelated: false }, {}, { unrelated: 'true' }])(
-    'does not interpret uncertain or malformed results as a switch',
-    async (result) => {
-      generateObject.mockResolvedValue(result);
+  it.each([
+    { standalone: true, unrelated: false },
+    { standalone: false, unrelated: true },
+    { standalone: false, unrelated: false },
+    { unrelated: true },
+    { standalone: 'true', unrelated: true },
+    { standalone: true, unrelated: 'true' },
+    {},
+    null,
+  ])('does not interpret uncertain or malformed results as a switch', async (result) => {
+    generateObject.mockResolvedValue(result);
+    expect(
+      await new SystemAgentService({} as LobeChatDatabase, 'user').checkTopicSwitch(
+        'prices',
+        'add terra',
+      ),
+    ).toBe(false);
+  });
+  it.each(['请重试', '继续', '还是不对', '按照第二个方案', '把刚才的结果导出'])(
+    'bypasses both model configuration and inference for dependent input: %s',
+    async (message) => {
       expect(
         await new SystemAgentService({} as LobeChatDatabase, 'user').checkTopicSwitch(
           'prices',
-          'add terra',
+          message,
         ),
       ).toBe(false);
+      expect(initModelRuntimeFromDB).not.toHaveBeenCalled();
+      expect(resolveSystemAgentModelConfig).not.toHaveBeenCalled();
+      expect(generateObject).not.toHaveBeenCalled();
     },
   );
+  it('keeps complex references in the existing topic even if unrelated was returned', async () => {
+    generateObject.mockResolvedValue({ standalone: false, unrelated: true });
+    expect(
+      await new SystemAgentService({} as LobeChatDatabase, 'user').checkTopicSwitch(
+        '模型价格对比',
+        '换个话题，请把上面的表格导出',
+      ),
+    ).toBe(false);
+    expect(generateObject).toHaveBeenCalledOnce();
+  });
+  it('permits a mixed opening when the full input is an independent new task', async () => {
+    generateObject.mockResolvedValue({ standalone: true, unrelated: true });
+    expect(
+      await new SystemAgentService({} as LobeChatDatabase, 'user').checkTopicSwitch(
+        '模型价格对比',
+        '继续，另外帮我查北京明天的天气',
+      ),
+    ).toBe(true);
+    expect(generateObject).toHaveBeenCalledOnce();
+  });
 });

@@ -24,7 +24,7 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
 
 ## 镜像与验收
 
-- 两个入口均为 `lobehub:lingshu-v2217-sandbox-auto-20260920-r3`，digest `sha256:8464e2504b917b5bf29ba33abb8d2b1e95297df697d5e64d010cd5f57dfdeb10`。
+- 两个入口均为 `lobehub:lingshu-v2217-topic-continuation-20260920-r1`，digest `sha256:8464e2504b917b5bf29ba33abb8d2b1e95297df697d5e64d010cd5f57dfdeb10`。
 - 全览搜索框保留粘贴的完整 URL，提取话题 ID 查询共享数据库；回车打开管理员详情。新输入名称或链接时自动包含冻结话题，之后仍可手动调整筛选。
 - 仍使用管理员接口和查看审计，不访问粘贴链接指向的外部网站，不增加非管理员权限。
 - 回归测试确认修复前失败、修复后通过；相关检查 5 项、lint、全仓类型检查及正式构建通过。
@@ -131,3 +131,11 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
   上一批旧容器保留，最早本次修改前备份位于 `/opt/backups/lingshu-sandbox-auto-20260920/`。
 - 私有证据：`.records/sandbox-auto-20260920/`、`.records/freeze-modal-20260920/`。
 - 二开边界和后续委派链路待办：[sandbox-auto-compatibility.md](../../upgrade/sandbox-auto-compatibility.md)。
+
+## 2026-09-20：依赖前文的指令不建议换题
+
+- 双入口同步镜像：`lobehub:lingshu-v2217-topic-continuation-20260920-r1`，digest `sha256:7b7cf1b4c4baa4958fb31af8e6618a2a3df660d4841f1d671a17c4d5125e8708`。
+- 先判断独立任务，再判断相关性；明确续接短句不调用辅助模型，最多一次语义判断，不增加历史上下文。
+- 58 项回归、类型检查、构建通过；真实接口 7 条输入符合预期，未发送正式对话。
+- 备份：`/opt/backups/lingshu-topic-continuation-20260920/before-cutover.dump`；旧容器保留，调度正常。
+- 细节：[topic-switch-continuation.md](../../upgrade/topic-switch-continuation.md)。
