@@ -13,7 +13,7 @@ interface DefaultAgentSandboxOptions {
   target?: DeviceExecutionTarget;
 }
 
-/** The web product exposes sandbox choices only; a native Agent must not keep the hidden none default. */
+/** The web product exposes sandbox choices only; a native Agent must not keep the hidden none/auto choices. */
 export const shouldDefaultAgentSandbox = (options: DefaultAgentSandboxOptions) =>
   options.enabled &&
   options.canSelect &&
@@ -21,7 +21,7 @@ export const shouldDefaultAgentSandbox = (options: DefaultAgentSandboxOptions) =
   !options.isDesktop &&
   !options.isHetero &&
   !options.boundDeviceId &&
-  (options.target === undefined || options.target === 'none');
+  (options.target === undefined || options.target === 'none' || options.target === 'auto');
 
 /** Repair a legacy/unset choice through the normal permission-aware save path, not just the label. */
 export const useDefaultAgentSandbox = (
