@@ -1,4 +1,25 @@
 export default {
+  'sandboxAccess.auth_required.title': 'Community sign-in required',
+  'sandboxAccess.auth_required.body':
+    'Sign in to continue, or choose a self-hosted sandbox. Your input and attachments will be kept.',
+  'sandboxAccess.auth_failed.title': 'Community sign-in was not completed',
+  'sandboxAccess.auth_failed.body': 'Try signing in again or use a self-hosted sandbox.',
+  'sandboxAccess.unavailable.title': 'Cloud sandbox is temporarily unavailable',
+  'sandboxAccess.unavailable.body':
+    'The community service could not be reached or verified. Retry later, or use a self-hosted sandbox if available.',
+  'sandboxAccess.full.title': 'Self-hosted sandbox is full',
+  'sandboxAccess.full.body':
+    'Retry later or sign in to use the cloud sandbox. Your input and attachments are kept.',
+  'sandboxAccess.new_topic.title': 'Use a new topic for the self-hosted sandbox?',
+  'sandboxAccess.new_topic.body':
+    'This topic has used the cloud sandbox. Temporary files cannot be shared. Only your current input and attachments will be sent to the new topic.',
+  'sandboxAccess.selfHosted': 'Use self-hosted sandbox',
+  'sandboxAccess.newTopic': 'New topic and continue',
+  'sandboxAccess.login': 'Sign in and continue',
+  'sandboxAccess.retry': 'Retry',
+  'sandboxAccess.pending': 'Cloud sandbox \u00B7 Sign-in required',
+  'sandboxAccess.checkFailed': 'Unable to check sandbox access. Your input is kept; please retry.',
+
   'heteroAgent.executionTarget.switchRunning':
     'Wait for the current task to finish before switching sandbox.',
   'heteroAgent.executionTarget.selfHosted': 'Self-hosted sandbox',

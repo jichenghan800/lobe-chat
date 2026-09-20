@@ -22,6 +22,8 @@ import {
   type SendButtonHandler,
   type SendButtonProps,
 } from '@/features/ChatInput/store/initialState';
+import { openAcceptedSandboxTopic } from '@/features/SandboxAccess/openAcceptedTopic';
+import { useSandboxAccess } from '@/features/SandboxAccess/useSandboxAccess';
 import { useQueryRoute } from '@/hooks/useQueryRoute';
 import { useSingleton } from '@/hooks/useSingleton';
 import { topicService } from '@/services/topic';
@@ -213,6 +215,7 @@ const ChatInput = memo<ChatInputProps>(
       s.sendMessage,
       s.stopGenerating,
     ]);
+    const prepareSandbox = useSandboxAccess(agentId || '');
     const { isAgentRuntimeMode } = useEffectiveAgentMode(agentId || '');
     const [enableHistoryCount, historyCount] = useAgentStore((s) => [
       chatConfigByIdSelectors.getEnableHistoryCountById(agentId || '')(s),
@@ -404,14 +407,69 @@ const ChatInput = memo<ChatInputProps>(
         }
 
         let targetContext = storeApi.getState().context;
+        let sandboxNewTopic: string | undefined;
         const sourceKey = messageMapKey(targetContext);
         const epoch = sendEpoch.current;
         const stillCurrent = () =>
           sendEpoch.current === epoch &&
           messageMapKey(storeApi.getState().context) === sourceKey &&
-          getMarkdownContent() === message;
+          getMarkdownContent() === message &&
+          JSON.stringify(
+            fileChatSelectors.chatUploadFileList(useFileStore.getState()).map((file) => file.id),
+          ) === JSON.stringify(currentFileList.map((file) => file.id)) &&
+          JSON.stringify(
+            fileChatSelectors.chatContextSelections(contextKey)(useFileStore.getState()),
+          ) === JSON.stringify(currentContextList);
+        if (
+          targetContext.agentId &&
+          !targetContext.groupId &&
+          !targetContext.threadId &&
+          !isInputQueueBlocked
+        ) {
+          sendPending.current = true;
+          try {
+            const access = await prepareSandbox({
+              agentId: targetContext.agentId,
+              topicId: targetContext.topicId,
+              enabled: isAgentRuntimeMode,
+              isCurrent: stillCurrent,
+            });
+            if (!access || !stillCurrent()) return;
+            if (access.newTopic) {
+              const detail = targetContext.topicId
+                ? await topicService.getTopicDetail(targetContext.topicId)
+                : undefined;
+              if (!stillCurrent()) return;
+              const id = await topicService.createTopic({
+                agentId: targetContext.agentId,
+                title: '',
+                model: detail?.model || undefined,
+                provider: detail?.provider || undefined,
+                metadata: { sandboxProvider: 'onlyboxes' },
+              });
+              const nextContext = { ...targetContext, topicId: id };
+              if (
+                !stillCurrent() ||
+                (editorData && saveDraft(messageMapKey(nextContext), editorData) === undefined)
+              ) {
+                await topicService.removeTopic(id);
+                return;
+              }
+              targetContext = nextContext;
+              sandboxNewTopic = id;
+            }
+          } catch (error) {
+            console.error('[SandboxAccess] Could not prepare topic', error);
+            toast.error(t('sandboxAccess.checkFailed'));
+            return;
+          } finally {
+            sendPending.current = false;
+          }
+        }
         // Only direct user submissions in an idle, ordinary topic. No job/tool loop checks.
         if (
+          targetContext.topicId === storeApi.getState().context.topicId &&
+          stillCurrent() &&
           targetContext.topicId &&
           targetContext.agentId &&
           !targetContext.threadId &&
@@ -433,6 +491,7 @@ const ChatInput = memo<ChatInputProps>(
                   title: '',
                   model: detail?.model || undefined,
                   provider: detail?.provider || undefined,
+                  metadata: { sandboxProvider: detail?.metadata?.sandboxProvider ?? 'market' },
                 });
                 if (!stillCurrent()) {
                   await topicService.removeTopic(newId);
@@ -460,6 +519,11 @@ const ChatInput = memo<ChatInputProps>(
           }
         }
 
+        if (sandboxNewTopic && !stillCurrent()) {
+          await topicService.removeTopic(sandboxNewTopic);
+          return;
+        }
+
         // Clear only after the user has chosen; dismissal preserves the draft.
         clearComposer();
 
@@ -474,6 +538,30 @@ const ChatInput = memo<ChatInputProps>(
           files: currentFileList,
           message,
           onMessageAccepted: () => {
+            // Only move to the fallback topic after the captured turn was accepted.
+            // A user who navigated elsewhere during dispatch keeps that location.
+            if (
+              sandboxNewTopic &&
+              messageMapKey(storeApi.getState().context) === sourceKey &&
+              sendEpoch.current === epoch
+            ) {
+              void openAcceptedSandboxTopic({
+                isSourceCurrent: () =>
+                  messageMapKey(storeApi.getState().context) === sourceKey &&
+                  sendEpoch.current === epoch,
+                isTargetCurrent: () =>
+                  useChatStore.getState().activeTopicId === sandboxNewTopic &&
+                  useChatStore.getState().activeAgentId === targetContext.agentId,
+                refresh: () => useChatStore.getState().refreshTopic(),
+                switchTopic: () => useChatStore.getState().switchTopic(sandboxNewTopic!),
+                navigate: () =>
+                  router.push(
+                    `/agent/${encodeURIComponent(targetContext.agentId!)}/${encodeURIComponent(sandboxNewTopic!)}`,
+                  ),
+              }).catch((error) =>
+                console.error('[SandboxAccess] Could not open accepted topic', error),
+              );
+            }
             if (messageMapKey(targetContext) !== sourceKey)
               removeDraft(messageMapKey(targetContext));
           },
@@ -485,6 +573,7 @@ const ChatInput = memo<ChatInputProps>(
       },
       [
         contextKey,
+        prepareSandbox,
         router,
         t,
         topicSwitchCheck,

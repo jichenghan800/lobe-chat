@@ -10,6 +10,11 @@ import { setPendingSandboxProvider } from '@/store/chat/pendingSandboxProvider';
 
 import { useSend } from './useSend';
 
+const sandboxGateMock = vi.hoisted(() => vi.fn().mockResolvedValue({}));
+vi.mock('@/features/SandboxAccess/useSandboxAccess', () => ({
+  useSandboxAccess: () => sandboxGateMock,
+}));
+
 const routerMock = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
@@ -174,6 +179,56 @@ vi.mock('@/store/task', () => ({
 }));
 
 describe('Home InputArea useSend', () => {
+  it('does not dispatch or clear newly attached files during authorization', async () => {
+    let release: (value: {}) => void = () => {};
+    sandboxGateMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const { result } = renderHook(() => useSend('agent'));
+    let pending: unknown;
+    await act(async () => {
+      pending = result.current.send({
+        clearContent: clearContentMock,
+        editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+        getEditorData: () => ({ type: 'doc' }),
+        getMarkdownContent: () => 'Keep this draft',
+      });
+    });
+    fileState.chatUploadFileList = [{ id: 'new-attachment' }];
+    await act(async () => {
+      release({});
+      await pending;
+    });
+    expect(sendMessageMock).not.toHaveBeenCalled();
+    expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+    expect(clearContentMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['agent', 'task'] as const)(
+    'keeps input and attachments when %s sandbox authorization is dismissed',
+    async (mode) => {
+      sandboxGateMock.mockResolvedValueOnce(false);
+      const { result } = renderHook(() => useSend(mode));
+      await act(async () => {
+        await result.current.send({
+          clearContent: clearContentMock,
+          editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+          getEditorData: () => ({ type: 'doc' }),
+          getMarkdownContent: () => 'Sandbox acceptance draft',
+        });
+      });
+      expect(sendMessageMock).not.toHaveBeenCalled();
+      expect(createTaskMock).not.toHaveBeenCalled();
+      expect(runTaskMock).not.toHaveBeenCalled();
+      expect(clearContentMock).not.toHaveBeenCalled();
+      expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+      expect(clearChatContextSelectionsMock).not.toHaveBeenCalled();
+    },
+  );
+
   beforeEach(() => {
     setPendingSandboxProvider('agt_custom', 'market');
     routerMock.push.mockReset();

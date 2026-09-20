@@ -1,6 +1,6 @@
 import { AGENT_CHAT_TOPIC_URL, AGENT_CHAT_URL } from '@lobechat/const';
 import { toast } from '@lobehub/ui/base-ui';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useActiveWorkspaceId } from '@/business/client/hooks/useActiveWorkspaceId';
@@ -9,6 +9,7 @@ import { buildTaskHandoffPath } from '@/features/AgentTaskManager/taskHandoff';
 import type { SendButtonHandler } from '@/features/ChatInput/store/initialState';
 import { buildMessageContextSelections } from '@/features/ChatInput/utils/contextSelections';
 import { useResourceAccess } from '@/features/ResourcePermission/useResourceAccess';
+import { useSandboxAccess } from '@/features/SandboxAccess/useSandboxAccess';
 import { useHomeDailyBrief } from '@/hooks/useHomeDailyBrief';
 import { usePermission } from '@/hooks/usePermission';
 import { useQueryRoute } from '@/hooks/useQueryRoute';
@@ -76,6 +77,16 @@ export const useSend = (mode: HomeMode = 'chat') => {
   const inboxAgentId = useAgentStore(builtinAgentSelectors.inboxAgentId);
   const { agentId: selectedAgentId } = useResolvedHomeAgentId();
   const agentId = selectedAgentId;
+  const prepareSandbox = useSandboxAccess(selectedAgentId || '');
+  const sendScope = useRef('');
+  sendScope.current = `${mode}:${selectedAgentId}`;
+  useEffect(
+    () => () => {
+      sendScope.current = 'unmounted';
+    },
+    [],
+  );
+  const preparing = useRef(false);
   const contextSelectionKey = `home:${mode}:${selectedAgentId ?? 'unresolved'}`;
   const { allowed: canCreateContent } = usePermission('create_content');
   const agentVisibility = useAgentStore((s) =>
@@ -145,6 +156,38 @@ export const useSend = (mode: HomeMode = 'chat') => {
 
       // Require input content (except for default inbox which can have files/context)
       if (!message && fileList.length === 0 && contextList.length === 0) return;
+
+      if (preparing.current) return;
+      preparing.current = true;
+      const scope = sendScope.current;
+      const inputSnapshot = JSON.stringify({
+        files: fileList.map((file) => file.id),
+        contexts: contextList,
+      });
+      const stillCurrent = () => {
+        const liveFiles = useFileStore.getState();
+        return (
+          sendScope.current === scope &&
+          (getMarkdownContent?.() ?? useChatStore.getState().inputMessage ?? '').trim() === typed &&
+          inputSnapshot ===
+            JSON.stringify({
+              files: fileChatSelectors.chatUploadFileList(liveFiles).map((file) => file.id),
+              contexts: fileChatSelectors.chatContextSelections(contextSelectionKey)(liveFiles),
+            })
+        );
+      };
+      try {
+        const access =
+          selectedAgentId &&
+          (await prepareSandbox({
+            agentId: selectedAgentId,
+            enabled: mode !== 'chat' && !inputActiveMode,
+            isCurrent: stillCurrent,
+          }));
+        if (access === false || !stillCurrent()) return;
+      } finally {
+        preparing.current = false;
+      }
 
       let submitted = false;
       try {
@@ -280,6 +323,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
       }
     },
     [
+      prepareSandbox,
       activeWorkspaceSlug,
       activeWorkspaceId,
       sendMessage,

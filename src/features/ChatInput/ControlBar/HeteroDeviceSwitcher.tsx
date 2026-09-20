@@ -42,6 +42,7 @@ import {
 import { useIsGatewayModeEnabled } from '@/helpers/gatewayMode';
 import { useEffectiveAgencyConfig } from '@/hooks/useEffectiveAgencyConfig';
 import { useEffectiveWorkingDirectory } from '@/hooks/useEffectiveWorkingDirectory';
+import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 import { localFileService } from '@/services/electron/localFileService';
 import { useAgentStore } from '@/store/agent';
 import { useElectronStore } from '@/store/electron';
@@ -381,6 +382,7 @@ interface HeteroDeviceSwitcherProps {
 
 const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
   const { t } = useTranslation('chat');
+  const marketAuth = useMarketAuth();
   const [open, setOpen] = useState(false);
   const navigate = useWorkspaceAwareNavigate();
   const { canUseResource } = useChatInputResourceAccess();
@@ -722,6 +724,15 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
     sandboxSelection.provider === 'onlyboxes'
   ) {
     chipLabel = t('heteroAgent.executionTarget.selfHosted');
+  }
+
+  if (
+    chipExecutionTarget === 'sandbox' &&
+    sandboxSelection.provider === 'market' &&
+    !marketAuth.isLoading &&
+    !marketAuth.isAuthenticated
+  ) {
+    chipLabel = t('sandboxAccess.pending');
   }
 
   const isActive = (target: DeviceExecutionTarget, deviceId?: string) => {
