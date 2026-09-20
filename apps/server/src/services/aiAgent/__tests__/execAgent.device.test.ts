@@ -1,3 +1,6 @@
+import { AuvManifest } from '@lobechat/builtin-tool-auv';
+import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
+import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
 import type * as ModelBankModule from 'model-bank';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -23,6 +26,15 @@ const { mockDeviceProxy } = vi.hoisted(() => ({
     isConfigured: false,
     queryDeviceList: vi.fn().mockResolvedValue([]),
     queryDeviceSystemInfo: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+const { mockTopicSandboxProvider } = vi.hoisted(() => ({
+  mockTopicSandboxProvider: vi.fn(),
+}));
+vi.mock('@/database/models/cottiSandbox', () => ({
+  CottiSandboxModel: class {
+    getTopicProvider = mockTopicSandboxProvider;
   },
 }));
 
@@ -172,6 +184,7 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTopicSandboxProvider.mockResolvedValue(undefined);
     topicMock.create.mockResolvedValue({ id: 'topic-1', metadata: undefined });
     topicMock.findById.mockResolvedValue(undefined);
     topicMock.updateMetadata.mockResolvedValue(undefined);
@@ -232,6 +245,73 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
     });
     service = new AiAgentService(mockDb, userId);
   };
+
+  describe('COTTI delegated topic sandbox', () => {
+    it.each([
+      ['market', false],
+      ['onlyboxes', false],
+      ['market', true],
+      ['onlyboxes', true],
+    ] as const)(
+      'exposes sandbox and removes device manifests for %s, gateway=%s',
+      async (provider, gateway) => {
+        await useAgencyConfig({});
+        mockDeviceProxy.isConfigured = gateway;
+        mockTopicSandboxProvider.mockResolvedValue(provider);
+        // Seed the same stale device entries seen in the incident snapshot.
+        mockCreateServerAgentToolsEngine.mockReturnValueOnce({
+          generateToolsDetailed: vi.fn().mockReturnValue({ enabledToolIds: [], tools: [] }),
+          getEnabledPluginManifests: vi.fn().mockReturnValue(
+            new Map([
+              [LocalSystemManifest.identifier, LocalSystemManifest],
+              [RemoteDeviceManifest.identifier, RemoteDeviceManifest],
+              [AuvManifest.identifier, AuvManifest],
+            ]),
+          ),
+        });
+        await service.execAgent({
+          agentId: 'agent-1',
+          appContext: { topicId: 'topic-existing', isolationThread: true, isSubAgent: false },
+          prompt: 'Process the topic attachments',
+        });
+        expect(mockTopicSandboxProvider).toHaveBeenCalledWith(userId, 'topic-existing');
+        const operation = mockCreateOperation.mock.calls[0][0];
+        expect(operation.executionPlan).toEqual({ kind: 'sandbox', target: 'sandbox' });
+        expect(operation.activeDeviceId).toBeUndefined();
+        expect(operation.toolSet.manifestMap['lobe-cloud-sandbox']).toBeDefined();
+        expect(operation.toolSet.manifestMap['lobe-local-system']).toBeUndefined();
+        expect(operation.toolSet.manifestMap['lobe-remote-device']).toBeUndefined();
+        expect(operation.toolSet.manifestMap['lobe-computer-use']).toBeUndefined();
+        expect(operation.appContext.topicId).toBe('topic-existing');
+        expect(operation.agentConfig.agencyConfig).toEqual({});
+        expect(topicMock.updateMetadata).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({ sandboxProvider: expect.anything() }),
+        );
+      },
+    );
+    it('keeps the original route when the topic has no selected sandbox', async () => {
+      await useAgencyConfig({});
+      await service.execAgent({
+        agentId: 'agent-1',
+        appContext: { topicId: 'topic-existing', isolationThread: true },
+        prompt: 'Continue',
+      });
+      expect(mockCreateOperation.mock.calls[0][0].executionPlan.target).not.toBe('sandbox');
+    });
+    it('does not override a delegate with an explicit device target', async () => {
+      await useAgencyConfig({ executionTarget: 'device', boundDeviceId: 'device-001' });
+      mockDeviceProxy.isConfigured = true;
+      mockDeviceProxy.queryDeviceList.mockResolvedValue([onlineDevice]);
+      await service.execAgent({
+        agentId: 'agent-1',
+        appContext: { topicId: 'topic-existing', isolationThread: true },
+        prompt: 'Run on my chosen computer',
+      });
+      expect(mockTopicSandboxProvider).not.toHaveBeenCalled();
+      expect(mockCreateOperation.mock.calls[0][0].activeDeviceId).toBe('device-001');
+    });
+  });
 
   describe('IM/Bot scenario with botContext', () => {
     it('should auto-activate when exactly one device is online (executionTarget: auto)', async () => {

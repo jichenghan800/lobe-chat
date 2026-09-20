@@ -24,7 +24,7 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
 
 ## 镜像与验收
 
-- 两个入口均为 `lobehub:lingshu-v2217-topic-continuation-20260920-r1`，digest `sha256:8464e2504b917b5bf29ba33abb8d2b1e95297df697d5e64d010cd5f57dfdeb10`。
+- 两个入口均为 `lobehub:lingshu-v2217-delegated-sandbox-20260920-r1`，digest `sha256:261b66eb11009f4a522a17dd518964bc1e6b32a39d93013820f9916807d5778c`。
 - 全览搜索框保留粘贴的完整 URL，提取话题 ID 查询共享数据库；回车打开管理员详情。新输入名称或链接时自动包含冻结话题，之后仍可手动调整筛选。
 - 仍使用管理员接口和查看审计，不访问粘贴链接指向的外部网站，不增加非管理员权限。
 - 回归测试确认修复前失败、修复后通过；相关检查 5 项、lint、全仓类型检查及正式构建通过。
@@ -139,3 +139,11 @@ chatdev.cotticoffee.com 和 chat.cotti.ai 是同一业务系统的两个入口�
 - 58 项回归、类型检查、构建通过；真实接口 7 条输入符合预期，未发送正式对话。
 - 备份：`/opt/backups/lingshu-topic-continuation-20260920/before-cutover.dump`；旧容器保留，调度正常。
 - 细节：[topic-switch-continuation.md](../../upgrade/topic-switch-continuation.md)。
+
+## 2026-09-20：冻结弹框三个去向与委派沙箱
+
+- 冻结弹框明确费用保护原因，保留 “如需继续当前话题，请联系管理员调整额度并解冻”。提供查看历史、新建话题、管理员解冻（联系入口），不自动修改额度或解冻。13 项回归、类型检查和 Chrome 可见弹框验收通过。
+- 随后同步发布 `lobehub:lingshu-v2217-delegated-sandbox-20260920-r1`。隔离委派且没有明确电脑配置时，沿用话题已有沙箱选择，提供沙箱工具并清除不适用的电脑工具；同一话题附件、权限、费用控制不变。详见 [委派沙箱最小二开](../../upgrade/delegated-topic-sandbox.md)。
+- 47 项回归、完整类型检查和构建通过；新增场景在旧 pipeline 上 4 项失败。没有代用户重跑业务任务，实际 Skill 选择与最终导出仍待后续真实执行验证。
+- 双入口同镜像、共享后端、公网会话接口 200、两项 QStash 计划启用均已确认。无 schema 迁移，生产 chat.cotticoffee.com 未改。
+- 备份 `/opt/backups/lingshu-delegated-sandbox-20260920/before-cutover.dump` 已通过 pg\_restore 列举检查；回退容器 `lingshu-dev-before-delegated-sandbox-20260920`、`lingshu-cotti-before-delegated-sandbox-20260920` 保留停止状态。私有证据 `.records/delegated-sandbox-20260920/`。
