@@ -53,6 +53,17 @@ def schedule_shape(items):
     return sorted((s['scheduleId'], s['destination'], s['cron']) for s in items)
 
 
+def schedules_match_release(original, actual, app_url):
+    expected = list(original)
+    if not any(s['scheduleId'] == 'lobe-task-schedule-dispatch' for s in expected):
+        expected.append({
+            'scheduleId': 'lobe-task-schedule-dispatch',
+            'destination': app_url.rstrip('/') + '/api/workflows/task/schedule-dispatch',
+            'cron': '*/10 * * * *',
+        })
+    return schedule_shape(actual) == schedule_shape(expected)
+
+
 def healthy():
     for _ in range(60):
         try:
@@ -146,11 +157,12 @@ def main():
         assert env_hash(upgraded) == manifest['environmentHash'], 'Runtime environment changed'
         for name, expected in manifest['dependencies'].items():
             assert inspect(name)['Id'] == expected, 'Dependency was recreated'
-        assert schedule_shape(schedules()) == schedule_shape(original_schedules), 'Schedules changed'
+        runtime_env = dict(item.split('=', 1) for item in upgraded['Config']['Env'])
+        assert schedules_match_release(original_schedules, schedules(), runtime_env['APP_URL']), 'Unexpected schedule changes'
         (R / 'release-result.json').write_text(json.dumps({
             'image': upgraded['Config']['Image'], 'imageId': upgraded['Image'],
             'backup': str(backup), 'authHealth': 200, 'environmentPreserved': True,
-            'dependenciesPreserved': True, 'scheduleDefinitionsPreserved': True,
+            'dependenciesPreserved': True, 'expectedScheduleDefinitionsVerified': True,
         }, indent=2))
     except Exception:
         print('Cutover failed; restoring the old application without restoring database data.', flush=True)
