@@ -38,7 +38,7 @@ describe('topic freeze notice', () => {
       key: 'longTopic.frozenBudgetUnknown',
     });
   });
-  it('does not blame cost for manual or historical context freezes', () => {
+  it('keeps manual accounting provenance and historical context separate', () => {
     expect(getTopicFreezeNotice({ ...freeze, reason: 'manual' }).key).toBe(
       'longTopic.frozenManual',
     );

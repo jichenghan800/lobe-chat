@@ -63,6 +63,9 @@ export default {
   'topicChoice.newSend': 'New topic and send',
   'topicChoice.current': 'Send in this topic',
   'topicChoice.viewHistory': 'View history',
+  'topicChoice.adminUnfreeze': 'Ask admin to unfreeze',
+  'topicChoice.contactAdminHint':
+    'Contact your platform administrator and share this topic link to request a review of its limit and freeze.',
   'topicChoice.frozenTitle': 'This topic is frozen',
   'topicChoice.frozenBody': 'Start a new topic, or keep a summary to continue.',
   'topicChoice.new': 'New topic',
@@ -71,11 +74,11 @@ export default {
   'topicChoice.failed': 'Could not create the topic. Your draft is kept.',
 
   'longTopic.frozenBudget':
-    'This topic has insufficient budget and is frozen. Estimated spend \u00A5{{spent}} / limit \u00A5{{limit}}. Start a new topic or contact an administrator to increase the limit.',
+    'This topic has reached its spending protection limit, or has insufficient budget for the next request. Estimated spend ¥{{spent}} / limit ¥{{limit}}. Its history is still available. To continue this topic, ask an administrator to review the limit and unfreeze it.',
   'longTopic.frozenBudgetUnknown':
-    'This topic has insufficient budget and is frozen. Start a new topic or contact an administrator to increase the limit.',
+    'This topic has triggered spending protection and further requests are paused. Its history is still available. To continue this topic, ask an administrator to review the limit and unfreeze it.',
   'longTopic.frozenManual':
-    'This topic was frozen by an administrator. Its history is still available. Contact an administrator to unfreeze it.',
+    'This topic has triggered spending protection and further requests are paused. Its history is still available. To continue this topic, ask an administrator to review the limit and unfreeze it.',
   'longTopic.frozenContext':
     'This topic was frozen by an earlier context limit. Its history is still available. Start a new topic or contact an administrator.',
   'longTopic.frozen':
