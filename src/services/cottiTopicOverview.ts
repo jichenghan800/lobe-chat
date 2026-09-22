@@ -5,6 +5,7 @@ import type {
 } from '@/types/cotti/topicOverview';
 
 class CottiTopicOverviewClientService {
+  activity = (topicId: string) => lambdaClient.cotti.topicOverview.activity.query({ topicId });
   accounting = (topicId: string) => lambdaClient.cotti.topicOverview.accounting.query({ topicId });
   manage = (input: CottiTopicManagementInput) =>
     lambdaClient.cotti.topicOverview.manage.mutate(input);

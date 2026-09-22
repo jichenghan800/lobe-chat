@@ -10,6 +10,7 @@ import { normalizeInboxAgentAvatar, normalizeInboxAgentTitle } from '@/database/
 import { reconcileTopicBudgetFreezes } from '@/database/utils/reconcileTopicBudgetFreezes';
 import { FileService } from '@/server/services/file';
 import type {
+  CottiTopicActivity,
   CottiTopicOverviewDetail,
   CottiTopicOverviewItem,
   CottiTopicOverviewList,
@@ -38,6 +39,7 @@ interface TopicOverviewRow {
   imageCount: number | string;
   messageCount: number | string;
   mode: CottiTopicOverviewMode;
+  modeInferred: boolean;
   pricedRecords: number | string;
   sessionId: null | string;
   targetTitle: null | string;
@@ -74,6 +76,43 @@ export class CottiTopicOverviewService {
 
   constructor(db: LobeChatDatabase) {
     this.db = db;
+  }
+
+  async activity(topicId: string): Promise<CottiTopicActivity | null> {
+    const result = await this.db.execute(sql`
+      SELECT t.id, t.metadata->>'sandboxProvider' AS sandbox,
+        m.role, a.model, a.provider, m.created_at AS "startedAt", m.updated_at AS "updatedAt",
+        (m.error IS NOT NULL) AS "hasError",
+        (coalesce(m.content,'') IN ('','...') AND m.usage IS NULL AND m.error IS NULL) AS pending,
+        p.api_name AS tool,
+        concat(t.updated_at::text, ':', stats.revision, ':', stats.count) AS revision
+      FROM topics t
+      LEFT JOIN LATERAL (SELECT * FROM messages WHERE topic_id=t.id ORDER BY created_at DESC,id DESC LIMIT 1) m ON TRUE
+      LEFT JOIN LATERAL (SELECT model,provider FROM messages WHERE topic_id=t.id AND role='assistant' ORDER BY created_at DESC,id DESC LIMIT 1) a ON TRUE
+      LEFT JOIN message_plugins p ON p.id=m.id
+      LEFT JOIN LATERAL (SELECT max(updated_at)::text AS revision,count(*) AS count FROM messages WHERE topic_id=t.id) stats ON TRUE
+      WHERE t.id=${topicId} AND COALESCE(t.is_deleted,FALSE)=FALSE
+    `);
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      revision: String(row.revision),
+      sandbox:
+        row.sandbox === 'onlyboxes' ? 'onlyboxes' : row.sandbox === 'market' ? 'market' : 'unknown',
+      status: row.hasError
+        ? 'error'
+        : row.pending
+          ? 'waiting'
+          : row.role === 'tool'
+            ? 'tool'
+            : row.role === 'assistant'
+              ? 'reply'
+              : 'unknown',
+      model: typeof row.model === 'string' ? row.model : null,
+      provider: typeof row.provider === 'string' ? row.provider : null,
+      tool: typeof row.tool === 'string' ? row.tool : null,
+      updatedAt: row.updatedAt ? toISOString(row.updatedAt as Date | string) : null,
+    };
   }
 
   async getDetail(topicId: string): Promise<CottiTopicOverviewDetail | undefined> {
@@ -262,17 +301,25 @@ export class CottiTopicOverviewService {
     SELECT page.*,
       CASE
         WHEN operation.has_task THEN 'task'
-        WHEN operation.has_operation THEN 'agent'
-        ELSE 'chat'
+        WHEN latest_mode.mode IN ('chat', 'agent') THEN latest_mode.mode
+        WHEN operation.has_operation OR message_stats.has_sandbox_tools THEN 'agent'
+        ELSE 'unknown'
       END AS mode,
+      (NOT COALESCE(operation.has_task, FALSE) AND latest_mode.mode IS NULL) AS "modeInferred",
       COALESCE(message_stats.cost_records, 0) AS "costRecords",
       COALESCE(message_stats.priced_records, 0) AS "pricedRecords",
       COALESCE(message_stats.message_count, 0) AS "messageCount",
       COALESCE(message_stats.image_count, 0) AS "imageCount"
     FROM (${page}) page
         LEFT JOIN LATERAL (
+          SELECT metadata->>'cottiInteractionMode' AS mode FROM messages
+          WHERE topic_id=page.id AND role='user' AND metadata->>'cottiInteractionMode' IN ('chat','agent')
+          ORDER BY created_at DESC LIMIT 1
+        ) latest_mode ON TRUE
+        LEFT JOIN LATERAL (
           SELECT
             COUNT(DISTINCT messages.id) AS message_count,
+            BOOL_OR(messages.tools::text LIKE '%lobe-cloud-sandbox%' OR messages.tools::text LIKE '%lobe-local-system%' OR messages.tools::text LIKE '%callSubAgent%') AS has_sandbox_tools,
             COUNT(DISTINCT messages.id) FILTER (WHERE messages.role='assistant' AND messages.user_id=page."userId" AND coalesce(messages.metadata->>'copied','') <> 'true') AS cost_records,
             COUNT(DISTINCT messages.id) FILTER (WHERE messages.role='assistant' AND messages.user_id=page."userId" AND coalesce(messages.metadata->>'copied','') <> 'true' AND coalesce(messages.usage->>'cost', messages.metadata->'usage'->>'cost', messages.metadata->>'cost') ~ '^[0-9]+([.][0-9]+)?$') AS priced_records,
             COUNT(*) FILTER (WHERE files.file_type LIKE 'image/%') AS image_count
@@ -303,6 +350,7 @@ export class CottiTopicOverviewService {
     imageCount: toNumber(row.imageCount),
     messageCount: toNumber(row.messageCount),
     mode: row.mode,
+    modeInferred: row.modeInferred,
     sessionId: row.sessionId,
     targetTitle: row.targetTitle,
     title: row.title,

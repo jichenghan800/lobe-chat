@@ -1,5 +1,5 @@
 import { useDebounce } from 'ahooks';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import { useClientDataSWR } from '@/libs/swr';
@@ -108,3 +108,20 @@ export const useCottiTopicAccounting = (topicId: string) =>
     () => cottiTopicOverviewService.accounting(topicId),
     { refreshInterval: 15000, revalidateOnFocus: true },
   );
+
+/** Poll only the visible topic's lightweight revision, not its full transcript. */
+export const useOverviewActivity = (topicId: string | undefined, refresh: () => unknown) => {
+  const revision = useRef<{ topicId: string; value: string } | undefined>(undefined);
+  const swr = useClientDataSWR(
+    topicId ? ['cotti', 'topic-activity', topicId] : null,
+    () => cottiTopicOverviewService.activity(topicId!),
+    { refreshInterval: 5000, refreshWhenHidden: false, revalidateOnFocus: true },
+  );
+  useEffect(() => {
+    if (!topicId || !swr.data) return;
+    const previous = revision.current;
+    revision.current = { topicId, value: swr.data.revision };
+    if (previous?.topicId === topicId && previous.value !== swr.data.revision) void refresh();
+  }, [topicId, swr.data, refresh]);
+  return swr;
+};

@@ -1,6 +1,6 @@
 'use client';
 
-import { Center, Empty, Flexbox, Icon } from '@lobehub/ui';
+import { Center, CopyButton, Empty, Flexbox, Icon } from '@lobehub/ui';
 import { Tag, Text } from '@lobehub/ui/base-ui';
 import { ImageIcon, MessageCircleIcon, TriangleAlertIcon } from 'lucide-react';
 import { memo, useState } from 'react';
@@ -11,9 +11,10 @@ import AsyncBoundary from '@/components/AsyncBoundary';
 import SkeletonList from '@/features/Conversation/components/SkeletonList';
 import BackButton from '@/features/NavPanel/components/BackButton';
 
-import { useCottiTopicOverviewDetail } from './hooks';
+import { useCottiTopicOverviewDetail, useOverviewActivity } from './hooks';
 import { ReadOnlyConversation } from './ReadOnlyConversation';
 import { styles } from './style';
+import { getOriginalTopicLink } from './topicLink';
 import { TopicManagement, TopicManagementHeader } from './TopicManagement';
 import { TopicModeTag } from './TopicModeTag';
 
@@ -23,6 +24,8 @@ export const TopicDetail = memo(() => {
   const location = useLocation();
   const swr = useCottiTopicOverviewDetail(topicId);
   const detail = swr.data;
+  const activity = useOverviewActivity(topicId, swr.mutate);
+  const originalLink = detail ? getOriginalTopicLink(window.location.origin, detail) : undefined;
   const [managementOpen, setManagementOpen] = useState(false);
 
   return (
@@ -45,13 +48,16 @@ export const TopicDetail = memo(() => {
               <div className={styles.detailTitle} style={{ flex: 1, minWidth: 0 }}>
                 {detail.title?.trim() || t('overview.untitled')}
               </div>
+              {originalLink && (
+                <CopyButton content={originalLink} title={t('overview.copyOriginal')} />
+              )}
               <TopicManagementHeader
                 topicId={detail.id}
                 onOpen={() => setManagementOpen((open) => !open)}
               />
             </Flexbox>
             <Flexbox horizontal align={'center'} gap={8} wrap={'wrap'}>
-              <TopicModeTag mode={detail.mode} />
+              <TopicModeTag inferred={detail.modeInferred} mode={detail.mode} />
               {(detail.userName || detail.userEmail || detail.targetTitle) && (
                 <Text fontSize={12} type={'secondary'}>
                   {[detail.userName || detail.userEmail, detail.targetTitle]
@@ -74,6 +80,30 @@ export const TopicDetail = memo(() => {
                 }).format(new Date(detail.updatedAt))}
               </Text>
             </Flexbox>
+          </Flexbox>
+          <Flexbox horizontal gap={8} padding={12} wrap="wrap">
+            <Text fontSize={12} type="secondary">
+              {t('overview.liveReadonly')}
+            </Text>
+            <Text fontSize={12}>
+              {activity.error
+                ? t('overview.liveError')
+                : activity.data
+                  ? [
+                      t(`overview.environment.${activity.data.sandbox}`),
+                      t(`overview.activity.${activity.data.status}`),
+                      activity.data.tool,
+                      activity.data.provider && activity.data.model
+                        ? `${activity.data.provider}/${activity.data.model}`
+                        : null,
+                      activity.data.updatedAt
+                        ? new Date(activity.data.updatedAt).toLocaleTimeString(i18n.language)
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : t('overview.activity.unknown')}
+            </Text>
           </Flexbox>
           {detail.messagesTruncated && (
             <Flexbox horizontal align={'center'} className={styles.truncated} gap={8}>

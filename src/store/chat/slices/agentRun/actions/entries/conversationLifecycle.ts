@@ -599,18 +599,16 @@ export class ConversationLifecycleActionImpl {
           throw error;
         })
       : [];
-    const userMessageMetadata =
-      metadata ||
-      contextSelections?.length ||
-      pageSelections?.length ||
-      localSystemToolSnapshots.length
-        ? {
-            ...metadata,
-            ...(contextSelections?.length ? { contextSelections } : undefined),
-            ...(pageSelections?.length ? { pageSelections } : undefined),
-            ...(localSystemToolSnapshots.length ? { localSystemToolSnapshots } : undefined),
-          }
-        : undefined;
+    const userMessageMetadata = {
+      ...metadata,
+      cottiInteractionMode:
+        resolveToolMode(agentConfig?.chatConfig) === 'chat'
+          ? ('chat' as const)
+          : ('agent' as const),
+      ...(contextSelections?.length ? { contextSelections } : undefined),
+      ...(pageSelections?.length ? { pageSelections } : undefined),
+      ...(localSystemToolSnapshots.length ? { localSystemToolSnapshots } : undefined),
+    };
 
     // Enrich selected skills/tools with preloaded content, injected directly
     // via SelectedSkillInjector/SelectedToolInjector — no fake tool-call preload messages

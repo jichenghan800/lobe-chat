@@ -38,6 +38,9 @@ describe('cotti.topicOverview router', () => {
 
     await expect(caller.topicOverview.list()).rejects.toMatchObject({ code: 'FORBIDDEN' });
     expect(list).not.toHaveBeenCalled();
+    await expect(caller.topicOverview.activity({ topicId: 'private' })).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
     await expect(caller.topicOverview.accounting({ topicId: 'private' })).rejects.toMatchObject({
       code: 'FORBIDDEN',
     });

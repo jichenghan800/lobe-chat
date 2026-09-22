@@ -223,6 +223,7 @@ export interface BotSenderMetadata {
 }
 
 export const MessageMetadataSchema = ModelUsageSchema.merge(ModelPerformanceSchema).extend({
+  cottiInteractionMode: z.enum(['chat', 'agent']).optional(),
   botSender: BotSenderMetadataSchema.optional(),
   agentDispatch: AgentDispatchMetadataSchema.optional(),
   collapsed: z.boolean().optional(),
@@ -343,6 +344,8 @@ export interface MessageMetadata {
   copied?: boolean;
   /** @deprecated use the top-level message `usage` field instead */
   cost?: number;
+  /** Mode captured when this turn was sent; never used for authorization. */
+  cottiInteractionMode?: 'chat' | 'agent';
   /** @deprecated use `metadata.performance` instead */
   duration?: number;
   finishType?: string;

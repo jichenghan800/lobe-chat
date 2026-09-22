@@ -12,3 +12,21 @@ export const getOverviewTopicId = (input: string): string | undefined => {
     return;
   }
 };
+
+/** A navigation link, not a public share or an impersonation grant. */
+export const getOriginalTopicLink = (
+  origin: string,
+  topic: {
+    agentId?: string | null;
+    groupId?: string | null;
+    id: string;
+    workspaceId?: string | null;
+  },
+): string | undefined => {
+  // Workspace/group routes need their own routing contract; never invent one.
+  if (!topic.agentId || topic.groupId || topic.workspaceId) return;
+  return new URL(
+    `/agent/${encodeURIComponent(topic.agentId)}/${encodeURIComponent(topic.id)}`,
+    origin,
+  ).href;
+};

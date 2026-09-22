@@ -30,6 +30,7 @@ import { TopicModeTag } from './TopicModeTag';
 const modeIcons = {
   agent: BotIcon,
   chat: MessageCircleIcon,
+  unknown: MessageCircleIcon,
   task: ListTodoIcon,
 } satisfies Record<CottiTopicOverviewMode, typeof BotIcon>;
 
@@ -135,7 +136,7 @@ export const TopicListPanel = memo(() => {
                     title={title}
                     description={
                       <Flexbox horizontal align={'center'} gap={4} style={{ minWidth: 0 }}>
-                        <TopicModeTag mode={item.mode} />
+                        <TopicModeTag inferred={item.modeInferred} mode={item.mode} />
                         {description && (
                           <Text
                             ellipsis={{ tooltipWhenOverflow: true }}

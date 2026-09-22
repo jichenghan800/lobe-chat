@@ -2,6 +2,7 @@
 import {
   agents,
   cottiLoginAccessRules,
+  messages,
   topicCostFreezes,
   topics,
   users,
@@ -85,6 +86,46 @@ describe('administrator overview includes every account', () => {
       .delete(cottiLoginAccessRules)
       .where(inArray(cottiLoginAccessRules.value, [`${ids[1]}@example.com`]));
     await db.delete(users).where(inArray(users.id, ids));
+  });
+
+  it('uses recorded turn mode rather than missing server operations, and labels unknown history honestly', async () => {
+    const id = `${prefix}-modes`;
+    await db.insert(topics).values({ id, userId: ids[0], title: id });
+    expect((await service.getDetail(id))?.mode).toBe('unknown');
+    await db.insert(messages).values({
+      id: `${id}-u1`,
+      topicId: id,
+      userId: ids[0],
+      role: 'user',
+      content: 'hi',
+      metadata: { cottiInteractionMode: 'agent' },
+      createdAt: new Date('2026-01-01'),
+    });
+    expect((await service.getDetail(id))?.mode).toBe('agent');
+    await db.insert(messages).values({
+      id: `${id}-u2`,
+      topicId: id,
+      userId: ids[0],
+      role: 'user',
+      content: 'hi',
+      metadata: { cottiInteractionMode: 'chat' },
+      createdAt: new Date('2026-01-02'),
+    });
+    expect((await service.getDetail(id))?.mode).toBe('chat');
+    const a = await service.activity(id);
+    await db.insert(messages).values({
+      id: `${id}-a`,
+      topicId: id,
+      userId: ids[0],
+      role: 'assistant',
+      content: '...',
+      model: 'test',
+    });
+    const b = await service.activity(id);
+    expect(b?.revision).not.toBe(a?.revision);
+    expect(b?.status).toBe('waiting');
+    expect(await service.activity('missing-topic')).toBeNull();
+    await db.delete(topics).where(eq(topics.id, id));
   });
 
   it('searches across regular, login-allowlisted and administrator accounts', async () => {

@@ -22,6 +22,9 @@ const cottiTopicOverviewProcedure = cottiAdminProcedure.use(async (opts) => {
 });
 
 export const cottiTopicOverviewRouter = router({
+  activity: cottiTopicOverviewProcedure
+    .input(z.object({ topicId: z.string().min(1) }))
+    .query(({ ctx, input }) => ctx.topicOverviewService.activity(input.topicId)),
   accounting: cottiTopicOverviewProcedure
     .input(z.object({ topicId: z.string().min(1) }))
     .query(({ ctx, input }) => ctx.topicManagementService.get(input.topicId)),

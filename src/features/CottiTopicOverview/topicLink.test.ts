@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getOverviewTopicId } from './topicLink';
+import { getOriginalTopicLink, getOverviewTopicId } from './topicLink';
 
 describe('overview topic links', () => {
   const id = 'tpc_t1SSaYPz2nK5';
@@ -30,5 +30,21 @@ describe('overview topic links', () => {
     '',
   ])('leaves ordinary searches and unsupported links unchanged: %s', (input) => {
     expect(getOverviewTopicId(input)).toBeUndefined();
+  });
+});
+
+describe('original topic links', () => {
+  it('preserves the current independent domain and uses the topic owner agent', () => {
+    expect(
+      getOriginalTopicLink('https://chat.cotti.ai', { id: 'tpc_x', agentId: 'agt_owner' }),
+    ).toBe('https://chat.cotti.ai/agent/agt_owner/tpc_x');
+  });
+  it('does not fabricate unsupported group/workspace or missing-agent routes', () => {
+    for (const topic of [
+      { id: 'tpc_x' },
+      { id: 'tpc_x', agentId: 'a', groupId: 'g' },
+      { id: 'tpc_x', agentId: 'a', workspaceId: 'w' },
+    ])
+      expect(getOriginalTopicLink('https://chat.cotti.ai', topic)).toBeUndefined();
   });
 });

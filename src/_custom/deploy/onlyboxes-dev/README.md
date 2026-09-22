@@ -48,3 +48,18 @@ OnlyBoxes 原生任务取消接口实测只改变 Console 记录，已派发进�
 - 首条消息：conversationLifecycle.ts、gateway.ts、服务端 aiAgent/pipeline/turnSetup.ts；任务入口 Home/InputArea/useSend.ts、服务端 task /taskRunner。
 - OnlyBoxes 适配：apps/server/src/services/sandbox/providers/onlyboxes.ts、onlyboxesBackground.ts。
 - 启用状态与配置：apps/server/src/routers/lambda/cotti/sandbox.ts、packages/env/src/sandbox.ts。
+
+## 2026-09-22 超时恢复与镜像保留
+
+自建话题 tpc\_kFuDI4jvYGmu 的附件初始化与实际命令各等 120 秒后超时，连 `print('ready')` 也失败。检查发现固定摘要运行镜像缺失；Docker 日志显示拉取随任务超时取消。仅重启空闲 Worker 后独立探针仍失败，恢复原摘要镜像后 Python 返回 56、同会话写读文件返回 recovery-ready（约 0.527 / 0.125 秒）。未重放用户业务任务。
+
+根用户 crontab 每周一 00:00 执行 `docker image prune -a -f && docker builder prune -a -f`；9 月 21 日 00:00 Docker 日志存在该镜像清理记录。沙箱闲置后无容器引用，因此运行镜像会进入清理范围。保留原清理任务，增加不启动的容器作为镜像引用：
+
+```bash
+docker create --name lingshu-onlyboxes-runtime-image-pin \
+  --label cotti.purpose=retain-onlyboxes-runtime --network none \
+  --entrypoint /bin/true \
+  coolfan1024/onlyboxes-runtime@sha256:2771c7fde19184d42afcf9889da3d908276006cded873b7861964a3fcce4d3cc
+```
+
+该容器保持 created，无进程、无 CPU / 内存占用，不属于 Worker 会话，不占平台名额。不要对其执行启动；未来如引入 container/system prune，必须同步保留此引用。升级运行镜像时须更新引用，再移除旧引用。没有改动官方 OnlyBoxes 源码、平台应用代码或用户附件。恢复证据与 Console 备份在 `.records/onlyboxes-recovery-20260922/`（私有）。本次验证覆盖底层执行及文件读写，不代表用户整套业务技能已经验收。

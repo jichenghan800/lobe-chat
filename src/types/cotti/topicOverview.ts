@@ -1,6 +1,6 @@
 import type { MetaData, UIChatMessage } from '@lobechat/types';
 
-export type CottiTopicOverviewMode = 'agent' | 'chat' | 'task';
+export type CottiTopicOverviewMode = 'agent' | 'chat' | 'task' | 'unknown';
 
 export interface CottiTopicOverviewQuery {
   page?: number;
@@ -21,6 +21,7 @@ export interface CottiTopicOverviewItem {
   imageCount: number;
   messageCount: number;
   mode: CottiTopicOverviewMode;
+  modeInferred?: boolean;
   sessionId?: null | string;
   targetTitle?: null | string;
   title?: null | string;
@@ -49,4 +50,14 @@ export interface CottiTopicManagementInput {
   action: 'freeze' | 'unfreeze' | 'setLimit' | 'setLimitAndUnfreeze';
   limitFen?: number | null;
   topicId: string;
+}
+
+export interface CottiTopicActivity {
+  model: string | null;
+  provider: string | null;
+  revision: string;
+  sandbox: 'market' | 'onlyboxes' | 'unknown';
+  status: 'error' | 'waiting' | 'tool' | 'reply' | 'unknown';
+  tool: string | null;
+  updatedAt: string | null;
 }
