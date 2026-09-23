@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import MarkdownMessage from './index';
@@ -24,6 +24,22 @@ describe('conversation image previews', () => {
       maxWidth: 'min(100%, 320px)',
       objectFit: 'contain',
     });
+  });
+
+  it('opens a tall image fitted inside the viewport while preserving its original source', async () => {
+    render(<MarkdownMessage enableStream={false}>{`![Tall poster](${source})`}</MarkdownMessage>);
+    const image = await screen.findByRole('img', { name: 'Tall poster' });
+    Object.defineProperties(image, {
+      naturalHeight: { configurable: true, value: 1376 },
+      naturalWidth: { configurable: true, value: 768 },
+    });
+    fireEvent.click(image);
+    const dialog = await screen.findByRole('dialog');
+    const preview = within(dialog).getByRole('img', { name: 'Tall poster' });
+    await waitFor(() => expect(preview.style.transform).toContain('scale(1)'));
+    expect(parseFloat(preview.style.height)).toBeLessThanOrEqual(window.innerHeight);
+    expect(preview).toHaveAttribute('src', source);
+    fireEvent.keyDown(dialog, { key: 'Escape' });
   });
 
   it('retains caller image options and surrounding message text', async () => {

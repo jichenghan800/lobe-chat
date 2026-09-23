@@ -26,6 +26,15 @@ const MarkdownMessage = memo<MarkdownProps>(({ children, componentProps, ...rest
           maxWidth: 'min(100%, 320px)',
           objectFit: 'contain',
           ...componentProps?.img,
+          preview:
+            componentProps?.img?.preview === false
+              ? false
+              : {
+                  defaultZoom: 'fit',
+                  ...(typeof componentProps?.img?.preview === 'object'
+                    ? componentProps.img.preview
+                    : {}),
+                },
         },
         mermaid: { fullFeatured: false, theme: mermaidTheme, ...componentProps?.mermaid },
       }}
