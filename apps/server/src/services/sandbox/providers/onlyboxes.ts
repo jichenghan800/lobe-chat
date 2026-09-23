@@ -1,4 +1,5 @@
 import { createHmac, randomUUID } from 'node:crypto';
+import nodePath from 'node:path';
 
 import type { SandboxCallToolResult } from '@lobechat/builtin-tool-cloud-sandbox';
 import { isRecord } from '@lobechat/utils';
@@ -195,11 +196,29 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     }
 
     try {
-      await this.ensureSession();
+      let exportPath = path;
+      if (nodePath.posix.isAbsolute(path)) {
+        await this.ensureSession();
+      } else {
+        // Resolve inside the same terminal environment used by code and file tools.
+        // Base64 keeps filenames out of shell/Python syntax, including quotes and newlines.
+        const encodedPath = Buffer.from(path).toString('base64');
+        const resolved = await this.execTerminal(
+          `python3 -c 'import base64,json,os; print(json.dumps(os.path.abspath(base64.b64decode("${encodedPath}").decode("utf-8"))))'`,
+        );
+        if (resolved.exit_code !== 0 || resolved.stdout_truncated) {
+          throw new Error('Failed to resolve export path in Onlyboxes sandbox');
+        }
+        const absolutePath: unknown = JSON.parse(resolved.stdout || 'null');
+        if (typeof absolutePath !== 'string' || !nodePath.posix.isAbsolute(absolutePath)) {
+          throw new Error('Invalid resolved export path from Onlyboxes sandbox');
+        }
+        exportPath = absolutePath;
+      }
 
       const task = await this.submitTask('terminalResource', {
         action: 'export',
-        file_path: path,
+        file_path: exportPath,
         headers: uploadHeaders,
         session_id: this.sessionId,
         signed_url: uploadUrl,

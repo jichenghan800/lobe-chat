@@ -447,6 +447,68 @@ describe('OnlyboxesSandboxProvider', () => {
     );
   });
 
+  it.each(['report.txt', './report.txt', '目录/报告 "$().txt'])(
+    'exports relative file %s from the terminal working directory',
+    async (path) => {
+      const absolutePath = `/tmp/${path.replace(/^\.\//, '')}`;
+      const fetchMock = vi.fn().mockImplementation(async (_url, options) => {
+        const payload = JSON.parse(options.body);
+        if (payload.command) {
+          expect(payload.command).toContain(Buffer.from(path).toString('base64'));
+          return new Response(
+            JSON.stringify({ exit_code: 0, stdout: JSON.stringify(absolutePath) }),
+          );
+        }
+        // Model the worker's root-relative docker cp behavior: only the absolute path exists.
+        return new Response(
+          JSON.stringify(
+            payload.input.file_path === absolutePath
+              ? { status: 'succeeded', result: { size_bytes: 25, mime_type: 'text/plain' } }
+              : { status: 'failed', error: { message: 'File not found' } },
+          ),
+        );
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+      const provider = new OnlyboxesSandboxProvider({
+        marketService: {} as MarketService,
+        topicId: 'topic-1',
+        userId: 'user-1',
+      });
+      expect(
+        await provider.exportFileToUploadUrl({
+          filename: 'report.txt',
+          path,
+          uploadUrl: 'https://uploads.example.com/put',
+        }),
+      ).toMatchObject({ success: true, size: 25 });
+    },
+  );
+
+  it.each([
+    { exit_code: 1, stdout: '' },
+    { exit_code: 0, stdout: '"relative.txt"' },
+    { exit_code: 0, stdout: 'not-json' },
+    { exit_code: 0, stdout: '"/tmp/report.txt"', stdout_truncated: true },
+  ])('does not export when sandbox path resolution fails: %j', async (terminal) => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(terminal)));
+    vi.stubGlobal('fetch', fetchMock);
+    const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+    const provider = new OnlyboxesSandboxProvider({
+      marketService: {} as MarketService,
+      topicId: 'topic-1',
+      userId: 'user-1',
+    });
+    expect(
+      await provider.exportFileToUploadUrl({
+        filename: 'report.txt',
+        path: 'report.txt',
+        uploadUrl: 'https://uploads.example.com/put',
+      }),
+    ).toMatchObject({ success: false });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('runs execScript from a prepared skill directory when skill zip URLs are available', async () => {
     const fetchMock = vi
       .fn()
