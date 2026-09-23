@@ -1,5 +1,8 @@
 import type { ChatFileItem, FileItem, UIChatMessage } from '@lobechat/types';
-import { isSpreadsheetFileNameOrType } from '@lobechat/utils/spreadsheet';
+import {
+  assertChatSpreadsheetSize,
+  isSpreadsheetFileNameOrType,
+} from '@lobechat/utils/spreadsheet';
 
 import { agentService } from '@/services/agent';
 import { messageService } from '@/services/message';
@@ -25,6 +28,11 @@ export const hydrateRuntimeFileContent = async ({
     file.name &&
     file.content === undefined &&
     !(isAgentMode && isSpreadsheetFileNameOrType(file.name, type));
+  if (!isAgentMode) {
+    for (const file of agentFiles.filter((file) => file.enabled)) {
+      assertChatSpreadsheetSize(file.name, file.type ?? file.fileType, file.size);
+    }
+  }
   const agentIds = agentFiles
     .filter((file) => file.enabled && needsBody(file, file.type ?? file.fileType))
     .map((file) => file.id);
@@ -50,6 +58,11 @@ export const hydrateRuntimeFileContent = async ({
         : {}),
     }));
   walk(messages, (files, message) => {
+    if (!isAgentMode) {
+      for (const file of files.filter((file) => !file.inaccessible)) {
+        assertChatSpreadsheetSize(file.name, file.fileType, file.size);
+      }
+    }
     const targetTopic = message.topicId ?? topicId;
     if (!targetTopic) return files;
     const ids = files

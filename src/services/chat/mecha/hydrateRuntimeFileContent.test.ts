@@ -141,3 +141,20 @@ describe('runtime-only file hydration', () => {
     expect(result.messages[1].fileList?.[0].inaccessible).toBe(true);
   });
 });
+
+it('blocks historical large CSV in Chat before loading cached text, but allows Agent metadata', async () => {
+  const input = message('large', 'data.csv');
+  input.fileList![0].size = 83_575_699;
+  const read = vi.spyOn(messageService, 'getMessages');
+  await expect(
+    hydrateRuntimeFileContent({ agentFiles: [], messages: [input], isAgentMode: false }),
+  ).rejects.toThrow('Switch to Agent mode');
+  expect(read).not.toHaveBeenCalled();
+  const result = await hydrateRuntimeFileContent({
+    agentFiles: [],
+    messages: [input],
+    isAgentMode: true,
+  });
+  expect(read).not.toHaveBeenCalled();
+  expect(result.messages[0].fileList![0].url).toBe('/file');
+});

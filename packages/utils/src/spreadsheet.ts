@@ -26,3 +26,17 @@ export const isSpreadsheetFileNameOrType = (name: string, type = '') => {
 
   return SPREADSHEET_FILE_EXTENSIONS.has(extension) || SPREADSHEET_MIME_TYPES.has(fileType);
 };
+
+/** Plain Chat may directly read only small spreadsheets. Larger originals need Agent tools. */
+export const CHAT_SPREADSHEET_LIMIT_BYTES = 128 * 1024;
+
+export const isLargeChatSpreadsheet = (name: string, type = '', size = 0) =>
+  isSpreadsheetFileNameOrType(name, type) && size > CHAT_SPREADSHEET_LIMIT_BYTES;
+
+export const assertChatSpreadsheetSize = (name: string, type = '', size = 0) => {
+  if (isLargeChatSpreadsheet(name, type, size)) {
+    throw new Error(
+      'This spreadsheet exceeds 128 KB. Switch to Agent mode to process the original file with sandbox tools.',
+    );
+  }
+};

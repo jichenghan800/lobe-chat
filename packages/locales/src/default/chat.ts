@@ -2543,7 +2543,8 @@ export default {
   'upload.preview.status.cancelled': 'Upload cancelled',
   'upload.preview.status.error': 'Upload failed',
   'upload.preview.status.pending': 'Preparing to upload...',
-  'upload.preview.status.processing': 'Processing file...',
+  'upload.preview.status.processing': 'Finalizing upload...',
+  'upload.preview.status.checkingProgress': 'Checking {{progress}}%',
   'upload.preview.status.success': 'Upload complete',
   'upload.preview.status.uploading': 'Uploading file...',
   'upload.validation.mediaNotSupported':

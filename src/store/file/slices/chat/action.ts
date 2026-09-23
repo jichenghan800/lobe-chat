@@ -313,9 +313,7 @@ export class FileActionImpl {
       ? filterSupportedChatUploadFiles(filteredFiles)
       : { supportedFiles: filteredFiles, unsupportedFiles: [] as File[] };
 
-    const { excelFilesRequiringAgentMode } = enforceFileTypeWhitelist
-      ? await filterExcelChatUploadFiles(typeSupportedFiles)
-      : { excelFilesRequiringAgentMode: [] as File[] };
+    const { excelFilesRequiringAgentMode } = await filterExcelChatUploadFiles(typeSupportedFiles);
     const filesRequiringAgentMode = new Set(excelFilesRequiringAgentMode);
     // Keep accepted spreadsheets in the visible draft even when ordinary Chat
     // must not send them. The user can switch to Agent without selecting or
@@ -331,7 +329,7 @@ export class FileActionImpl {
       );
     }
 
-    if (excelFilesRequiringAgentMode.length > 0) {
+    if (enforceFileTypeWhitelist && excelFilesRequiringAgentMode.length > 0) {
       toast.warning(
         t('upload.validation.largeExcelFileInChat', {
           files: excelFilesRequiringAgentMode.map((file) => file.name).join(', '),

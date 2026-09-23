@@ -314,6 +314,39 @@ describe('useFileStore:chat', () => {
     expect(toast.warning).toHaveBeenCalledWith('upload.validation.largeExcelFileInChat');
   });
 
+  it('keeps large CSV visible after upload but marks it as Agent-only in chat mode', async () => {
+    mockAgentMode({ enableAgentMode: false, heterogeneous: false });
+
+    const { result } = renderHook(() => useStore());
+    const uploadWithProgress = vi.fn().mockResolvedValue({
+      id: 'file-excel',
+      url: 'https://files.example.com/large.xlsx',
+    });
+    const largeExcel = new File([new Uint8Array(LARGE_EXCEL_UPLOAD_LIMIT_BYTES + 1)], 'large.csv', {
+      type: 'text/csv',
+    });
+
+    act(() => {
+      useStore.setState({
+        chatUploadFileList: [],
+        uploadWithProgress: uploadWithProgress as any,
+      });
+    });
+
+    await act(async () => {
+      await result.current.uploadChatFiles([largeExcel], AGENT_ID);
+    });
+
+    expect(uploadWithProgress).toHaveBeenCalledOnce();
+    expect(result.current.chatUploadFileList).toEqual([
+      expect.objectContaining({
+        requiresAgentMode: true,
+      }),
+    ]);
+    expect(ragService.parseFileContent).not.toHaveBeenCalled();
+    expect(toast.warning).toHaveBeenCalledWith('upload.validation.largeExcelFileInChat');
+  });
+
   it('uploadChatFiles should allow large Excel files in agent mode without parsing them', async () => {
     mockAgentMode({ enableAgentMode: true, heterogeneous: false });
 
@@ -340,6 +373,8 @@ describe('useFileStore:chat', () => {
 
     expect(toast.error).not.toHaveBeenCalled();
     expect(uploadWithProgress).toHaveBeenCalledTimes(1);
+    expect(result.current.chatUploadFileList[0].requiresAgentMode).toBe(true);
+    expect(toast.warning).not.toHaveBeenCalled();
     expect(ragService.parseFileContent).not.toHaveBeenCalled();
   });
 

@@ -442,9 +442,17 @@ describe('UploadService', () => {
       vi.mocked(lambdaClient.upload.createS3MultipartUploadPartUrl.mutate).mockResolvedValue(
         'https://example.com/part',
       );
-      vi.mocked(lambdaClient.upload.completeS3MultipartUpload.mutate).mockResolvedValue({
-        success: true,
-      });
+      const onProgress = vi.fn();
+      vi.mocked(lambdaClient.upload.completeS3MultipartUpload.mutate).mockImplementation(
+        async () => {
+          expect(onProgress).toHaveBeenLastCalledWith(
+            'processing',
+            expect.objectContaining({ progress: 99.9 }),
+          );
+          expect(onProgress.mock.calls.some(([status]) => status === 'success')).toBe(false);
+          return { success: true };
+        },
+      );
 
       const xhr = new XMLHttpRequest();
       vi.spyOn(xhr, 'addEventListener').mockImplementation((event, handler) => {
@@ -454,7 +462,16 @@ describe('UploadService', () => {
         }
       });
 
-      await uploadService.uploadToServerS3(largeFile, {});
+      await uploadService.uploadToServerS3(largeFile, { onProgress });
+      expect(onProgress).toHaveBeenLastCalledWith(
+        'success',
+        expect.objectContaining({ progress: 100 }),
+      );
+      expect(
+        onProgress.mock.calls.some(
+          ([status, state]) => status === 'uploading' && state.progress > 0 && state.progress < 99,
+        ),
+      ).toBe(true);
 
       expect(lambdaClient.upload.createS3PreSignedUrl.mutate).not.toHaveBeenCalled();
       expect(lambdaClient.upload.createS3MultipartUploadPartUrl.mutate).toHaveBeenCalledTimes(2);

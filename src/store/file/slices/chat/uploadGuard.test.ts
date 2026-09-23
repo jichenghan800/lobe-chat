@@ -126,7 +126,7 @@ describe('isLargeExcelFile', () => {
 
     expect(isLargeExcelFile(largeExcel)).toBe(true);
     expect(isLargeExcelFile(smallExcel)).toBe(false);
-    expect(isLargeExcelFile(largeCsv)).toBe(false);
+    expect(isLargeExcelFile(largeCsv)).toBe(true);
   });
 });
 
@@ -210,4 +210,11 @@ describe('filterSupportedChatUploadFiles', () => {
     expect(supportedFiles).toEqual([png]);
     expect(unsupportedFiles).toEqual([zip]);
   });
+});
+
+it('requires Agent for large CSV but permits a small CSV without workbook parsing', async () => {
+  const large = new File([new Uint8Array(128 * 1024 + 1)], 'TABLE.CSV', { type: '' });
+  const small = new File(['a,b\n1,2'], 'small.csv', { type: 'text/csv' });
+  expect((await filterExcelChatUploadFiles([large])).excelFilesRequiringAgentMode).toEqual([large]);
+  expect((await filterExcelChatUploadFiles([small])).allowedFiles).toEqual([small]);
 });

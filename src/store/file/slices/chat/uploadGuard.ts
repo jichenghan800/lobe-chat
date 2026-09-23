@@ -1,3 +1,9 @@
+import {
+  CHAT_SPREADSHEET_LIMIT_BYTES,
+  isLargeChatSpreadsheet,
+  isSpreadsheetFileNameOrType,
+} from '@lobechat/utils/spreadsheet';
+
 import { getFileExtension, isExcelFileNameOrType } from '@/utils/spreadsheet';
 
 const SUPPORTED_CHAT_IMAGE_TYPES = new Set([
@@ -106,12 +112,12 @@ const SUPPORTED_CHAT_DOCUMENT_MIME_TYPES = new Set([
   'text/plain',
 ]);
 
-export const LARGE_EXCEL_UPLOAD_LIMIT_BYTES = 128 * 1024;
+export const LARGE_EXCEL_UPLOAD_LIMIT_BYTES = CHAT_SPREADSHEET_LIMIT_BYTES;
 
 export const isExcelFile = (file: File) => isExcelFileNameOrType(file.name, file.type);
 
 export const isLargeExcelFile = (file: File) =>
-  isExcelFile(file) && file.size > LARGE_EXCEL_UPLOAD_LIMIT_BYTES;
+  isLargeChatSpreadsheet(file.name, file.type, file.size);
 
 // Canonical audio mime for each supported extension. Audio containers like .m4a share the
 // ISO-BMFF box layout with .mp4, so the browser often reports an empty mime and byte-sniffing
@@ -200,11 +206,12 @@ const getExcelContentSheetCount = async (file: File): Promise<number> => {
 };
 
 export const filterExcelChatUploadFiles = async (files: File[]) => {
-  const excelFiles = files.filter(isExcelFile);
+  const isTable = (file: File) => isSpreadsheetFileNameOrType(file.name, file.type);
+  const excelFiles = files.filter(isTable);
 
   if (excelFiles.length > 1) {
     return {
-      allowedFiles: files.filter((file) => !isExcelFile(file)),
+      allowedFiles: files.filter((file) => !isTable(file)),
       excelFilesRequiringAgentMode: excelFiles,
     };
   }
@@ -213,13 +220,18 @@ export const filterExcelChatUploadFiles = async (files: File[]) => {
   const excelFilesRequiringAgentMode: File[] = [];
 
   for (const file of files) {
-    if (!isExcelFile(file)) {
+    if (!isTable(file)) {
       allowedFiles.push(file);
       continue;
     }
 
     if (isLargeExcelFile(file)) {
       excelFilesRequiringAgentMode.push(file);
+      continue;
+    }
+
+    if (!isExcelFile(file)) {
+      allowedFiles.push(file);
       continue;
     }
 

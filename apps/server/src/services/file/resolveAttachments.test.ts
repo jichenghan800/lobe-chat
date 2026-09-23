@@ -2,10 +2,11 @@
 import type { LobeChatDatabase } from '@lobechat/database';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveAttachmentMetadata } from './resolveAttachments';
+import { resolveAttachmentMetadata, resolveAttachmentsByFileIds } from './resolveAttachments';
 
 const mocks = vi.hoisted(() => ({
   findByIds: vi.fn(),
+  parseFile: vi.fn(),
   getFullFileUrl: vi.fn(),
 }));
 
@@ -15,7 +16,11 @@ vi.mock('@/database/models/file', () => ({
   }),
 }));
 
-vi.mock('@/server/services/document', () => ({ DocumentService: vi.fn() }));
+vi.mock('@/server/services/document', () => ({
+  DocumentService: vi.fn().mockImplementation(function () {
+    return { parseFile: mocks.parseFile };
+  }),
+}));
 
 vi.mock('@/server/services/file', () => ({
   FileService: vi.fn().mockImplementation(function () {
@@ -60,4 +65,18 @@ describe('resolveAttachmentMetadata', () => {
       },
     ]);
   });
+});
+
+it('rejects large CSV before parsing in Chat and keeps its original URL in Agent', async () => {
+  mocks.findByIds.mockResolvedValue([
+    { id: 'large', name: 'data.csv', fileType: 'text/csv', size: 83_575_699, url: 'data.csv' },
+  ]);
+  mocks.getFullFileUrl.mockResolvedValue('https://files.example.com/data.csv');
+  const args = { db: {} as LobeChatDatabase, fileIds: ['large'], userId: 'user-1' };
+  await expect(resolveAttachmentsByFileIds(args)).rejects.toThrow('Switch to Agent mode');
+  expect(mocks.parseFile).not.toHaveBeenCalled();
+  const result = await resolveAttachmentsByFileIds({ ...args, metadataOnlySpreadsheets: true });
+  expect(result.fileList[0].url).toBe('https://files.example.com/data.csv');
+  expect(result.fileList[0].content).toBeUndefined();
+  expect(mocks.parseFile).not.toHaveBeenCalled();
 });

@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   deleteDocument: vi.fn(),
   deleteDocuments: vi.fn(),
   findById: vi.fn(),
+  findFileById: vi.fn(),
+  parseFile: vi.fn(),
   findByIds: vi.fn(),
   findBySlug: vi.fn(),
   getAccessLevel: vi.fn(),
@@ -62,7 +64,7 @@ vi.mock('@/database/models/document', async (importOriginal) => ({
 }));
 vi.mock('@/database/models/file', () => ({
   FileModel: vi.fn(function () {
-    return {};
+    return { findById: mocks.findFileById };
   }),
 }));
 vi.mock('@/database/models/message', () => ({
@@ -83,6 +85,7 @@ vi.mock('@/server/services/document', () => ({
   DocumentService: vi.fn(function () {
     return {
       createDocument: mocks.createDocument,
+      parseFile: mocks.parseFile,
       deleteDocument: mocks.deleteDocument,
       deleteDocuments: mocks.deleteDocuments,
       publishToWorkspace: mocks.publishToWorkspace,
@@ -514,5 +517,34 @@ describe('documentRouter updateDocument mention notifications', () => {
     await flushAfterWork();
 
     expect(mocks.notifyDocumentMention).not.toHaveBeenCalled();
+  });
+});
+
+describe('direct file parsing spreadsheet guard', () => {
+  beforeEach(() => vi.clearAllMocks());
+  it('rejects a large CSV before returning cached or newly parsed content', async () => {
+    mocks.findFileById.mockResolvedValue({
+      id: 'csv',
+      name: 'data.csv',
+      fileType: 'text/csv',
+      size: 83_575_699,
+    });
+    const caller = documentRouter.createCaller({ serverDB: {}, userId: 'member-1' } as never);
+    await expect(caller.parseFileContent({ id: 'csv' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: expect.stringContaining('Switch to Agent mode'),
+    });
+    expect(mocks.parseFile).not.toHaveBeenCalled();
+  });
+  it('retains small CSV direct reading', async () => {
+    mocks.findFileById.mockResolvedValue({
+      id: 'csv',
+      name: 'data.csv',
+      fileType: 'text/csv',
+      size: 128 * 1024,
+    });
+    mocks.parseFile.mockResolvedValue({ content: 'a,b' });
+    const caller = documentRouter.createCaller({ serverDB: {}, userId: 'member-1' } as never);
+    expect(await caller.parseFileContent({ id: 'csv' })).toEqual({ content: 'a,b' });
   });
 });

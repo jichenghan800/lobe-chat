@@ -1,7 +1,10 @@
 import type { LobeChatDatabase } from '@lobechat/database';
 import type { ChatAudioItem, ChatFileItem, ChatImageItem, ChatVideoItem } from '@lobechat/types';
 import { readAudioDurationMs } from '@lobechat/utils/audio';
-import { isSpreadsheetFileNameOrType } from '@lobechat/utils/spreadsheet';
+import {
+  assertChatSpreadsheetSize,
+  isSpreadsheetFileNameOrType,
+} from '@lobechat/utils/spreadsheet';
 import debug from 'debug';
 
 import { FileModel } from '@/database/models/file';
@@ -94,6 +97,9 @@ export const resolveAttachmentsByFileIds = async ({
     return result;
   }
 
+  if (!metadataOnlySpreadsheets) {
+    for (const file of fileRecords) assertChatSpreadsheetSize(file.name, file.fileType, file.size);
+  }
   const documentService = new DocumentService(db, userId, workspaceId);
   const recordById = new Map(fileRecords.map((f) => [f.id, f]));
 

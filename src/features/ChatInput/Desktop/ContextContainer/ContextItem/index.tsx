@@ -138,12 +138,16 @@ const ContextItem = memo<FileItemProps>((props) => {
                 />
               ) : indicator === 'progress' ? (
                 <span
-                  aria-label={t('upload.preview.status.uploading')}
                   aria-valuemax={100}
                   aria-valuemin={0}
                   aria-valuenow={progress}
                   className={styles.statusIcon}
                   role={'progressbar'}
+                  aria-label={t(
+                    status === 'pending'
+                      ? 'upload.preview.status.pending'
+                      : 'upload.preview.status.uploading',
+                  )}
                 >
                   <Progress
                     percent={progress}
@@ -159,7 +163,16 @@ const ContextItem = memo<FileItemProps>((props) => {
               )}
             </Flexbox>
           )}
-          {sizeLabel && <span className={styles.size}>{sizeLabel}</span>}
+          {sizeLabel && (
+            <span className={styles.size}>
+              {status === 'pending'
+                ? `${progress === undefined ? t('upload.preview.status.pending') : t('upload.preview.status.checkingProgress', { progress })} · `
+                : status === 'processing'
+                  ? `${t('upload.preview.status.processing')} · `
+                  : ''}
+              {sizeLabel}
+            </span>
+          )}
         </Flexbox>
       </Tooltip>
       {canRetry && (
