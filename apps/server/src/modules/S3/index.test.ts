@@ -529,6 +529,74 @@ describe('FileS3', () => {
       });
     });
 
+    it('stops on an OSS final page even when it advertises a next marker', async () => {
+      const s3 = new FileS3();
+      vi.mocked(paginateListParts).mockReturnValue(
+        (async function* (): AsyncGenerator<ListPartsCommandOutput, undefined> {
+          yield {
+            IsTruncated: false,
+            NextPartNumberMarker: '2',
+            Parts: [
+              { ETag: 'etag-1', PartNumber: 1, Size: 32 },
+              { ETag: 'etag-2', PartNumber: 2, Size: 5 },
+            ],
+          } as ListPartsCommandOutput;
+          throw new Error('Final page must not be followed');
+        })(),
+      );
+      mockS3ClientSend.mockResolvedValue({});
+      await s3.completeMultipartUpload('large.xlsx', 'upload-1', 2, undefined, {
+        partSize: 32,
+        size: 37,
+      });
+      expect(CompleteMultipartUploadCommand).toHaveBeenCalled();
+    });
+
+    it('collects genuinely truncated pages before completing', async () => {
+      const s3 = new FileS3();
+      vi.mocked(paginateListParts).mockReturnValue(
+        (async function* (): AsyncGenerator<ListPartsCommandOutput, undefined> {
+          yield {
+            IsTruncated: true,
+            NextPartNumberMarker: '1',
+            Parts: [{ ETag: 'etag-1', PartNumber: 1, Size: 32 }],
+          } as ListPartsCommandOutput;
+          yield {
+            IsTruncated: false,
+            NextPartNumberMarker: '2',
+            Parts: [{ ETag: 'etag-2', PartNumber: 2, Size: 5 }],
+          } as ListPartsCommandOutput;
+          return undefined;
+        })(),
+      );
+      mockS3ClientSend.mockResolvedValue({});
+      await s3.completeMultipartUpload('large.xlsx', 'upload-1', 2, undefined, {
+        partSize: 32,
+        size: 37,
+      });
+      expect(CompleteMultipartUploadCommand).toHaveBeenCalled();
+    });
+
+    it('rejects repeated continuation markers instead of cycling', async () => {
+      const s3 = new FileS3();
+      vi.mocked(paginateListParts).mockReturnValue(
+        (async function* (): AsyncGenerator<ListPartsCommandOutput, undefined> {
+          for (let index = 0; index < 2; index++) {
+            yield {
+              IsTruncated: true,
+              NextPartNumberMarker: '1',
+              Parts: [{ ETag: 'etag-1', PartNumber: 1 }],
+            } as ListPartsCommandOutput;
+          }
+          throw new Error('Repeated marker must not be followed');
+        })(),
+      );
+      await expect(s3.completeMultipartUpload('large.xlsx', 'upload-1', 2)).rejects.toThrow(
+        'listing did not advance',
+      );
+      expect(CompleteMultipartUploadCommand).not.toHaveBeenCalled();
+    });
+
     it('should reject completion when a part is missing', async () => {
       const s3 = new FileS3();
       vi.mocked(paginateListParts).mockReturnValue(

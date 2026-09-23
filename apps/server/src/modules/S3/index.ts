@@ -218,6 +218,8 @@ export class S3 {
       uploadedParts && !expectedFile ? [...uploadedParts] : [];
 
     if (!uploadedParts || expectedFile) {
+      const seenMarkers = new Set<string>();
+      let pageCount = 0;
       for await (const page of paginateListParts(
         { client: this.client },
         { Bucket: this.bucket, Key: key, UploadId: uploadId },
@@ -226,6 +228,20 @@ export class S3 {
           if (!part.ETag || !part.PartNumber) continue;
           parts.push({ ETag: part.ETag, PartNumber: part.PartNumber, Size: part.Size });
         }
+
+        // OSS can return a NextPartNumberMarker even on its final page. The SDK
+        // paginator follows that marker, cycling back to the first page forever.
+        if (page.IsTruncated === false) break;
+
+        const nextMarker = page.NextPartNumberMarker;
+        if (
+          ++pageCount > expectedPartCount ||
+          (nextMarker && seenMarkers.has(nextMarker)) ||
+          (page.IsTruncated === true && (!nextMarker || !page.Parts?.length))
+        ) {
+          throw new Error('S3 multipart listing did not advance');
+        }
+        if (nextMarker) seenMarkers.add(nextMarker);
       }
     }
 
