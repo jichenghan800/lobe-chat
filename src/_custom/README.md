@@ -1,8 +1,10 @@
 # 灵枢 AI 当前二开
 
-当前候选基于官方 v2.2.18，分支 `upgrade/v2.2.18-customizations`；现有服务仍为 v2.2.17。整理日期：2026-09-24。
+当前候选基于官方 v2.2.18，分支 `upgrade/v2.2.18-customizations`；开发双入口已切换候选，生产仍为 v2.2.17。整理日期：2026-09-24。
 
 ## 当前部署与最新变更
+
+2026-09-24：chatdev.cotticoffee.com 与 chat.cotti.ai 同步切换 v2.2.18 完整二开候选，共享新的验收数据库，旧库与旧容器保留。生产不变。[发布与验收记录](deploy/v2218/acceptance-release-20260924.md)。
 
 截至 2026-09-23 最后一次发布，三个入口均为 `lobehub:lingshu-v2217-image-fit-20260923-r1`（源码 `147592dd99`）。开发 `chatdev.cotticoffee.com` 与 `chat.cotti.ai` 共享开发后端；生产 `chat.cotticoffee.com` 保留独立生产数据。生产 OnlyBoxes 已启用，默认容量 2，Docker 未升级。
 

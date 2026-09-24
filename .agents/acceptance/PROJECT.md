@@ -1,5 +1,15 @@
 # PROJECT.md — acceptance adapter for LobeHub
 
+## Self-hosted upgrade acceptance override (2026-09-24)
+
+For the explicitly authorized LingShu v2.2.18 rollout, use the two deployed web entries `https://chatdev.cotticoffee.com` and `https://chat.cotti.ai`. They share `lingshu-v2217-pg / lobehub_v2218_acceptance`, Redis, OSS and QStash; existing application container names and loopback ports 3232/3231 remain stable. The production domain `chat.cotticoffee.com` is outside this rollout.
+
+Use the user's existing remote Chrome through Chrome DevTools MCP on the existing 9222 tunnel. Open dedicated acceptance tabs and preserve unrelated tabs. Do not launch Electron, seed users, inject authentication cookies, run localhost dev setup, or point a CLI at the official cloud. If login is missing, request the user's login in the visible browser.
+
+The user explicitly requested that both domains remain deployed for acceptance; do not tear down these applications at the end. Only stop temporary probes created by this run. Private reports stay under `.records/v2218-cutover/`; do not publish enterprise data, screenshots, or reports to external services without explicit authorization.
+
+Runtime identity: inspect both application image IDs and their effective database targets without printing secrets. Health probes: loopback `/api/auth/get-session`, public `/signin`, and real authenticated browser pages. Queue and sandbox tests use the existing shared services; do not create duplicate recurring schedules. Use a new administrator-owned test topic for paid calls or writes, not a user's unfinished task.
+
 This file is the **commands** layer of LobeHub's acceptance setup: every
 LobeHub-specific command, port, service, surface, and probe. The `acceptance`
 skill reads it — it never guesses LobeHub's commands.
