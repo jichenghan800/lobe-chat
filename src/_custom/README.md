@@ -4,7 +4,7 @@
 
 ## 当前部署与最新变更
 
-2026-09-24：chatdev.cotticoffee.com 与 chat.cotti.ai 同步切换 v2.2.18 完整二开候选，共享新的验收数据库，旧库与旧容器保留。当前为 r2，生产不变。[首次发布记录](deploy/v2218/acceptance-release-20260924.md)、[显示修正](deploy/v2218/acceptance-followup-20260924.md)、[第三轮核心链路](deploy/v2218/acceptance-round3-20260924.md)、[第四轮分享与回退](deploy/v2218/acceptance-round4-20260924.md)。
+2026-09-24：chatdev.cotticoffee.com 与 chat.cotti.ai 同步切换 v2.2.18 完整二开候选，共享新的验收数据库，旧库与旧容器保留。当前已追加 GPT-6 Sol 官方模型定义支持，渠道尚未启用，生产不变。[首次发布记录](deploy/v2218/acceptance-release-20260924.md)、[显示修正](deploy/v2218/acceptance-followup-20260924.md)、[第三轮核心链路](deploy/v2218/acceptance-round3-20260924.md)、[第四轮分享与回退](deploy/v2218/acceptance-round4-20260924.md)。
 
 截至 2026-09-23 最后一次发布，三个入口均为 `lobehub:lingshu-v2217-image-fit-20260923-r1`（源码 `147592dd99`）。开发 `chatdev.cotticoffee.com` 与 `chat.cotti.ai` 共享开发后端；生产 `chat.cotticoffee.com` 保留独立生产数据。生产 OnlyBoxes 已启用，默认容量 2，Docker 未升级。
 
@@ -22,10 +22,16 @@
 
 ## v2.2.18 完整合并候选
 
+- [GPT-6 Sol 官方模型定义回填](upgrade/gpt6-sol.md)：仅增加模型支持，渠道开通与可见列表单独配置。
+
 - [本次合并与验证状态](upgrade/v2.2.18-merge-status.md)
+
 - [完整二开核对清单](upgrade/v2.2.18-merge-audit.json)
+
 - [隔离构建、备份与数据库迁移](deploy/v2218/README.md)
+
 - [生产只读基线与发布准备](deploy/v2218/production-readiness-20260924.md)
+
 - [最初的源码差异评估](upgrade/v2.2.18-assessment.md)：历史评估，当前状态以上述合并记录为准。
 
 ## 合并核对与历史基线

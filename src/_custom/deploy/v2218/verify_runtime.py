@@ -6,7 +6,7 @@ from urllib.request import urlopen
 
 
 NAMES = ['lingshu-v2217-app-dev', 'cotti-v2216-native-app-cotti-1']
-EXPECTED_IMAGE = 'sha256:823336c14091938052303050ee6bf68054c3a6f2d054ba767a74f19775e85df9'
+EXPECTED_IMAGE = 'sha256:d6cb4851ab262ef1a50c063c71620af89c8825343edb4263d00d20ee4b69fa14'
 
 
 def main():
