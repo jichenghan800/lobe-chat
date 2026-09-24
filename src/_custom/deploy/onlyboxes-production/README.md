@@ -1,5 +1,7 @@
 # 生产 OnlyBoxes 启用（2026-09-23）
 
+> 本文保留对应阶段的部署记录；当前版本与后续补丁以 [二开总览](../../README.md) 和 [图片适屏发布记录](../../upgrade/image-preview-fit.md) 为准。
+
 目标 chat.cotticoffee.com，生产机 10.82.70.138。12 核 / 约 46 GiB RAM。先独立启用自建沙箱配置，随后已发布 `lobehub:lingshu-v2217-onlyboxes-export-dev-20260923-r1`，见 ../production-v2217/prepare-20260923.md。
 
 独立部署目录 `/opt/onlyboxes-prod`，Console / Worker 与开发相同原生二进制，独立随机凭据、SQLite 与 Worker 身份。凭据目录 0700，配置 0600。systemd 自启。固定运行镜像与开发相同摘要，并通过不启动的 `lingshu-onlyboxes-runtime-image-pin` 保留。
