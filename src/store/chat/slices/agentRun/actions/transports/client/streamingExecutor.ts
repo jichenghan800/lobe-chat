@@ -34,11 +34,13 @@ import {
 } from '@lobechat/types';
 import debug from 'debug';
 
+import { resolveRetiredModel } from '@/_custom/registry/modelRetirement';
 import { createAgentToolsEngine } from '@/helpers/toolEngineering';
 import { aiAgentService } from '@/services/aiAgent';
 import { isCanUseAudio, isCanUseVideo, isCanUseVision } from '@/services/chat/helper';
 import { type ResolvedAgentConfig } from '@/services/chat/mecha';
 import { composeEnabledTools, resolveAgentConfig } from '@/services/chat/mecha';
+import { cottiModelDisplayService } from '@/services/cottiModelDisplay';
 import { localFileService } from '@/services/electron/localFileService';
 import { messageService } from '@/services/message';
 import { workService } from '@/services/work';
@@ -65,6 +67,7 @@ import { pageAgentRuntime } from '@/store/tool/slices/builtin/executors/pageAgen
 import { type StoreSetter } from '@/store/types';
 import { toolInterventionSelectors } from '@/store/user/selectors';
 import { getUserStoreState } from '@/store/user/store';
+import type { ModelDisplayConfig } from '@/types/modelDisplay';
 
 import { buildRunLifecycle } from '../../lifecycle/buildRunLifecycle';
 import type { RunParkedReason, RunScope } from '../../lifecycle/types';
@@ -129,7 +132,9 @@ export class StreamingExecutorActionImpl {
     subAgentId: paramSubAgentId,
     isSubAgent,
     modelOverride,
+    modelDisplayConfig,
     chatConfigOverride,
+    selectedToolIds: requestedToolIds,
   }: {
     messages: UIChatMessage[];
     parentMessageId: string;
@@ -140,6 +145,8 @@ export class StreamingExecutorActionImpl {
     operationId?: string;
     initialState?: AgentState;
     initialContext?: AgentRuntimeContext;
+    /** Turn-scoped tools; prompt context may already be persisted in the user message. */
+    selectedToolIds?: string[];
     /**
      * Sub Agent ID - behavior depends on scope
      * - scope: 'group' | 'group_agent': Used for agent config and changes message ownership
@@ -149,6 +156,7 @@ export class StreamingExecutorActionImpl {
     isSubAgent?: boolean;
     /** Model/provider the run is forced onto, resolved by the caller that spawns it. */
     modelOverride?: { model: string; provider: string };
+    modelDisplayConfig?: ModelDisplayConfig;
     /** chatConfig patch merged over the resolved chatConfig (sub-agent thinking overrides). */
     chatConfigOverride?: Partial<LobeAgentChatConfig> | null;
   }): {
@@ -196,7 +204,19 @@ export class StreamingExecutorActionImpl {
     // resolveAgentConfig returns an immer-frozen config, so build a new object
     // rather than mutating in place.
     const topicModel = topicId ? topicSelectors.getTopicModelById(topicId)(this.#get()) : undefined;
-    const modelResolution = modelOverride ?? topicModel;
+    const requestedModel =
+      modelOverride ??
+      topicModel ??
+      (resolvedAgentConfig.agentConfig?.model && resolvedAgentConfig.agentConfig.provider
+        ? {
+            model: resolvedAgentConfig.agentConfig.model,
+            provider: resolvedAgentConfig.agentConfig.provider,
+          }
+        : undefined);
+    const modelResolution =
+      requestedModel && modelDisplayConfig
+        ? resolveRetiredModel(modelDisplayConfig, requestedModel)
+        : requestedModel;
     const agentConfig: ResolvedAgentConfig =
       (modelResolution || chatConfigOverride) && resolvedAgentConfig.agentConfig
         ? {
@@ -218,9 +238,9 @@ export class StreamingExecutorActionImpl {
         : resolvedAgentConfig;
 
     const { agentConfig: agentConfigData, plugins: pluginIds } = agentConfig;
-    const selectedToolIds = initialContext?.initialContext?.selectedTools?.map(
-      (tool) => tool.identifier,
-    );
+    const selectedToolIds =
+      requestedToolIds ??
+      initialContext?.initialContext?.selectedTools?.map((tool) => tool.identifier);
 
     if (!agentConfigData || !agentConfigData.model) {
       throw new Error(
@@ -278,6 +298,11 @@ export class StreamingExecutorActionImpl {
       // sub-agent runs. Desktop client runs also need the local environment so
       // local-system can advertise IPC-only capabilities such as direct image reads.
       { executionEnv: isDesktop ? 'local' : undefined, isSubAgent, scope },
+      selectedToolIds,
+      {
+        agentId: effectiveAgentId,
+        config: { ...agentConfigData, chatConfig: agentConfig.chatConfig },
+      },
     );
     // When skillActivateMode is 'manual':
     // Exclude only discovery tools (activator, skill-store) so runtime-managed defaults
@@ -514,6 +539,7 @@ export class StreamingExecutorActionImpl {
     context: ConversationContext;
     disableTools?: boolean;
     initialContext?: AgentRuntimeContext;
+    selectedToolIds?: string[];
     initialState?: AgentState;
     inPortalThread?: boolean;
     metadata?: Pick<MessageMetadata, 'trigger'>;
@@ -643,6 +669,7 @@ export class StreamingExecutorActionImpl {
     // without rechecking capability. Wait (bounded) for the list so a fast first
     // send after reload never attaches tools to a model that can't use them.
     await getAiInfraStoreState().ensureAiProviderRuntimeStateReady();
+    const modelDisplayConfig = await cottiModelDisplayService.getConfig();
 
     // ===========================================
     // Step 1: Create Agent State (resolves config once)
@@ -662,10 +689,12 @@ export class StreamingExecutorActionImpl {
       threadId: threadId ?? undefined,
       initialState: params.initialState,
       initialContext: params.initialContext,
+      selectedToolIds: params.selectedToolIds,
       operationId,
       subAgentId, // Pass subAgentId for agent config retrieval (behavior depends on scope)
       isSubAgent, // Pass isSubAgent to filter out lobe-agent tool in sub-agent context
       modelOverride: params.modelOverride,
+      modelDisplayConfig,
       chatConfigOverride: params.chatConfigOverride,
     });
 
@@ -677,6 +706,20 @@ export class StreamingExecutorActionImpl {
       };
     }
 
+    if (
+      topicId &&
+      !isSubAgent &&
+      agentConfig.agentConfig?.model &&
+      agentConfig.agentConfig.provider
+    ) {
+      const selected = topicSelectors.getTopicModelById(topicId)(this.#get());
+      const actual = agentConfig.agentConfig;
+      if (selected && (selected.model !== actual.model || selected.provider !== actual.provider))
+        await this.#get().updateTopicModel(topicId, {
+          model: actual.model,
+          provider: agentConfig.agentConfig.provider,
+        });
+    }
     // Use model/provider from resolved agentConfig
     const { agentConfig: agentConfigData } = agentConfig;
     const model = agentConfigData.model;

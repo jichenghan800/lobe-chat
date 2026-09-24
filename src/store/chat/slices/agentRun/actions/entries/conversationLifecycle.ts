@@ -58,6 +58,7 @@ import {
   chatConfigByIdSelectors,
 } from '@/store/agent/selectors';
 import { agentGroupByIdSelectors, getChatGroupStoreState } from '@/store/agentGroup';
+import { getPendingSandboxProvider } from '@/store/chat/pendingSandboxProvider';
 import { getPendingTopicRepos } from '@/store/chat/pendingTopicRepos';
 import {
   dbMessageSelectors,
@@ -605,18 +606,16 @@ export class ConversationLifecycleActionImpl {
           throw error;
         })
       : [];
-    const userMessageMetadata =
-      metadata ||
-      contextSelections?.length ||
-      pageSelections?.length ||
-      localSystemToolSnapshots.length
-        ? {
-            ...metadata,
-            ...(contextSelections?.length ? { contextSelections } : undefined),
-            ...(pageSelections?.length ? { pageSelections } : undefined),
-            ...(localSystemToolSnapshots.length ? { localSystemToolSnapshots } : undefined),
-          }
-        : undefined;
+    const userMessageMetadata = {
+      ...metadata,
+      cottiInteractionMode:
+        resolveToolMode(agentConfig?.chatConfig) === 'chat'
+          ? ('chat' as const)
+          : ('agent' as const),
+      ...(contextSelections?.length ? { contextSelections } : undefined),
+      ...(pageSelections?.length ? { pageSelections } : undefined),
+      ...(localSystemToolSnapshots.length ? { localSystemToolSnapshots } : undefined),
+    };
 
     // Enrich selected skills/tools with preloaded content, injected directly
     // via SelectedSkillInjector/SelectedToolInjector — no fake tool-call preload messages
@@ -1219,9 +1218,13 @@ export class ConversationLifecycleActionImpl {
             }
           : undefined;
     /** First-send persistence bypasses turnSetup, so both runtime paths must carry the effort snapshot. */
-    const optimisticTopicMetadata = newTopicReasoningSnapshot
-      ? { ...workingDirectoryMetadata, ...newTopicReasoningSnapshot }
-      : workingDirectoryMetadata;
+    const optimisticTopicMetadata: ChatTopicMetadata = {
+      ...workingDirectoryMetadata,
+      ...newTopicReasoningSnapshot,
+      ...(willCreateNewTopic && operationContext.agentId
+        ? { sandboxProvider: getPendingSandboxProvider(operationContext.agentId) }
+        : {}),
+    };
 
     // The sidebar row was already inserted (title + model) before the awaits
     // above; the cwd/repos metadata only resolves here, so patch it on now.
@@ -1853,9 +1856,14 @@ export class ConversationLifecycleActionImpl {
 
     try {
       throwIfSendAborted(signal);
-      const { model, provider } = agentSelectors.getAgentConfigById(agentId)(getAgentStoreState());
-
       const topicId = operationContext.topicId;
+      // Match the streaming executor: a topic's selected model takes precedence
+      // over the agent default, including the persisted assistant attribution.
+      const topicModel = topicId
+        ? topicSelectors.getTopicModelById(topicId)(this.#get())
+        : undefined;
+      const { model, provider } =
+        topicModel ?? agentSelectors.getAgentConfigById(agentId)(getAgentStoreState());
 
       // Persist selected skill/tool context into user message content so it survives across turns.
       // Deduplicate: skip skills/tools already @mentioned in earlier messages (via editorData).
@@ -2102,7 +2110,7 @@ export class ConversationLifecycleActionImpl {
         runId: operationId,
         runScope: sendRunScope,
         runtimeType,
-        topicId: data.topicId,
+        topicId: data.topicId ?? operationContext.topicId,
       })
       .catch(console.error);
 
@@ -2201,9 +2209,9 @@ export class ConversationLifecycleActionImpl {
 
           const hasInitialContext = hasMentionedAgents || !!injectedManifests;
 
-          // Note: selectedSkills and selectedTools are NOT passed here — they are
-          // persisted into the user message content above so they survive across
-          // turns without re-injection.
+          // Skill/tool descriptions are already persisted above. Pass tool IDs
+          // separately to execution so mentioning a connector enables its APIs
+          // without injecting the same prompt context twice.
           const agentRuntimeInitialContext = hasInitialContext
             ? {
                 initialContext: {
@@ -2223,6 +2231,8 @@ export class ConversationLifecycleActionImpl {
           const clientRun = executeClientAgent({
             context: execContext,
             initialContext: mergedAgentRuntimeInitialContext,
+            selectedToolIds:
+              selectedTools.length > 0 ? selectedTools.map((tool) => tool.identifier) : undefined,
             metadata: requestMetadata,
             messages: displayMessages,
             parentMessageId: data.assistantMessageId,

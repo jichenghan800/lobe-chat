@@ -70,6 +70,7 @@ export const resolveToolRules = (request: ToolRuleRequest): ResolvedToolRules =>
   // Chat mode: a strict outer whitelist. No always-on tools, no runtime
   // injection, no activator — each entry still passes its own gate.
   const chatModeRules = {
+    ...Object.fromEntries((request.selectedToolIds ?? []).map((id) => [id, true])),
     [ImageGenerationManifest.identifier]: imageGenerationEnabled,
     [KnowledgeBaseManifest.identifier]: kbEnabled,
     [MemoryManifest.identifier]: memoryEnabled,

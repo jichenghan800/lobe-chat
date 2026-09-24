@@ -78,6 +78,13 @@ export interface UploadFileItem {
    */
   previewUrl?: string;
   /**
+   * This draft file is intentionally kept visible and uploaded, but must not
+   * be sent through ordinary Chat because expanding it into the prompt can
+   * exceed the context window. Switching the conversation to Agent mode lets
+   * the runtime inspect the original file with tools.
+   */
+  requiresAgentMode?: boolean;
+  /**
    * Set when the draft was uploaded as an agent-share VISITOR: the file lives
    * under the creator's account, so remove/retry must go through the
    * share-scoped endpoints instead of the visitor's own file API.

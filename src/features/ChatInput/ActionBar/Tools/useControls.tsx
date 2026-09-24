@@ -25,6 +25,10 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  FEISHU_DOCUMENTS_CONNECTOR_PRESET,
+  isFeishuDocumentsConnector,
+} from '@/const/connectorPresets';
 import { openConnectorEditDrawer } from '@/features/Connectors/CustomConnectorModal/imperative';
 import { openPluginEditDrawer } from '@/features/PluginDevModal/imperative';
 import { createSkillStoreModal } from '@/features/SkillStore';
@@ -1334,7 +1338,12 @@ export const useControls = ({ closeDropdown }: { closeDropdown?: () => void } = 
   const customConnectorItems = useMemo(
     () =>
       customConnectors.map((connector) => {
-        const title = connector.name || connector.identifier;
+        const rawTitle = connector.name || connector.identifier;
+        const title = isFeishuDocumentsConnector(connector)
+          ? t('connectorPreset.feishuDocuments.title', {
+              defaultValue: FEISHU_DOCUMENTS_CONNECTOR_PRESET.name,
+            })
+          : rawTitle;
         const icon = <Icon icon={McpIcon} size={SKILL_ICON_SIZE} />;
         const popoverContent = (
           <ToolItemDetailPopover

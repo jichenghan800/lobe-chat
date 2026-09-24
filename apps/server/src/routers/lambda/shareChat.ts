@@ -735,6 +735,7 @@ export const shareChatRouter = router({
 
     const messageModel = new MessageModel(ctx.serverDB, share.ownerId, undefined, undefined, {
       includeShareVisitor: true,
+      includeFileContent: false,
     });
     const fileService = new FileService(ctx.serverDB, share.ownerId);
 

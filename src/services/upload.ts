@@ -170,9 +170,15 @@ class UploadService {
 
     try {
       if (file.size >= MULTIPART_UPLOAD_THRESHOLD) {
-        await this.uploadMultipart(file, uploadPathname, abortController?.signal, (loaded) => {
-          onProgress?.('uploading', this.getUploadState(loaded, file.size, startTime));
-        });
+        await this.uploadMultipart(
+          file,
+          uploadPathname,
+          abortController?.signal,
+          (loaded) => {
+            onProgress?.('uploading', this.getUploadState(loaded, file.size, startTime));
+          },
+          () => onProgress?.('processing', this.getUploadState(file.size, file.size, startTime)),
+        );
       } else {
         const preSignUrl = await lambdaClient.upload.createS3PreSignedUrl.mutate({
           pathname: uploadPathname,
@@ -305,6 +311,7 @@ class UploadService {
     pathname: string,
     signal: AbortSignal | undefined,
     onProgress: (loaded: number) => void,
+    onCompleting?: () => void,
   ): Promise<void> => {
     const parts: Array<{ etag: string; partNumber: number }> = [];
     const upload = await lambdaClient.upload.createS3MultipartUpload.mutate({
@@ -336,6 +343,7 @@ class UploadService {
         onProgress(end);
       }
 
+      onCompleting?.();
       await lambdaClient.upload.completeS3MultipartUpload.mutate({
         partCount,
         parts: parts.length === partCount ? parts : undefined,

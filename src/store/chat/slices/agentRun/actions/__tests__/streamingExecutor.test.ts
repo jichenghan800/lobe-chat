@@ -1321,6 +1321,8 @@ describe('StreamingExecutor actions', () => {
         expect.any(Object),
         undefined,
         expect.objectContaining({ executionEnv: 'local' }),
+        undefined,
+        expect.objectContaining({ agentId: TEST_IDS.SESSION_ID, config: expect.any(Object) }),
       );
       const readFile = state.toolManifestMap['lobe-local-system']?.api.find(
         (api: LobeChatPluginApi) => api.name === 'readFile',
@@ -1381,56 +1383,92 @@ describe('StreamingExecutor actions', () => {
       expect(pageContextSpy).not.toHaveBeenCalled();
     });
 
-    it('should merge selectedTools into generated tools when provided', () => {
-      act(() => {
-        useChatStore.setState({ executeClientAgent: realExecAgentRuntime });
-      });
-
-      const { result } = renderHook(() => useChatStore());
-      const userMessage = {
-        id: TEST_IDS.USER_MESSAGE_ID,
-        role: 'user',
-        content: TEST_CONTENT.USER_MESSAGE,
-        sessionId: TEST_IDS.SESSION_ID,
-        topicId: TEST_IDS.TOPIC_ID,
-      } as UIChatMessage;
-
-      const generateToolsDetailed = vi.fn().mockReturnValue({
-        enabledManifests: [],
-        enabledToolIds: ['lobe-notebook'],
-        tools: [],
-      });
-
+    it('passes final runtime Chat config instead of raw Agent config to tool generation', () => {
+      const toolsSpy = vi.spyOn(toolEngineering, 'createAgentToolsEngine').mockReturnValue({
+        generateToolsDetailed: vi
+          .fn()
+          .mockReturnValue({ enabledManifests: [], enabledToolIds: [], tools: [] }),
+      } as unknown as ReturnType<typeof toolEngineering.createAgentToolsEngine>);
       vi.spyOn(agentConfigResolver, 'resolveAgentConfig').mockReturnValue({
-        agentConfig: createMockAgentConfig(),
-        chatConfig: createMockChatConfig(),
+        agentConfig: {
+          ...createMockAgentConfig(),
+          chatConfig: { ...createMockChatConfig(), enableAgentMode: true },
+        },
+        chatConfig: { ...createMockChatConfig(), enableAgentMode: false, searchMode: 'off' },
         isBuiltinAgent: false,
-        plugins: ['lobe-artifacts'],
+        plugins: [],
       });
-      vi.spyOn(toolEngineering, 'createAgentToolsEngine').mockReturnValue({
-        generateToolsDetailed,
-      } as any);
-
-      result.current.internal_createAgentState({
-        messages: [userMessage],
-        parentMessageId: userMessage.id,
+      useChatStore.getState().internal_createAgentState({
+        messages: [
+          { id: TEST_IDS.USER_MESSAGE_ID, role: 'user', content: 'test' } as UIChatMessage,
+        ],
+        parentMessageId: TEST_IDS.USER_MESSAGE_ID,
         agentId: TEST_IDS.SESSION_ID,
         topicId: TEST_IDS.TOPIC_ID,
-        initialContext: {
-          phase: 'init',
-          initialContext: {
-            selectedTools: [{ identifier: 'lobe-notebook', name: 'Notebook' }],
-          },
-        },
       });
-
-      expect(generateToolsDetailed).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skipDefaultTools: undefined,
-          toolIds: ['lobe-artifacts', 'lobe-notebook'],
-        }),
-      );
+      expect(toolsSpy.mock.lastCall?.[4]).toMatchObject({
+        agentId: TEST_IDS.SESSION_ID,
+        config: { chatConfig: { enableAgentMode: false, searchMode: 'off' } },
+      });
     });
+
+    it.each(['context', 'ids'] as const)(
+      'merges selected tools from %s into generated tools',
+      (source) => {
+        act(() => {
+          useChatStore.setState({ executeClientAgent: realExecAgentRuntime });
+        });
+
+        const { result } = renderHook(() => useChatStore());
+        const userMessage = {
+          id: TEST_IDS.USER_MESSAGE_ID,
+          role: 'user',
+          content: TEST_CONTENT.USER_MESSAGE,
+          sessionId: TEST_IDS.SESSION_ID,
+          topicId: TEST_IDS.TOPIC_ID,
+        } as UIChatMessage;
+
+        const generateToolsDetailed = vi.fn().mockReturnValue({
+          enabledManifests: [],
+          enabledToolIds: ['lobe-notebook'],
+          tools: [],
+        });
+
+        vi.spyOn(agentConfigResolver, 'resolveAgentConfig').mockReturnValue({
+          agentConfig: createMockAgentConfig(),
+          chatConfig: createMockChatConfig(),
+          isBuiltinAgent: false,
+          plugins: ['lobe-artifacts'],
+        });
+        vi.spyOn(toolEngineering, 'createAgentToolsEngine').mockReturnValue({
+          generateToolsDetailed,
+        } as any);
+
+        result.current.internal_createAgentState({
+          messages: [userMessage],
+          parentMessageId: userMessage.id,
+          agentId: TEST_IDS.SESSION_ID,
+          topicId: TEST_IDS.TOPIC_ID,
+          selectedToolIds: source === 'ids' ? ['lobe-notebook'] : undefined,
+          initialContext:
+            source === 'context'
+              ? {
+                  phase: 'init',
+                  initialContext: {
+                    selectedTools: [{ identifier: 'lobe-notebook', name: 'Notebook' }],
+                  },
+                }
+              : undefined,
+        });
+
+        expect(generateToolsDetailed).toHaveBeenCalledWith(
+          expect.objectContaining({
+            skipDefaultTools: undefined,
+            toolIds: ['lobe-artifacts', 'lobe-notebook'],
+          }),
+        );
+      },
+    );
 
     it('should enable multimodal understanding when a previous user message has audio', () => {
       act(() => {
@@ -2973,3 +3011,7 @@ describe('StreamingExecutor actions', () => {
     });
   });
 });
+
+vi.mock('@/services/cottiModelDisplay', () => ({
+  cottiModelDisplayService: { getConfig: async () => ({ agent: [], chat: [] }) },
+}));

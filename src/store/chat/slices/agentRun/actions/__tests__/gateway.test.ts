@@ -15,6 +15,7 @@ import { GatewayActionImpl } from '../transports/gateway/gateway';
 
 vi.mock('@/services/aiAgent', () => ({
   aiAgentService: {
+    getOperationStatus: vi.fn(),
     execAgentTask: vi.fn(),
     interruptTask: vi.fn(),
     refreshGatewayToken: vi.fn(),
@@ -854,6 +855,44 @@ describe('GatewayActionImpl', () => {
       },
     );
 
+    it('polls the submitted server operation when this queue deployment has no Gateway URL', async () => {
+      const { action, state, connectToGateway } = createExecuteTestAction();
+      const controller = new AbortController();
+      state.getOperationAbortSignal = () => controller.signal;
+      window.global_serverConfigStore!.getState().serverConfig.agentGatewayUrl = undefined;
+      // The fixture returns a fresh config on each read.
+      vi.spyOn(window.global_serverConfigStore!, 'getState').mockReturnValue({
+        serverConfig: {},
+      } as ReturnType<typeof window.global_serverConfigStore.getState>);
+      vi.mocked(aiAgentService.getOperationStatus).mockResolvedValue(null);
+      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
+        agentId: 'agent-1',
+        assistantMessageId: 'ast-1',
+        autoStarted: true,
+        createdAt: new Date().toISOString(),
+        message: 'ok',
+        operationId: 'queue-op-1',
+        status: 'created',
+        success: true,
+        timestamp: new Date().toISOString(),
+        topicId: 'topic-1',
+        userMessageId: 'usr-1',
+      });
+      try {
+        await action.executeGatewayAgent({
+          context: { agentId: 'agent-1', topicId: 'topic-1' },
+          message: 'synthetic follow-up',
+        });
+        expect(aiAgentService.getOperationStatus).toHaveBeenCalledWith(
+          'queue-op-1',
+          expect.any(AbortSignal),
+        );
+        expect(connectToGateway).not.toHaveBeenCalled();
+      } finally {
+        controller.abort();
+      }
+    });
+
     it('should forward parentMessageId to execAgentTask for regeneration', async () => {
       const { action } = createExecuteTestAction();
 
@@ -1008,55 +1047,65 @@ describe('GatewayActionImpl', () => {
       });
     });
 
-    it('should replace the optimistic topic placeholder with the server topic id', async () => {
-      const { action, internalReplaceTopicId } = createExecuteTestAction();
+    it.each(['market', 'onlyboxes'] as const)(
+      'should forward %s without requiring a working directory',
+      async (sandboxProvider) => {
+        const { action, internalReplaceTopicId } = createExecuteTestAction();
 
-      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
-        agentId: 'agent-1',
-        assistantMessageId: 'ast-1',
-        autoStarted: true,
-        createdAt: new Date().toISOString(),
-        message: 'ok',
-        operationId: 'server-op-1',
-        status: 'created',
-        success: true,
-        timestamp: new Date().toISOString(),
-        token: 'test-token',
-        topicId: 'topic-1',
-        userMessageId: 'usr-1',
-      });
-
-      await action.executeGatewayAgent({
-        context: { agentId: 'agent-1', topicId: null, threadId: null, scope: 'main' },
-        message: '666',
-        optimisticTopic: { id: 'tmp-topic', title: '666' },
-      });
-
-      expect(internalReplaceTopicId).toHaveBeenCalledWith({
-        agentId: 'agent-1',
-        groupId: undefined,
-        nextId: 'topic-1',
-        previousId: 'tmp-topic',
-        value: {
-          sessionId: 'agent-1',
-          title: '666',
-        },
-      });
-      expect(moveChatContextSelections).toHaveBeenCalledWith(
-        messageMapKey({
+        vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
           agentId: 'agent-1',
-          scope: 'main',
-          threadId: null,
-          topicId: 'tmp-topic',
-        }),
-        messageMapKey({
-          agentId: 'agent-1',
-          scope: 'main',
-          threadId: null,
+          assistantMessageId: 'ast-1',
+          autoStarted: true,
+          createdAt: new Date().toISOString(),
+          message: 'ok',
+          operationId: 'server-op-1',
+          status: 'created',
+          success: true,
+          timestamp: new Date().toISOString(),
+          token: 'test-token',
           topicId: 'topic-1',
-        }),
-      );
-    });
+          userMessageId: 'usr-1',
+        });
+
+        await action.executeGatewayAgent({
+          context: { agentId: 'agent-1', topicId: null, threadId: null, scope: 'main' },
+          message: '666',
+          optimisticTopic: { id: 'tmp-topic', title: '666', metadata: { sandboxProvider } },
+        });
+
+        expect(aiAgentService.execAgentTask).toHaveBeenCalledWith(
+          expect.objectContaining({
+            appContext: expect.objectContaining({ initialTopicMetadata: { sandboxProvider } }),
+          }),
+          expect.objectContaining({ signal: undefined }),
+        );
+        expect(internalReplaceTopicId).toHaveBeenCalledWith({
+          agentId: 'agent-1',
+          groupId: undefined,
+          nextId: 'topic-1',
+          previousId: 'tmp-topic',
+          value: {
+            metadata: { sandboxProvider },
+            sessionId: 'agent-1',
+            title: '666',
+          },
+        });
+        expect(moveChatContextSelections).toHaveBeenCalledWith(
+          messageMapKey({
+            agentId: 'agent-1',
+            scope: 'main',
+            threadId: null,
+            topicId: 'tmp-topic',
+          }),
+          messageMapKey({
+            agentId: 'agent-1',
+            scope: 'main',
+            threadId: null,
+            topicId: 'topic-1',
+          }),
+        );
+      },
+    );
 
     it('should keep optimistic topic metadata when replacing the placeholder topic id', async () => {
       const { action, internalReplaceTopicId } = createExecuteTestAction();

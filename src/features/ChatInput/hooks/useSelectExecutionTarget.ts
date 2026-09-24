@@ -104,13 +104,13 @@ export const useSelectExecutionTarget = (agentId: string) => {
       deviceId?: string,
       options?: SelectExecutionTargetOptions,
     ) => {
-      if (isAccessLoading) return;
+      if (isAccessLoading) return false;
 
       // Fixed workspace agents are author-controlled. Keep any existing member
       // override dormant (so switching back to member choice restores it), but
       // never let this picker create or update an override while fixed.
       if (usesWorkspaceMemberSelection && agencyConfig?.executionTargetSelectionPolicy === 'fixed')
-        return;
+        return false;
 
       const boundDeviceId = agencyConfig?.boundDeviceId;
       let nextBoundDeviceId = target === 'device' ? deviceId : boundDeviceId;
@@ -125,7 +125,7 @@ export const useSelectExecutionTarget = (agentId: string) => {
         }
         // Hetero agents must execute somewhere; without a resolvable local
         // device there is nothing to pin `local` to, so don't switch.
-        if (isHetero && !nextBoundDeviceId) return;
+        if (isHetero && !nextBoundDeviceId) return false;
       }
 
       // Store the intent verbatim (`local` stays `local`), not a
@@ -170,8 +170,9 @@ export const useSelectExecutionTarget = (agentId: string) => {
           await updateWorkspaceUserPreference({ agentDeviceOverrides: nextOverrides });
         } catch {
           if (!options?.silent) toast.error(t('saveAgentConfigFail', { ns: 'common' }));
+          return false;
         }
-        return;
+        return true;
       }
 
       const nextConfig = {
@@ -198,7 +199,7 @@ export const useSelectExecutionTarget = (agentId: string) => {
           ...(options?.silent ? { showErrorMessage: false } : {}),
         });
       } catch {
-        return;
+        return false;
       }
 
       // A manager's earlier `local` pick lives in their own override and would
@@ -231,8 +232,10 @@ export const useSelectExecutionTarget = (agentId: string) => {
             { showErrorMessage: false },
           );
           if (!options?.silent) toast.error(t('saveAgentConfigFail', { ns: 'common' }));
+          return false;
         }
       }
+      return true;
     },
     [
       agentId,

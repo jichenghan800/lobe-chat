@@ -49,6 +49,21 @@ type UpdateTopicMetadataInput = Omit<Partial<ChatTopicMetadata>, 'onboardingSess
 export class TopicService {
   cancelRateLimitContinuation = (id: string) =>
     lambdaClient.topic.cancelRateLimitContinuation.mutate({ id });
+  checkTopicSwitch = (topicId: string, message: string, signal?: AbortSignal) =>
+    lambdaClient.topic.checkTopicSwitch.mutate(
+      { topicId, message: message.slice(0, 1000) },
+      { signal },
+    );
+
+  getCostFreeze = (topicId: string) => lambdaClient.topic.getCostFreeze.query({ topicId });
+
+  summarizeContinuationFragment = (
+    input: { topicId: string; model: string; provider: string; text: string; previous: string },
+    signal?: AbortSignal,
+  ) => lambdaClient.topic.summarizeContinuationFragment.mutate(input, { signal });
+
+  getTopicTranscript = (topicId: string, offset = 0) =>
+    lambdaClient.topic.getTopicTranscript.query({ topicId, offset, limit: 500 });
 
   createTopic = (params: CreateTopicParams): Promise<string> => {
     return lambdaClient.topic.createTopic.mutate({

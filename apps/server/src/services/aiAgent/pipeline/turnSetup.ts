@@ -17,6 +17,7 @@ import {
   RequestTrigger,
   resolveHeterogeneousProviderTopicModel,
 } from '@lobechat/types';
+import { isSpreadsheetFileNameOrType } from '@lobechat/utils/spreadsheet';
 import { TRPCError } from '@trpc/server';
 import debug from 'debug';
 
@@ -149,11 +150,13 @@ const resolveRunAttachments = async (
     attachedFileIds,
     fileAccessScope,
     files,
+    metadataOnlySpreadsheets,
     throwIfAborted,
   }: {
     attachedFileIds?: string[];
     fileAccessScope: FileAccessScope;
     files?: InternalExecAgentParams['files'];
+    metadataOnlySpreadsheets: boolean;
     throwIfAborted: (stage: string) => Promise<void>;
   },
 ): Promise<RunAttachments> => {
@@ -214,19 +217,24 @@ const resolveRunAttachments = async (
         // JSON / .skill files are actually visible to the LLM (instead of
         // being silently uploaded but never read).
         let content: string | undefined;
-        try {
-          const document = await documentService.parseFile(result.fileId);
-          content = document.content ?? undefined;
-        } catch (parseError) {
-          log(
-            'execAgent: parseFile failed for %s (fileId=%s): %O',
-            file.name,
-            result.fileId,
-            parseError,
-          );
-          warnings.push(
-            `File "${file.name || 'unknown'}" was uploaded but its contents could not be extracted.`,
-          );
+        if (
+          !metadataOnlySpreadsheets ||
+          !isSpreadsheetFileNameOrType(file.name ?? '', file.mimeType ?? '')
+        ) {
+          try {
+            const document = await documentService.parseFile(result.fileId);
+            content = document.content ?? undefined;
+          } catch (parseError) {
+            log(
+              'execAgent: parseFile failed for %s (fileId=%s): %O',
+              file.name,
+              result.fileId,
+              parseError,
+            );
+            warnings.push(
+              `File "${file.name || 'unknown'}" was uploaded but its contents could not be extracted.`,
+            );
+          }
         }
 
         fileList.push({
@@ -277,6 +285,7 @@ const resolveRunAttachments = async (
         db: deps.db,
         fileAccessScope,
         fileIds: attachedFileIds,
+        metadataOnlySpreadsheets,
         userId: deps.userId,
         workspaceId: deps.workspaceId,
       });
@@ -493,6 +502,9 @@ export const setupTurn = async (
             ...(editingAgentId && { editingAgentId }),
             ...(editingGroupId && { editingGroupId }),
             taskId: operationTaskId,
+            ...(initialTopicMeta?.sandboxProvider && {
+              sandboxProvider: initialTopicMeta.sandboxProvider,
+            }),
             ...(initialTopicMeta?.repos && { repos: initialTopicMeta.repos }),
             ...(initialTopicMeta?.workingDirectory && {
               workingDirectory: initialTopicMeta.workingDirectory,
@@ -670,6 +682,7 @@ export const setupTurn = async (
     attachedFileIds,
     fileAccessScope: shareGate ? agentShareFileAccessScope(shareGate) : ordinaryFileAccessScope,
     files,
+    metadataOnlySpreadsheets: isHeteroAgent || agentConfig.chatConfig?.enableAgentMode === true,
     throwIfAborted: throwIfExecutionAborted,
   });
 

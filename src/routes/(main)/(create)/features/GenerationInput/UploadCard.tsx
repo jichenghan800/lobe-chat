@@ -11,6 +11,8 @@ import { memo, useCallback, useRef, useState } from 'react';
 import Image from '@/libs/next/Image';
 import { useFileStore } from '@/store/file';
 
+import { useUploadFilesValidation } from '../../image/features/ConfigPanel/hooks/useUploadFilesValidation';
+
 export const UPLOAD_CARD_SIZE = 64;
 const ADD_CIRCLE_SIZE = 28;
 
@@ -168,6 +170,7 @@ const UploadCard = memo<UploadCardProps>(
     variant = 'card',
   }) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const { validateFiles } = useUploadFilesValidation(undefined, maxFileSize);
     const uploadWithProgress = useFileStore((s) => s.uploadWithProgress);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadPreview, setUploadPreview] = useState<string | null>(null);
@@ -182,19 +185,20 @@ const UploadCard = memo<UploadCardProps>(
 
     const handleFileChange = useCallback(
       async (e: ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files ?? []);
+        e.target.value = '';
         // When a batch handler is provided, delegate all selected files to the
         // parent so multiple references can be uploaded and landed at once.
         if (onUploadFiles) {
-          const files = Array.from(e.target.files ?? []);
           if (files.length === 0) return;
           await onUploadFiles(files);
           return;
         }
 
-        const file = e.target.files?.[0];
+        const file = files[0];
         if (!file) return;
 
-        if (maxFileSize && file.size > maxFileSize) return;
+        if (maxFileSize && !validateFiles([file])) return;
 
         const previewUrl = URL.createObjectURL(file);
         setUploadPreview(previewUrl);
@@ -219,7 +223,7 @@ const UploadCard = memo<UploadCardProps>(
           setIsUploading(false);
         }
       },
-      [maxFileSize, uploadWithProgress, onUpload, onUploadFiles],
+      [maxFileSize, uploadWithProgress, onUpload, onUploadFiles, validateFiles],
     );
 
     const showPreview = uploadPreview || imageUrl;

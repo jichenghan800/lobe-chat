@@ -111,8 +111,15 @@ export class MessageService {
   private userModel: UserModel;
   private toolProjectionEnabled?: Promise<boolean>;
 
-  constructor(db: LobeChatDatabase, userId: string, workspaceId?: string) {
-    this.messageModel = new MessageModel(db, userId, workspaceId);
+  constructor(
+    db: LobeChatDatabase,
+    userId: string,
+    workspaceId?: string,
+    includeFileContent = true,
+  ) {
+    this.messageModel = new MessageModel(db, userId, workspaceId, undefined, {
+      includeFileContent,
+    });
     this.fileService = new FileService(db, userId, workspaceId);
     this.compressionRepository = new CompressionRepository(db, userId, workspaceId);
     this.userModel = new UserModel(db, userId);

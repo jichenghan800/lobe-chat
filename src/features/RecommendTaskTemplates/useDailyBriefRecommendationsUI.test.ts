@@ -428,7 +428,7 @@ describe('useDailyBriefRecommendationsUI', () => {
     expect(mockUseFetchLobehubConnectorConnections).toHaveBeenCalledWith(false);
   });
 
-  it('logs recommendation request errors instead of treating them as normal empty data', async () => {
+  it('keeps a failed recommendation request visible and lets the viewer retry', async () => {
     const error = new Error('market down');
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockUseSWR.mockReturnValue({
@@ -441,7 +441,10 @@ describe('useDailyBriefRecommendationsUI', () => {
     const { result } = renderHook(() => useDailyBriefRecommendationsUI());
 
     try {
-      expect(result.current).toEqual({ mode: 'hidden' });
+      expect(result.current).toMatchObject({ isRetrying: false, mode: 'error' });
+      if (result.current.mode !== 'error') throw new Error('Expected retryable error');
+      await result.current.onRetry();
+      expect(mockMutate).toHaveBeenCalledOnce();
       await waitFor(() =>
         expect(consoleErrorSpy).toHaveBeenCalledWith('[taskTemplate:listDailyRecommend]', error),
       );

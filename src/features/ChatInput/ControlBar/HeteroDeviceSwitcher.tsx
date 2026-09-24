@@ -21,8 +21,11 @@ import { useTranslation } from 'react-i18next';
 
 import InstantSwitch from '@/components/InstantSwitch';
 import { DOWNLOAD_URL } from '@/const/url';
+import { useEffectiveAgentModePreference } from '@/features/ChatInput/hooks/effectiveAgentModePreference';
 import { useChatInputResourceAccess } from '@/features/ChatInput/hooks/useChatInputResourceAccess';
+import { useDefaultAgentSandbox } from '@/features/ChatInput/hooks/useDefaultAgentSandbox';
 import { useLocalSandboxCapability } from '@/features/ChatInput/hooks/useLocalSandboxCapability';
+import { useSandboxSelection } from '@/features/ChatInput/hooks/useSandboxSelection';
 import { useSelectExecutionTarget } from '@/features/ChatInput/hooks/useSelectExecutionTarget';
 import { useDeviceList } from '@/features/DeviceManager/useDeviceList';
 import {
@@ -39,11 +42,13 @@ import {
 import { useIsGatewayModeEnabled } from '@/helpers/gatewayMode';
 import { useEffectiveAgencyConfig } from '@/hooks/useEffectiveAgencyConfig';
 import { useEffectiveWorkingDirectory } from '@/hooks/useEffectiveWorkingDirectory';
+import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 import { localFileService } from '@/services/electron/localFileService';
 import { useAgentStore } from '@/store/agent';
 import { useElectronStore } from '@/store/electron';
 
 import { formatLockedControlTooltip } from '../utils/lockedControlTooltip';
+import { AdminDesktopDownload } from './AdminDesktopDownload';
 import { useCommitWorkingDirectory } from './useCommitWorkingDirectory';
 
 const styles = createStaticStyles(({ css }) => ({
@@ -96,6 +101,8 @@ const styles = createStaticStyles(({ css }) => ({
 
     font-size: 11px;
     color: ${cssVar.colorTextDescription};
+    overflow-wrap: anywhere;
+    white-space: normal;
   `,
   extra: css`
     display: flex;
@@ -372,6 +379,7 @@ interface HeteroDeviceSwitcherProps {
 
 const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
   const { t } = useTranslation('chat');
+  const marketAuth = useMarketAuth();
   const [open, setOpen] = useState(false);
   const navigate = useWorkspaceAwareNavigate();
   const { canUseResource } = useChatInputResourceAccess();
@@ -528,11 +536,25 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
   }, [agentId, commitWorkingDirectory, configuredWorkingDirectory]);
 
   const selectExecutionTarget = useSelectExecutionTarget(agentId);
+  const agentModePreference = useEffectiveAgentModePreference(agentId);
+  useDefaultAgentSandbox(
+    agentId,
+    {
+      enabled: agentModePreference.enableAgentMode,
+      isDesktop,
+      isHetero,
+      canSelect: canShowExecutionTargetSelector,
+      loading: isWorkspacePreferenceLoading || agentModePreference.isPreferenceLoading,
+      target: agencyConfig?.executionTarget,
+      boundDeviceId,
+    },
+    selectExecutionTarget,
+  );
   const handleSelect = useCallback(
     async (target: DeviceExecutionTarget, deviceId?: string, localSandbox?: boolean) => {
       setOpen(false);
       if (localSandbox) await ensureSandboxWorkingDirectory();
-      await selectExecutionTarget(target, deviceId, { localSandbox });
+      return selectExecutionTarget(target, deviceId, { localSandbox });
     },
     [ensureSandboxWorkingDirectory, selectExecutionTarget],
   );
@@ -599,6 +621,10 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
     canShowExecutionTargetSelector,
     isWorkspacePreferenceLoading,
   ]);
+
+  const sandboxSelection = useSandboxSelection(agentId, async () => {
+    return handleSelect('sandbox');
+  });
 
   if (!canShowExecutionTarget) return null;
 
@@ -681,6 +707,31 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
       : t('heteroAgent.executionTarget.workspaceGroup');
   }
 
+  // Web exposes only environments this deployment can actually provide. Keep
+  // unsupported historical selections unmodified, but let users choose a
+  // supported environment rather than advertising a computer-only option.
+  if (!isDesktop && chipExecutionTarget !== 'sandbox' && canShowExecutionTargetSelector) {
+    chipIcon = <ExecutionTargetIcon target={'sandbox'} />;
+    chipLabel = t('heteroAgent.executionTarget.title');
+  }
+
+  if (
+    !isDesktop &&
+    chipExecutionTarget === 'sandbox' &&
+    sandboxSelection.provider === 'onlyboxes'
+  ) {
+    chipLabel = t('heteroAgent.executionTarget.selfHosted');
+  }
+
+  if (
+    chipExecutionTarget === 'sandbox' &&
+    sandboxSelection.provider === 'market' &&
+    !marketAuth.isLoading &&
+    !marketAuth.isAuthenticated
+  ) {
+    chipLabel = t('sandboxAccess.pending');
+  }
+
   const isActive = (target: DeviceExecutionTarget, deviceId?: string) => {
     if (target === 'device') return executionTarget === 'device' && boundDeviceId === deviceId;
     // The two local rows share one target and are told apart by the sandbox
@@ -736,7 +787,23 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
     );
   };
 
-  const content = (
+  const sandboxOption = (
+    <OptionRow
+      active={isActive('sandbox') && (isDesktop || sandboxSelection.provider === 'market')}
+      disabled={!supportsSandbox}
+      icon={<ExecutionTargetIcon target={'sandbox'} />}
+      label={t('heteroAgent.executionTarget.sandbox')}
+      desc={t(
+        supportsSandbox
+          ? 'heteroAgent.executionTarget.sandboxDesc'
+          : 'heteroAgent.executionTarget.sandboxUnsupported',
+        { name: heteroType ? HETEROGENEOUS_TYPE_LABELS[heteroType] : undefined },
+      )}
+      onClick={() => (isDesktop ? void handleSelect('sandbox') : sandboxSelection.select('market'))}
+    />
+  );
+
+  const content = isDesktop ? (
     <Flexbox style={{ maxWidth: 320, minWidth: 280 }}>
       <div className={styles.header}>
         <Flexbox horizontal align={'center'} gap={4}>
@@ -778,15 +845,6 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
           icon={<ExecutionTargetIcon target={'none'} />}
           label={t('heteroAgent.executionTarget.none')}
           onClick={() => void handleSelect('none')}
-        />
-      )}
-      {isHetero ? null : (
-        <OptionRow
-          active={isActive('auto')}
-          desc={t('heteroAgent.executionTarget.autoDesc')}
-          icon={<ExecutionTargetIcon target={'auto'} />}
-          label={t('heteroAgent.executionTarget.auto')}
-          onClick={() => void handleSelect('auto')}
         />
       )}
       {/* `local` pins this desktop's personal `deviceId`. Available in both
@@ -855,19 +913,16 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
           onClick={() => void handleSelect('local', undefined, true)}
         />
       ) : null}
-      <OptionRow
-        active={isActive('sandbox')}
-        disabled={!supportsSandbox}
-        icon={<ExecutionTargetIcon target={'sandbox'} />}
-        label={t('heteroAgent.executionTarget.sandbox')}
-        desc={t(
-          supportsSandbox
-            ? 'heteroAgent.executionTarget.sandboxDesc'
-            : 'heteroAgent.executionTarget.sandboxUnsupported',
-          { name: heteroType ? HETEROGENEOUS_TYPE_LABELS[heteroType] : undefined },
-        )}
-        onClick={() => void handleSelect('sandbox')}
-      />
+      {sandboxOption}
+      {isHetero ? null : (
+        <OptionRow
+          active={isActive('auto')}
+          desc={t('heteroAgent.executionTarget.autoDesc')}
+          icon={<ExecutionTargetIcon target={'auto'} />}
+          label={t('heteroAgent.executionTarget.auto')}
+          onClick={() => void handleSelect('auto')}
+        />
+      )}
       {deviceRows.length > 0 ? (
         showDeviceGroups ? (
           <>
@@ -937,6 +992,24 @@ const HeteroDeviceSwitcher = memo<HeteroDeviceSwitcherProps>(({ agentId }) => {
       {hasNoDevices && !isLoading && isDesktop && !isWorkspaceAgent ? (
         <div className={styles.empty}>{t('heteroAgent.executionTarget.noDevices')}</div>
       ) : null}
+    </Flexbox>
+  ) : (
+    <Flexbox gap={6} style={{ maxWidth: 320, minWidth: 280 }}>
+      <div className={styles.header}>
+        <span className={styles.headerTitle}>{t('heteroAgent.executionTarget.title')}</span>
+      </div>
+      {sandboxOption}
+      {sandboxSelection.selfHostedAvailable ? (
+        <OptionRow
+          active={isActive('sandbox') && sandboxSelection.provider === 'onlyboxes'}
+          desc={t('heteroAgent.executionTarget.selfHostedDesc')}
+          disabled={!supportsSandbox}
+          icon={<ExecutionTargetIcon target={'sandbox'} />}
+          label={t('heteroAgent.executionTarget.selfHosted')}
+          onClick={() => sandboxSelection.select('onlyboxes')}
+        />
+      ) : null}
+      <AdminDesktopDownload />
     </Flexbox>
   );
 

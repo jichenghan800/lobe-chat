@@ -9,6 +9,7 @@ import type {
 import { lambdaClient } from '@/libs/trpc/client';
 
 class TaskService {
+  acknowledgeResults = async (id: string) => lambdaClient.task.acknowledgeResults.mutate({ id });
   // ── Queries ──
 
   find = async (id: string) => lambdaClient.task.find.query({ id });

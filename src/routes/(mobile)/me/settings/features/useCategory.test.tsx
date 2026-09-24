@@ -9,6 +9,11 @@ import { useUserStore } from '@/store/user';
 
 import { SettingsGroupKey, useCategory } from './useCategory';
 
+const cottiAccess = vi.hoisted(() => ({ canManage: true }));
+vi.mock('@/features/CottiPlatformManagement/useManagedSettingsAccess', () => ({
+  useManagedSettingsAccess: () => cottiAccess,
+}));
+
 vi.hoisted(() => {
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
@@ -50,6 +55,7 @@ const createWrapper = (showProvider: boolean) => {
 const initialUserStoreState = useUserStore.getState();
 
 afterEach(() => {
+  cottiAccess.canManage = true;
   cleanup();
   navigate.mockReset();
   useUserStore.setState(initialUserStoreState, true);
@@ -110,4 +116,26 @@ describe('mobile settings useCategory', () => {
     expect(developerGroup?.items.map((item) => item.key)).toContain(SettingsTabs.OAuthApps);
     expect(systemGroup?.items.map((item) => item.key)).not.toContain(SettingsTabs.OAuthApps);
   });
+});
+
+it('hides managed tabs for ordinary users even in developer mode, preserving credentials and connectors', () => {
+  cottiAccess.canManage = false;
+  useUserStore.setState({
+    settings: {
+      ...initialUserStoreState.settings,
+      general: { ...initialUserStoreState.settings.general, isDevMode: true },
+    },
+  });
+  const { result } = renderHook(() => useCategory(), { wrapper: createWrapper(true) });
+  const keys = result.current.flatMap((group) => group.items.map((item) => item.key));
+  for (const tab of [
+    SettingsTabs.Provider,
+    SettingsTabs.ServiceModel,
+    SettingsTabs.APIKey,
+    SettingsTabs.Messenger,
+  ]) {
+    expect(keys).not.toContain(tab);
+  }
+  expect(keys).toContain(SettingsTabs.Creds);
+  expect(keys).toContain(SettingsTabs.Connector);
 });

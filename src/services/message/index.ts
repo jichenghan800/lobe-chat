@@ -37,7 +37,9 @@ interface MessageReadQueryContext {
   agentId?: string | null;
   /** Agent-share visitor surface — routes the read through `shareChat.getMessages`. */
   agentShareId?: string;
+  fileContentIds?: string[];
   groupId?: string | null;
+  includeFileContent?: boolean;
   /**
    * Skip the Work-summary assembly on the server — set by mid-stream
    * refetches (tool_end / step_complete) so each tool round doesn't re-run
@@ -224,7 +226,12 @@ export class MessageService {
   };
 
   updateMessageError = async (id: string, value: ChatMessageError, ctx?: MessageQueryContext) => {
-    const error = normalizeHeterogeneousMessageError(normalizeChatMessageError(value));
+    // Typed Error instances carry budget details that the generic Error normalizer drops.
+    const input =
+      value instanceof Error && value.type
+        ? { ...value, message: value.message, type: value.type }
+        : value;
+    const error = normalizeHeterogeneousMessageError(normalizeChatMessageError(input));
 
     return lambdaClient.message.update.mutate({
       ...ctx,

@@ -116,7 +116,7 @@ describe('TaskWorkspaceLayout', () => {
     render(<TaskWorkspaceLayout />);
 
     expect(screen.queryByTestId('task-agent-portal')).not.toBeInTheDocument();
-    expect(screen.getByTestId('task-agent-conversation')).toBeInTheDocument();
+    expect(screen.queryByTestId('task-agent-conversation')).not.toBeInTheDocument();
     expect(screen.getByTestId('task-agent-manager')).toHaveAttribute('data-expand', 'false');
   });
 

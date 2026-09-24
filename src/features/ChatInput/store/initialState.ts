@@ -4,6 +4,7 @@ import { type ChatInputProps } from '@lobehub/editor/react';
 import { type MenuProps } from '@lobehub/ui';
 
 import { type ActionKeys } from '@/features/ChatInput';
+import type { topicService } from '@/services/topic';
 
 export type SendButtonHandler = (params: {
   clearContent: () => void;
@@ -69,6 +70,7 @@ export interface PublicState {
   leftActions: ActionKeys[];
   mentionItems?: SlashOptions['items'];
   mobile?: boolean;
+  modelDisplayScope?: 'agent' | 'chat';
   onMarkdownContentChange?: (content: string) => void;
   onSend?: SendButtonHandler;
   onVoiceMessageSend?: VoiceMessageSendHandler;
@@ -89,10 +91,13 @@ export interface PublicState {
    * Slash menu placement: 'bottom' for home page (input in center), 'top' for page input (at bottom)
    */
   slashPlacement?: SlashPlacement;
+  topicModelScope: boolean;
 }
 
 export interface State extends PublicState {
   _savedEditorState?: Record<string, any>;
+  costFreeze?: Awaited<ReturnType<typeof topicService.getCostFreeze>>;
+  costFrozen?: boolean;
   editor?: IEditor;
   inputCompletionError?: InputCompletionError;
   inputCompletionErrorDismissed: boolean;
@@ -102,6 +107,7 @@ export interface State extends PublicState {
 }
 
 export const initialState: State = {
+  topicModelScope: true,
   activeAudioInputMode: undefined,
   allowExpand: true,
   expand: false,

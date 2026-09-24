@@ -3,11 +3,12 @@ import { Icon, Tooltip } from '@lobehub/ui';
 import { toast } from '@lobehub/ui/base-ui';
 import { Upload } from 'antd';
 import { css, cx } from 'antd-style';
-import { FileUp, FolderUp, ImageUp, Paperclip } from 'lucide-react';
+import { FileUp, FolderUp, ImageUp, LibraryBig, Paperclip } from 'lucide-react';
 import { memo, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import TipGuide from '@/components/TipGuide';
+import { openSendFilesModal } from '@/features/LibraryModal';
 import { useMediaUploadAbility } from '@/hooks/useMediaUploadAbility';
 import { usePermission } from '@/hooks/usePermission';
 import { useFileStore } from '@/store/file';
@@ -188,7 +189,19 @@ const FileUpload = memo(() => {
     },
   ];
 
-  const items: ActionDropdownMenuItems = [...uploadItems, ...knowledgeItems];
+  const items: ActionDropdownMenuItems = [
+    ...uploadItems,
+    {
+      icon: <Icon icon={LibraryBig} size={MENU_ICON_SIZE} />,
+      key: 'send-file-from-library',
+      label: t('attachment.fromLibrary'),
+      onClick: () => {
+        setDropdownOpen(false);
+        openSendFilesModal();
+      },
+    },
+    ...knowledgeItems,
+  ];
 
   const content = (
     <ChatInputAction

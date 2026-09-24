@@ -1,3 +1,4 @@
+import { DEFAULT_ASSISTANT_NAME } from '@lobechat/business-const';
 import { DEFAULT_AVATAR, DEFAULT_INBOX_AVATAR } from '@lobechat/const';
 import { agentDisplayName } from '@lobechat/types';
 import { preventDefault } from '@lobehub/ui';
@@ -57,20 +58,23 @@ const AskAgentCommands = memo(() => {
   if (!isAtMention) return null;
 
   // Check if Lobe AI matches the query
-  const showLobeAI = !mentionQuery || 'lobe ai'.includes(mentionQuery);
+  const showLobeAI =
+    !mentionQuery || DEFAULT_ASSISTANT_NAME.toLowerCase().includes(mentionQuery.toLowerCase());
 
   return (
     <Command.Group heading={t('cmdk.mentionAgent')}>
       {/* @Lobe AI option */}
       {showLobeAI && (
         <Command.Item
-          value="@lobe-ai"
+          value={`@${DEFAULT_ASSISTANT_NAME}`}
           onMouseDown={preventDefault}
-          onSelect={() => handleAgentSelect(inboxAgentId, 'Lobe AI', DEFAULT_INBOX_AVATAR)}
+          onSelect={() =>
+            handleAgentSelect(inboxAgentId, DEFAULT_ASSISTANT_NAME, DEFAULT_INBOX_AVATAR)
+          }
         >
           <Avatar emojiScaleWithBackground avatar={DEFAULT_INBOX_AVATAR} shape="square" size={18} />
           <div className={styles.itemContent}>
-            <div className={styles.itemLabel}>@Lobe AI</div>
+            <div className={styles.itemLabel}>@{DEFAULT_ASSISTANT_NAME}</div>
           </div>
         </Command.Item>
       )}

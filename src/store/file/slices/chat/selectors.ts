@@ -13,6 +13,9 @@ const chatContextSelections = (contextKey?: string) => (s: FilesStoreState) =>
     : EMPTY_CHAT_CONTEXT_SELECTIONS;
 const isImageUploading = (s: FilesStoreState) => s.uploadingIds.length > 0;
 
+const hasAgentModeRequiredFiles = (s: FilesStoreState) =>
+  s.chatUploadFileList.some((item) => item.requiresAgentMode);
+
 const chatRawFileList = (s: FilesStoreState) => s.chatUploadFileList.map((item) => item.file);
 const chatUploadFileListHasItem = (s: FilesStoreState) => s.chatUploadFileList.length > 0;
 const chatContextSelectionHasItem = (contextKey?: string) => (s: FilesStoreState) =>
@@ -27,6 +30,10 @@ const isUploadingFiles = (s: FilesStoreState) =>
       (file.tasks && !file.tasks?.finishEmbedding),
   );
 
+/** Draft placeholders (including failed/cancelled uploads) must never become attachment IDs. */
+const hasUnreadyChatFiles = (s: FilesStoreState) =>
+  s.chatUploadFileList.some((file) => file.status !== 'success') || isUploadingFiles(s);
+
 export const filesSelectors = {
   chatUploadFileList,
   isImageUploading,
@@ -38,5 +45,7 @@ export const fileChatSelectors = {
   chatRawFileList,
   chatUploadFileList,
   chatUploadFileListHasItem,
+  hasAgentModeRequiredFiles,
+  hasUnreadyChatFiles,
   isUploadingFiles,
 };

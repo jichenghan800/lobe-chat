@@ -26,7 +26,7 @@ import type { ReactNode } from 'react';
 import { memo, Suspense, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { openAttachKnowledgeModal } from '@/features/LibraryModal';
+import { openAttachKnowledgeModal, openSendFilesModal } from '@/features/LibraryModal';
 import { useIsDark } from '@/hooks/useIsDark';
 import { useMediaUploadAbility } from '@/hooks/useMediaUploadAbility';
 import { useModelSupportToolUse } from '@/hooks/useModelSupportToolUse';
@@ -321,11 +321,18 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
   const skillActivateMode = useAgentStore((s) =>
     chatConfigByIdSelectors.getSkillActivateModeById(agentId)(s),
   );
-  const [searchMode, useModelBuiltinSearch, disableGatewayMode] = useAgentStore((s) => [
-    chatConfigByIdSelectors.getSearchModeById(agentId)(s),
-    chatConfigByIdSelectors.getUseModelBuiltinSearchById(agentId)(s),
-    chatConfigByIdSelectors.getChatConfigById(agentId)(s).disableGatewayMode,
-  ]);
+  const [searchMode, searchRoute, useModelBuiltinSearch, disableGatewayMode] = useAgentStore(
+    (s) => {
+      const chatConfig = chatConfigByIdSelectors.getChatConfigById(agentId)(s);
+
+      return [
+        chatConfig.searchMode ?? 'auto',
+        chatConfig.searchRoute,
+        chatConfig.useModelBuiltinSearch,
+        chatConfig.disableGatewayMode,
+      ];
+    },
+  );
   const isGatewayModeEnabled = (disableGatewayMode ?? defaultDisableGatewayMode) !== true;
 
   const isMemoryEnabled = useMemoryEnabled(agentId);
@@ -340,6 +347,10 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
   const handleOpenKnowledge = useCallback(() => {
     close();
     openAttachKnowledgeModal();
+  }, [close]);
+  const handleOpenSendFiles = useCallback(() => {
+    close();
+    openSendFilesModal();
   }, [close]);
   const {
     enabledCount: knowledgeEnabledCount,
@@ -369,8 +380,11 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
     !isModelBuiltinSearchInternal && (isModelHasBuiltinSearch || isProviderHasBuiltinSearch);
 
   // Derived active search option
+  const preferProviderSearch =
+    searchRoute === 'model' ||
+    (searchRoute !== 'application' && (searchMode === 'auto' || useModelBuiltinSearch === true));
   const activeSearchOption: 'off' | 'app' | 'provider' =
-    searchMode === 'off' ? 'off' : useModelBuiltinSearch ? 'provider' : 'app';
+    searchMode === 'off' ? 'off' : preferProviderSearch ? 'provider' : 'app';
 
   const handleToggleMemory = useCallback(
     async (enabled: boolean) => {
@@ -382,11 +396,19 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
   const handleSelectSearch = useCallback(
     async (option: 'off' | 'app' | 'provider') => {
       if (option === 'off') {
-        await updateAgentChatConfig({ searchMode: 'off', useModelBuiltinSearch: false });
+        await updateAgentChatConfig({ searchMode: 'off' });
       } else if (option === 'app') {
-        await updateAgentChatConfig({ searchMode: 'auto', useModelBuiltinSearch: false });
+        await updateAgentChatConfig({
+          searchMode: 'auto',
+          searchRoute: 'application',
+          useModelBuiltinSearch: false,
+        });
       } else {
-        await updateAgentChatConfig({ searchMode: 'auto', useModelBuiltinSearch: true });
+        await updateAgentChatConfig({
+          searchMode: 'auto',
+          searchRoute: 'model',
+          useModelBuiltinSearch: true,
+        });
       }
     },
     [updateAgentChatConfig],
@@ -592,20 +614,6 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
                       onClick: () => handleSelectSearch('off'),
                     },
                     {
-                      key: 'search-app',
-                      label: renderSearchOption(
-                        <Icon
-                          color={activeSearchOption === 'app' ? cssVar.colorInfo : undefined}
-                          icon={SearchCheck}
-                          size={18}
-                        />,
-                        t('plus.search.appSearch'),
-                        t('plus.search.appSearchDesc'),
-                        activeSearchOption === 'app',
-                      ),
-                      onClick: () => handleSelectSearch('app'),
-                    },
-                    {
                       key: 'search-provider',
                       label: renderSearchOption(
                         <Icon
@@ -618,6 +626,20 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
                         activeSearchOption === 'provider',
                       ),
                       onClick: () => handleSelectSearch('provider'),
+                    },
+                    {
+                      key: 'search-app',
+                      label: renderSearchOption(
+                        <Icon
+                          color={activeSearchOption === 'app' ? cssVar.colorInfo : undefined}
+                          icon={SearchCheck}
+                          size={18}
+                        />,
+                        t('plus.search.appSearch'),
+                        t('plus.search.appSearchDesc'),
+                        activeSearchOption === 'app',
+                      ),
+                      onClick: () => handleSelectSearch('app'),
                     },
                   ],
                   extra: <Icon className="lobe-submenu-chevron" icon={ChevronRight} size={16} />,
@@ -637,7 +659,9 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
                   key: 'search-toggle',
                   label: t('search.title'),
                   onCheckedChange: (checked: boolean) =>
-                    handleSelectSearch(checked ? 'app' : 'off'),
+                    checked
+                      ? updateAgentChatConfig({ searchMode: 'auto' })
+                      : handleSelectSearch('off'),
                   type: 'switch',
                 } as ActionDropdownMenuItems[number],
               ]),
@@ -675,36 +699,50 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
 
     // "Add Attachments..." merges file upload with the knowledge base (libraries / files).
     // When the knowledge base is disabled there is no submenu, so Upload stays a top-level entry.
-    const attachmentsItems: ActionDropdownMenuItems = enableKnowledgeBase
+    const attachmentItems: ActionDropdownMenuItems = enableKnowledgeBase
       ? [
           {
             children: [
               ...uploadItems,
-              ...(canConfigureResource && knowledgeItems.length > 0
-                ? [{ type: 'divider' as const }, ...knowledgeItems]
-                : canConfigureResource
-                  ? [
+              {
+                icon: <Icon icon={LibraryBig} size={20} />,
+                key: 'send-file-from-library',
+                label: t('attachment.fromLibrary'),
+                onClick: handleOpenSendFiles,
+              },
+            ],
+            // Trailing chevron (replaces base-ui's default triangle submenu arrow,
+            // which is hidden via the .lobe-submenu-chevron rule in ActionDropdown).
+            extra: <Icon className="lobe-submenu-chevron" icon={ChevronRight} size={16} />,
+            icon: FileUp,
+            key: 'attachments',
+            label: t('attachment.addFiles'),
+          } as ActionDropdownMenuItems[number],
+        ]
+      : uploadItems;
+
+    const persistentKnowledgeItems: ActionDropdownMenuItems =
+      enableKnowledgeBase && canConfigureResource
+        ? [
+            {
+              children:
+                knowledgeItems.length > 0
+                  ? knowledgeItems
+                  : [
                       {
                         disabled: true,
                         key: 'knowledge-empty',
                         label: t('knowledgeBase.related.empty'),
                       },
-                    ]
-                  : []),
-            ],
-            // Trailing chevron (replaces base-ui's default triangle submenu arrow,
-            // which is hidden via the .lobe-submenu-chevron rule in ActionDropdown).
-            extra: <Icon className="lobe-submenu-chevron" icon={ChevronRight} size={16} />,
-            footer: canConfigureResource ? knowledgeFooter : undefined,
-            icon: LibraryBig,
-            key: 'attachments',
-            label: renderLabelWithCount(
-              t('plus.addAttachments'),
-              canConfigureResource ? knowledgeEnabledCount : 0,
-            ),
-          } as ActionDropdownMenuItems[number],
-        ]
-      : uploadItems;
+                    ],
+              extra: <Icon className="lobe-submenu-chevron" icon={ChevronRight} size={16} />,
+              footer: knowledgeFooter,
+              icon: LibraryBig,
+              key: 'persistent-knowledge',
+              label: renderLabelWithCount(t('attachment.addAsKnowledge'), knowledgeEnabledCount),
+            } as ActionDropdownMenuItems[number],
+          ]
+        : [];
 
     // Goal creation has one canonical entry: drop the goal chip at the head of
     // the composer. The agent then plans and calls lobe-goal.createGoal,
@@ -727,7 +765,8 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
     // Grouped with a single divider only between non-empty groups:
     // [attachments] | [memory · search · skills] | [set goal] | [formatting · gateway · params]
     const menuGroups: ActionDropdownMenuItems[] = [
-      attachmentsItems,
+      attachmentItems,
+      persistentKnowledgeItems,
       coreItems,
       acceptanceItems,
       formatItems,
@@ -757,6 +796,7 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
     isMemoryEnabled,
     isParamsPanelActive,
     isSkillPolicyMenuOpen,
+    handleOpenSendFiles,
     knowledgeEnabledCount,
     setShowTypoBar,
     showProviderSearch,
@@ -772,6 +812,7 @@ const usePlusMenuItems = ({ close }: { close: () => void }): ActionDropdownMenuI
     skillItems,
     skillMarketFooter,
     skillMarketHeader,
+    updateAgentChatConfig,
     upload,
     close,
   ]);

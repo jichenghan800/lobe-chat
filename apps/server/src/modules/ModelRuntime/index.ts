@@ -37,9 +37,17 @@ import { DEFAULT_MODEL_PROVIDER_LIST } from 'model-bank/modelProviders';
 import { loadModels } from '@/business/client/model-bank/loadModels';
 import { getBusinessModelRuntimeHooks } from '@/business/server/model-runtime';
 import { AiProviderModel } from '@/database/models/aiProvider';
+import { CottiUserGroupModel } from '@/database/models/cottiUserGroup';
 import { type LobeChatDatabase } from '@/database/type';
 import { getLLMConfig } from '@/envs/llm';
 import { getServerGlobalConfig } from '@/server/globalConfig';
+import { createContextCostGuard } from '@/server/services/cotti/contextCostGuard';
+import {
+  createModelRetirementGuard,
+  withModelRetirement,
+} from '@/server/services/cotti/modelRetirement';
+import { createTopicToolTrace } from '@/server/services/cotti/topicToolTrace';
+import { createUserModelAccessGuard } from '@/server/services/cotti/userModelAccess';
 import { createLLMGenerationTracingHook } from '@/server/services/llmGenerationTracing/hook';
 import { ensureFreshOAuthToken } from '@/server/services/oauthDeviceFlow/refresh';
 
@@ -425,8 +433,14 @@ export const initModelRuntimeWithUserPayload = (
   payload: ClientSecretPayload,
   params: any = {},
   hooks?: ModelRuntimeHooks,
+  costScope?: { db: LobeChatDatabase; userId: string },
 ) => {
   const runtimeProvider = payload.runtimeProvider ?? provider;
+  hooks = mergeModelRuntimeHooks(
+    createContextCostGuard(provider, costScope),
+    mergeModelRuntimeHooks(createTopicToolTrace(provider), hooks),
+  );
+  hooks = mergeModelRuntimeHooks(createUserModelAccessGuard(provider, costScope), hooks);
 
   /**
    * User-configured endpoints can come from older clients or persisted rows that predate
@@ -484,10 +498,14 @@ export const initModelRuntimeFromDB = async (
   const aiProviderModel = new AiProviderModel(db, userId, workspaceId);
 
   // Use getAiProviderById with KeyVaultsGateKeeper.getUserKeyVaults as decryptor
-  const providerConfig = await aiProviderModel.getAiProviderById(
+  const { group: channelGroup } = await new CottiUserGroupModel(db).resolve(userId);
+  const storedProviderConfig = await aiProviderModel.getAiProviderById(
     provider,
     KeyVaultsGateKeeper.getUserKeyVaults,
   );
+
+  // Restricted groups use the platform channel credentials, never personal endpoint/key overrides.
+  const providerConfig = channelGroup ? undefined : storedProviderConfig;
 
   // 2. Resolve the runtime provider for custom providers
   // For custom providers, use sdkType from settings (defaults to 'openai')
@@ -525,10 +543,26 @@ export const initModelRuntimeFromDB = async (
   // 5. Compose with the per-call llm_generation_tracing hook (no-op when the
   //    service is unconfigured, so OSS / self-hosted setups pay nothing for it).
   const tracingHooks = createLLMGenerationTracingHook(userId, provider, workspaceId);
-  const hooks = mergeModelRuntimeHooks(businessHooks, tracingHooks);
+  const hooks = mergeModelRuntimeHooks(
+    createModelRetirementGuard(db, provider, userId),
+    mergeModelRuntimeHooks(businessHooks, tracingHooks),
+  );
 
   // 6. Initialize ModelRuntime with the payload and hooks
-  return initModelRuntimeWithUserPayload(provider, payload, { userId, workspaceId }, hooks);
+  const runtime = initModelRuntimeWithUserPayload(
+    provider,
+    payload,
+    { userId, workspaceId },
+    hooks,
+    { db, userId },
+  );
+  return withModelRetirement(
+    runtime,
+    provider,
+    db,
+    (targetProvider) => initModelRuntimeFromDB(db, userId, targetProvider, workspaceId),
+    userId,
+  );
 };
 
 export interface ServerDefaultHeterogeneousModelReference {

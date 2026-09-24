@@ -63,6 +63,7 @@ import { createGatewayEventHandler, isCompletedRuntimeEnd } from './gatewayEvent
 import { createGatewayEventRouter } from './gatewayEventRouter';
 import { createGatewayMemberStreamHandler } from './gatewayMemberStreamHandler';
 import { type GatewayMuxIdentity, getGatewayMux } from './muxRegistry';
+import { pollQueueOperation } from './pollQueueOperation';
 import { flagQueuedMessagesOnRunStart, syncQueuedMessagesFlag } from './queuedMessagesFlag';
 
 const getGatewayServerConfig = () =>
@@ -730,8 +731,13 @@ export class GatewayActionImpl {
       tempMessageIds,
     } = params;
 
-    const agentGatewayUrl = getGatewayServerConfig()?.agentGatewayUrl;
-    if (!agentGatewayUrl) {
+    const serverConfig = getGatewayServerConfig();
+    const agentGatewayUrl = serverConfig?.agentGatewayUrl ?? '';
+    // Queue mode may poll; missing configuration and misconfigured Gateway must fail before submission.
+    if (
+      !agentGatewayUrl &&
+      (!serverConfig || serverConfig.enableGatewayMode || executionContext.agentShareId)
+    ) {
       throw new Error('[Gateway] Cannot execute agent: serverConfig.agentGatewayUrl is missing');
     }
 
@@ -764,7 +770,7 @@ export class GatewayActionImpl {
     // it — the server can't read client-local state, and without this a
     // workspace hetero run's first send would fall back to the device default
     // cwd instead of the member's pick.
-    const initialTopicMetadata =
+    const workingDirectoryMetadata =
       pendingRepos.length > 0
         ? {
             repos: pendingRepos,
@@ -778,6 +784,14 @@ export class GatewayActionImpl {
               workingDirectoryConfig: optimisticTopic.metadata.workingDirectoryConfig,
             }
           : undefined;
+
+    const initialTopicMetadata =
+      isCreateNewTopic && (workingDirectoryMetadata || optimisticTopic?.metadata?.sandboxProvider)
+        ? {
+            ...workingDirectoryMetadata,
+            sandboxProvider: optimisticTopic?.metadata?.sandboxProvider,
+          }
+        : undefined;
 
     // Honour user-initiated cancel during phase-1 init: while we await the
     // execAgentTask round-trip the caller's loading state (e.g. `sendMessage`)
@@ -1171,8 +1185,8 @@ export class GatewayActionImpl {
       ownerOperationId: result.operationId,
     });
 
-    this.#get().connectToGateway({
-      // This tab started the run: it owns the run's local tool execution.
+    const connectionOptions: Parameters<ChatStore['connectToGateway']>[0] = {
+      // This tab owns local tool execution for the run it started.
       executor: true,
       gatewayUrl: agentGatewayUrl,
       onEvent: eventRouter,
@@ -1243,7 +1257,28 @@ export class GatewayActionImpl {
       operationId: result.operationId,
       token: result.token || '',
       topicId: result.topicId,
-    });
+    };
+    if (!agentGatewayUrl && !agentShareId) {
+      void pollQueueOperation({
+        onComplete: (succeeded) =>
+          connectionOptions.onSessionComplete?.({
+            authFailed: false,
+            succeeded,
+            terminalReceived: true,
+          }),
+        onEvent: eventRouter,
+        onTimeout: () =>
+          this.#get().failOperation(gatewayOpId, {
+            message:
+              'Result refresh timed out; the server may still be running. Reopen this conversation to check its result.',
+            type: 'QueueRefreshTimeout',
+          }),
+        operationId: result.operationId,
+        signal: this.#get().getOperationAbortSignal(gatewayOpId),
+      });
+    } else {
+      this.#get().connectToGateway(connectionOptions);
+    }
 
     return result;
   };

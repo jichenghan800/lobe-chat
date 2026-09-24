@@ -35,6 +35,7 @@ import type { SteerContinuation } from '../../store/slices/data/steerChains';
 import { getOperationFinalRootId } from '../../store/slices/data/workSummaries';
 import InterruptedHint from '../Assistant/components/InterruptedHint';
 import Usage from '../components/Extras/Usage';
+import TopicTokenUsage from '../components/Extras/Usage/TopicTokenUsage';
 import MessageBranch from '../components/MessageBranch';
 import {
   useSetMessageItemActionElementPortialContext,
@@ -285,6 +286,7 @@ const GroupMessage = memo<GroupMessageProps>(
         // The supervisor row is labelled by the group, not by the agent behind it —
         // drop `name` too, or the renderer's name-first resolution would surface the
         // agent's personal name over the group title.
+        afterActions={isLatestItem ? <TopicTokenUsage messageId={id} /> : undefined}
         avatar={isSupervisor ? { ...avatar, name: undefined, title: groupMeta.title } : avatar}
         id={id}
         placement={'left'}

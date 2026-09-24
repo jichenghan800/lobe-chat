@@ -25,6 +25,7 @@ import { FileModel } from '@/database/models/file';
 import { MessageModel } from '@/database/models/message';
 import { RbacModel } from '@/database/models/rbac';
 import { TopicModel } from '@/database/models/topic';
+import { TopicCostFreezeModel } from '@/database/models/topicCostFreeze';
 import { TopicShareModel } from '@/database/models/topicShare';
 import { WorkspaceAuditLogModel } from '@/database/models/workspaceAuditLog';
 import { AgentMigrationRepo } from '@/database/repositories/agentMigration';
@@ -34,8 +35,10 @@ import { chatGroups } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
+import { summarizeContinuationFragment } from '@/server/services/cotti/topicContinuation';
 import { FileService } from '@/server/services/file';
 import { createFtsSearchRepo } from '@/server/services/ftsSearch';
+import { SystemAgentService } from '@/server/services/systemAgent';
 import { after } from '@/server/utils/scheduleAfterResponse';
 import { type BatchTaskResult } from '@/types/service';
 
@@ -82,6 +85,7 @@ const topicProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) =>
       messageModel: new MessageModel(ctx.serverDB, ctx.userId, wsId),
       topicImporterRepo: new TopicImporterRepo(ctx.serverDB, ctx.userId, wsId),
       topicModel: new TopicModel(ctx.serverDB, ctx.userId, wsId),
+      topicCostFreezeModel: new TopicCostFreezeModel(ctx.serverDB, ctx.userId),
       topicShareModel: new TopicShareModel(ctx.serverDB, ctx.userId, wsId),
     },
   });
@@ -100,6 +104,7 @@ const topicSearchProcedure = topicProcedure.use(async (opts) => {
   return opts.next({
     ctx: {
       topicModel: new TopicModel(ctx.serverDB, ctx.userId, workspaceId, ftsSearchRepo),
+      topicCostFreezeModel: new TopicCostFreezeModel(ctx.serverDB, ctx.userId),
     },
   });
 });
@@ -264,12 +269,49 @@ export const topicRouter = router({
       return { metadata: result.metadata };
     }),
 
+  checkTopicSwitch: topicProcedure
+    .use(withScopedPermission('message:create'))
+    .input(z.object({ topicId: z.string(), message: z.string().min(1).max(1000) }))
+    .mutation(async ({ input, ctx, signal }) => {
+      const topic = await ctx.topicModel.findOwnTopicById(input.topicId);
+      if (!topic) throw new TRPCError({ code: 'NOT_FOUND' });
+      const description = topic.description || topic.title;
+      if (!description) return false;
+      return new SystemAgentService(
+        ctx.serverDB,
+        ctx.userId,
+        ctx.workspaceId ?? undefined,
+      ).checkTopicSwitch(
+        description,
+        input.message,
+        AbortSignal.any([signal ?? new AbortController().signal, AbortSignal.timeout(4000)]),
+      );
+    }),
+  getCostFreeze: topicProcedure
+    .input(z.object({ topicId: z.string() }))
+    .query(({ input, ctx }) => ctx.topicCostFreezeModel.get(input.topicId)),
+  summarizeContinuationFragment: topicProcedure
+    .use(withScopedPermission('message:create'))
+    .input(
+      z.object({
+        topicId: z.string(),
+        model: z.string().min(1).max(200),
+        provider: z.string().min(1).max(200),
+        text: z.string().min(1).max(32_000),
+        previous: z.string().max(24_000),
+      }),
+    )
+    .mutation(async ({ input, ctx, signal }) => {
+      if (!(await ctx.topicModel.findOwnTopicById(input.topicId)))
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Topic not found' });
+      return summarizeContinuationFragment(ctx.serverDB, ctx.userId, input, signal);
+    }),
   getTopicDetail: topicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input, ctx }) => {
       const topic = await ctx.topicModel.findOwnTopicById(input.id);
       if (!topic) return null;
-      return topic;
+      return { ...topic, modelCost: await ctx.topicModel.getRecordedModelCost(input.id) };
     }),
 
   getTopicTranscript: topicProcedure
@@ -1050,6 +1092,7 @@ export const topicRouter = router({
         value: z.object({
           agentId: z.string().optional(),
           completedAt: z.date().nullish(),
+          description: z.string().max(100).nullish(),
           favorite: z.boolean().optional(),
           historySummary: z.string().optional(),
           messages: z.array(z.string()).optional(),

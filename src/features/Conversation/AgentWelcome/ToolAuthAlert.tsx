@@ -7,7 +7,15 @@ import { Divider } from 'antd';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
 import isEqual from 'fast-deep-equal';
 import { PlusIcon, XIcon } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { contextSelectors, useConversationStore } from '@/features/Conversation/store';
@@ -19,6 +27,12 @@ import {
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
+import { useChatStore } from '@/store/chat';
+import {
+  getPendingSandboxProvider,
+  subscribePendingSandboxProvider,
+} from '@/store/chat/pendingSandboxProvider';
+import { topicSelectors } from '@/store/chat/selectors';
 import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useToolStore } from '@/store/tool';
 import { ComposioServerStatus, composioStoreSelectors } from '@/store/tool/slices/composioStore';
@@ -424,6 +438,16 @@ const ToolAuthAlert = memo(() => {
   const { t } = useTranslation('chat');
 
   const agentId = useConversationStore(contextSelectors.agentId);
+  const topicId = useConversationStore((s) => s.context.topicId);
+  const topicProvider = useChatStore(
+    (s) => topicSelectors.currentTopicMetadata(s)?.sandboxProvider,
+  );
+  const pendingProvider = useSyncExternalStore(
+    subscribePendingSandboxProvider,
+    () => getPendingSandboxProvider(agentId),
+    () => 'market' as const,
+  );
+  const selfHosted = (topicId ? topicProvider : pendingProvider) === 'onlyboxes';
   const plugins = useAgentStore(agentByIdSelectors.getAgentPluginsById(agentId), isEqual);
   const isComposioEnabled = useServerConfigStore(serverConfigSelectors.enableComposio);
   const isLobehubSkillEnabled = useServerConfigStore(serverConfigSelectors.enableLobehubSkill);
@@ -450,10 +474,11 @@ const ToolAuthAlert = memo(() => {
         lobehubInitialized: isLobehubServersInit,
         lobehubServers,
         marketAuthenticated: isMarketAuthenticated,
-        marketTools: MARKET_AUTH_TOOLS,
+        marketTools: selfHosted ? [] : MARKET_AUTH_TOOLS,
         plugins,
       }),
     [
+      selfHosted,
       composioServers,
       isComposioEnabled,
       isComposioServersInit,

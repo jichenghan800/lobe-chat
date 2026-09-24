@@ -1,5 +1,6 @@
 import debug from 'debug';
 
+import { COTTI_FIXED_IMAGE_GENERATION_COUNT } from '@/const/cottiGeneration';
 import { lambdaClient } from '@/libs/trpc/client';
 import { type CreateImageServicePayload } from '@/server/routers/lambda/image';
 
@@ -11,7 +12,10 @@ export class AiImageService {
     log('Creating image with payload: %O', payload);
 
     try {
-      const result = await lambdaClient.image.createImage.mutate(payload);
+      const result = await lambdaClient.image.createImage.mutate({
+        ...payload,
+        imageNum: COTTI_FIXED_IMAGE_GENERATION_COUNT,
+      });
       log('Image creation service call completed successfully: %O', {
         batchId: result.data?.batch?.id,
         generationCount: result.data?.generations?.length,

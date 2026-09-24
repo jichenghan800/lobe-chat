@@ -1,16 +1,25 @@
-import { describe, expect, it, vi } from 'vitest';
+import { TRPCClientError } from '@trpc/client';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { FileListItem } from '@/types/files';
 
 import { resourceService } from './index';
 
-const { mockGetKnowledgeItem, mockGetKnowledgeItems, mockUpdateDocument, mockUpdateFile } =
-  vi.hoisted(() => ({
-    mockGetKnowledgeItem: vi.fn(),
-    mockGetKnowledgeItems: vi.fn(),
-    mockUpdateDocument: vi.fn(),
-    mockUpdateFile: vi.fn(),
-  }));
+const {
+  mockGetKnowledgeItem,
+  mockGetKnowledgeItems,
+  mockUpdateDocument,
+  mockUpdateFile,
+  mockRemoveFile,
+  mockRemoveFiles,
+} = vi.hoisted(() => ({
+  mockRemoveFile: vi.fn(),
+  mockRemoveFiles: vi.fn(),
+  mockGetKnowledgeItem: vi.fn(),
+  mockGetKnowledgeItems: vi.fn(),
+  mockUpdateDocument: vi.fn(),
+  mockUpdateFile: vi.fn(),
+}));
 
 vi.mock('../document', () => ({
   documentService: {
@@ -23,6 +32,8 @@ vi.mock('../file', () => ({
     getKnowledgeItem: mockGetKnowledgeItem,
     getKnowledgeItems: mockGetKnowledgeItems,
     updateFile: mockUpdateFile,
+    removeFile: mockRemoveFile,
+    removeFiles: mockRemoveFiles,
   },
 }));
 
@@ -133,5 +144,57 @@ describe('resourceService.queryResources', () => {
       libraryId: undefined,
     });
     expect(result.items[0].contentPreview).toBe('Server-generated preview');
+  });
+});
+
+const rpcError = (code: string) =>
+  TRPCClientError.from({
+    error: {
+      code: -32004,
+      data: { code, httpStatus: code === 'NOT_FOUND' ? 404 : 403 },
+      message: code,
+    },
+  });
+
+describe('resource deletion from a stale list', () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it('treats an already removed file as a completed deletion', async () => {
+    mockGetKnowledgeItem.mockRejectedValue(rpcError('NOT_FOUND'));
+    await expect(resourceService.deleteResource('file-stale')).resolves.toBeUndefined();
+    expect(mockRemoveFile).not.toHaveBeenCalled();
+  });
+
+  it('deletes the surviving files in a mixed batch', async () => {
+    mockGetKnowledgeItem
+      .mockRejectedValueOnce(rpcError('NOT_FOUND'))
+      .mockResolvedValueOnce(createKnowledgeItem({ id: 'file-present' }));
+    await resourceService.deleteResources(['file-stale', 'file-present']);
+    expect(mockRemoveFiles).toHaveBeenCalledWith(['file-present']);
+  });
+
+  it('completes an entirely stale selection without a delete request', async () => {
+    mockGetKnowledgeItem.mockRejectedValue(rpcError('NOT_FOUND'));
+    await expect(
+      resourceService.deleteResources(['file-old-a', 'file-old-b']),
+    ).resolves.toBeUndefined();
+    expect(mockRemoveFiles).not.toHaveBeenCalled();
+  });
+
+  it.each(['FORBIDDEN', 'UNAUTHORIZED', 'INTERNAL_SERVER_ERROR'])(
+    'preserves %s errors',
+    async (code) => {
+      const error = rpcError(code);
+      mockGetKnowledgeItem.mockRejectedValue(error);
+      await expect(resourceService.deleteResource('file-private')).rejects.toBe(error);
+      await expect(resourceService.deleteResources(['file-private'])).rejects.toBe(error);
+      expect(mockRemoveFiles).not.toHaveBeenCalled();
+    },
+  );
+
+  it('preserves network errors even when the message says not found', async () => {
+    const error = new Error('File not found');
+    mockGetKnowledgeItem.mockRejectedValue(error);
+    await expect(resourceService.deleteResource('file-network')).rejects.toBe(error);
   });
 });

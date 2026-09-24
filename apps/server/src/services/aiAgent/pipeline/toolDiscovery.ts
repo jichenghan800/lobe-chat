@@ -38,6 +38,7 @@ import { AiProviderModel } from '@/database/models/aiProvider';
 import { ChatGroupModel } from '@/database/models/chatGroup';
 import { ConnectorModel } from '@/database/models/connector';
 import { ConnectorToolModel } from '@/database/models/connectorTool';
+import { CottiSandboxModel } from '@/database/models/cottiSandbox';
 import { FileModel } from '@/database/models/file';
 import type { MessageModel } from '@/database/models/message';
 import type { PluginModel } from '@/database/models/plugin';
@@ -67,6 +68,7 @@ import {
   buildLastSyncedAtMap,
   scheduleStaleConnectorToolsRefresh,
 } from '@/server/services/connector/refresh';
+import { shouldInheritTopicSandbox } from '@/server/services/cotti/delegatedSandbox';
 import { deviceGateway } from '@/server/services/deviceGateway';
 import { getScopedOnlineDevices } from '@/server/services/deviceGateway/scopedDevices';
 import type { MarketService } from '@/server/services/market';
@@ -719,8 +721,25 @@ export const discoverTools = async (
     // `lobe-cloud-sandbox` grant (the sandbox manifest only materializes when
     // the plan resolves to `sandbox`). `sandboxFallback` keeps that decision
     // inside the resolver instead of patching its result here.
+    // COTTI: an isolation thread keeps the parent's topic, including its sandbox
+    // provider and uploaded files. Do not default an unconfigured delegate to a PC.
+    const inheritTopicSandbox =
+      shouldInheritTopicSandbox({
+        agencyConfig: agentConfig.agencyConfig,
+        chatConfig: agentConfig.chatConfig,
+        hasExplicitDevice: !!(
+          requestedDeviceId ||
+          localDeviceId ||
+          boundDeviceId ||
+          isFixedDeviceTarget
+        ),
+        isolationThread: appContext?.isolationThread,
+        shareVisitor: !!shareGate,
+      }) && !!(await new CottiSandboxModel(deps.db).getTopicProvider(deps.userId, topicId));
     executionPlan = resolveExecutionPlan({
-      agencyConfig: agentConfig.agencyConfig,
+      agencyConfig: inheritTopicSandbox
+        ? { ...agentConfig.agencyConfig, executionTarget: 'sandbox' }
+        : agentConfig.agencyConfig,
       canUseDevice,
       chatConfig: agentConfig.chatConfig ?? undefined,
       clientExecutionAvailable: gatewayConfigured,
@@ -926,6 +945,7 @@ export const discoverTools = async (
       },
       model,
       provider,
+      selectedToolIds,
       useApplicationBuiltinSearchTool: searchDecision.useApplicationBuiltinSearchTool,
     });
 
@@ -974,6 +994,7 @@ export const discoverTools = async (
       enabledManifests: manifestMap,
       exclusivePluginIds,
       executionTarget: executionPlan.target,
+      serverOnlySandbox: inheritTopicSandbox,
       lobehubSkills: activeLobehubSkillManifests,
     });
     Object.assign(toolManifestMap, discovery.manifestMap);

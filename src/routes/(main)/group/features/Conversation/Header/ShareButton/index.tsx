@@ -5,6 +5,7 @@ import { Share2 } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { COTTI_TOPIC_LINK_SHARE_ENABLED } from '@/_custom/registry/topicLinkShare';
 import { DESKTOP_HEADER_ICON_SIZE, MOBILE_HEADER_ICON_SIZE } from '@/const/layoutTokens';
 import { useShareModal } from '@/features/ShareModal';
 import { LazySharePopover as SharePopover } from '@/features/SharePopover/lazy';
@@ -27,7 +28,8 @@ const ShareButton = memo<ShareButtonProps>(({ mobile, setOpen, open }) => {
   // topic-share policy is read off that agent — same resolution the group's
   // messages and topics are written with.
   const { agentId, topicId: activeTopicId } = useGroupContext();
-  const enableTopicLinkShare = useServerConfigStore(serverConfigSelectors.enableBusinessFeatures);
+  const enableBusinessFeatures = useServerConfigStore(serverConfigSelectors.enableBusinessFeatures);
+  const enableTopicLinkShare = COTTI_TOPIC_LINK_SHARE_ENABLED || enableBusinessFeatures;
   const { allowed: canShare, reason } = usePermission('edit_own_content');
 
   // Hide share button when no topic exists (no messages sent yet)

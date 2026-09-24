@@ -1,4 +1,35 @@
 export default {
+  'sandboxAccess.auth_required.title': 'Community sign-in required',
+  'sandboxAccess.auth_required.body':
+    'Sign in to continue, or choose a self-hosted sandbox. Your input and attachments will be kept.',
+  'sandboxAccess.auth_failed.title': 'Community sign-in was not completed',
+  'sandboxAccess.auth_failed.body': 'Try signing in again or use a self-hosted sandbox.',
+  'sandboxAccess.unavailable.title': 'Cloud sandbox is temporarily unavailable',
+  'sandboxAccess.unavailable.body':
+    'The community service could not be reached or verified. Retry later, or use a self-hosted sandbox if available.',
+  'sandboxAccess.full.title': 'Self-hosted sandbox is full',
+  'sandboxAccess.full.body':
+    'Retry later or sign in to use the cloud sandbox. Your input and attachments are kept.',
+  'sandboxAccess.new_topic.title': 'Use a new topic for the self-hosted sandbox?',
+  'sandboxAccess.new_topic.body':
+    'This topic has used the cloud sandbox. Temporary files cannot be shared. Only your current input and attachments will be sent to the new topic.',
+  'sandboxAccess.selfHosted': 'Use self-hosted sandbox',
+  'sandboxAccess.newTopic': 'New topic and continue',
+  'sandboxAccess.login': 'Sign in and continue',
+  'sandboxAccess.retry': 'Retry',
+  'sandboxAccess.pending': 'Cloud sandbox \u00B7 Sign-in required',
+  'sandboxAccess.checkFailed': 'Unable to check sandbox access. Your input is kept; please retry.',
+
+  'heteroAgent.executionTarget.switchRunning':
+    'Wait for the current task to finish before switching sandbox.',
+  'heteroAgent.executionTarget.selfHosted': 'Self-hosted sandbox',
+  'heteroAgent.executionTarget.selfHostedDesc': 'Run in a temporary sandbox on the platform server',
+  'heteroAgent.executionTarget.switchTitle': 'Start a new topic to switch sandbox?',
+  'heteroAgent.executionTarget.switchDesc':
+    'The current topic and its files will stay in their original sandbox.',
+  'heteroAgent.executionTarget.newTopic': 'New topic',
+  'heteroAgent.executionTarget.selectFailed':
+    'Could not change the execution environment. Please retry.',
   'goalExperiment.continuedFrom': 'Continued exploration',
   'goalExperiment.drill': 'Explore inside',
   'goalExperiment.drillNamed': 'Explore inside: {{title}}',
@@ -39,6 +70,82 @@ export default {
     'These are version references recorded when the experiment was created. Execution history contains the actual dispatched input.',
   'goalExperiment.unavailableInput': 'Referenced work is unavailable',
 
+  'chatMode.agentPermissionDenied': 'Agent access is disabled. Contact your administrator.',
+  'messages.topicTokens.total': 'Topic total: {{value}} tokens',
+  'messages.topicTokens.loading': 'Updating topic tokens…',
+  'messages.topicTokens.unavailable': 'Topic tokens unavailable',
+  'messages.topicTokens.unavailableHint':
+    'Usage is missing or could not be loaded; this does not mean zero consumption.',
+  'messages.topicTokens.hint':
+    'Recorded total: {{total}} tokens (input {{input}}, output {{output}}). Includes recorded model calls and threads. Cache tokens are already included. This is cumulative consumption, not the current context size; missing usage is not counted and deleted messages may reduce the total.',
+
+  'topicChoice.title': 'Start a new topic?',
+  'topicChoice.body': 'This looks like a new question. A new topic avoids unrelated history.',
+  'topicChoice.newSend': 'New topic and send',
+  'topicChoice.current': 'Send in this topic',
+  'topicChoice.viewHistory': 'View history',
+  'topicChoice.adminUnfreeze': 'Ask admin to unfreeze',
+  'topicChoice.contactAdminHint':
+    'Contact your platform administrator and share this topic link to request a review of its limit and freeze.',
+  'topicChoice.frozenTitle': 'This topic is frozen',
+  'topicChoice.frozenBody': 'Start a new topic, or keep a summary to continue.',
+  'topicChoice.new': 'New topic',
+  'topicChoice.carry': 'Keep summary and continue',
+  'topicChoice.frozenAction': 'Continue in a new topic',
+  'topicChoice.failed': 'Could not create the topic. Your draft is kept.',
+
+  'longTopic.frozenBudget':
+    'This topic has reached its spending protection limit, or has insufficient budget for the next request. Estimated spend ¥{{spent}} / limit ¥{{limit}}. Its history is still available. To continue this topic, ask an administrator to review the limit and unfreeze it.',
+  'longTopic.frozenBudgetUnknown':
+    'This topic has triggered spending protection and further requests are paused. Its history is still available. To continue this topic, ask an administrator to review the limit and unfreeze it.',
+  'longTopic.frozenManual':
+    'This topic has triggered spending protection and further requests are paused. Its history is still available. To continue this topic, ask an administrator to review the limit and unfreeze it.',
+  'longTopic.frozenContext':
+    'This topic was frozen by an earlier context limit. Its history is still available. Start a new topic or contact an administrator.',
+  'longTopic.frozen':
+    'This topic is frozen. You can still read its history. Continue in a new topic.',
+  'longTopic.switchSuggestion':
+    'Changing subjects? Use “New question” to leave this topic’s history behind. Your draft will carry over.',
+  'longTopic.dismissSuggestion': 'Dismiss',
+
+  'longTopic.newQuestion': 'New question',
+  'longTopic.continueProgress': 'Continue with a summary',
+  'longTopic.summarizing': 'Preparing a handoff · {{current}}/{{total}}',
+  'longTopic.preparing': 'Preparing your new topic…',
+  'longTopic.cancel': 'Cancel',
+  'longTopic.continuedTitle': 'Continued · {{title}}',
+  'longTopic.handoff':
+    'Continue the work below. This is an automatically generated handoff; verify important facts against the [original topic]({{source}}).\n\n{{summary}}',
+
+  'longTopic.label': 'Long context',
+  'longTopic.description':
+    'This conversation has a large estimated context. Later turns may resend its history and increase token usage. Start a new topic when changing subjects; the old conversation stays available. To continue the same task, copy only the key conclusions and next steps. This estimate is not a bill.',
+  'longTopic.newTopic': 'New topic',
+  'longTopic.failed': 'Could not open a new topic. Please try again.',
+
+  'attachment.addAsKnowledge': 'Add as knowledge',
+  'attachment.addFiles': 'Add files',
+  'attachment.agentModeRequired':
+    'This spreadsheet is kept. Switch to Agent mode to send it and use tools to read the original file; no upload is needed again.',
+  'attachment.agentModeRequiredHome':
+    'This spreadsheet is kept. Switch to Agent below to send it; no upload is needed again.',
+  'attachment.empty': 'No files available',
+  'attachment.fromLibrary': 'Choose from Resources',
+  'attachment.pickerTitle': 'Choose files from Resources',
+  'attachment.resourceUnavailable': 'This file is unavailable. Refresh and try again.',
+  'attachment.searchEmpty': 'No matching files',
+  'attachment.searchPlaceholder': 'Search files',
+  'attachment.selected': 'Added',
+  'attachment.sendWithMessage': 'Send with message',
+  'upload.validation.largeExcelFileInChat':
+    'Spreadsheet kept: {{files}}. It is not suitable for expansion in regular Chat; switch to Agent mode before sending.',
+  'shareModal.pdfPreviewErrorDescription':
+    'The PDF was generated. You can download it or generate it again.',
+  'shareModal.pdfPreviewError': 'PDF preview unavailable',
+  'taskSchedule.unviewedResultPauseNotice':
+    'The task pauses before its next run after {{count}} consecutive results go unviewed. Viewing a result resets the count; a paused task must be resumed manually.',
+  'chatMode.chatDesc': 'No runtime environment or autonomy; uses fewer tokens',
+  'chatMode.agentDesc': 'Agent can use tools and environment to complete tasks automatically',
   'ModelSwitch.title': 'Model',
   'active': 'Active',
   'audioPlayer.download': 'Download audio',
@@ -670,7 +777,7 @@ export default {
   'historySummary': 'Historical Message Summary',
   'inactive': 'Inactive',
   'inbox.desc': 'Collaborate in one Workspace and move ideas into outcomes.',
-  'inbox.title': 'Lobe AI',
+  'inbox.title': '灵枢AI',
   'input.addAi': 'Add an AI message',
   'input.addAiPrefillUnsupported':
     'The current model doesn’t support ending the conversation with an assistant message. Follow it with a user message before sending.',
@@ -877,12 +984,12 @@ export default {
   'createModal.skillSuggestion.actions.install': 'Add Skill',
   'createModal.skillSuggestion.actions.installing': 'Adding…',
   'createModal.skillSuggestion.actions.openSkills': 'View in Skills',
-  'createModal.skillSuggestion.actions.tryInLobeAI': 'Use in LobeAI',
+  'createModal.skillSuggestion.actions.tryInLobeAI': 'Use in 灵枢AI',
   'createModal.skillSuggestion.description':
     'This looks like a reusable workflow. Install the Skill once, then use it across Agents.',
   'createModal.skillSuggestion.installed.description':
-    'You can use this Skill in LobeAI or add it to any Agent.',
-  'createModal.skillSuggestion.installed.ready': 'Ready in LobeAI',
+    'You can use this Skill in 灵枢AI or add it to any Agent.',
+  'createModal.skillSuggestion.installed.ready': 'Ready in 灵枢AI',
   'createModal.skillSuggestion.installed.title': 'Skill added',
   'createModal.skillSuggestion.installError':
     "Skill wasn't added. Retry, or create an Agent anyway.",
@@ -1281,11 +1388,12 @@ export default {
   'search.grounding.imageSearchQueries': 'Image Search Keywords',
   'search.grounding.imageTitle': 'Found {{count}} images',
   'chatMode.agent': 'Agent',
-  'plus.search.appSearch': 'Smart Search',
+  'plus.search.appSearch': 'Platform Search',
   'plus.search.appSearchDesc':
-    'LobeHub optimized search service, delivering best retrieval results.',
-  'plus.search.modelSearch': 'Provider Search',
-  'plus.search.modelSearchDesc': 'May cause unexpected behavior when enabled, not recommended.',
+    'Use the platform search service as a fallback or manual alternative.',
+  'plus.search.modelSearch': 'Model Search',
+  'plus.search.modelSearchDesc':
+    "Use the model provider's native web search. Preferred when available.",
   'plus.search.off': 'Off',
   'plus.search.offDesc': '',
   'plus.addAttachments': 'Attachments',
@@ -1297,10 +1405,8 @@ export default {
   'chatMode.agentCap.memory': 'Memory',
   'chatMode.agentCap.tools': 'Tool calls',
   'chatMode.agentCap.web': 'Web search',
-  'chatMode.agentDesc': 'Agent can use tools and environment to complete tasks automatically',
   'chatMode.agentUnsupported': 'The current model does not support tool calling',
   'chatMode.chat': 'Chat',
-  'chatMode.chatDesc': 'No runtime environment or autonomy; uses fewer tokens',
   'chatMode.select': 'Switch Mode',
   'runtimeEnv.mode.cloud': 'Cloud Sandbox',
   'runtimeEnv.mode.cloudDesc': 'Run in a secure cloud sandbox',
@@ -2223,7 +2329,7 @@ export default {
     "Couldn't load sub-tasks. Click the progress badge to retry.",
   'taskList.title': 'Tasks',
   'taskList.unassigned': 'Unassigned',
-  'taskList.unassignedAgentHint': 'Lobe AI will run this task when no agent is selected',
+  'taskList.unassignedAgentHint': '灵枢AI will run this task when no agent is selected',
   'taskList.assignTo': 'Assign to',
   'taskList.assigneeSearch.agentEmpty': 'No matching agent',
   'taskList.assigneeSearch.agentPlaceholder': 'Search agent...',
@@ -2452,7 +2558,8 @@ export default {
   'upload.preview.status.cancelled': 'Upload cancelled',
   'upload.preview.status.error': 'Upload failed',
   'upload.preview.status.pending': 'Preparing to upload...',
-  'upload.preview.status.processing': 'Processing file...',
+  'upload.preview.status.processing': 'Finalizing upload...',
+  'upload.preview.status.checkingProgress': 'Checking {{progress}}%',
   'upload.preview.status.success': 'Upload complete',
   'upload.preview.status.uploading': 'Uploading file...',
   'upload.validation.mediaNotSupported':
@@ -3102,4 +3209,9 @@ export default {
   'internalLink.preview.verifyStatus.unverified': 'Unverified',
   'internalLink.preview.verifyStatus.verifying': 'Verifying',
   'you': 'You',
+  'messages.topicTokens.cost': 'Estimated model cost {{value}}',
+  'messages.topicTokens.costPartial': 'Estimated model cost {{value}} (incomplete)',
+  'messages.topicTokens.costUnavailable': 'Model cost unavailable',
+  'messages.topicTokens.costHint':
+    'Recorded cost for {{priced}} of {{calls}} model replies; missing costs are excluded. Uses recorded per-call prices including cache reads/writes and reasoning output. CNY display uses a fixed rate of 1 USD = {{rate}} CNY, not a live exchange rate. Excludes separate search/tool/storage charges, tax and account rebates; provider billing is authoritative.',
 };

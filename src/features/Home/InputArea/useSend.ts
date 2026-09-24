@@ -1,6 +1,6 @@
 import { AGENT_CHAT_TOPIC_URL, AGENT_CHAT_URL } from '@lobechat/const';
 import { toast } from '@lobehub/ui/base-ui';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useActiveWorkspaceId } from '@/business/client/hooks/useActiveWorkspaceId';
@@ -9,6 +9,7 @@ import { buildTaskHandoffPath } from '@/features/AgentTaskManager/taskHandoff';
 import type { SendButtonHandler } from '@/features/ChatInput/store/initialState';
 import { buildMessageContextSelections } from '@/features/ChatInput/utils/contextSelections';
 import { useResourceAccess } from '@/features/ResourcePermission/useResourceAccess';
+import { useSandboxAccess } from '@/features/SandboxAccess/useSandboxAccess';
 import { useHomeDailyBrief } from '@/hooks/useHomeDailyBrief';
 import { usePermission } from '@/hooks/usePermission';
 import { useQueryRoute } from '@/hooks/useQueryRoute';
@@ -16,6 +17,7 @@ import { agentService } from '@/services/agent';
 import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
+import { getPendingSandboxProvider } from '@/store/chat/pendingSandboxProvider';
 import { fileChatSelectors, useFileStore } from '@/store/file';
 import { useGlobalStore } from '@/store/global';
 import { useHomeStore } from '@/store/home';
@@ -56,6 +58,7 @@ interface PendingTaskRun {
 
 export const useSend = (mode: HomeMode = 'chat') => {
   const { t } = useTranslation('home');
+  const { t: tChat } = useTranslation('chat');
   const router = useQueryRoute();
   const activeWorkspaceId = useActiveWorkspaceId();
   const activeWorkspaceSlug = useActiveWorkspaceSlug();
@@ -74,6 +77,16 @@ export const useSend = (mode: HomeMode = 'chat') => {
   const inboxAgentId = useAgentStore(builtinAgentSelectors.inboxAgentId);
   const { agentId: selectedAgentId } = useResolvedHomeAgentId();
   const agentId = selectedAgentId;
+  const prepareSandbox = useSandboxAccess(selectedAgentId || '');
+  const sendScope = useRef('');
+  sendScope.current = `${mode}:${selectedAgentId}`;
+  useEffect(
+    () => () => {
+      sendScope.current = 'unmounted';
+    },
+    [],
+  );
+  const preparing = useRef(false);
   const contextSelectionKey = `home:${mode}:${selectedAgentId ?? 'unresolved'}`;
   const { allowed: canCreateContent } = usePermission('create_content');
   const agentVisibility = useAgentStore((s) =>
@@ -97,7 +110,9 @@ export const useSend = (mode: HomeMode = 'chat') => {
       // `onChange`, so a fast type-then-Enter sequence can fire before the
       // cache catches up and the empty-message guard would bail incorrectly.
       const typed = (getMarkdownContent?.() ?? inputMessage ?? '').trim();
-      const fileList = fileChatSelectors.chatUploadFileList(useFileStore.getState());
+      const fileStore = useFileStore.getState();
+      if (fileChatSelectors.hasUnreadyChatFiles(fileStore)) return;
+      const fileList = fileChatSelectors.chatUploadFileList(fileStore);
       const contextList = fileChatSelectors.chatContextSelections(contextSelectionKey)(
         useFileStore.getState(),
       );
@@ -108,7 +123,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
       // currently displayed daily-brief hint (with cosmetic ellipsis stripped)
       // and rotate the carousel so the next press shows / sends a different
       // pair.
-      const hint = mode === 'chat' && currentPair?.hint ? stripHintEllipsis(currentPair.hint) : '';
+      const hint = mode !== 'task' && currentPair?.hint ? stripHintEllipsis(currentPair.hint) : '';
       const usedHint = !typed && !!hint;
       const message = typed || hint;
 
@@ -124,6 +139,10 @@ export const useSend = (mode: HomeMode = 'chat') => {
         : (getEditorData?.() ?? mainInputEditor?.getJSONState());
 
       if (!canCreateContent) return;
+      if (mode === 'chat' && fileList.some((item) => item.requiresAgentMode)) {
+        toast.error(tChat('attachment.agentModeRequiredHome'));
+        return;
+      }
 
       if ((mode === 'task' || !inputActiveMode) && !canUseResource) return;
 
@@ -137,6 +156,38 @@ export const useSend = (mode: HomeMode = 'chat') => {
 
       // Require input content (except for default inbox which can have files/context)
       if (!message && fileList.length === 0 && contextList.length === 0) return;
+
+      if (preparing.current) return;
+      preparing.current = true;
+      const scope = sendScope.current;
+      const inputSnapshot = JSON.stringify({
+        files: fileList.map((file) => file.id),
+        contexts: contextList,
+      });
+      const stillCurrent = () => {
+        const liveFiles = useFileStore.getState();
+        return (
+          sendScope.current === scope &&
+          (getMarkdownContent?.() ?? useChatStore.getState().inputMessage ?? '').trim() === typed &&
+          inputSnapshot ===
+            JSON.stringify({
+              files: fileChatSelectors.chatUploadFileList(liveFiles).map((file) => file.id),
+              contexts: fileChatSelectors.chatContextSelections(contextSelectionKey)(liveFiles),
+            })
+        );
+      };
+      try {
+        const access =
+          selectedAgentId &&
+          (await prepareSandbox({
+            agentId: selectedAgentId,
+            enabled: mode !== 'chat' && !inputActiveMode,
+            isCurrent: stillCurrent,
+          }));
+        if (access === false || !stillCurrent()) return;
+      } finally {
+        preparing.current = false;
+      }
 
       let submitted = false;
       try {
@@ -159,6 +210,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
           if (!taskRun) {
             const created = await createTask({
               assigneeAgentId: selectedAgentId,
+              config: { sandboxProvider: getPendingSandboxProvider(selectedAgentId) },
               editorData,
               instruction: message,
               name: taskNameFromMessage(message),
@@ -229,6 +281,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
           default: {
             if (!selectedAgentId) return;
 
+            await useAgentStore.getState().waitForAgentConfigUpdateById(selectedAgentId);
             await ensureAgentConfigLoaded(selectedAgentId);
 
             sendMessage({
@@ -270,6 +323,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
       }
     },
     [
+      prepareSandbox,
       activeWorkspaceSlug,
       activeWorkspaceId,
       sendMessage,
@@ -288,6 +342,7 @@ export const useSend = (mode: HomeMode = 'chat') => {
       canUseResource,
       canCreateContent,
       t,
+      tChat,
     ],
   );
 

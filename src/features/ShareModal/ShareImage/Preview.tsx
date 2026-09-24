@@ -1,3 +1,4 @@
+import { DEFAULT_ASSISTANT_NAME } from '@lobechat/business-const';
 import { agentDisplayName, type ConversationContext, type UIChatMessage } from '@lobechat/types';
 import { Flexbox, Markdown } from '@lobehub/ui';
 import { Avatar, Text } from '@lobehub/ui/base-ui';
@@ -80,7 +81,7 @@ const Preview = memo<PreviewProps>(
 
     const displayTitle =
       (isHeaderInbox ?? isInbox)
-        ? 'Lobe AI'
+        ? DEFAULT_ASSISTANT_NAME
         : agentDisplayName(headerMeta) || title || currentTitle;
     const displayAvatar = headerMeta?.avatar || currentAvatar;
     const displayBackgroundColor = headerMeta?.backgroundColor || currentBackgroundColor;

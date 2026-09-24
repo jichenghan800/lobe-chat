@@ -47,6 +47,78 @@ describe('OnlyboxesSandboxProvider', () => {
     vi.useRealTimers();
   });
 
+  it('stops a managed background process in its sandbox instead of only cancelling the Console record', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ task_id: 'task-1', status: 'pending' })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ exit_code: 0, stdout: 'stopped' })));
+    vi.stubGlobal('fetch', fetchMock);
+    const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+    const provider = new OnlyboxesSandboxProvider({
+      marketService: {} as MarketService,
+      topicId: 'topic',
+      userId: 'user',
+    });
+    const started = await provider.callTool('runCommand', {
+      command: 'sleep 10',
+      background: true,
+    });
+    const commandId = (started.result as { commandId: string }).commandId;
+    expect(commandId).toMatch(/^task-1~[a-f\d-]{36}$/);
+    expect((await provider.callTool('killCommand', { commandId })).success).toBe(true);
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      'https://onlyboxes.example.com/api/v1/commands/terminal',
+    );
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(body.session_id).toBe('lobe-user-topic');
+    expect(body.command).toContain(commandId.split('~')[1]);
+  });
+
+  it('does not claim to stop an unmanaged legacy command', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+    const provider = new OnlyboxesSandboxProvider({
+      marketService: {} as MarketService,
+      topicId: 'topic',
+      userId: 'user',
+    });
+    expect((await provider.callTool('killCommand', { commandId: 'task-1' })).success).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['runCommand', 'executeCode', 'writeLocalFile', 'readLocalFile'])(
+    'returns a structured capacity error without sending %s to OnlyBoxes',
+    async (tool) => {
+      const { SandboxCapacityService, SandboxCapacityError } = await import('../capacity');
+      const capacity = new SandboxCapacityService(async () => {
+        throw new Error('unused');
+      });
+      vi.spyOn(capacity, 'run').mockRejectedValue(new SandboxCapacityError());
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+      const provider = new OnlyboxesSandboxProvider(
+        {
+          marketService: {} as MarketService,
+          topicId: 't',
+          userId: 'u',
+        },
+        capacity,
+      );
+      const result = await provider.callTool(tool, {
+        command: 'echo ok',
+        code: 'print(42)',
+        language: 'python',
+        path: '/tmp/test.txt',
+        content: 'test',
+      });
+      expect(result.success).toBe(false);
+      expect(JSON.stringify(result)).toContain('SandboxCapacityFull');
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
   it('maps runCommand to the terminal command endpoint with a persistent session', async () => {
     const fetchMock = vi.fn(async () => {
       return new Response(
@@ -80,7 +152,7 @@ describe('OnlyboxesSandboxProvider', () => {
         body: JSON.stringify({
           command: 'echo ok',
           create_if_missing: true,
-          lease_ttl_sec: 120,
+          lease_ttl_sec: 180,
           session_id: 'lobe-user-1-topic-1',
           timeout_ms: 120_000,
         }),
@@ -373,6 +445,68 @@ describe('OnlyboxesSandboxProvider', () => {
         }),
       }),
     );
+  });
+
+  it.each(['report.txt', './report.txt', '目录/报告 "$().txt'])(
+    'exports relative file %s from the terminal working directory',
+    async (path) => {
+      const absolutePath = `/tmp/${path.replace(/^\.\//, '')}`;
+      const fetchMock = vi.fn().mockImplementation(async (_url, options) => {
+        const payload = JSON.parse(options.body);
+        if (payload.command) {
+          expect(payload.command).toContain(Buffer.from(path).toString('base64'));
+          return new Response(
+            JSON.stringify({ exit_code: 0, stdout: JSON.stringify(absolutePath) }),
+          );
+        }
+        // Model the worker's root-relative docker cp behavior: only the absolute path exists.
+        return new Response(
+          JSON.stringify(
+            payload.input.file_path === absolutePath
+              ? { status: 'succeeded', result: { size_bytes: 25, mime_type: 'text/plain' } }
+              : { status: 'failed', error: { message: 'File not found' } },
+          ),
+        );
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+      const provider = new OnlyboxesSandboxProvider({
+        marketService: {} as MarketService,
+        topicId: 'topic-1',
+        userId: 'user-1',
+      });
+      expect(
+        await provider.exportFileToUploadUrl({
+          filename: 'report.txt',
+          path,
+          uploadUrl: 'https://uploads.example.com/put',
+        }),
+      ).toMatchObject({ success: true, size: 25 });
+    },
+  );
+
+  it.each([
+    { exit_code: 1, stdout: '' },
+    { exit_code: 0, stdout: '"relative.txt"' },
+    { exit_code: 0, stdout: 'not-json' },
+    { exit_code: 0, stdout: '"/tmp/report.txt"', stdout_truncated: true },
+  ])('does not export when sandbox path resolution fails: %j', async (terminal) => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(terminal)));
+    vi.stubGlobal('fetch', fetchMock);
+    const { OnlyboxesSandboxProvider } = await import('./onlyboxes');
+    const provider = new OnlyboxesSandboxProvider({
+      marketService: {} as MarketService,
+      topicId: 'topic-1',
+      userId: 'user-1',
+    });
+    expect(
+      await provider.exportFileToUploadUrl({
+        filename: 'report.txt',
+        path: 'report.txt',
+        uploadUrl: 'https://uploads.example.com/put',
+      }),
+    ).toMatchObject({ success: false });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('runs execScript from a prepared skill directory when skill zip URLs are available', async () => {

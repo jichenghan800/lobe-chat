@@ -57,6 +57,7 @@ export const useEffectiveAgentMode = (agentId: string) => {
   return {
     ...resolveEffectiveAgentMode({ enableAgentMode, isModelListReady, supportToolUse }),
     isPreferenceLoading,
+    requestedAgentModeEnabled: enableAgentMode,
     usesWorkspaceMemberMode,
   };
 };

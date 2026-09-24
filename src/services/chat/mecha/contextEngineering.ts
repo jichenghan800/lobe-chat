@@ -49,6 +49,7 @@ import {
   createBrowserContextFactProviders,
   resolveBrowserConnectorFeatures,
 } from './contextFactProviders';
+import { hydrateRuntimeFileContent } from './hydrateRuntimeFileContent';
 import { combineUserMemoryData, resolveTopicMemories, resolveUserPersona } from './memoryManager';
 import { resolveClientSkills } from './skillEngineering';
 
@@ -181,14 +182,28 @@ export const contextEngineering = async ({
 
   // Agent store state: chat mode, knowledge and identity of the responding agent.
   const agentStoreState = getAgentStoreState();
+  const targetAgentId = agentId ?? agentStoreState.activeAgentId;
+  const targetConfig = targetAgentId
+    ? agentSelectors.getAgentConfigById(targetAgentId)(agentStoreState)
+    : undefined;
   // Example: preset-task calls omit `enableAgentMode`; preserve explicit chat mode
   // from stored config instead of letting MessagesEngine treat `undefined` as agent mode.
-  const effectiveEnableAgentMode =
-    enableAgentMode ?? agentChatConfigSelectors.currentChatConfig(agentStoreState).enableAgentMode;
+  const effectiveEnableAgentMode = enableAgentMode ?? targetConfig?.chatConfig?.enableAgentMode;
 
   // Get enabled agent files with content and knowledge bases from agent store
-  const agentFiles = agentSelectors.currentAgentFiles(agentStoreState);
-  const agentKnowledgeBases = agentSelectors.currentAgentKnowledgeBases(agentStoreState);
+  // Resolve files from the agent actually preparing this model call, not the
+  // last agent page the user visited. Hydrate a local snapshot, never UI stores.
+  const hydrated = await hydrateRuntimeFileContent({
+    agentFiles: targetConfig?.files ?? [],
+    agentId: targetAgentId,
+    groupId,
+    isAgentMode: effectiveEnableAgentMode !== false,
+    messages,
+    topicId,
+  });
+  messages = hydrated.messages;
+  const agentFiles = hydrated.agentFiles;
+  const agentKnowledgeBases = targetConfig?.knowledgeBases ?? [];
 
   const fileContents = agentFiles
     .filter((file) => file.enabled && file.content)

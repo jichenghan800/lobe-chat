@@ -15,6 +15,7 @@ import { withScopedPermission } from '@/business/server/trpc-middlewares/rbacPer
 import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceAuth';
 import { LOADING_FLAT } from '@/const/message';
 import { AgentModel } from '@/database/models/agent';
+import { FileModel } from '@/database/models/file';
 import { MessageModel } from '@/database/models/message';
 import { ThreadModel } from '@/database/models/thread';
 import { TopicModel } from '@/database/models/topic';
@@ -134,6 +135,7 @@ const aiChatProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) =
       agentModel: new AgentModel(ctx.serverDB, ctx.userId, wsId),
       aiChatService: new AiChatService(ctx.serverDB, ctx.userId, wsId),
       aiGenerationService: new AiGenerationService(ctx.serverDB, ctx.userId, wsId),
+      fileModel: new FileModel(ctx.serverDB, ctx.userId, wsId),
       fileService: new FileService(ctx.serverDB, ctx.userId, wsId),
       messageModel: new MessageModel(ctx.serverDB, ctx.userId, wsId),
       threadModel: new ThreadModel(ctx.serverDB, ctx.userId, wsId),
@@ -192,6 +194,21 @@ export const aiChatRouter = router({
   sendMessageInServer: aiChatWriteProcedure
     .input(AiSendMessageServerSchema)
     .mutation(async ({ input, ctx }) => {
+      // Validate before creating the topic: failed uploads retain a local filename
+      // as their draft ID. Never persist an empty topic for such a rejected send.
+      const fileIds = [...new Set(input.newUserMessage.files ?? [])];
+      if (fileIds.length > 0) {
+        const accessibleFiles = await ctx.fileModel.findByIds(fileIds);
+        const accessibleIds = new Set(accessibleFiles.map((file) => file.id));
+        if (fileIds.some((id) => !accessibleIds.has(id))) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message:
+              'Attachment upload is incomplete or the file is unavailable. Remove it and upload again.',
+          });
+        }
+      }
+
       const timingContext =
         input.newAssistantMessage.provider === 'lobehub'
           ? { requestId: createTimingRequestId(), startedAt: Date.now() }

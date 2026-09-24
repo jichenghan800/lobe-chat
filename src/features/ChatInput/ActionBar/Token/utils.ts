@@ -11,6 +11,7 @@ interface ToolContextRefreshKeyOptions {
   memoryEnabled?: boolean;
   runtimeMode?: RuntimeEnvMode;
   searchMode?: LobeAgentChatConfig['searchMode'];
+  searchRoute?: LobeAgentChatConfig['searchRoute'];
   skillActivateMode?: LobeAgentChatConfig['skillActivateMode'];
   useModelBuiltinSearch?: boolean;
 }
@@ -29,6 +30,7 @@ export const getToolContextRefreshKey = ({
   memoryEnabled,
   runtimeMode,
   searchMode,
+  searchRoute,
   skillActivateMode,
   useModelBuiltinSearch,
 }: ToolContextRefreshKeyOptions) =>
@@ -36,6 +38,7 @@ export const getToolContextRefreshKey = ({
     agentId || '',
     enableAgentMode === false ? 'chat' : 'agent',
     searchMode || 'auto',
+    searchRoute || 'search-route-auto',
     useModelBuiltinSearch ? 'model-search' : 'app-search',
     skillActivateMode || 'auto',
     memoryEnabled ? 'memory-on' : 'memory-off',

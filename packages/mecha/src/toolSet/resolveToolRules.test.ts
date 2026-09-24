@@ -15,6 +15,22 @@ const request = (overrides: Partial<ToolRuleRequest> = {}): ToolRuleRequest => (
 });
 
 describe('resolveToolRules', () => {
+  it('allows a selected Chat tool while preserving builtin and disabled gates', () => {
+    const resolved = resolveToolRules(
+      request({
+        agent: { chatConfig: { enableAgentMode: false }, plugins: [] },
+        disabledPluginIds: ['blocked-connector'],
+        selectedToolIds: ['feishu-documents', 'blocked-connector', 'lobe-knowledge-base'],
+        hasEnabledKnowledgeBases: false,
+      }),
+    );
+    expect(resolved.rules['feishu-documents']).toBe(true);
+    expect(resolved.rules['unselected-connector']).toBeUndefined();
+    expect(resolved.rules['lobe-knowledge-base']).toBe(false);
+    expect(resolved.excludedIdentifiers.has('blocked-connector')).toBe(true);
+    expect(resolved.allowExplicitActivation).toBe(false);
+  });
+
   it('derives the three modes from the chat config, never from the model', () => {
     expect(resolveToolRules(request()).toolMode).toBe('agent');
     expect(

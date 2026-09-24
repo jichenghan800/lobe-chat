@@ -1,0 +1,13 @@
+[Unit]
+Description=LingShu OnlyBoxes Console
+After=lingshu-onlyboxes-network.service
+Requires=lingshu-onlyboxes-network.service
+[Service]
+WorkingDirectory=/opt/onlyboxes-dev
+EnvironmentFile=/opt/onlyboxes-dev/console.env
+ExecStart=/opt/onlyboxes-dev/onlyboxes-console
+Restart=on-failure
+RestartSec=3
+UMask=0077
+[Install]
+WantedBy=multi-user.target

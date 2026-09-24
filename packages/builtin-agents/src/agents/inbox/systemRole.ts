@@ -18,7 +18,7 @@ export interface InboxIdentity {
  * product default no matter what it is called.
  */
 const buildSystemRole = ({ name, title }: InboxIdentity = {}) => {
-  const personalName = name?.trim() || 'Lobe';
+  const personalName = name?.trim() || '灵枢AI';
   const role = title?.trim();
   const identity = role ? `${personalName} (${role})` : personalName;
 

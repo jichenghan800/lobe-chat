@@ -13,7 +13,7 @@ interface FileListProps {
 
 const ImageFileListViewer = memo<FileListProps>(({ items }) => {
   return (
-    <PreviewGroup preview={{ onDownload: downloadPreviewImage }}>
+    <PreviewGroup preview={{ defaultZoom: 'fit', onDownload: downloadPreviewImage }}>
       <GalleyGrid items={items} renderItem={ImageItem} />
     </PreviewGroup>
   );

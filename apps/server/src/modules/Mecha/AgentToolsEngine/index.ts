@@ -170,6 +170,7 @@ export const createServerAgentToolsEngine = (
       hasImageOutput: !!modelAbilities?.imageOutput,
     },
     useApplicationBuiltinSearchTool,
+    selectedToolIds: params.selectedToolIds,
   });
 
   log(

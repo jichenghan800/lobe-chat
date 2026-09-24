@@ -70,6 +70,8 @@ export interface DiscoveryPoolRequest {
   executionTarget: DeviceExecutionTarget;
   /** Disabled-filtered LobeHub skill manifests. */
   lobehubSkills?: readonly LobeToolManifest[];
+  /** A delegated sandbox run must not discover client device tools. */
+  serverOnlySandbox?: boolean;
 }
 
 export interface DiscoveryPool {
@@ -131,7 +133,7 @@ export const resolveDiscoveryPool = (request: DiscoveryPoolRequest): DiscoveryPo
   // A `none` / `sandbox` run behind a gateway must not expose device tools:
   // "no device" means NO device, not "no device yet". Without a gateway the
   // desktop client owns the tool gate and routes in-process.
-  const stripDeviceTools = hasDeviceProxy && !deviceCapable;
+  const stripDeviceTools = (hasDeviceProxy || request.serverOnlySandbox) && !deviceCapable;
   if (stripDeviceTools) {
     delete manifestMap[AuvManifest.identifier];
     delete manifestMap[RemoteDeviceManifest.identifier];

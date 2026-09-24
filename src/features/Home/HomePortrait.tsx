@@ -1,15 +1,19 @@
 import { DEFAULT_INBOX_AVATAR } from '@lobechat/const';
+import { Tooltip } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
+import type { SyntheticEvent } from 'react';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { resolveChiefAgentArtwork } from '@/features/ChiefAgent/artwork';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 
 import { useResolvedHomeAgentId } from './AgentSelect/useResolvedHomeAgentId';
+import { resolveFeishuAdminContactUrl } from './feishuSupport';
 import { HOME_PORTRAIT_INSET } from './portraitFraming';
 
-const styles = createStaticStyles(({ css }) => ({
+const styles = createStaticStyles(({ css, cssVar }) => ({
   /**
    * The speech layout owns image dimensions and overlap. Both sizes reveal
    * the same fraction used by the artwork studio preview, with the lower
@@ -28,13 +32,43 @@ const styles = createStaticStyles(({ css }) => ({
     object-fit: contain;
     object-position: bottom;
   `,
+  link: css`
+    pointer-events: auto;
+
+    position: absolute;
+    inset-block-end: var(--home-portrait-overlap);
+    inset-inline-end: ${HOME_PORTRAIT_INSET}px;
+
+    width: var(--home-portrait-width);
+    height: var(--home-portrait-height);
+    border-radius: 24px;
+
+    &:focus-visible {
+      outline: 2px solid ${cssVar.colorPrimary};
+      outline-offset: 2px;
+    }
+
+    & > img {
+      inset-block-end: 0;
+      inset-inline-end: 0;
+    }
+  `,
   root: css`
     position: relative;
     height: 100%;
   `,
 }));
 
+const LOCAL_HOME_PORTRAIT = '/avatars/lingshu-home-portrait.webp';
+
+const handlePortraitError = (event: SyntheticEvent<HTMLImageElement>) => {
+  const image = event.currentTarget;
+  if (image.getAttribute('src') !== LOCAL_HOME_PORTRAIT) image.src = LOCAL_HOME_PORTRAIT;
+};
+
 const HomePortrait = memo(() => {
+  const { t } = useTranslation('home');
+  const supportUrl = resolveFeishuAdminContactUrl(process.env.NEXT_PUBLIC_COTTI_FEISHU_SUPPORT_URL);
   // The portrait depicts whoever home is addressing, so it follows the same
   // selection the composer sends to — not the Inbox Agent it defaults to.
   const { agentId } = useResolvedHomeAgentId();
@@ -48,11 +82,38 @@ const HomePortrait = memo(() => {
   // the built-in catalog covers everyone else.
   const fullBodyArtwork = useAgentStore(agentSelectors.getAgentFullBodyArtworkById(agentId ?? ''));
   const artwork = resolveChiefAgentArtwork(meta.avatar || DEFAULT_INBOX_AVATAR);
-  const hero = fullBodyArtwork || artwork.hero;
+  const hero = fullBodyArtwork || (artwork.id === 'lobe' ? LOCAL_HOME_PORTRAIT : artwork.hero);
 
   return (
     <div className={styles.root}>
-      <img aria-hidden alt="" className={styles.image} key={hero} src={hero} />
+      {supportUrl ? (
+        <Tooltip title={t('dashboard.support.feishu.tooltip')}>
+          <a
+            aria-label={t('dashboard.support.feishu.action')}
+            className={styles.link}
+            href={supportUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <img
+              alt=""
+              className={styles.image}
+              key={hero}
+              src={hero}
+              onError={handlePortraitError}
+            />
+          </a>
+        </Tooltip>
+      ) : (
+        <img
+          aria-hidden
+          alt=""
+          className={styles.image}
+          key={hero}
+          src={hero}
+          onError={handlePortraitError}
+        />
+      )}
     </div>
   );
 });

@@ -1169,6 +1169,13 @@
       "when": 1789816134383,
       "tag": "0166_device_architecture",
       "breakpoints": true
+    },
+    {
+      "idx": 167,
+      "version": "7",
+      "when": 1790218102140,
+      "tag": "0167_lingshu_v2218_customizations",
+      "breakpoints": true
     }
   ],
   "version": "6"

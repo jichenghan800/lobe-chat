@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 import { useTopicDrawerArtifactPortal } from '@/features/AgentTasks/hooks/useTopicDrawerArtifactPortal';
 import { PortalContent } from '@/features/Portal/router';
@@ -28,6 +28,14 @@ const AgentTaskManager = memo<AgentTaskManagerProps>(({ preferredAgentId, viewed
   ]);
   const showArtifactInTopicDrawer = useTopicDrawerArtifactPortal();
   const showPortalInTaskPanel = showPortal && !showArtifactInTopicDrawer;
+  const [hasOpened, setHasOpened] = useState(false);
+
+  useEffect(() => {
+    if (expand || showPortalInTaskPanel) setHasOpened(true);
+  }, [expand, showPortalInTaskPanel]);
+
+  // Defer initial setup, then retain the selected agent, draft and live conversation on collapse.
+  const shouldMountContent = expand || hasOpened || showPortalInTaskPanel;
 
   return (
     <RightPanel
@@ -40,13 +48,14 @@ const AgentTaskManager = memo<AgentTaskManagerProps>(({ preferredAgentId, viewed
     >
       {/* Artifact cards in the run drawer keep that reading context. Other task
           portals render here because Tasks routes have no desktop Portal host. */}
-      {showPortalInTaskPanel ? (
-        <PortalContent />
-      ) : (
-        <TaskAgentProvider preferredAgentId={preferredAgentId} viewedTaskId={viewedTaskId}>
-          <Conversation />
-        </TaskAgentProvider>
-      )}
+      {shouldMountContent &&
+        (showPortalInTaskPanel ? (
+          <PortalContent />
+        ) : (
+          <TaskAgentProvider preferredAgentId={preferredAgentId} viewedTaskId={viewedTaskId}>
+            <Conversation />
+          </TaskAgentProvider>
+        ))}
     </RightPanel>
   );
 });

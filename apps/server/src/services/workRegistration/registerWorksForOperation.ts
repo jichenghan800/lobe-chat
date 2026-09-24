@@ -532,7 +532,7 @@ export const registerWorksForOperation = async (
   // it is safe to build once here for every export.
   const marketService = new MarketService({ userInfo: { userId } });
   const fileService = new FileService(serverDB, userId, workspaceId);
-  const sandboxService = createSandboxService({
+  const sandboxService = await createSandboxService({
     fileService,
     marketService,
     serverDB,

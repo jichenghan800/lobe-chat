@@ -1,5 +1,6 @@
 'use client';
 
+import { DEFAULT_ASSISTANT_NAME } from '@lobechat/business-const';
 import {
   agentDisplayName,
   agentSecondaryDisplayName,
@@ -110,7 +111,7 @@ export const useHomeAgentRows = (): HomeAgentRows => {
           DEFAULT_INBOX_AVATAR,
         backgroundColor: inboxMeta?.backgroundColor || undefined,
         id: inboxAgentId,
-        title: agentDisplayName(inboxMeta, 'Lobe AI'),
+        title: agentDisplayName(inboxMeta, DEFAULT_ASSISTANT_NAME),
       });
     }
     workspaceRows.push(

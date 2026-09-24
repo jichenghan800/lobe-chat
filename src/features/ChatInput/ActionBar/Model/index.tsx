@@ -1,5 +1,5 @@
 import { Tooltip } from '@lobehub/ui';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
@@ -10,8 +10,11 @@ import { topicSelectors } from '@/store/chat/slices/topic/selectors';
 import SelectorTrigger from '../../components/SelectorTrigger';
 import { useAgentId } from '../../hooks/useAgentId';
 import { useAgentModelSelection } from '../../hooks/useAgentModelSelection';
+import { useEffectiveAgentMode } from '../../hooks/useEffectiveAgentMode';
 import { useModelLockTooltip } from '../../hooks/useModelLockTooltip';
 import { useReasoningEffortControl } from '../../hooks/useReasoningEffortControl';
+import { useSwitchModelDisplayScope } from '../../hooks/useSwitchModelDisplayScope';
+import { useChatInputStore } from '../../store';
 import { useActionBarContext } from '../context';
 import SelectorMenu from './SelectorMenu';
 
@@ -19,6 +22,9 @@ const ModelSwitch = memo(() => {
   const { t } = useTranslation('chat');
   const { dropdownPlacement } = useActionBarContext();
   const agentId = useAgentId();
+  const effectiveAgentMode = useEffectiveAgentMode(agentId);
+  const explicitScope = useChatInputStore((s) => s.modelDisplayScope);
+  const modelDisplayScope = explicitScope ?? effectiveAgentMode.currentMode;
   const {
     canDisplayModel,
     canSelectModel,
@@ -31,11 +37,48 @@ const ModelSwitch = memo(() => {
   // column). Display the topic's pinned model when present, else the agent
   // default; a switch pins to the active topic, otherwise updates the agent
   // (via selectModel, which honors workspace member overrides).
-  const activeTopicId = useChatStore((s) => s.activeTopicId);
-  const topicModel = useChatStore(topicSelectors.activeTopicModel);
+  // Home creates a new conversation even when the chat store retains the
+  // previously visited topic. Keep model and effort reads/writes in this scope.
+  const topicModelScope = useChatInputStore((s) => s.topicModelScope !== false);
+  const storedTopicId = useChatStore((s) => s.activeTopicId);
+  const storedTopicModel = useChatStore(topicSelectors.activeTopicModel);
+  const storedTopicLoading = useChatStore(topicSelectors.isActiveTopicModelLoading);
+  const activeTopicId = topicModelScope ? storedTopicId : undefined;
+  const topicModel = topicModelScope ? storedTopicModel : undefined;
+  const isTopicModelLoading = topicModelScope && storedTopicLoading;
   const updateTopicModel = useChatStore((s) => s.updateTopicModel);
   const model = topicModel?.model ?? agentModel;
   const provider = topicModel?.model ? topicModel.provider : agentProvider;
+
+  const switchModelDisplayScope = useSwitchModelDisplayScope();
+  const reconciledContext = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!canSelectModel || !agentId || isTopicModelLoading) return;
+    // Mode belongs to the Agent, but each topic pins its own model. Reconcile
+    // when entering a topic or changing mode, including an inherited mode.
+    // Do not react to the intermediate model write of a manual mode change:
+    // its mode flag is saved afterwards and the old pool must not undo it.
+    const context = JSON.stringify([agentId, activeTopicId, modelDisplayScope]);
+    if (!explicitScope && reconciledContext.current === context) return;
+    reconciledContext.current = context;
+    void switchModelDisplayScope(modelDisplayScope)
+      .then((applied) => {
+        if (!applied && reconciledContext.current === context)
+          reconciledContext.current = undefined;
+      })
+      .catch((error) => {
+        if (reconciledContext.current === context) reconciledContext.current = undefined;
+        console.error('[ModelSwitch] Failed to reconcile the mode model', error);
+      });
+  }, [
+    activeTopicId,
+    agentId,
+    canSelectModel,
+    explicitScope,
+    isTopicModelLoading,
+    modelDisplayScope,
+    switchModelDisplayScope,
+  ]);
 
   const enabledModel = useAiInfraStore(aiModelSelectors.getEnabledModelById(model, provider));
   const displayName = enabledModel?.displayName || model;
@@ -49,12 +92,12 @@ const ModelSwitch = memo(() => {
 
   const handleModelChange = useCallback(
     async (params: { model: string; provider: string }) => {
-      if (!canSelectModel) return;
+      if (!canSelectModel || isTopicModelLoading) return;
 
       if (activeTopicId) await updateTopicModel(activeTopicId, params);
       else await selectModel(params);
     },
-    [activeTopicId, canSelectModel, selectModel, updateTopicModel],
+    [activeTopicId, canSelectModel, isTopicModelLoading, selectModel, updateTopicModel],
   );
 
   // Both current values on one chip, the way the heterogeneous selector reads:
@@ -75,7 +118,7 @@ const ModelSwitch = memo(() => {
     />
   );
 
-  if (!canDisplayModel) return null;
+  if (!canDisplayModel || isTopicModelLoading) return null;
 
   // Model + effort in one menu, so the two settings that decide how a turn runs
   // are picked in the same place (see SelectorMenu).
@@ -86,6 +129,7 @@ const ModelSwitch = memo(() => {
         displayName={displayName}
         effort={effort}
         model={model}
+        modelDisplayScope={modelDisplayScope}
         placement={dropdownPlacement ?? 'topRight'}
         provider={provider}
         onModelChange={handleModelChange}
@@ -101,6 +145,7 @@ const ModelSwitch = memo(() => {
   return (
     <ModelSwitchPanel
       model={model}
+      modelDisplayScope={modelDisplayScope}
       openOnHover={false}
       placement={dropdownPlacement ?? 'topRight'}
       provider={provider}

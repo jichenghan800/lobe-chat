@@ -7,6 +7,7 @@ import { createStore, Provider } from './store';
 import { DEFAULT_CHAT_INPUT_FEATURE } from './store/initialState';
 import type { StoreUpdaterProps } from './StoreUpdater';
 import StoreUpdater from './StoreUpdater';
+import { TopicCostFreezeLoader } from './TopicCostFreezeLoader';
 
 interface ChatInputProviderProps extends StoreUpdaterProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ interface ChatInputProviderProps extends StoreUpdaterProps {
 
 export const ChatInputProvider = memo<ChatInputProviderProps>(
   ({
+    modelDisplayScope,
     agentId,
     canRecordVoiceMessage,
     children,
@@ -32,6 +34,7 @@ export const ChatInputProvider = memo<ChatInputProviderProps>(
     onMarkdownContentChange,
     mentionItems,
     allowExpand = true,
+    topicModelScope = true,
     slashPlacement,
     getMessages,
     resolveSendBlocked,
@@ -43,7 +46,9 @@ export const ChatInputProvider = memo<ChatInputProviderProps>(
       <Provider
         createStore={() =>
           createStore({
+            modelDisplayScope,
             allowExpand,
+            topicModelScope,
             canRecordVoiceMessage,
             contextSelectionKey,
             contextWindowMessages,
@@ -75,16 +80,19 @@ export const ChatInputProvider = memo<ChatInputProviderProps>(
           leftActions={leftActions}
           mentionItems={mentionItems}
           mobile={mobile}
+          modelDisplayScope={modelDisplayScope}
           resolveSendBlocked={resolveSendBlocked}
           rightActions={rightActions}
           sendButtonProps={sendButtonProps}
           sendMenu={sendMenu}
           slashPlacement={slashPlacement}
+          topicModelScope={topicModelScope}
           onMarkdownContentChange={onMarkdownContentChange}
           onSend={onSend}
           onVoiceMessageSend={onVoiceMessageSend}
         />
         <ReasoningConfigLoader />
+        <TopicCostFreezeLoader />
         {children}
       </Provider>
     );

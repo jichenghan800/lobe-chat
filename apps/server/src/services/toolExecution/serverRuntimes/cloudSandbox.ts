@@ -130,7 +130,7 @@ export const cloudSandboxRuntime: ServerRuntimeRegistration = {
       userInfo: { userId: context.userId, workspaceId: context.workspaceId },
     });
     const fileService = new FileService(context.serverDB, context.userId, context.workspaceId);
-    const sandboxService = createSandboxService({
+    const sandboxService = await createSandboxService({
       fileService,
       marketService,
       serverDB: context.serverDB,

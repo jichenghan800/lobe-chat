@@ -193,3 +193,23 @@ describe('resolveClientExecutors', () => {
     ).toEqual({});
   });
 });
+
+describe('topic sandbox delegation', () => {
+  it('excludes PC tools without a device gateway while keeping sandbox discovery', () => {
+    const ids = [
+      AuvManifest.identifier,
+      LocalSystemManifest.identifier,
+      RemoteDeviceManifest.identifier,
+    ];
+    const resolved = resolveDiscoveryPool(
+      request({
+        executionTarget: 'sandbox',
+        serverOnlySandbox: true,
+        deviceCapable: false,
+        enabledManifests: new Map(ids.map((id) => [id, manifest(id)])),
+      }),
+    );
+    for (const id of ids) expect(resolved.manifestMap[id]).toBeUndefined();
+    expect(resolved.manifestMap[CloudSandboxManifest.identifier]).toBeDefined();
+  });
+});

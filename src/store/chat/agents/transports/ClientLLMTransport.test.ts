@@ -265,3 +265,14 @@ describe('ClientLLMTransport.retryPolicy.onError · terminal operation teardown'
     expect(store.updateTopicStatus).not.toHaveBeenCalled();
   });
 });
+
+describe('compression topic cost identity', () => {
+  it('keeps the source topic on auxiliary streaming calls so compression cannot bypass freezing', async () => {
+    const { transport } = createTransport();
+    await transport.stream({ model: 'terra', provider: 'azure', messages: [] });
+    expect(chatService.getChatCompletion).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ topicId: 'topic-1' }),
+    );
+  });
+});

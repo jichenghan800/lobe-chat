@@ -1,8 +1,9 @@
 import { createMediaFileRef } from '@lobechat/const/mediaRef';
 import { filesPrompts } from '@lobechat/prompts';
-import type { ChatAudioItem, MessageContentPart } from '@lobechat/types';
+import type { ChatAudioItem, ChatFileItem, MessageContentPart } from '@lobechat/types';
 import { normalizeAudioDurationMs } from '@lobechat/utils/audio';
 import { imageUrlToBase64 } from '@lobechat/utils/imageToBase64';
+import { isSpreadsheetFileNameOrType } from '@lobechat/utils/spreadsheet';
 import { parseDataUri } from '@lobechat/utils/uriParser';
 import { isDesktopLocalStaticServerUrl } from '@lobechat/utils/url';
 import debug from 'debug';
@@ -80,6 +81,8 @@ export interface FileContextConfig {
   enabled?: boolean;
   /** Whether to include file URLs in file context prompts */
   includeFileUrl?: boolean;
+  /** Whether to omit spreadsheet body content while retaining its downloadable file reference */
+  omitSpreadsheetContent?: boolean;
 }
 
 export interface MessageContentConfig {
@@ -260,12 +263,20 @@ export class MessageContentProcessor extends BaseProcessor {
 
     // Add file context (if file context is enabled and has files, images, videos or audios)
     if ((hasFiles || hasImages || hasVideos || hasAudios) && this.config.fileContext?.enabled) {
+      const fileList = this.config.fileContext.omitSpreadsheetContent
+        ? message.fileList?.map((file: ChatFileItem) =>
+            isSpreadsheetFileNameOrType(file.name, file.fileType)
+              ? { ...file, content: undefined }
+              : file,
+          )
+        : message.fileList;
+
       const filesContext = filesPrompts({
         // File access URLs are needed by sandbox/code tools that fetch attachments from text.
         // Call sites can still disable them for environments such as desktop local files.
         addUrl: this.config.fileContext.includeFileUrl ?? true,
         audioList: message.audioList || [],
-        fileList: message.fileList,
+        fileList,
         imageList: message.imageList || [],
         messageId: message.id,
         videoList: message.videoList || [],

@@ -3,6 +3,10 @@ import { type BetterAuthPlugin } from 'better-auth/types';
 
 import { authEnv } from '@/envs/auth';
 
+interface EmailWhitelistOptions {
+  isAllowed?: (email: string) => boolean | Promise<boolean>;
+}
+
 /**
  * Parse comma-separated email whitelist string into array.
  */
@@ -36,7 +40,7 @@ export function isEmailAllowed(email: string): boolean {
  * Better Auth plugin to restrict registration to whitelisted emails/domains.
  * Intercepts user creation (both email signup and SSO) via databaseHooks.
  */
-export const emailWhitelist = (): BetterAuthPlugin => ({
+export const emailWhitelist = (options: EmailWhitelistOptions = {}): BetterAuthPlugin => ({
   id: 'email-whitelist',
   init() {
     return {
@@ -44,10 +48,37 @@ export const emailWhitelist = (): BetterAuthPlugin => ({
         databaseHooks: {
           user: {
             create: {
-              before: async (user) => {
+              before: async (user, context) => {
                 if (!user.email) return { data: user };
 
-                if (!isEmailAllowed(user.email)) {
+                // This hook runs after Better Auth validates OAuth state, exchanges the
+                // code and loads the provider profile. Only this Portal deployment
+                // delegates admission; email/OTP signup and other providers retain
+                // the product's local whitelist.
+                const portalIssuers = [
+                  'https://auth.cotti.ai/api/auth',
+                  'https://auth.cotti.ai/api/auth/.well-known/openid-configuration',
+                  'http://cotti-portal:3700/api/auth/.well-known/openid-configuration',
+                ];
+                if (
+                  process.env.COTTI_PORTAL_MANAGED_ACCESS === '1' &&
+                  process.env.APP_URL === 'https://chat.cotti.ai' &&
+                  process.env.AUTH_GENERIC_OIDC_ID === 'cotti-chat' &&
+                  portalIssuers.includes(process.env.AUTH_GENERIC_OIDC_ISSUER ?? '') &&
+                  ((context?.params?.providerId === 'generic-oidc' &&
+                    (context.path === '/oauth2/callback/generic-oidc' ||
+                      context.path === '/oauth2/callback/:providerId')) ||
+                    (context?.params?.id === 'generic-oidc' &&
+                      (context.path === '/callback/generic-oidc' ||
+                        context.path === '/callback/:id')))
+                ) {
+                  return { data: user };
+                }
+
+                const allowed = await (options.isAllowed?.(user.email) ??
+                  isEmailAllowed(user.email));
+
+                if (!allowed) {
                   throw new APIError('FORBIDDEN', {
                     code: 'EMAIL_NOT_ALLOWED',
                     message: 'EMAIL_NOT_ALLOWED',

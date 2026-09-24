@@ -3,9 +3,10 @@ import type { CreateMessageParams } from '@lobechat/types';
 import { AgentRuntimeErrorType, ChatErrorType, ThreadType } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 import type { Mock } from 'vitest';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AgentModel } from '@/database/models/agent';
+import { FileModel } from '@/database/models/file';
 import { MessageModel } from '@/database/models/message';
 import { ThreadModel } from '@/database/models/thread';
 import { TopicModel } from '@/database/models/topic';
@@ -17,6 +18,14 @@ const flushAsyncTasks = () => new Promise<void>((resolve) => setTimeout(resolve,
 
 vi.mock('@/database/models/agent');
 vi.mock('@/database/models/message');
+vi.mock('@/database/models/file');
+const findFiles = vi.fn();
+beforeEach(() => {
+  findFiles.mockImplementation(async (ids: string[]) => ids.map((id) => ({ id })));
+  vi.mocked(FileModel).mockImplementation(function () {
+    return { findByIds: findFiles } as unknown as FileModel;
+  });
+});
 vi.mock('@/database/models/thread');
 vi.mock('@/database/models/topic');
 vi.mock('@/server/services/aiChat');
@@ -69,6 +78,31 @@ describe('aiChatRouter', () => {
 
     return mockCreateUserAndAssistantMessages;
   };
+
+  it.each(['screenshot.png', 'file-missing', 'file-other-user'])(
+    'rejects inaccessible attachment %s before writing topic or messages',
+    async (fileId) => {
+      findFiles.mockResolvedValueOnce([]);
+      const createTopic = vi.fn();
+      const createMessage = vi.fn();
+      vi.mocked(TopicModel).mockImplementation(function () {
+        return { create: createTopic } as unknown as TopicModel;
+      });
+      mockMessageModel(createMessage);
+      const caller = aiChatRouter.createCaller(mockCtx as any);
+      await expect(
+        caller.sendMessageInServer({
+          newAssistantMessage: { model: 'test', provider: 'test' },
+          newTopic: { title: 'Draft' },
+          newUserMessage: { content: 'Review', files: [fileId] },
+          sessionId: 's1',
+          topicPageSize: 20,
+        }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+      expect(createTopic).not.toHaveBeenCalled();
+      expect(createMessage).not.toHaveBeenCalled();
+    },
+  );
 
   it('should create topic optionally, create user/assistant messages, and return payload', async () => {
     const mockCreateTopic = vi.fn().mockResolvedValue({ id: 't1' });

@@ -17,11 +17,14 @@ import ModeSelector from './ModeSelector';
 import WorkspaceControls from './WorkspaceControls';
 
 const styles = createStaticStyles(({ css }) => ({
-  // `flex: none` keeps the row at 28px inside the column-flex composer; without
-  // it the bar shrinks to the compact chips' min-content height.
+  // Keep compact controls at least 28px tall, but reserve space for cost guidance.
   bar: css`
     flex: none;
-    height: 28px;
+    flex-wrap: wrap;
+    row-gap: 4px;
+
+    height: auto;
+    min-height: 28px;
     padding-block: 0;
     padding-inline: 4px;
   `,
@@ -32,16 +35,19 @@ const styles = createStaticStyles(({ css }) => ({
   leftGroup: css`
     scrollbar-width: none;
     overflow: auto hidden;
-    flex: 1;
+    flex: 1 1 120px;
     min-width: 0;
 
     &::-webkit-scrollbar {
       display: none;
     }
   `,
-  // Right cluster (approval mode + context window) stays pinned and intact.
+  // Guidance wraps within the composer on narrow screens.
   rightGroup: css`
     flex: none;
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
   `,
 }));
 

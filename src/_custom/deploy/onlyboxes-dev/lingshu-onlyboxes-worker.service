@@ -1,0 +1,14 @@
+[Unit]
+Description=LingShu OnlyBoxes Docker Worker
+After=docker.service lingshu-onlyboxes-console.service lingshu-onlyboxes-network.service
+Requires=docker.service lingshu-onlyboxes-network.service
+Wants=lingshu-onlyboxes-console.service
+[Service]
+WorkingDirectory=/opt/onlyboxes-dev
+EnvironmentFile=/opt/onlyboxes-dev/worker.env
+ExecStart=/opt/onlyboxes-dev/onlyboxes-worker-docker
+Restart=on-failure
+RestartSec=3
+UMask=0077
+[Install]
+WantedBy=multi-user.target

@@ -952,6 +952,7 @@ const ExecAgentSchema = z
         groupId: z.string().nullish(),
         initialTopicMetadata: z
           .object({
+            sandboxProvider: z.enum(['market', 'onlyboxes']).optional(),
             repos: z.array(z.string()).optional(),
             workingDirectory: z.string().optional(),
             workingDirectoryConfig: workingDirConfigSchema.optional(),

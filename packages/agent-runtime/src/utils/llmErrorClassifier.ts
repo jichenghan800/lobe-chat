@@ -120,7 +120,8 @@ const normalizeSignal = (error: unknown): LLMErrorSignal => {
           ? raw.status
           : typeof raw.statusCode === 'number'
             ? raw.statusCode
-            : (numericStatusFromCode(raw.code) ?? tryExtractStatus(message)),
+            : (numericStatusFromCode(raw.code, raw.errorType, raw.type) ??
+              tryExtractStatus(message)),
     };
   }
 
@@ -165,8 +166,16 @@ const normalizeSignal = (error: unknown): LLMErrorSignal => {
               ? nested.status
               : typeof nestedError?.status === 'number'
                 ? nestedError.status
-                : (numericStatusFromCode(raw.code, nested?.code, nestedError?.code) ??
-                  tryExtractStatus(message)),
+                : (numericStatusFromCode(
+                    raw.code,
+                    raw.errorType,
+                    raw.type,
+                    nested?.code,
+                    nested?.errorType,
+                    nested?.type,
+                    nestedError?.code,
+                    nestedError?.type,
+                  ) ?? tryExtractStatus(message)),
     };
   }
 

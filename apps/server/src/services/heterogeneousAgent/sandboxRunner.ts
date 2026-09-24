@@ -223,7 +223,7 @@ export async function spawnHeteroSandbox(params: SandboxRunParams): Promise<void
     topicId,
   );
 
-  const sandboxService = createSandboxService({ marketService, topicId, userId });
+  const sandboxService = await createSandboxService({ marketService, topicId, userId });
   const result = await sandboxService.callTool('runCommand', {
     background: true,
     command: shellCommand,

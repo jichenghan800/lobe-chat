@@ -1,120 +1,67 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-// Get mocked module
-import { authEnv } from '@/envs/auth';
+import { emailWhitelist } from './email-whitelist';
 
-import { isEmailAllowed } from './email-whitelist';
+vi.mock('@/envs/auth', () => ({ authEnv: { AUTH_ALLOWED_EMAILS: 'cotticoffee.com' } }));
 
-// Mock authEnv
-vi.mock('@/envs/auth', () => ({
-  authEnv: {
-    AUTH_ALLOWED_EMAILS: undefined as string | undefined,
-  },
-}));
+const user = { email: 'member@example.com', id: 'test-member', name: 'Member' };
+const callback = { params: { providerId: 'generic-oidc' }, path: '/oauth2/callback/generic-oidc' };
 
-describe('isEmailAllowed', () => {
-  beforeEach(() => {
-    // Reset to undefined before each test
-    (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS = undefined;
+async function createUser(context: unknown, isAllowed = vi.fn().mockResolvedValue(false)) {
+  const plugin = emailWhitelist({ isAllowed });
+  const config = await plugin.init!({} as never);
+  return config!.options!.databaseHooks!.user!.create!.before!(user as never, context as never);
+}
+
+function portalEnvironment() {
+  vi.stubEnv('COTTI_PORTAL_MANAGED_ACCESS', '1');
+  vi.stubEnv('APP_URL', 'https://chat.cotti.ai');
+  vi.stubEnv('AUTH_GENERIC_OIDC_ID', 'cotti-chat');
+  vi.stubEnv(
+    'AUTH_GENERIC_OIDC_ISSUER',
+    'http://cotti-portal:3700/api/auth/.well-known/openid-configuration',
+  );
+}
+
+afterEach(() => vi.unstubAllEnvs());
+
+describe('portal registration admission', () => {
+  it('accepts a central member after the configured Portal OAuth callback', async () => {
+    portalEnvironment();
+    const localWhitelist = vi.fn().mockResolvedValue(false);
+    await expect(createUser(callback, localWhitelist)).resolves.toEqual({ data: user });
+    expect(localWhitelist).not.toHaveBeenCalled();
   });
 
-  describe('when whitelist is empty', () => {
-    it('should allow all emails when AUTH_ALLOWED_EMAILS is undefined', () => {
-      expect(isEmailAllowed('anyone@example.com')).toBe(true);
-    });
-
-    it('should allow all emails when AUTH_ALLOWED_EMAILS is empty string', () => {
-      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS = '';
-      expect(isEmailAllowed('anyone@example.com')).toBe(true);
-    });
-  });
-
-  describe('domain matching', () => {
-    beforeEach(() => {
-      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS =
-        'example.com,company.org';
-    });
-
-    it('should allow email from whitelisted domain', () => {
-      expect(isEmailAllowed('user@example.com')).toBe(true);
-      expect(isEmailAllowed('admin@company.org')).toBe(true);
-    });
-
-    it('should reject email from non-whitelisted domain', () => {
-      expect(isEmailAllowed('user@other.com')).toBe(false);
-    });
-
-    it('should be case-sensitive for domain', () => {
-      expect(isEmailAllowed('user@Example.com')).toBe(false);
-      expect(isEmailAllowed('user@EXAMPLE.COM')).toBe(false);
+  it.each([
+    null,
+    { ...callback, path: '/sign-up/email' },
+    { ...callback, path: '/sign-in/email-otp' },
+    { ...callback, params: { providerId: 'feishu' } },
+    { ...callback, path: '/oauth2/callback/feishu' },
+  ])('keeps local admission for non-Portal creation: %j', async (context) => {
+    portalEnvironment();
+    await expect(createUser(context)).rejects.toMatchObject({
+      body: { code: 'EMAIL_NOT_ALLOWED' },
     });
   });
 
-  describe('exact email matching', () => {
-    beforeEach(() => {
-      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS =
-        'admin@special.com,vip@other.com';
-    });
-
-    it('should allow exact email match', () => {
-      expect(isEmailAllowed('admin@special.com')).toBe(true);
-      expect(isEmailAllowed('vip@other.com')).toBe(true);
-    });
-
-    it('should reject different email at same domain', () => {
-      expect(isEmailAllowed('user@special.com')).toBe(false);
-    });
-
-    it('should be case-sensitive for email', () => {
-      expect(isEmailAllowed('Admin@special.com')).toBe(false);
+  it.each([
+    ['COTTI_PORTAL_MANAGED_ACCESS', ''],
+    ['APP_URL', 'https://chatdev.cotticoffee.com'],
+    ['AUTH_GENERIC_OIDC_ID', 'other-client'],
+    ['AUTH_GENERIC_OIDC_ISSUER', 'https://untrusted.example/api/auth'],
+  ])('does not delegate with an unrelated %s', async (key, value) => {
+    portalEnvironment();
+    vi.stubEnv(key, value);
+    await expect(createUser(callback)).rejects.toMatchObject({
+      body: { code: 'EMAIL_NOT_ALLOWED' },
     });
   });
 
-  describe('mixed domain and email matching', () => {
-    beforeEach(() => {
-      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS =
-        'example.com,admin@other.com';
-    });
-
-    it('should allow any email from whitelisted domain', () => {
-      expect(isEmailAllowed('anyone@example.com')).toBe(true);
-    });
-
-    it('should allow specific whitelisted email', () => {
-      expect(isEmailAllowed('admin@other.com')).toBe(true);
-    });
-
-    it('should reject non-whitelisted email from non-whitelisted domain', () => {
-      expect(isEmailAllowed('user@other.com')).toBe(false);
-    });
-  });
-
-  describe('whitespace handling', () => {
-    it('should trim whitespace from whitelist entries', () => {
-      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS =
-        ' example.com , admin@other.com ';
-      expect(isEmailAllowed('user@example.com')).toBe(true);
-      expect(isEmailAllowed('admin@other.com')).toBe(true);
-    });
-
-    it('should filter empty entries', () => {
-      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS =
-        'example.com,,other.com';
-      expect(isEmailAllowed('user@example.com')).toBe(true);
-      expect(isEmailAllowed('user@other.com')).toBe(true);
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should reject malformed email without @', () => {
-      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS = 'example.com';
-      expect(isEmailAllowed('invalid-email')).toBe(false);
-    });
-
-    it('should handle email with multiple @ symbols', () => {
-      (authEnv as { AUTH_ALLOWED_EMAILS: string | undefined }).AUTH_ALLOWED_EMAILS = 'example.com';
-      // split('@')[1] returns 'middle@example.com', which won't match 'example.com'
-      expect(isEmailAllowed('user@middle@example.com')).toBe(false);
+  it('preserves existing local whitelist acceptance', async () => {
+    await expect(createUser(null, vi.fn().mockResolvedValue(true))).resolves.toEqual({
+      data: user,
     });
   });
 });

@@ -9,7 +9,7 @@ import {
   resolveEnableTargetProviderId,
   resolveStaleModelState,
 } from '@/features/ModelSelect/resolveStaleModelState';
-import { useEnabledChatModels } from '@/hooks/useEnabledChatModels';
+import { useEnabledChatModelsState } from '@/hooks/useEnabledChatModels';
 import { usePermission } from '@/hooks/usePermission';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
@@ -117,15 +117,17 @@ export const useChatInputNotice = (): ChatInputNotice | undefined => {
   // Waiting on it for a `fixed` agent would swallow a genuine warning.
   const isMemberOverridePending = selectionPolicy === 'member' && isPreferenceLoading;
 
-  const enabledChatModelList = useEnabledChatModels();
+  const { models: enabledChatModelList, isReady: isModelAccessReady } = useEnabledChatModelsState();
   const builtinAiModelList = useAiInfraStore((s) => s.builtinAiModelList);
   const enabledAiProviders = useAiInfraStore((s) => s.enabledAiProviders);
   const modelRedirects = useAiInfraStore((s) => s.modelRedirects);
   const toggleProviderEnabled = useAiInfraStore((s) => s.toggleProviderEnabled);
   const toggleProviderModelEnabled = useAiInfraStore((s) => s.toggleProviderModelEnabled);
-  const isModelConfigReady = useAiInfraStore((s) =>
+  const isRuntimeConfigReady = useAiInfraStore((s) =>
     aiProviderSelectors.isInitAiProviderRuntimeState(s),
   );
+  // An empty list while group visibility/VIP policy loads is not a disabled model.
+  const isModelConfigReady = isRuntimeConfigReady && isModelAccessReady;
   const currentChatModel = findEnabledChatModel(enabledChatModelList, model, provider);
   const staleModelState = useMemo(
     () =>

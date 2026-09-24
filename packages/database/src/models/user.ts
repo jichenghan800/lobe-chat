@@ -1,3 +1,4 @@
+import { DEFAULT_SYSTEM_AGENT_CONFIG } from '@lobechat/const';
 import type {
   SSOProvider,
   UserGeneralConfig,
@@ -18,6 +19,7 @@ import type { NewUser, UserItem, UserSettingsItem } from '../schemas';
 import { messages, nextauthAccounts, topics, users, userSettings } from '../schemas';
 import type { LobeChatDatabase } from '../type';
 import { AGENT_TRANSFER_PENDING_OWNER_DELETE, AgentTransferJobModel } from './agentTransferJob';
+import { CottiUserGroupModel } from './cottiUserGroup';
 
 type DecryptUserKeyVaults = (
   encryptKeyVaultsStr: string | null,
@@ -165,6 +167,20 @@ export class UserModel {
       tts: state.settingsTTS || {},
     };
 
+    const { group } = await new CottiUserGroupModel(this.db).resolve(this.userId);
+    if (group) {
+      settings.systemAgent = Object.fromEntries(
+        Object.keys(DEFAULT_SYSTEM_AGENT_CONFIG).map((key) => [
+          key,
+          {
+            ...settings.systemAgent?.[key as keyof typeof DEFAULT_SYSTEM_AGENT_CONFIG],
+            model: group.fastModel,
+            provider: group.provider,
+          },
+        ]),
+      );
+    }
+
     return {
       avatar: state.avatar || undefined,
       agentOnboarding: state.agentOnboarding || undefined,
@@ -194,7 +210,25 @@ export class UserModel {
   };
 
   getUserSettings = async () => {
-    return this.db.query.userSettings.findFirst({ where: eq(userSettings.id, this.userId) });
+    const settings = await this.db.query.userSettings.findFirst({
+      where: eq(userSettings.id, this.userId),
+    });
+    const { group } = await new CottiUserGroupModel(this.db).resolve(this.userId);
+    if (!group) return settings;
+    const systemAgent = settings?.systemAgent as PartialDeep<UserSettings>['systemAgent'];
+    return {
+      ...settings,
+      systemAgent: Object.fromEntries(
+        Object.keys(DEFAULT_SYSTEM_AGENT_CONFIG).map((key) => [
+          key,
+          {
+            ...systemAgent?.[key as keyof typeof DEFAULT_SYSTEM_AGENT_CONFIG],
+            model: group.fastModel,
+            provider: group.provider,
+          },
+        ]),
+      ),
+    };
   };
 
   getUserPreference = async (): Promise<UserPreference | undefined> => {
@@ -592,8 +626,8 @@ export class UserModel {
         ? inArray(users.id, options.whitelist)
         : undefined;
 
-    // User memory defaults to enabled=true when user settings are missing.
-    const memoryEnabledCondition = sql`COALESCE((${userSettings.memory} ->> 'enabled')::boolean, true) = true`;
+    // Automatic memory extraction requires the user to explicitly enable memory.
+    const memoryEnabledCondition = sql`COALESCE((${userSettings.memory} ->> 'enabled')::boolean, false) = true`;
     // Eligible users must have at least one topic with at least one user message.
     const hasChattedTopicCondition = sql`
       EXISTS (

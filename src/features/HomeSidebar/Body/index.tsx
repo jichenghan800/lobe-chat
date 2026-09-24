@@ -151,10 +151,17 @@ const Body = memo(() => {
     [hiddenSections, activeWorkspaceId, enableProjects],
   );
 
-  const visibleKeys = useMemo(
-    () => sidebarItems.filter((k) => !HEADER_KEYS.has(k) && isVisible(k)),
-    [sidebarItems, isVisible],
-  );
+  const visibleKeys = useMemo(() => {
+    const keys = sidebarItems.filter(
+      (k) => k !== 'overview' && !HEADER_KEYS.has(k) && isVisible(k),
+    );
+    const overview = navLinkItems.get('overview');
+    if (overview && !overview.hidden && isVisible('overview')) {
+      const generationIndex = keys.indexOf('image');
+      keys.splice(generationIndex < 0 ? keys.length : generationIndex, 0, 'overview');
+    }
+    return keys;
+  }, [sidebarItems, isVisible, navLinkItems]);
 
   const renderNavLink = useCallback(
     (key: string) => {

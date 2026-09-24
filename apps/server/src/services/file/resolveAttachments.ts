@@ -8,6 +8,10 @@ import type {
 } from '@lobechat/types';
 import { ordinaryFileAccessScope } from '@lobechat/types';
 import { readAudioDurationMs } from '@lobechat/utils/audio';
+import {
+  assertChatSpreadsheetSize,
+  isSpreadsheetFileNameOrType,
+} from '@lobechat/utils/spreadsheet';
 import debug from 'debug';
 
 import { FileModel } from '@/database/models/file';
@@ -34,6 +38,11 @@ interface ResolveArgs {
   db: LobeChatDatabase;
   fileAccessScope?: FileAccessScope;
   fileIds: string[];
+  /**
+   * Keep spreadsheet bodies out of the prompt and expose only file metadata.
+   * Defaults to false so ordinary Chat keeps the upstream direct-read behavior.
+   */
+  metadataOnlySpreadsheets?: boolean;
   userId: string;
   workspaceId?: string;
 }
@@ -61,15 +70,20 @@ const getAudioMetadata = (
 /**
  * Resolve fileIds into image/video/file lists for the LLM prompt layer.
  *
- * Images and videos return as-is with a signed URL. Non-media files are
+ * Images and videos return as-is with a signed URL. Most non-media files are
  * parsed via `DocumentService.parseFile` (idempotent) so their text content
- * can be injected by `filesPrompts()`. Missing or unparseable files are
- * skipped and reported in `warnings`.
+ * can be injected by `filesPrompts()`. When `metadataOnlySpreadsheets` is set,
+ * spreadsheet attachments stay metadata-only so Agent runtimes can inspect
+ * the original workbook with tools instead of expanding the whole table into
+ * the model context. Ordinary Chat leaves this option off and retains the
+ * upstream direct-read behavior.
+ * Missing or unparseable files are skipped and reported in `warnings`.
  */
 export const resolveAttachmentsByFileIds = async ({
   db,
   fileAccessScope = ordinaryFileAccessScope,
   fileIds,
+  metadataOnlySpreadsheets = false,
   userId,
   workspaceId,
 }: ResolveArgs): Promise<ResolvedAttachments> => {
@@ -92,6 +106,9 @@ export const resolveAttachmentsByFileIds = async ({
     return result;
   }
 
+  if (!metadataOnlySpreadsheets) {
+    for (const file of fileRecords) assertChatSpreadsheetSize(file.name, file.fileType, file.size);
+  }
   const documentService = new DocumentService(db, userId, workspaceId);
   const recordById = new Map(fileRecords.map((f) => [f.id, f]));
 
@@ -113,6 +130,11 @@ export const resolveAttachmentsByFileIds = async ({
       ) {
         return { file, fileType, id, resolvedUrl };
       }
+
+      if (metadataOnlySpreadsheets && isSpreadsheetFileNameOrType(file.name, fileType)) {
+        return { content: undefined, file, fileType, id, resolvedUrl };
+      }
+
       let content: string | undefined;
       let parseError: unknown;
       try {

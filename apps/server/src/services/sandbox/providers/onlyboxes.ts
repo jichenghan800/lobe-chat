@@ -1,4 +1,5 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
+import nodePath from 'node:path';
 
 import type { SandboxCallToolResult } from '@lobechat/builtin-tool-cloud-sandbox';
 import { isRecord } from '@lobechat/utils';
@@ -8,6 +9,7 @@ import { sha256 } from 'js-sha256';
 import { appEnv } from '@/envs/app';
 import { sandboxEnv } from '@/envs/sandbox';
 
+import type { SandboxCapacityService } from '../capacity';
 import type {
   SandboxProvider,
   SandboxProviderCapabilities,
@@ -15,6 +17,11 @@ import type {
   SandboxProviderFileExportResult,
   SandboxServiceOptions,
 } from '../types';
+import {
+  backgroundCommand,
+  cancelBackgroundCommand,
+  parseBackgroundCommandId,
+} from './onlyboxesBackground';
 
 const log = debug('lobe-server:sandbox:onlyboxes');
 
@@ -64,7 +71,10 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
   private readonly leaseTTLSec: number;
   private readonly options: SandboxServiceOptions;
 
-  constructor(options: SandboxServiceOptions) {
+  constructor(
+    options: SandboxServiceOptions,
+    private readonly capacity?: SandboxCapacityService,
+  ) {
     this.options = options;
     this.baseUrl = (sandboxEnv.ONLYBOXES_BASE_URL || '').replace(/\/+$/, '');
     this.jitIssuer = sandboxEnv.ONLYBOXES_JIT_ISSUER || appEnv.APP_URL || 'lobehub';
@@ -84,83 +94,83 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     try {
       switch (toolName) {
         case 'runCommand': {
-          return this.runCommand(params);
+          return await this.runCommand(params);
         }
 
         case 'getCommandOutput': {
-          return this.getCommandOutput(params);
+          return await this.getCommandOutput(params);
         }
 
         case 'killCommand': {
-          return this.killCommand(params);
+          return await this.killCommand(params);
         }
 
         case 'executeCode': {
-          return this.executeCode(params);
+          return await this.executeCode(params);
         }
 
         case 'execScript': {
-          return this.execScript(params);
+          return await this.execScript(params);
         }
 
         case 'listLocalFiles': {
-          return this.runJsonScript(listFilesScript, params);
+          return await this.runJsonScript(listFilesScript, params);
         }
 
         case 'listFiles': {
-          return this.runJsonScript(listFilesScript, params);
+          return await this.runJsonScript(listFilesScript, params);
         }
 
         case 'readLocalFile': {
-          return this.runJsonScript(readFileScript, params);
+          return await this.runJsonScript(readFileScript, params);
         }
 
         case 'readFile': {
-          return this.runJsonScript(readFileScript, params);
+          return await this.runJsonScript(readFileScript, params);
         }
 
         case 'writeLocalFile': {
-          return this.writeLocalFile(params);
+          return await this.writeLocalFile(params);
         }
 
         case 'writeFile': {
-          return this.writeLocalFile(params);
+          return await this.writeLocalFile(params);
         }
 
         case 'editLocalFile': {
-          return this.runJsonScript(editFileScript, params);
+          return await this.runJsonScript(editFileScript, params);
         }
 
         case 'editFile': {
-          return this.runJsonScript(editFileScript, params);
+          return await this.runJsonScript(editFileScript, params);
         }
 
         case 'searchLocalFiles': {
-          return this.runJsonScript(searchFilesScript, params);
+          return await this.runJsonScript(searchFilesScript, params);
         }
 
         case 'searchFiles': {
-          return this.runJsonScript(searchFilesScript, params);
+          return await this.runJsonScript(searchFilesScript, params);
         }
 
         case 'moveLocalFiles': {
-          return this.runJsonScript(moveFilesScript, params);
+          return await this.runJsonScript(moveFilesScript, params);
         }
 
         case 'moveFiles': {
-          return this.runJsonScript(moveFilesScript, params);
+          return await this.runJsonScript(moveFilesScript, params);
         }
 
         case 'grepContent': {
-          return this.runJsonScript(grepContentScript, params);
+          return await this.runJsonScript(grepContentScript, params);
         }
 
         case 'globLocalFiles': {
-          return this.runJsonScript(globFilesScript, params);
+          return await this.runJsonScript(globFilesScript, params);
         }
 
         case 'globFiles': {
-          return this.runJsonScript(globFilesScript, params);
+          return await this.runJsonScript(globFilesScript, params);
         }
 
         default: {
@@ -186,11 +196,29 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     }
 
     try {
-      await this.ensureSession();
+      let exportPath = path;
+      if (nodePath.posix.isAbsolute(path)) {
+        await this.ensureSession();
+      } else {
+        // Resolve inside the same terminal environment used by code and file tools.
+        // Base64 keeps filenames out of shell/Python syntax, including quotes and newlines.
+        const encodedPath = Buffer.from(path).toString('base64');
+        const resolved = await this.execTerminal(
+          `python3 -c 'import base64,json,os; print(json.dumps(os.path.abspath(base64.b64decode("${encodedPath}").decode("utf-8"))))'`,
+        );
+        if (resolved.exit_code !== 0 || resolved.stdout_truncated) {
+          throw new Error('Failed to resolve export path in Onlyboxes sandbox');
+        }
+        const absolutePath: unknown = JSON.parse(resolved.stdout || 'null');
+        if (typeof absolutePath !== 'string' || !nodePath.posix.isAbsolute(absolutePath)) {
+          throw new Error('Invalid resolved export path from Onlyboxes sandbox');
+        }
+        exportPath = absolutePath;
+      }
 
       const task = await this.submitTask('terminalResource', {
         action: 'export',
-        file_path: path,
+        file_path: exportPath,
         headers: uploadHeaders,
         session_id: this.sessionId,
         signed_url: uploadUrl,
@@ -329,12 +357,13 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     }
 
     if (params.background === true) {
+      const runId = randomUUID();
       const task = await this.submitTask(
         'terminalExec',
         {
-          command,
+          command: backgroundCommand(command, runId),
           create_if_missing: true,
-          lease_ttl_sec: this.leaseTTLSec,
+          lease_ttl_sec: this.leaseForTimeout(this.timeout(params)),
           session_id: this.sessionId,
         },
         { mode: 'async', timeoutMs: this.timeout(params) },
@@ -348,8 +377,8 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
 
       return {
         result: {
-          commandId: task.task_id,
-          shell_id: task.task_id,
+          commandId: `${task.task_id}~${runId}`,
+          shell_id: `${task.task_id}~${runId}`,
         },
         success: true,
       };
@@ -533,9 +562,13 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     const commandId = String(params.commandId || '');
     if (!commandId) return this.errorResult('commandId is required');
 
-    const task = await this.request<OnlyboxesTaskResponse>(`/api/v1/tasks/${commandId}`, {
-      method: 'GET',
-    });
+    const taskId = parseBackgroundCommandId(commandId)?.taskId ?? commandId;
+    const task = await this.request<OnlyboxesTaskResponse>(
+      `/api/v1/tasks/${encodeURIComponent(taskId)}`,
+      {
+        method: 'GET',
+      },
+    );
 
     const running =
       task.status === 'running' || task.status === 'pending' || task.status === 'dispatched';
@@ -559,22 +592,13 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
   }
 
   private async killCommand(params: Record<string, unknown>): Promise<SandboxCallToolResult> {
-    const commandId = String(params.commandId || '');
-    if (!commandId) return this.errorResult('commandId is required');
-
-    const task = await this.request<OnlyboxesTaskResponse>(`/api/v1/tasks/${commandId}/cancel`, {
-      method: 'POST',
-    });
-
-    return {
-      error: task.error
-        ? { message: task.error.message || task.error.code || 'Failed to cancel task' }
-        : undefined,
-      result: {
-        success: !task.error,
-      },
-      success: !task.error,
-    };
+    const command = parseBackgroundCommandId(String(params.commandId || ''));
+    if (!command) return this.errorResult('This command has no managed background process to stop');
+    const stopped = await this.execTerminal(cancelBackgroundCommand(command.runId), 15_000);
+    if (stopped.exit_code !== 0) {
+      return this.errorResult(stopped.stderr || 'Failed to stop the background process');
+    }
+    return { result: { success: true }, success: true };
   }
 
   private async runJsonScript(
@@ -618,12 +642,18 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     }
   }
 
+  private leaseForTimeout(timeoutMs: number) {
+    // Every command renews the idle lease. Keep it beyond the command deadline,
+    // including background dispatch, so the lease cannot interrupt active work.
+    return Math.max(this.leaseTTLSec, Math.ceil(timeoutMs / 1000) + 60);
+  }
+
   private async execTerminal(command: string, timeoutMs = DEFAULT_TIMEOUT_MS) {
     return this.request<TerminalExecResult>('/api/v1/commands/terminal', {
       body: JSON.stringify({
         command,
         create_if_missing: true,
-        lease_ttl_sec: this.leaseTTLSec,
+        lease_ttl_sec: this.leaseForTimeout(timeoutMs),
         session_id: this.sessionId,
         timeout_ms: timeoutMs,
       }),
@@ -657,10 +687,37 @@ export class OnlyboxesSandboxProvider implements SandboxProvider {
     headers.set('Authorization', `Bearer ${this.createJITToken()}`);
     headers.set('Content-Type', 'application/json');
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
-      headers,
-    });
+    const parsed: unknown = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
+    const payload =
+      parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : undefined;
+    const createsSession =
+      path === '/api/v1/commands/terminal' ||
+      (path === '/api/v1/tasks' && payload?.capability === 'terminalExec');
+    const execute = (signal?: AbortSignal) =>
+      fetch(`${this.baseUrl}${path}`, {
+        ...init,
+        headers,
+        ...(signal ? { signal } : {}),
+      });
+    const response =
+      createsSession && this.capacity
+        ? await this.capacity.run(
+            {
+              leaseTtlMs:
+                this.leaseForTimeout(
+                  typeof payload?.timeout_ms === 'number' ? payload.timeout_ms : DEFAULT_TIMEOUT_MS,
+                ) * 1000,
+              sessionKey: sha256(
+                JSON.stringify([this.baseUrl, this.jitIssuer, this.options.userId, this.sessionId]),
+              ),
+              timeoutMs:
+                typeof payload?.timeout_ms === 'number' && Number.isFinite(payload.timeout_ms)
+                  ? payload.timeout_ms
+                  : DEFAULT_TIMEOUT_MS,
+            },
+            execute,
+          )
+        : await execute();
     const body = await response.text();
     const json = body ? JSON.parse(body) : {};
 

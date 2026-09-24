@@ -60,6 +60,7 @@ export const store: CreateStore = (publicState) => (set, get) => ({
     return String(readDocument(get().editor, 'markdown') || '').trimEnd();
   },
   handleSendButton: () => {
+    if (get().costFrozen) return;
     const editor = get().editor;
     if (!editor) return;
 
@@ -114,6 +115,8 @@ export const store: CreateStore = (publicState) => (set, get) => ({
     }
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        // A send preflight may have opened a dialog; preserve its default action focus.
+        if (document.querySelector('[role="dialog"]')) return;
         editor.focus();
       });
     });

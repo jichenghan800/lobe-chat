@@ -1,9 +1,20 @@
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TempFileManager } from '../tempFileManager';
+
+const managers: TempFileManager[] = [];
+const createManager = (dirname: string) => {
+  const manager = new TempFileManager(dirname);
+  managers.push(manager);
+  return manager;
+};
+afterEach(() => {
+  for (const manager of managers.splice(0)) manager.cleanup();
+  vi.restoreAllMocks();
+});
 
 // Mock node modules
 vi.mock('node:fs', () => ({
@@ -37,14 +48,14 @@ describe('TempFileManager', () => {
   });
 
   it('should create temp directory on initialization', () => {
-    new TempFileManager(mockDirname);
+    createManager(mockDirname);
 
     expect(tmpdir).toHaveBeenCalled();
     expect(mkdtempSync).toHaveBeenCalledWith(`${mockTmpDir}/${mockDirname}`);
   });
 
   it('should write temp file successfully', async () => {
-    const manager = new TempFileManager(mockDirname);
+    const manager = createManager(mockDirname);
     const testData = new Uint8Array([1, 2, 3]);
     const fileName = 'test.txt';
 
@@ -55,7 +66,7 @@ describe('TempFileManager', () => {
   });
 
   it('should cleanup on write failure', async () => {
-    const manager = new TempFileManager(mockDirname);
+    const manager = createManager(mockDirname);
     const testData = new Uint8Array([1, 2, 3]);
     const fileName = 'test.txt';
 
@@ -72,7 +83,7 @@ describe('TempFileManager', () => {
   });
 
   it('should cleanup temp directory', () => {
-    const manager = new TempFileManager(mockDirname);
+    const manager = createManager(mockDirname);
     vi.mocked(existsSync).mockReturnValue(true);
 
     manager.cleanup();
@@ -82,7 +93,7 @@ describe('TempFileManager', () => {
   });
 
   it('should skip cleanup if directory does not exist', () => {
-    const manager = new TempFileManager(mockDirname);
+    const manager = createManager(mockDirname);
     vi.mocked(existsSync).mockReturnValue(false);
 
     manager.cleanup();
@@ -93,7 +104,7 @@ describe('TempFileManager', () => {
 
   it('should register cleanup hooks on process events', () => {
     const processOnSpy = vi.spyOn(process, 'on');
-    new TempFileManager(mockDirname);
+    createManager(mockDirname);
 
     expect(processOnSpy).toHaveBeenCalledWith('exit', expect.any(Function));
     expect(processOnSpy).toHaveBeenCalledWith('uncaughtException', expect.any(Function));
@@ -124,7 +135,7 @@ describe('TempFileManager - path traversal prevention', () => {
   it.each(traversalPayloads)(
     'should sanitize path traversal filename: $input → $expected',
     async ({ input, expected }) => {
-      const manager = new TempFileManager('test-');
+      const manager = createManager('test-');
       const testData = new Uint8Array([0x41, 0x42, 0x43]);
 
       const resultPath = await manager.writeTempFile(testData, input);
@@ -136,7 +147,7 @@ describe('TempFileManager - path traversal prevention', () => {
   );
 
   it('should not write to traversed path', async () => {
-    const manager = new TempFileManager('test-');
+    const manager = createManager('test-');
     const testData = new Uint8Array([0x41, 0x42, 0x43]);
 
     const resultPath = await manager.writeTempFile(testData, '../../evil.txt');
@@ -145,5 +156,38 @@ describe('TempFileManager - path traversal prevention', () => {
     expect(resultPath).toBe('/tmp/test-xyz/evil.txt');
     expect(resultPath).not.toContain('..');
     expect(writeFileSync).toHaveBeenCalledWith('/tmp/test-xyz/evil.txt', testData);
+  });
+});
+
+describe('TempFileManager shared process cleanup', () => {
+  const events = ['exit', 'uncaughtException', 'SIGINT', 'SIGTERM'] as const;
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(tmpdir).mockReturnValue('/tmp');
+    vi.mocked(mkdtempSync).mockReturnValue('/tmp/fixture');
+    vi.mocked(existsSync).mockReturnValue(true);
+  });
+  it('registers one listener per event for many simultaneous managers and releases them after cleanup', () => {
+    const before = events.map((event) => process.listenerCount(event));
+    const batch = Array.from({ length: 20 }, () => createManager('fixture-'));
+    expect(events.map((event) => process.listenerCount(event))).toEqual(before.map((n) => n + 1));
+    batch.forEach((manager) => manager.cleanup());
+    expect(events.map((event) => process.listenerCount(event))).toEqual(before);
+  });
+  it('re-registers hooks after the last manager was cleaned without accumulating listeners', () => {
+    const before = events.map((event) => process.listenerCount(event));
+    for (let i = 0; i < 20; i++) createManager('fixture-').cleanup();
+    expect(events.map((event) => process.listenerCount(event))).toEqual(before);
+    createManager('fixture-');
+    expect(events.map((event) => process.listenerCount(event))).toEqual(before.map((n) => n + 1));
+  });
+  it('cleans all tracked managers through the registered exit handler', () => {
+    const before = new Set(process.listeners('exit'));
+    createManager('one-');
+    createManager('two-');
+    const added = process.listeners('exit').filter((handler) => !before.has(handler));
+    expect(added).toHaveLength(1);
+    added[0](0);
+    expect(rmSync).toHaveBeenCalledTimes(2);
   });
 });

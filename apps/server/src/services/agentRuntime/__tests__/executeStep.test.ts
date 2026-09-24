@@ -13,6 +13,10 @@ import { AgentRuntimeService } from '../AgentRuntimeService';
 import { CriticalAgentInterventionPersistenceError } from '../CompletionLifecycle';
 import { hookDispatcher } from '../hooks';
 
+vi.mock('@/server/services/cotti/userModelAccess', () => ({
+  assertCottiAgentAllowed: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock all heavy dependencies to isolate executeStep logic
 vi.mock('@/envs/app', () => ({ appEnv: { APP_URL: 'http://localhost:3010' } }));
 vi.mock('@/database/models/message', () => ({
@@ -1976,3 +1980,9 @@ describe('AgentRuntimeService.executeStep - queued messages flag', () => {
     expect(step.mock.calls[0][1].stepContext?.hasQueuedMessages).toBeUndefined();
   });
 });
+
+vi.mock('@/database/models/cottiModelDisplay', () => ({
+  CottiModelDisplayModel: class {
+    getConfig = async () => ({ agent: [], chat: [] });
+  },
+}));

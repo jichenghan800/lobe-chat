@@ -9,13 +9,13 @@
  * draws the same fraction as a preview frame — if the two ever disagree, the
  * preview is lying about where home will cut.
  */
-export const HOME_PORTRAIT_VISIBLE_RATIO = 0.65;
+export const HOME_PORTRAIT_VISIBLE_RATIO = 112 / 152;
 
 /** Shared with the greeting layout so text never enters the artwork's box. */
-export const HOME_PORTRAIT_WIDTH = 176;
+export const HOME_PORTRAIT_WIDTH = 152;
 export const HOME_PORTRAIT_INSET = 12;
 
-export const HOME_PORTRAIT_HEIGHT = 200;
+export const HOME_PORTRAIT_HEIGHT = 152;
 /** Space between the hero row and the card that masks the portrait. */
 export const HOME_PORTRAIT_CARD_GAP = 24;
 

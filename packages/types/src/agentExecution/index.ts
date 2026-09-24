@@ -2,7 +2,7 @@ import type { LobeAgentChatConfig } from '../agent/chatConfig';
 import type { CreateThreadWithMessageParams } from '../aiChat';
 import type { DeviceUnavailableErrorData, WorkingDirConfig } from '../device';
 import type { TaskDetail, UIChatMessage } from '../message';
-import type { ChatTopic } from '../topic';
+import type { ChatTopic, TopicSandboxProvider } from '../topic';
 
 export type AgentSignalOperationKind =
   'memory' | 'nightly-review' | 'self-feedback-intent' | 'self-reflection' | 'skill';
@@ -105,6 +105,7 @@ export interface ExecAgentAppContext {
    * this execution. Ignored when a topicId is already provided (existing topic).
    */
   initialTopicMetadata?: {
+    sandboxProvider?: TopicSandboxProvider;
     repos?: string[];
     workingDirectory?: string;
     workingDirectoryConfig?: WorkingDirConfig;

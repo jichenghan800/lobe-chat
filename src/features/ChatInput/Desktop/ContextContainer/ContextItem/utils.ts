@@ -55,7 +55,9 @@ export const getUploadChipState = ({
     indicator:
       status === 'error' || status === 'cancelled'
         ? 'error'
-        : status === 'uploading' && progress !== undefined
+        : (status === 'uploading' ||
+              (status === 'pending' && progress !== undefined && progress < 100)) &&
+            progress !== undefined
           ? 'progress'
           : busy
             ? 'loading'
@@ -73,17 +75,13 @@ export const getUploadChipSize = ({
   if (status === 'success') return undefined;
 
   const total = formatSize(file.size);
-  if (status !== 'pending' && status !== 'uploading') return total;
+  if (status !== 'uploading') return total;
 
   const { progress } = getUploadChipState({ status, uploadState });
   if (status === 'uploading' && progress === undefined) return `—/${total}`;
 
   const unit = total.split(' ')[1];
   const divisor = unit === 'GB' ? 1024 ** 3 : unit === 'MB' ? 1024 ** 2 : 1024;
-  const transferred = (
-    (file.size * (status === 'pending' ? 0 : progress!)) /
-    100 /
-    divisor
-  ).toFixed(1);
+  const transferred = ((file.size * progress!) / 100 / divisor).toFixed(1);
   return `${transferred}/${total}`;
 };

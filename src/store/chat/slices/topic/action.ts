@@ -3,7 +3,7 @@
 import { TRACING_SCENARIOS } from '@lobechat/const';
 import {
   chainSummaryTitle,
-  TOPIC_TITLE_JSON_SCHEMA,
+  TOPIC_METADATA_JSON_SCHEMA,
   TOPIC_TITLE_PROMPT_VERSION,
 } from '@lobechat/prompts';
 import {
@@ -338,7 +338,7 @@ export class ChatTopicActionImpl {
     const { model, provider } = systemAgentSelectors.topic(useUserStore.getState());
 
     // Structured generation, the same way `SystemAgentService.generateTopicTitle`
-    // does it: the chain asks for `TOPIC_TITLE_JSON_SCHEMA`, so read the title
+    // does it: the chain asks for `TOPIC_METADATA_JSON_SCHEMA`, so read the title
     // off the parsed object. Streaming a completion here used to write the raw
     // answer to `topic.title`, which named topics `{"title":"简单问候"}`.
     try {
@@ -347,15 +347,16 @@ export class ChatTopicActionImpl {
           ...chainSummaryTitle(
             messagesForTitle,
             userGeneralSettingsSelectors.currentResponseLanguage(useUserStore.getState()),
+            true,
           ),
           metadata: { topicId },
           model,
           provider,
-          schema: TOPIC_TITLE_JSON_SCHEMA,
+          schema: TOPIC_METADATA_JSON_SCHEMA,
           tracing: {
             promptVersion: TOPIC_TITLE_PROMPT_VERSION,
             scenario: TRACING_SCENARIOS.TopicTitle,
-            schemaName: TOPIC_TITLE_JSON_SCHEMA.name,
+            schemaName: TOPIC_METADATA_JSON_SCHEMA.name,
             topicId,
           },
         },
@@ -367,7 +368,13 @@ export class ChatTopicActionImpl {
       // otherwise stay in the sidebar forever.
       if (!title) return restorePreviousTitle();
 
-      await this.#get().internal_updateTopic(topicId, { title });
+      const description = (data as { description?: string } | undefined)?.description
+        ?.trim()
+        .slice(0, 100);
+      await this.#get().internal_updateTopic(topicId, {
+        title,
+        ...(description ? { description } : {}),
+      });
     } catch (error) {
       console.error('[summaryTopicTitle] failed to generate a title:', error);
       restorePreviousTitle();

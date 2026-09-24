@@ -315,7 +315,7 @@ describe('useSelectExecutionTarget', () => {
         .mockRejectedValue(new Error('save failed'));
       const { result } = renderHook(() => useSelectExecutionTarget('agent-id'));
 
-      await expect(result.current('sandbox')).resolves.toBeUndefined();
+      await expect(result.current('sandbox')).resolves.toBe(false);
 
       expect(toast.error).toHaveBeenCalledWith('saveAgentConfigFail');
       expect(testState.agent.updateAgentConfigById).not.toHaveBeenCalled();
@@ -327,7 +327,7 @@ describe('useSelectExecutionTarget', () => {
         .mockRejectedValue(new Error('save failed'));
       const { result } = renderHook(() => useSelectExecutionTarget('agent-id'));
 
-      await expect(result.current('sandbox', undefined, { silent: true })).resolves.toBeUndefined();
+      await expect(result.current('sandbox', undefined, { silent: true })).resolves.toBe(false);
 
       expect(toast.error).not.toHaveBeenCalled();
     });
@@ -541,7 +541,7 @@ describe('useSelectExecutionTarget', () => {
       };
       const { result } = renderHook(() => useSelectExecutionTarget('agent-id'));
 
-      await result.current('sandbox');
+      expect(await result.current('sandbox')).toBe(false);
 
       expect(testState.agent.updateAgentConfigById).toHaveBeenCalledTimes(1);
       expect(testState.user.updateWorkspaceUserPreference).not.toHaveBeenCalled();

@@ -15,6 +15,7 @@ import {
   type ToolManifest,
   type WorkingModel,
 } from '@lobechat/types';
+import type { PartialDeep } from 'type-fest';
 
 import { applyToolNameMaxLength } from '@/helpers/applyToolNameMaxLength';
 import { isToolAvailableInCurrentEnv } from '@/helpers/toolAvailability';
@@ -34,6 +35,7 @@ import {
 import { connectorSelectors } from '@/store/tool/slices/connector';
 import { useUserStore } from '@/store/user';
 import { settingsSelectors } from '@/store/user/selectors';
+import type { LobeAgentConfig } from '@/types/agent';
 
 import { getSearchConfig } from '../getSearchConfig';
 import { isCanUseFC } from '../isCanUseFC';
@@ -143,12 +145,25 @@ export const createAgentToolsEngine = (
   pluginIds?: string[],
   /** Conversation context for context-aware builtin manifests (scope, isSubAgent). */
   manifestContext?: BuiltinToolResolveContext,
+  selectedToolIds?: string[],
+  targetAgent?: { agentId: string; config: PartialDeep<LobeAgentConfig> },
 ) => {
-  const searchConfig = getSearchConfig(workingModel.model, workingModel.provider);
-  const agentState = getAgentStoreState();
-  const activeAgentId = agentState.activeAgentId || '';
+  const globalAgentState = getAgentStoreState();
+  const agentState = targetAgent
+    ? {
+        ...globalAgentState,
+        activeAgentId: targetAgent.agentId,
+        agentMap: { ...globalAgentState.agentMap, [targetAgent.agentId]: targetAgent.config },
+      }
+    : globalAgentState;
   const chatConfig = agentChatConfigSelectors.currentChatConfig(agentState);
-
+  const searchConfig = getSearchConfig(
+    workingModel.model,
+    workingModel.provider,
+    targetAgent?.agentId,
+    targetAgent ? chatConfig : undefined,
+  );
+  const activeAgentId = agentState.activeAgentId || '';
   // The rules — mode, per-tool enablement and defaults — are shared with the
   // server runtime through `@lobechat/mecha`; the browser only assembles its
   // facts. It has no device gateway, so no device walls apply here and the
@@ -175,6 +190,7 @@ export const createAgentToolsEngine = (
       )(getAiInfraStoreState()),
     },
     runtimePluginIds: pluginIds,
+    selectedToolIds,
     useApplicationBuiltinSearchTool: searchConfig.useApplicationBuiltinSearchTool,
   });
 

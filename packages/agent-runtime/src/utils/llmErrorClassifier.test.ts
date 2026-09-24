@@ -106,3 +106,20 @@ describe('llmErrorClassifier', () => {
     ).toBe('stop');
   });
 });
+
+describe('numeric runtime HTTP error types', () => {
+  it.each([400, 403])('stops a local policy rejection with errorType %s', (errorType) => {
+    const error = { errorType, error: { code: 'TOPIC_COST_FROZEN', message: '话题已冻结' } };
+    expect(classifyLLMError(error).kind).toBe('stop');
+    // Browser fetch errors carry the HTTP number as `type`, rather than `errorType`.
+    expect(classifyLLMError({ type: errorType, body: error.error }).kind).toBe('stop');
+    expect(classifyLLMError({ error }).kind).toBe('stop');
+    expect(classifyLLMError(Object.assign(new Error('话题已冻结'), { errorType })).kind).toBe(
+      'stop',
+    );
+  });
+
+  it('still retries numeric rate limits', () => {
+    expect(classifyLLMError({ errorType: 429, error: { message: '稍后重试' } }).kind).toBe('retry');
+  });
+});

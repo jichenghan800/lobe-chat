@@ -94,9 +94,9 @@ describe('getUploadChipSize', () => {
     );
   });
 
-  it('shows zero transferred while pending even with stale progress', () => {
+  it('shows total size without pretending hash progress is uploaded bytes', () => {
     expect(getUploadChipSize({ file, status: 'pending', uploadState: uploadState(100) })).toBe(
-      '0.0/2.4 MB',
+      '2.4 MB',
     );
   });
 
@@ -132,4 +132,16 @@ describe('getUploadChipSize', () => {
       }),
     ).toBe('0.0/0.0 KB');
   });
+});
+
+it('exposes hash progress separately from upload completion', () => {
+  expect(getUploadChipState({ status: 'pending', uploadState: uploadState(42) })).toMatchObject({
+    busy: true,
+    canPreview: false,
+    indicator: 'progress',
+    progress: 42,
+  });
+  expect(
+    getUploadChipState({ status: 'processing', uploadState: uploadState(99.9) }),
+  ).toMatchObject({ busy: true, canPreview: false, indicator: 'loading' });
 });

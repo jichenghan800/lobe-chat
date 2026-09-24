@@ -286,7 +286,7 @@ const execInSandboxHandler = async ({
       }
     }
 
-    const sandboxService = createSandboxService({
+    const sandboxService = await createSandboxService({
       fileService: ctx.fileService,
       marketService: ctx.marketService,
       serverDB: ctx.serverDB,
@@ -718,7 +718,7 @@ export const marketRouter = router({
       log('Exporting and uploading file: %s from path: %s in topic: %s', filename, path, topicId);
 
       try {
-        const sandboxService = createSandboxService({
+        const sandboxService = await createSandboxService({
           fileService: ctx.fileService,
           marketService: ctx.marketService,
           topicId,

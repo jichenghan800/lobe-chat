@@ -223,6 +223,15 @@ class AgentService {
     );
   };
 
+  getAgentFileContents = async (agentId: string, fileContentIds: string[]) => {
+    const config = await lambdaClient.agent.getAgentConfigById.query({
+      agentId,
+      fileContentIds,
+      includeFileContent: true,
+    });
+    return config?.files ?? [];
+  };
+
   getAgentConfigById = async (agentId: string) => {
     return lambdaClient.agent.getAgentConfigById.query({ agentId });
   };

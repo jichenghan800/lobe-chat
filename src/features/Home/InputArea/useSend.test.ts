@@ -1,12 +1,19 @@
 /**
  * @vitest-environment happy-dom
  */
+import type { UploadFileItem } from '@lobechat/types';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SendButtonHandler } from '@/features/ChatInput/store/initialState';
+import { setPendingSandboxProvider } from '@/store/chat/pendingSandboxProvider';
 
 import { useSend } from './useSend';
+
+const sandboxGateMock = vi.hoisted(() => vi.fn().mockResolvedValue({}));
+vi.mock('@/features/SandboxAccess/useSandboxAccess', () => ({
+  useSandboxAccess: () => sandboxGateMock,
+}));
 
 const routerMock = vi.hoisted(() => ({
   push: vi.fn(),
@@ -34,7 +41,7 @@ const chatState = vi.hoisted(() => ({
 
 const fileState = vi.hoisted(() => ({
   chatContextSelectionsByContext: {} as Record<string, any[]>,
-  chatUploadFileList: [],
+  chatUploadFileList: [] as Partial<UploadFileItem>[],
   clearChatContextSelections: clearChatContextSelectionsMock,
   clearChatUploadFileList: clearChatUploadFileListMock,
   restoreChatContextSelections: restoreChatContextSelectionsMock,
@@ -61,6 +68,7 @@ const agentState = vi.hoisted(() => ({
     agt_inbox: {},
   } as Record<string, any>,
   inboxAgentId: 'agt_inbox',
+  waitForAgentConfigUpdateById: vi.fn().mockResolvedValue(undefined),
   internal_dispatchAgentMap: vi.fn(),
 }));
 
@@ -148,16 +156,13 @@ vi.mock('@/store/chat', () => {
   return { useChatStore };
 });
 
-vi.mock('@/store/file', () => {
+vi.mock('@/store/file', async () => {
+  const { fileChatSelectors } = await import('@/store/file/slices/chat/selectors');
   const useFileStore = (selector: (state: typeof fileState) => unknown) => selector(fileState);
   useFileStore.getState = () => fileState;
 
   return {
-    fileChatSelectors: {
-      chatContextSelections: (contextKey: string) => (state: typeof fileState) =>
-        state.chatContextSelectionsByContext[contextKey] ?? [],
-      chatUploadFileList: (state: typeof fileState) => state.chatUploadFileList,
-    },
+    fileChatSelectors,
     useFileStore,
   };
 });
@@ -174,10 +179,62 @@ vi.mock('@/store/task', () => ({
 }));
 
 describe('Home InputArea useSend', () => {
+  it('does not dispatch or clear newly attached files during authorization', async () => {
+    let release: (value: {}) => void = () => {};
+    sandboxGateMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const { result } = renderHook(() => useSend('agent'));
+    let pending: unknown;
+    await act(async () => {
+      pending = result.current.send({
+        clearContent: clearContentMock,
+        editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+        getEditorData: () => ({ type: 'doc' }),
+        getMarkdownContent: () => 'Keep this draft',
+      });
+    });
+    fileState.chatUploadFileList = [{ id: 'new-attachment' }];
+    await act(async () => {
+      release({});
+      await pending;
+    });
+    expect(sendMessageMock).not.toHaveBeenCalled();
+    expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+    expect(clearContentMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['agent', 'task'] as const)(
+    'keeps input and attachments when %s sandbox authorization is dismissed',
+    async (mode) => {
+      sandboxGateMock.mockResolvedValueOnce(false);
+      const { result } = renderHook(() => useSend(mode));
+      await act(async () => {
+        await result.current.send({
+          clearContent: clearContentMock,
+          editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+          getEditorData: () => ({ type: 'doc' }),
+          getMarkdownContent: () => 'Sandbox acceptance draft',
+        });
+      });
+      expect(sendMessageMock).not.toHaveBeenCalled();
+      expect(createTaskMock).not.toHaveBeenCalled();
+      expect(runTaskMock).not.toHaveBeenCalled();
+      expect(clearContentMock).not.toHaveBeenCalled();
+      expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+      expect(clearChatContextSelectionsMock).not.toHaveBeenCalled();
+    },
+  );
+
   beforeEach(() => {
+    setPendingSandboxProvider('agt_custom', 'market');
     routerMock.push.mockReset();
     routerMock.replace.mockReset();
     sendMessageMock.mockReset();
+    agentState.waitForAgentConfigUpdateById.mockReset().mockResolvedValue(undefined);
     clearContentMock.mockReset();
     clearChatUploadFileListMock.mockReset();
     clearChatContextSelectionsMock.mockReset();
@@ -199,41 +256,46 @@ describe('Home InputArea useSend', () => {
     activeWorkspaceIdMock.value = null;
   });
 
-  it('creates and starts a private workspace task with the selected Agent', async () => {
-    activeWorkspaceIdMock.value = 'workspace-1';
-    globalState.systemStatus.homeSelectedAgentId = 'agt_custom';
-    homeState.ungroupedAgents = [{ id: 'agt_custom', type: 'agent' }];
-    agentState.agentMap.agt_custom = {};
-    createTaskMock.mockResolvedValue({
-      assigneeAgentId: 'agt_custom',
-      identifier: 'T-26',
-    });
-    runTaskMock.mockResolvedValue({ topicId: 'tpc-26' });
-    const { result } = renderHook(() => useSend('task'));
-    const params: Parameters<SendButtonHandler>[0] = {
-      clearContent: vi.fn(),
-      editor: {} as Parameters<SendButtonHandler>[0]['editor'],
-      getEditorData: () => ({ type: 'doc' }),
-      getMarkdownContent: () => 'Prepare the weekly report',
-    };
+  it.each(['market', 'onlyboxes'] as const)(
+    'creates a task with the selected %s sandbox',
+    async (sandboxProvider) => {
+      setPendingSandboxProvider('agt_custom', sandboxProvider);
+      activeWorkspaceIdMock.value = 'workspace-1';
+      globalState.systemStatus.homeSelectedAgentId = 'agt_custom';
+      homeState.ungroupedAgents = [{ id: 'agt_custom', type: 'agent' }];
+      agentState.agentMap.agt_custom = {};
+      createTaskMock.mockResolvedValue({
+        assigneeAgentId: 'agt_custom',
+        identifier: 'T-26',
+      });
+      runTaskMock.mockResolvedValue({ topicId: 'tpc-26' });
+      const { result } = renderHook(() => useSend('task'));
+      const params: Parameters<SendButtonHandler>[0] = {
+        clearContent: vi.fn(),
+        editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+        getEditorData: () => ({ type: 'doc' }),
+        getMarkdownContent: () => 'Prepare the weekly report',
+      };
 
-    await act(async () => {
-      await result.current.send(params);
-    });
+      await act(async () => {
+        await result.current.send(params);
+      });
 
-    expect(createTaskMock).toHaveBeenCalledWith({
-      assigneeAgentId: 'agt_custom',
-      editorData: { type: 'doc' },
-      instruction: 'Prepare the weekly report',
-      name: 'Prepare the weekly report',
-      visibility: 'private',
-    });
-    expect(runTaskMock).toHaveBeenCalledWith('T-26', undefined, { throwOnError: true });
-    expect(sendMessageMock).not.toHaveBeenCalled();
-    expect(toggleTaskAgentPanelMock).toHaveBeenCalledWith(true);
-    expect(routerMock.push).toHaveBeenCalledWith('/tasks?agentId=agt_custom&topicId=tpc-26');
-    expect(clearContentMock).toHaveBeenCalledTimes(1);
-  });
+      expect(createTaskMock).toHaveBeenCalledWith({
+        assigneeAgentId: 'agt_custom',
+        config: { sandboxProvider },
+        editorData: { type: 'doc' },
+        instruction: 'Prepare the weekly report',
+        name: 'Prepare the weekly report',
+        visibility: 'private',
+      });
+      expect(runTaskMock).toHaveBeenCalledWith('T-26', undefined, { throwOnError: true });
+      expect(sendMessageMock).not.toHaveBeenCalled();
+      expect(toggleTaskAgentPanelMock).toHaveBeenCalledWith(true);
+      expect(routerMock.push).toHaveBeenCalledWith('/tasks?agentId=agt_custom&topicId=tpc-26');
+      expect(clearContentMock).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('keeps the complete draft when the task row could not be created', async () => {
     createTaskMock.mockResolvedValue(null);
@@ -303,7 +365,7 @@ describe('Home InputArea useSend', () => {
   });
 
   it('does not discard attachments that Task mode cannot persist', async () => {
-    fileState.chatUploadFileList = [{ id: 'file-1' }] as any;
+    fileState.chatUploadFileList = [{ id: 'file-1', status: 'success' }] as any;
     const { result } = renderHook(() => useSend('task'));
     const params: Parameters<SendButtonHandler>[0] = {
       clearContent: vi.fn(),
@@ -323,7 +385,7 @@ describe('Home InputArea useSend', () => {
 
   it('explains why an attachment-only Task submission cannot proceed', async () => {
     chatState.inputMessage = '';
-    fileState.chatUploadFileList = [{ id: 'file-1' }] as any;
+    fileState.chatUploadFileList = [{ id: 'file-1', status: 'success' }] as any;
     const { result } = renderHook(() => useSend('task'));
     const params: Parameters<SendButtonHandler>[0] = {
       clearContent: vi.fn(),
@@ -497,5 +559,75 @@ describe('Home InputArea useSend', () => {
       }),
     );
     expect(clearChatContextSelectionsMock).toHaveBeenCalledWith('home:chat:agt_inbox');
+  });
+  it.each(['pending', 'uploading', 'error', 'cancelled'] as const)(
+    'keeps the text and attachment draft when an upload is %s',
+    async (status) => {
+      fileState.chatUploadFileList = [{ id: 'screenshot.png', status }];
+      const { result } = renderHook(() => useSend('chat'));
+      const clearContent = vi.fn();
+      await act(async () => {
+        await result.current.send({
+          clearContent,
+          editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+          getEditorData: () => undefined,
+          getMarkdownContent: () => 'review attachment',
+        });
+      });
+      expect(sendMessageMock).not.toHaveBeenCalled();
+      expect(clearContent).not.toHaveBeenCalled();
+      expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps an Agent-only spreadsheet draft on Home instead of sending it through Chat', async () => {
+    fileState.chatUploadFileList = [
+      { id: 'file-sheet', requiresAgentMode: true, status: 'success' },
+    ] as any;
+    const { result } = renderHook(() => useSend('chat'));
+
+    await act(async () => {
+      await result.current.send({
+        clearContent: vi.fn(),
+        editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+        getEditorData: () => undefined,
+        getMarkdownContent: () => 'analyze this workbook',
+      });
+    });
+
+    expect(sendMessageMock).not.toHaveBeenCalled();
+    expect(clearChatUploadFileListMock).not.toHaveBeenCalled();
+    expect(messageErrorMock).toHaveBeenCalledWith('attachment.agentModeRequiredHome');
+  });
+
+  it('does not send until the selected agent model is saved', async () => {
+    let finish!: () => void;
+    agentState.waitForAgentConfigUpdateById.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const { result } = renderHook(() => useSend('chat'));
+    const params: Parameters<SendButtonHandler>[0] = {
+      clearContent: vi.fn(),
+      editor: {} as Parameters<SendButtonHandler>[0]['editor'],
+      getEditorData: () => undefined,
+      getMarkdownContent: () => 'test pending save',
+    };
+    sendMessageMock.mockClear();
+    let sending!: Promise<void>;
+    act(() => {
+      sending = Promise.resolve(result.current.send(params));
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(sendMessageMock).not.toHaveBeenCalled();
+    await act(async () => {
+      finish();
+      await sending;
+    });
+    expect(sendMessageMock).toHaveBeenCalledTimes(1);
   });
 });

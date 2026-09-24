@@ -144,5 +144,6 @@ export interface ServerCreateAgentToolsEngineParams {
   /** Provider name for function calling compatibility check */
   provider: string;
   /** Final search-routing decision resolved by the caller. */
+  selectedToolIds?: string[];
   useApplicationBuiltinSearchTool?: boolean;
 }

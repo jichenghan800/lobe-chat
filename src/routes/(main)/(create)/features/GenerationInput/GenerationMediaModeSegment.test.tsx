@@ -1,7 +1,7 @@
 /**
  * @vitest-environment happy-dom
  */
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -71,33 +71,17 @@ vi.mock('@/store/serverConfig', () => ({
 }));
 
 describe('GenerationMediaModeSegment', () => {
-  it('uses an icon-only toggle group in the composer toolbar', () => {
+  it('hides the toolbar media switch', () => {
     render(<GenerationMediaModeSegment mode="image" />);
-
-    const toggleGroup = screen.getByTestId('mode-toggle-group');
-    expect(toggleGroup).toBeInTheDocument();
+    expect(screen.queryByTestId('mode-toggle-group')).not.toBeInTheDocument();
     expect(screen.queryByTestId('mode-select')).not.toBeInTheDocument();
-    expect(toggleGroup.querySelectorAll('svg')).toHaveLength(2);
-    expect(screen.queryByText('tab.image')).not.toBeInTheDocument();
     expect(screen.queryByText('tab.video')).not.toBeInTheDocument();
-    expect(componentMocks.segmented?.options?.map((option) => option.label)).toEqual([
-      'tab.image',
-      'tab.video',
-    ]);
-    expect(componentMocks.segmented?.classNames).toEqual({
-      item: 'toolbar-item',
-      itemLabel: 'toolbar-label',
-    });
-
-    act(() => componentMocks.segmented?.onChange?.('video'));
-    expect(componentMocks.navigate).toHaveBeenCalledWith('/video');
   });
 
-  it('keeps the labeled select in the hero title', () => {
+  it('retains a static image heading without a video selector', () => {
     render(<GenerationMediaModeSegment layout="hero" mode="image" />);
-
-    expect(screen.getByTestId('mode-select')).toBeInTheDocument();
-    expect(screen.queryByTestId('mode-toggle-group')).not.toBeInTheDocument();
+    expect(screen.getByText('tab.image')).toBeInTheDocument();
+    expect(screen.queryByTestId('mode-select')).not.toBeInTheDocument();
   });
 });
 

@@ -3,6 +3,8 @@ import { TRPCError } from '@trpc/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BriefModel } from '@/database/models/brief';
+import { TaskModel } from '@/database/models/task';
+import { TaskTopicModel } from '@/database/models/taskTopic';
 
 import { runHeartbeatTick } from './heartbeatTick';
 import { TaskRunnerService } from './index';
@@ -28,6 +30,14 @@ vi.mock('@/database/models/brief', () => ({
   BriefModel: vi.fn(),
 }));
 
+vi.mock('@/database/models/task', () => ({
+  TaskModel: vi.fn(),
+}));
+
+vi.mock('@/database/models/taskTopic', () => ({
+  TaskTopicModel: vi.fn(),
+}));
+
 vi.mock('@/server/services/taskScheduler', () => ({
   setTaskSchedulerExecutionCallback: mockSetTaskSchedulerExecutionCallback,
 }));
@@ -42,6 +52,13 @@ describe('runHeartbeatTick', () => {
 
   const mockBriefModel = {
     hasUnresolvedUrgentByTask: vi.fn().mockResolvedValue(false),
+  };
+  const mockTaskModel = {
+    updateContext: vi.fn(),
+    updateStatus: vi.fn(),
+  };
+  const mockTaskTopicModel = {
+    countConsecutiveCompletedAutomationRuns: vi.fn().mockResolvedValue(0),
   };
   const mockRunner = {
     runTask: vi.fn(),
@@ -66,6 +83,33 @@ describe('runHeartbeatTick', () => {
     (TaskRunnerService as any).mockImplementation(function () {
       return mockRunner;
     });
+    mockTaskTopicModel.countConsecutiveCompletedAutomationRuns.mockResolvedValue(0);
+    (TaskModel as any).mockImplementation(function () {
+      return mockTaskModel;
+    });
+    (TaskTopicModel as any).mockImplementation(function () {
+      return mockTaskTopicModel;
+    });
+  });
+
+  it('pauses before the next heartbeat after three consecutive results go unviewed', async () => {
+    mockSelectTask.mockResolvedValue([baseTask({ context: {} })]);
+    mockTaskTopicModel.countConsecutiveCompletedAutomationRuns.mockResolvedValue(3);
+
+    const outcome = await runHeartbeatTick(taskId, userId);
+
+    expect(outcome).toEqual({ ran: false, reason: 'unviewed-results' });
+    expect(mockTaskModel.updateStatus).toHaveBeenCalledWith(taskId, 'paused', { error: null });
+    expect(mockRunner.runTask).not.toHaveBeenCalled();
+  });
+
+  it('skips an already paused heartbeat task without evaluating results', async () => {
+    mockSelectTask.mockResolvedValue([baseTask({ status: 'paused' })]);
+
+    const outcome = await runHeartbeatTick(taskId, userId);
+
+    expect(outcome).toEqual({ ran: false, reason: 'paused' });
+    expect(mockTaskTopicModel.countConsecutiveCompletedAutomationRuns).not.toHaveBeenCalled();
   });
 
   it('runs the task and excludes transient error briefs from tick gating', async () => {

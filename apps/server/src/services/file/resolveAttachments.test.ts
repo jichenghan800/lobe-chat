@@ -7,8 +7,8 @@ import { resolveAttachmentMetadata, resolveAttachmentsByFileIds } from './resolv
 
 const mocks = vi.hoisted(() => ({
   findByIds: vi.fn(),
-  getFullFileUrl: vi.fn(),
   parseFile: vi.fn(),
+  getFullFileUrl: vi.fn(),
 }));
 
 vi.mock('@/database/models/file', () => ({
@@ -125,4 +125,18 @@ describe('resolveAttachmentMetadata', () => {
       expect.objectContaining({ content: 'Visitor report', id: 'file-visitor-pdf' }),
     ]);
   });
+});
+
+it('rejects large CSV before parsing in Chat and keeps its original URL in Agent', async () => {
+  mocks.findByIds.mockResolvedValue([
+    { id: 'large', name: 'data.csv', fileType: 'text/csv', size: 83_575_699, url: 'data.csv' },
+  ]);
+  mocks.getFullFileUrl.mockResolvedValue('https://files.example.com/data.csv');
+  const args = { db: {} as LobeChatDatabase, fileIds: ['large'], userId: 'user-1' };
+  await expect(resolveAttachmentsByFileIds(args)).rejects.toThrow('Switch to Agent mode');
+  expect(mocks.parseFile).not.toHaveBeenCalled();
+  const result = await resolveAttachmentsByFileIds({ ...args, metadataOnlySpreadsheets: true });
+  expect(result.fileList[0].url).toBe('https://files.example.com/data.csv');
+  expect(result.fileList[0].content).toBeUndefined();
+  expect(mocks.parseFile).not.toHaveBeenCalled();
 });

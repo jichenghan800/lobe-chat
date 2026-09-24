@@ -49,6 +49,8 @@ const testState = vi.hoisted(() => ({
     toggleProviderEnabled: vi.fn(async () => {}),
     toggleProviderModelEnabled: vi.fn(async () => {}),
   },
+  modelDisplayReady: true,
+  userPolicyReady: true,
   isDesktop: false,
   permission: {
     canManageAiInfra: true,
@@ -98,8 +100,12 @@ vi.mock('@/features/ChatInput/hooks/useChatInputResourceAccess', () => ({
   useChatInputResourceAccess: () => testState.resourceAccess,
 }));
 
-vi.mock('@/hooks/useEnabledChatModels', () => ({
-  useEnabledChatModels: () => testState.aiInfra.enabledChatModelList,
+vi.mock('@/_custom/hooks/useCottiModelDisplayConfig', () => ({
+  useCottiModelDisplayConfig: () => ({ data: testState.modelDisplayReady ? {} : undefined }),
+}));
+
+vi.mock('@/_custom/hooks/useCottiUserPolicy', () => ({
+  useCottiUserPolicy: () => ({ data: testState.userPolicyReady ? { vip: true } : undefined }),
 }));
 
 vi.mock('@/hooks/usePermission', () => ({
@@ -156,6 +162,8 @@ describe('useChatInputNotice', () => {
     testState.aiInfra.toggleProviderEnabled.mockReset();
     testState.aiInfra.toggleProviderModelEnabled.mockReset();
     toastError.mockReset();
+    testState.modelDisplayReady = true;
+    testState.userPolicyReady = true;
     testState.isDesktop = false;
     testState.permission.canManageAiInfra = true;
     testState.permission.reason = undefined;
@@ -271,6 +279,29 @@ describe('useChatInputNotice', () => {
 
     expect(result.current).toEqual({ key: 'input.modelUnavailable', type: 'warning' });
   });
+
+  it.each(['modelDisplayReady', 'userPolicyReady'] as const)(
+    'does not mistake pending %s for a disabled model on initial load',
+    (pending) => {
+      testState.aiInfra.isInitAiProviderRuntimeState = true;
+      testState.aiInfra.builtinAiModelList = [{ id: 'gpt-4o', providerId: 'openai', type: 'chat' }];
+      testState.aiInfra.enabledAiProviders = [{ id: 'openai' }];
+      testState.aiInfra.enabledChatModelList = [{ id: 'openai', children: [{ id: 'gpt-4o' }] }];
+      testState[pending] = false;
+      const { result, rerender } = renderHook(() => useChatInputNotice());
+      expect(result.current).toBeUndefined();
+
+      testState[pending] = true;
+      rerender();
+      expect(result.current).toBeUndefined();
+
+      // A real disable after loading must still be reported immediately.
+      testState.aiInfra.enabledChatModelList = [];
+      rerender();
+      expect(result.current).toMatchObject({ key: 'input.modelDisabled' });
+      expect(testState.aiInfra.toggleProviderModelEnabled).not.toHaveBeenCalled();
+    },
+  );
 
   it('offers to enable a model that still exists but is disabled', async () => {
     testState.aiInfra.isInitAiProviderRuntimeState = true;
@@ -511,6 +542,8 @@ describe('useChatInputNotice', () => {
   });
 
   it('does not return the sandbox tip off desktop even when the sandbox is selected', () => {
+    testState.modelDisplayReady = true;
+    testState.userPolicyReady = true;
     testState.isDesktop = false;
     testState.agent.agencyConfig = { executionTarget: 'sandbox' };
     testState.aiInfra.isInitAiProviderRuntimeState = true;

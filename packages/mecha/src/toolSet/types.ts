@@ -72,6 +72,8 @@ export interface ToolRuleRequest {
    * group or page scope); enabled like pinned plugins in agent mode.
    */
   runtimePluginIds?: readonly string[];
+  /** Explicit tools selected for this turn; runtime gates still apply. */
+  selectedToolIds?: readonly string[];
   /** The application's web-browsing tool should serve search for this model. */
   useApplicationBuiltinSearchTool?: boolean;
 }

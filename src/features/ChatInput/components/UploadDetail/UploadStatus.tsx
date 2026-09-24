@@ -27,7 +27,9 @@ const UploadStatus = memo<UploadStateProps>(({ error, status, size, uploadState 
         <Flexbox horizontal align={'center'} gap={4}>
           <Icon spin icon={Loader2Icon} size={12} />
           <Text style={{ fontSize: 12 }} type={'secondary'}>
-            {t('upload.preview.status.pending')}
+            {uploadState?.progress === undefined
+              ? t('upload.preview.status.pending')
+              : t('upload.preview.status.checkingProgress', { progress: uploadState.progress })}
           </Text>
         </Flexbox>
       );
@@ -47,9 +49,9 @@ const UploadStatus = memo<UploadStateProps>(({ error, status, size, uploadState 
     case 'processing': {
       return (
         <Flexbox horizontal align={'center'} gap={4}>
-          <Progress percent={uploadState?.progress} size={14} type="circle" />
+          <Icon spin icon={Loader2Icon} size={12} />
           <Text style={{ fontSize: 12 }} type={'secondary'}>
-            {formatSize(size)}
+            {t('upload.preview.status.processing')}
           </Text>
         </Flexbox>
       );

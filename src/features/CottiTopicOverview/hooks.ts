@@ -1,0 +1,127 @@
+import { useDebounce } from 'ahooks';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
+
+import { useClientDataSWR } from '@/libs/swr';
+import { cottiTopicOverviewService } from '@/services/cottiTopicOverview';
+import type { CottiTopicOverviewQuery } from '@/types/cotti/topicOverview';
+
+import { getOverviewTopicId } from './topicLink';
+
+const parsePage = (value: string | null) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+};
+
+export const useCottiTopicOverviewList = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const state = useMemo(
+    () => ({
+      sort: searchParams.get('sort') === 'cost' ? ('cost' as const) : ('updated' as const),
+      page: parsePage(searchParams.get('page')),
+      q: searchParams.get('q')?.trim() ?? '',
+      status: (['active', 'frozen', 'all'].includes(searchParams.get('status') ?? '')
+        ? searchParams.get('status')
+        : 'all') as 'active' | 'frozen' | 'all',
+    }),
+    [searchParams],
+  );
+  const [queryInput, setQueryInput] = useState(state.q);
+  const debouncedQuery = useDebounce(queryInput, { wait: 300 });
+  const query = {
+    sort: state.sort,
+    status: state.status,
+    page: state.page,
+    pageSize: 50,
+    q: getOverviewTopicId(state.q) ?? (state.q || undefined),
+  } as const satisfies CottiTopicOverviewQuery;
+
+  useEffect(() => {
+    setQueryInput(state.q);
+  }, [state.q]);
+
+  useEffect(() => {
+    if (debouncedQuery.trim() === state.q) return;
+    const next = new URLSearchParams(searchParams);
+    const normalizedQuery = debouncedQuery.trim();
+    if (normalizedQuery) next.set('q', normalizedQuery);
+    else next.delete('q');
+    next.delete('page');
+    if (normalizedQuery) next.set('status', 'all');
+    setSearchParams(next, { replace: true });
+  }, [debouncedQuery, searchParams, setSearchParams, state.q]);
+
+  const swr = useClientDataSWR(
+    [
+      'cotti',
+      'topic-overview',
+      'list',
+      query.q ?? '',
+      query.page,
+      query.pageSize,
+      query.status,
+      query.sort,
+    ],
+    () => cottiTopicOverviewService.list(query),
+    { keepPreviousData: true, revalidateOnFocus: false },
+  );
+
+  return {
+    setSort: (sort: 'cost' | 'updated') => {
+      const next = new URLSearchParams(searchParams);
+      next.set('sort', sort);
+      next.delete('page');
+      if (sort === 'updated') next.set('status', 'all');
+      setSearchParams(next);
+    },
+    setStatus: (status: 'active' | 'frozen' | 'all') => {
+      const next = new URLSearchParams(searchParams);
+      next.set('status', status);
+      next.delete('page');
+      setSearchParams(next);
+    },
+    queryInput,
+    setPage: (page: number) => {
+      const next = new URLSearchParams(searchParams);
+      if (page > 1) next.set('page', String(page));
+      else next.delete('page');
+      setSearchParams(next);
+    },
+    setQueryInput,
+    state,
+    swr,
+  };
+};
+
+export const useCottiTopicOverviewDetail = (topicId?: string) => {
+  const openedAt = useMemo(() => ({ topicId, time: Date.now() }), [topicId]);
+  return useClientDataSWR(
+    topicId ? ['cotti', 'topic-overview', 'detail', topicId, openedAt.time] : null,
+    () => cottiTopicOverviewService.getDetail(topicId!),
+    { revalidateOnFocus: false, revalidateOnReconnect: false },
+  );
+};
+
+export const useCottiTopicAccounting = (topicId: string) =>
+  useClientDataSWR(
+    ['cotti', 'topic-accounting', topicId],
+    () => cottiTopicOverviewService.accounting(topicId),
+    { refreshInterval: 15000, revalidateOnFocus: true },
+  );
+
+/** Poll only the visible topic's lightweight revision, not its full transcript. */
+export const useOverviewActivity = (topicId: string | undefined, refresh: () => unknown) => {
+  const revision = useRef<{ topicId: string; value: string } | undefined>(undefined);
+  const swr = useClientDataSWR(
+    topicId ? ['cotti', 'topic-activity', topicId] : null,
+    () => cottiTopicOverviewService.activity(topicId!),
+    { refreshInterval: 5000, refreshWhenHidden: false, revalidateOnFocus: true },
+  );
+  useEffect(() => {
+    if (!topicId || !swr.data) return;
+    const previous = revision.current;
+    revision.current = { topicId, value: swr.data.revision };
+    if (previous?.topicId === topicId && previous.value !== swr.data.revision) void refresh();
+  }, [topicId, swr.data, refresh]);
+  return swr;
+};

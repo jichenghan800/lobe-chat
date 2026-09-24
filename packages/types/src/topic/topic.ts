@@ -113,6 +113,8 @@ export interface OnboardingSessionSnapshot {
   version: number;
 }
 
+export type TopicSandboxProvider = 'market' | 'onlyboxes';
+
 export interface ChatTopicMetadata {
   /** Watermark written by the background topic-summary workflow. */
   autoSummary?: {
@@ -303,6 +305,10 @@ export interface ChatTopicMetadata {
     startedAt?: string;
     threadId?: string | null;
   } | null;
+  /** Server-owned execution guard; uncertain outcomes remain pinned. */
+  sandboxActivity?: { pending: string[]; used: boolean };
+  /** Fixed once execution starts: temporary files are not shared between providers. */
+  sandboxProvider?: TopicSandboxProvider;
   /**
    * A deferred agent run on this topic. Present iff the topic status is
    * `scheduled`. Set to `null` to clear it (same clear-convention as
@@ -588,10 +594,12 @@ export const chatTopicMetadataUpdateSchema = z.object({
  * Metadata a client may seed when creating a topic: the pinned reasoning
  * snapshot taken alongside the pinned model (see `snapshotAgentModel`).
  */
-export const chatTopicCreateMetadataSchema = chatTopicMetadataUpdateSchema.pick({
-  heteroEffort: true,
-  reasoningConfig: true,
-});
+export const chatTopicCreateMetadataSchema = chatTopicMetadataUpdateSchema
+  .pick({
+    heteroEffort: true,
+    reasoningConfig: true,
+  })
+  .extend({ sandboxProvider: z.enum(['market', 'onlyboxes']).optional() });
 
 export interface ChatTopicSummary {
   content: string;
@@ -645,6 +653,8 @@ export interface ChatTopic extends Omit<BaseDataModel, 'meta'> {
    * `metadata.model` (measured dominant model from the usage roll-up).
    */
   model?: string | null;
+  /** Recorded model-only estimates in USD; missing calls are not zero-cost calls. */
+  modelCost?: { calls: number; pricedCalls: number; totalUSD: number | null };
   provider?: string | null;
   sessionId?: string;
   /**
@@ -659,6 +669,10 @@ export interface ChatTopic extends Omit<BaseDataModel, 'meta'> {
   title: string;
   /** Server-side mock until real token aggregation lands. */
   tokenUsage?: number | null;
+  totalInputTokens?: number | null;
+  totalOutputTokens?: number | null;
+  /** Native persisted usage rollup; null means usage has not been recorded. */
+  totalTokens?: number | null;
   trigger?: string | null;
   userId?: string;
 }
@@ -700,6 +714,8 @@ export interface RecentTopic {
 }
 
 export interface CreateTopicParams {
+  /** Agent context; sessionId is reserved for a persisted legacy session. */
+  agentId?: string;
   favorite?: boolean;
   groupId?: string | null;
   messages?: string[];

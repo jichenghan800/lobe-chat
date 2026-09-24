@@ -400,7 +400,10 @@ export const convertIterableToStream = <T>(
  * Create a transformer to convert the response into an SSE format
  */
 export const createSSEProtocolTransformer = (
-  transformer: (chunk: any, stack: StreamContext) => StreamProtocolChunk | StreamProtocolChunk[],
+  transformer: (
+    chunk: any,
+    stack: StreamContext,
+  ) => StreamProtocolChunk | null | undefined | (StreamProtocolChunk | null | undefined)[],
   streamStack?: StreamContext,
   options?: { requireTerminalEvent?: boolean },
 ) => {
@@ -428,10 +431,13 @@ export const createSSEProtocolTransformer = (
 
       const buffers = Array.isArray(result) ? result : [result];
 
-      buffers.forEach(({ type, id, data }) => {
+      buffers.forEach((buffer) => {
+        if (buffer == null) return;
+        const { type, id, data } = buffer;
         controller.enqueue(`id: ${id}\n`);
         controller.enqueue(`event: ${type}\n`);
-        controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
+        // JSON.stringify(undefined) has no JSON representation; keep the wire valid.
+        controller.enqueue(`data: ${JSON.stringify(data) ?? 'null'}\n\n`);
 
         // mark terminal when receiving any of these events
         if (type === 'stop' || type === 'usage' || type === 'error') hasTerminalEvent = true;

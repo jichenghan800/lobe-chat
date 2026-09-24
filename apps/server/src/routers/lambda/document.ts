@@ -1,3 +1,4 @@
+import { assertChatSpreadsheetSize } from '@lobechat/utils/spreadsheet';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
@@ -485,6 +486,18 @@ export const documentRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       await assertContentsNotInRestrictedKnowledgeBase(ctx, [input.id]);
+      const file = await ctx.fileModel.findById(input.id);
+      if (file) {
+        try {
+          assertChatSpreadsheetSize(file.name, file.fileType, file.size);
+        } catch (error) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            cause: error,
+            message: (error as Error).message,
+          });
+        }
+      }
       const lobeDocument = await ctx.documentService.parseFile(input.id);
 
       return lobeDocument;

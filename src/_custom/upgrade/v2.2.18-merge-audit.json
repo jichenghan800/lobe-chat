@@ -1,0 +1,567 @@
+{
+  "customBaseline": "313d0beb75",
+  "implementationDecisions": [
+    {
+      "item": "Error serialization",
+      "decision": "retain minimal typed-Error projection before upstream normalization",
+      "evidence": "Existing frozen-topic SuperJSON regression fails on upstream-only path."
+    },
+    {
+      "item": "Tool assembly duplication",
+      "decision": "candidate: port selected tools, target Agent and delegated sandbox rules through upstream shared mecha",
+      "evidence": "Shared rule tests 21 passed; related client/server regression checks passed. Browser acceptance pending; implementation substitution disclosed to user."
+    },
+    {
+      "item": "Database migration snapshots",
+      "decision": "keep upstream 0162-0166 unchanged; generate additive 0167, retain historical custom SQL without renumbering",
+      "evidence": "Both isolated copies preserve 14 customization table row counts through two applications."
+    }
+  ],
+  "items": [
+    {
+      "id": "DEV-001",
+      "name": "PDF解析",
+      "decision": "preserve-behavior",
+      "references": ["src/libs/document-loaders/loaders/pdf/index.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-002",
+      "name": "人员管理",
+      "decision": "preserve-behavior",
+      "references": [
+        "apps/server/src/routers/lambda/cotti/peopleManagement.ts",
+        "src/features/CottiPlatformManagement/PeopleManagementSettings/UserManagementSettings.tsx",
+        "packages/database/src/models/cottiUserPolicy.ts",
+        "apps/server/src/services/cotti/userModelAccess.ts"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-003",
+      "name": "蓝版飞书",
+      "decision": "preserve-behavior",
+      "references": ["src/libs/better-auth/sso/providers/feishu.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-004",
+      "name": "搜索路由",
+      "decision": "preserve-behavior",
+      "references": ["src/helpers/getSearchConfig.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-005",
+      "name": "模式模型池/面板",
+      "decision": "preserve-behavior",
+      "references": ["src/hooks/useEnabledChatModels.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-006",
+      "name": "成本修复",
+      "decision": "preserve-behavior",
+      "references": [
+        "apps/server/src/services/usage/cost.ts",
+        "src/store/chat/slices/agentRun/actions/entries/conversationLifecycle.ts"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-007",
+      "name": "平台统计",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/routers/lambda/cotti/platformAnalytics.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-008",
+      "name": "内容审计",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/routers/lambda/cotti/platformAudit.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-009",
+      "name": "会话总览",
+      "decision": "preserve-behavior",
+      "references": [
+        "src/hooks/useNavLayout.ts",
+        "apps/server/src/services/cotti/topicOverview/index.ts",
+        "src/features/CottiTopicOverview/TopicManagement.tsx",
+        "apps/server/src/services/cotti/topicOverview/management.ts",
+        "packages/database/src/schemas/cottiTopicPolicy.ts"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-010",
+      "name": "首页通知",
+      "decision": "preserve-behavior",
+      "references": ["src/features/CottiPlatformManagement/HomeNotificationSettings.tsx"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-011",
+      "name": "飞书资料连接器",
+      "decision": "preserve-behavior",
+      "references": ["src/const/connectorPresets.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-012",
+      "name": "首页Chat/Agent/Task",
+      "decision": "preserve-behavior",
+      "references": ["src/features/Home/InputArea/EditorInput.tsx"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-013",
+      "name": "连续未查看暂停",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/services/taskRunner/unviewedResults.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-014",
+      "name": "话题分享",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/routers/lambda/shareChat.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-015",
+      "name": "PDF导出",
+      "decision": "preserve-behavior",
+      "references": ["src/features/ShareModal/SharePdf/usePdfGeneration.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-016",
+      "name": "附件与知识分离",
+      "decision": "preserve-behavior",
+      "references": ["src/store/file/slices/chat/action.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-017",
+      "name": "联系管理员",
+      "decision": "preserve-behavior",
+      "references": ["src/features/Home/HomePortrait.tsx"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-018",
+      "name": "任务模型迁移",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/routers/lambda/cotti/modelDisplay.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-019",
+      "name": "QStash注册控制",
+      "decision": "preserve-behavior",
+      "references": ["scripts/serverLauncher/startServer.js"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-020",
+      "name": "双域名认证",
+      "decision": "preserve-behavior",
+      "references": ["src/libs/cottiSsoRedirect.ts", "src/proxy.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-021",
+      "name": "社区清空",
+      "decision": "preserve-behavior",
+      "references": ["src/layout/AuthProvider/MarketAuth/tokenStorage.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-022",
+      "name": "首页保存时序",
+      "decision": "preserve-behavior",
+      "references": ["src/store/agent/slices/agent/action.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-023",
+      "name": "目标Chat工具隔离",
+      "decision": "preserve-behavior",
+      "references": ["src/helpers/toolEngineering/index.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-024",
+      "name": "追问队列同步",
+      "decision": "preserve-behavior",
+      "references": ["src/store/chat/slices/agentRun/actions/transports/gateway/gateway.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-025",
+      "name": "沙箱文件指纹",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/services/sandbox/service.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-026",
+      "name": "Agent配置减重",
+      "decision": "preserve-behavior",
+      "references": ["packages/database/src/models/agent.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-027",
+      "name": "消息附件减重",
+      "decision": "preserve-behavior",
+      "references": ["src/services/chat/mecha/hydrateRuntimeFileContent.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-028",
+      "name": "OSS批删",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/modules/S3/index.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-029",
+      "name": "参考图超限反馈",
+      "decision": "preserve-behavior",
+      "references": [
+        "src/routes/(main)/(create)/features/GenerationInput/useReferenceImageUpload.ts"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-030",
+      "name": "Portal准入",
+      "decision": "preserve-behavior",
+      "references": ["src/libs/better-auth/plugins/email-whitelist.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-031",
+      "name": "资料重复删除",
+      "decision": "preserve-behavior",
+      "references": ["src/services/resource/index.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-032",
+      "name": "全局下线与引用迁移",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/services/cotti/modelRetirement.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-033",
+      "name": "长话题提醒",
+      "decision": "preserve-behavior",
+      "references": ["src/features/ChatInput/ActionBar/Token/contextWarning.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-034",
+      "name": "任务面板延迟挂载",
+      "decision": "preserve-behavior",
+      "references": ["src/features/AgentTaskManager/index.tsx"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-035",
+      "name": "导入/内置模型归一",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/services/cotti/agentModelNormalization.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-036",
+      "name": "普通用户设置隐藏",
+      "decision": "preserve-behavior",
+      "references": ["src/features/Settings/features/SettingsContent.tsx"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-037",
+      "name": "灵枢AI品牌",
+      "decision": "preserve-behavior",
+      "references": ["packages/business/const/src/branding.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-038",
+      "name": "首页快捷入口",
+      "decision": "preserve-behavior",
+      "references": ["src/features/Home/NewModelShortcuts/starterModels.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-039",
+      "name": "runtime模型裁剪",
+      "decision": "preserve-behavior",
+      "references": ["packages/database/src/repositories/aiInfra/index.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-040",
+      "name": "话题模型加载",
+      "decision": "preserve-behavior",
+      "references": ["src/features/ChatInput/ActionBar/Model/index.tsx"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-041",
+      "name": "流式工具状态",
+      "decision": "preserve-behavior",
+      "references": ["src/store/chat/agents/StreamingHandler.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-042",
+      "name": "社区账户恢复",
+      "decision": "preserve-behavior",
+      "references": ["src/routes/(main)/community/features/UserAvatar/index.tsx"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-043",
+      "name": "Composio入口/同步",
+      "decision": "preserve-behavior",
+      "references": ["src/store/tool/slices/composioStore/action.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-044",
+      "name": "定向诊断/临时文件",
+      "decision": "preserve-behavior",
+      "references": ["packages/trpc/src/lambda/index.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-045",
+      "name": "安全提示/记忆/推理默认",
+      "decision": "preserve-behavior",
+      "references": ["packages/model-runtime/src/utils/modelExtendParams.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-046",
+      "name": "图片单张/隐藏视频",
+      "decision": "preserve-behavior",
+      "references": ["apps/server/src/routers/lambda/image/index.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-047",
+      "name": "SSE空数据",
+      "decision": "preserve-behavior",
+      "references": ["packages/model-runtime/src/core/streams/protocol.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-048",
+      "name": "小人像/气泡",
+      "decision": "preserve-behavior",
+      "references": ["src/features/Home/index.tsx"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-049",
+      "name": "推荐错误/重试",
+      "decision": "preserve-behavior",
+      "references": ["src/features/RecommendTaskTemplates/useDailyBriefRecommendationsUI.ts"],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-050",
+      "name": "邮箱验证码登录",
+      "decision": "preserve-behavior",
+      "references": [
+        "src/features/Auth/SignIn/useEmailOtpSignIn.ts",
+        "src/features/Auth/SignIn/SignInEmailStep.tsx"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-051",
+      "name": "上下文成本保护与摘要续聊",
+      "decision": "preserve-behavior",
+      "references": [
+        "apps/server/src/services/cotti/contextCostGuard.ts",
+        "src/features/Conversation/ChatInput/topicSwitchCheck.ts",
+        "src/_custom/topicSwitchPolicy.ts"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance",
+      "note": "Preserve current monetary guard and topic-switch behavior. Do not restore the removed context-length freeze from the old v2.2.16 inventory."
+    },
+    {
+      "id": "DEV-052",
+      "name": "话题强制成本冻结",
+      "decision": "preserve-behavior",
+      "references": [
+        "packages/database/src/schemas/topicCostFreeze.ts",
+        "packages/database/src/models/topicCostFreeze.ts",
+        "apps/server/src/services/cotti/contextCostGuard.ts",
+        "apps/server/src/services/cotti/topicContinuation.ts",
+        "src/features/ChatInput/TopicCostFreezeLoader.tsx",
+        "packages/database/src/models/cottiTopicBudget.ts",
+        "src/features/CottiPlatformManagement/TopicBudgetSettings.tsx"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-053",
+      "name": "GPT Image 2.5 Flare",
+      "decision": "preserve-behavior",
+      "references": [
+        "packages/model-bank/src/aiModels/openai.ts",
+        "src/features/Home/NewModelShortcuts/starterModels.ts"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-054",
+      "name": "生成图与对话图片紧凑预览",
+      "decision": "preserve-behavior",
+      "references": [
+        "src/features/Conversation/Markdown/index.tsx",
+        "src/routes/(main)/(create)/image/features/GenerationFeed/GenerationItem/utils.ts"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "DEV-055",
+      "name": "全览刷新保持与日期倒序",
+      "decision": "preserve-behavior",
+      "references": [
+        "src/proxy.ts",
+        "src/features/CottiTopicOverview/routeMeta.ts",
+        "src/features/CottiTopicOverview/TopicListPanel.tsx",
+        "apps/server/src/services/cotti/topicOverview/index.ts"
+      ],
+      "missingReferences": [],
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-001",
+      "name": "用户组与 Astraflow 渠道隔离",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-002",
+      "name": "自建沙箱、容量与按话题选择",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-003",
+      "name": "云端沙箱授权预检及明确选择兜底",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-004",
+      "name": "委派 Agent 继承沙箱与工具权限",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-005",
+      "name": "全览模式、原链接、费用及只读活动跟踪",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-006",
+      "name": "OSS 分片结束条件、大 Excel/CSV 保护与上传阶段",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-007",
+      "name": "冻结提示与依赖上下文的追问保留",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-008",
+      "name": "OnlyBoxes 相对路径导出",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-009",
+      "name": "图片预览适应屏幕",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    },
+    {
+      "id": "V217-010",
+      "name": "跨发布静态资源兼容",
+      "decision": "preserve-behavior",
+      "verification": "pending-consolidated-acceptance"
+    }
+  ],
+  "strategy": "2026-09-24 user requested all necessary customizations merged before one consolidated acceptance. No intermediate product signoff.",
+  "upstream": "v2.2.18"
+}

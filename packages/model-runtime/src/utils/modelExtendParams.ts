@@ -50,8 +50,32 @@ export const resolveEffectiveReasoningChatConfig = (
   const base: LobeAgentChatConfig = { ...ctx.agentChatConfig };
   for (const key of MODEL_REASONING_EXTEND_PARAMS) delete base[key];
 
+  // Enterprise defaults only fill unset effort fields. Personal model settings
+  // and explicit sub-agent choices below retain priority. Model-card filtering
+  // in applyModelExtendParams prevents sending unsupported parameters.
+  const effort = base.enableAgentMode === false ? 'low' : 'medium';
+  const hasExplicitEffort = MODEL_REASONING_EXTEND_PARAMS.some(
+    (key) =>
+      key.toLowerCase().includes('effort') &&
+      (ctx.modelReasoningConfig?.[key] !== undefined ||
+        ctx.subAgentReasoningOverrides?.[key] !== undefined),
+  );
+  // An explicit empty topic/model pin means native model defaults.
+  const hasExplicitDefault =
+    ctx.modelReasoningConfig != null && Object.keys(ctx.modelReasoningConfig).length === 0;
+  const defaults: AiModelReasoningConfig =
+    hasExplicitEffort || hasExplicitDefault
+      ? {}
+      : {
+          reasoningEffort: effort,
+          gpt5ReasoningEffort: effort,
+          gpt5_1ReasoningEffort: effort,
+          gpt5_2ReasoningEffort: effort,
+          gpt5_6ReasoningEffort: effort,
+        };
   return {
     ...base,
+    ...defaults,
     ...pickReasoningFields(ctx.modelReasoningConfig),
     ...pickReasoningFields(ctx.subAgentReasoningOverrides),
   };
