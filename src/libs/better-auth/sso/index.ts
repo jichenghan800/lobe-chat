@@ -13,7 +13,7 @@ import Authentik from './providers/authentik';
 import Casdoor from './providers/casdoor';
 import CloudflareZeroTrust from './providers/cloudflare-zero-trust';
 import Cognito from './providers/cognito';
-import Feishu from './providers/feishu';
+import Feishu, { FeishuBlue } from './providers/feishu';
 import GenericOIDC from './providers/generic-oidc';
 import Github from './providers/github';
 import Google from './providers/google';
@@ -41,6 +41,7 @@ const providerDefinitions = [
   Okta,
   Zitadel,
   Feishu,
+  FeishuBlue,
   Wechat,
 ] as const;
 

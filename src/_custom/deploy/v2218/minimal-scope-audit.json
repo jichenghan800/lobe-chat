@@ -1,0 +1,220 @@
+{
+  "base": "v2.2.17",
+  "customSource": "313d0beb75",
+  "dependencySnapshot": {
+    "file": "pnpm-lock.yaml",
+    "sha256": "a5e8b9da36e5b8448dafbaf6aab0633cad5ff04fa34ffd52094e61e2ed3f5688",
+    "backup": "/opt/backups/lingshu-v2218-isolation-20260924/pnpm-lock.yaml",
+    "pnpm": "12.4.1",
+    "note": "Upstream disables lockfile by default. Generate with --lockfile=true; future installs must explicitly use --lockfile=true --frozen-lockfile. Install scripts not run yet."
+  },
+  "files": [
+    {
+      "path": "apps/server/src/modules/ModelRuntime/index.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "apps/server/src/services/agentRuntime/AgentRuntimeService.ts",
+      "upstreamChanged": true,
+      "stage": "pending"
+    },
+    {
+      "path": "apps/server/src/services/cotti/contextCostGuard.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "apps/server/src/services/cotti/contextCostGuard.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "apps/server/src/services/cotti/modelRetirement.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "apps/server/src/services/cotti/modelRetirement.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "apps/server/src/services/cotti/userModelAccess.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "apps/server/src/services/cotti/userModelAccess.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/__tests__/cottiLoginAccess.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/__tests__/cottiPlatformAdmin.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/__tests__/cottiTopicBudget.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/__tests__/cottiUserGroup.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/__tests__/cottiUserLoginControl.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/__tests__/cottiUserPolicy.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/__tests__/topicCostFreeze.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/cottiLoginAccess.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/cottiPlatformAdmin.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/cottiTopicBudget.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/cottiUserGroup.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/cottiUserLoginControl.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/cottiUserPolicy.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/models/topicCostFreeze.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/schemas/cottiTopicBudget.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/schemas/cottiUserGroup.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/schemas/cottiUserPolicy.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "packages/database/src/schemas/topicCostFreeze.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "src/_custom/registry/modelRetirement.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "src/_custom/registry/userModelAccess.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "src/_custom/registry/userModelAccess.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "src/libs/better-auth/auth-client.desktop.ts",
+      "upstreamChanged": false,
+      "stage": "ported-unit-tested"
+    },
+    {
+      "path": "src/libs/better-auth/auth-client.ts",
+      "upstreamChanged": false,
+      "stage": "ported-unit-tested"
+    },
+    {
+      "path": "src/libs/better-auth/define-config.ts",
+      "upstreamChanged": true,
+      "stage": "pending"
+    },
+    {
+      "path": "src/libs/better-auth/plugins/email-whitelist.integration.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "src/libs/better-auth/plugins/email-whitelist.test.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "src/libs/better-auth/plugins/email-whitelist.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    },
+    {
+      "path": "src/libs/better-auth/sso/index.ts",
+      "upstreamChanged": false,
+      "stage": "ported-unit-tested"
+    },
+    {
+      "path": "src/libs/better-auth/sso/providers/feishu.test.ts",
+      "upstreamChanged": false,
+      "stage": "ported-unit-tested"
+    },
+    {
+      "path": "src/libs/better-auth/sso/providers/feishu.ts",
+      "upstreamChanged": false,
+      "stage": "ported-unit-tested"
+    },
+    {
+      "path": "src/libs/better-auth/sso/providers/generic-oidc.test.ts",
+      "upstreamChanged": false,
+      "stage": "ported-unit-tested"
+    },
+    {
+      "path": "src/libs/better-auth/sso/providers/generic-oidc.ts",
+      "upstreamChanged": false,
+      "stage": "ported-unit-tested"
+    },
+    {
+      "path": "src/services/cottiTopicBudget.ts",
+      "upstreamChanged": false,
+      "stage": "pending"
+    }
+  ],
+  "note": "Dependency and integration checklist, not a complete minimal file manifest. Upstream unchanged does not mean behavioral acceptance.",
+  "upstream": "v2.2.18"
+}

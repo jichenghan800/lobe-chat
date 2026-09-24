@@ -44,10 +44,13 @@ declare global {
       AUTH_DISABLE_EMAIL_PASSWORD?: string;
 
       AUTH_EMAIL_VERIFICATION?: string;
+      AUTH_ENABLE_EMAIL_OTP?: string;
       AUTH_ENABLE_MAGIC_LINK?: string;
       AUTH_FEISHU_APP_ID?: string;
-
       AUTH_FEISHU_APP_SECRET?: string;
+
+      AUTH_FEISHU_BLUE_APP_ID?: string;
+      AUTH_FEISHU_BLUE_APP_SECRET?: string;
       AUTH_GENERIC_OIDC_ID?: string;
       AUTH_GENERIC_OIDC_ISSUER?: string;
 
@@ -120,6 +123,7 @@ export const getAuthConfig = () => {
       AUTH_TRUSTED_ORIGINS: z.string().optional(),
       AUTH_EMAIL_VERIFICATION: z.boolean().optional().default(false),
       AUTH_ENABLE_MAGIC_LINK: z.boolean().optional().default(false),
+      AUTH_ENABLE_EMAIL_OTP: z.boolean().optional().default(false),
       AUTH_ALLOWED_EMAILS: z.string().optional(),
       AUTH_DISABLE_EMAIL_PASSWORD: z.boolean().optional().default(false),
 
@@ -166,7 +170,9 @@ export const getAuthConfig = () => {
       AUTH_CLOUDFLARE_ZERO_TRUST_ISSUER: z.string().optional(),
 
       AUTH_FEISHU_APP_ID: z.string().optional(),
+      AUTH_FEISHU_BLUE_APP_ID: z.string().optional(),
       AUTH_FEISHU_APP_SECRET: z.string().optional(),
+      AUTH_FEISHU_BLUE_APP_SECRET: z.string().optional(),
 
       AUTH_GENERIC_OIDC_ID: z.string().optional(),
       AUTH_GENERIC_OIDC_SECRET: z.string().optional(),
@@ -209,6 +215,7 @@ export const getAuthConfig = () => {
       AUTH_COOKIE_PREFIX: process.env.AUTH_COOKIE_PREFIX,
       AUTH_EMAIL_VERIFICATION: process.env.AUTH_EMAIL_VERIFICATION === '1',
       AUTH_ENABLE_MAGIC_LINK: process.env.AUTH_ENABLE_MAGIC_LINK === '1',
+      AUTH_ENABLE_EMAIL_OTP: process.env.AUTH_ENABLE_EMAIL_OTP === '1',
       AUTH_SECRET: process.env.AUTH_SECRET,
       AUTH_SSO_PROVIDERS: process.env.AUTH_SSO_PROVIDERS,
       AUTH_TRUSTED_ORIGINS: process.env.AUTH_TRUSTED_ORIGINS,
@@ -261,7 +268,9 @@ export const getAuthConfig = () => {
       AUTH_CLOUDFLARE_ZERO_TRUST_ISSUER: process.env.AUTH_CLOUDFLARE_ZERO_TRUST_ISSUER,
 
       AUTH_FEISHU_APP_ID: process.env.AUTH_FEISHU_APP_ID,
+      AUTH_FEISHU_BLUE_APP_ID: process.env.AUTH_FEISHU_BLUE_APP_ID,
       AUTH_FEISHU_APP_SECRET: process.env.AUTH_FEISHU_APP_SECRET,
+      AUTH_FEISHU_BLUE_APP_SECRET: process.env.AUTH_FEISHU_BLUE_APP_SECRET,
 
       AUTH_GENERIC_OIDC_ID: process.env.AUTH_GENERIC_OIDC_ID,
       AUTH_GENERIC_OIDC_SECRET: process.env.AUTH_GENERIC_OIDC_SECRET,
