@@ -18,6 +18,8 @@ import type {
   CottiTopicOverviewQuery,
 } from '@/types/cotti/topicOverview';
 
+import { billableMessageFilter } from './accountingFilter';
+
 const MAX_TOPIC_MESSAGES = 5000;
 
 export const cottiTopicOverviewQuerySchema = z.object({
@@ -320,8 +322,8 @@ export class CottiTopicOverviewService {
           SELECT
             COUNT(DISTINCT messages.id) AS message_count,
             BOOL_OR(messages.tools::text LIKE '%lobe-cloud-sandbox%' OR messages.tools::text LIKE '%lobe-local-system%' OR messages.tools::text LIKE '%callSubAgent%') AS has_sandbox_tools,
-            COUNT(DISTINCT messages.id) FILTER (WHERE messages.role='assistant' AND messages.user_id=page."userId" AND coalesce(messages.metadata->>'copied','') <> 'true') AS cost_records,
-            COUNT(DISTINCT messages.id) FILTER (WHERE messages.role='assistant' AND messages.user_id=page."userId" AND coalesce(messages.metadata->>'copied','') <> 'true' AND coalesce(messages.usage->>'cost', messages.metadata->'usage'->>'cost', messages.metadata->>'cost') ~ '^[0-9]+([.][0-9]+)?$') AS priced_records,
+            COUNT(DISTINCT messages.id) FILTER (WHERE messages.role='assistant' AND messages.user_id=page."userId" AND coalesce(messages.metadata->>'copied','') <> 'true' AND ${billableMessageFilter}) AS cost_records,
+            COUNT(DISTINCT messages.id) FILTER (WHERE messages.role='assistant' AND messages.user_id=page."userId" AND coalesce(messages.metadata->>'copied','') <> 'true' AND ${billableMessageFilter} AND coalesce(messages.usage->>'cost', messages.metadata->'usage'->>'cost', messages.metadata->>'cost') ~ '^[0-9]+([.][0-9]+)?$') AS priced_records,
             COUNT(*) FILTER (WHERE files.file_type LIKE 'image/%') AS image_count
           FROM messages
           LEFT JOIN messages_files ON messages_files.message_id = messages.id

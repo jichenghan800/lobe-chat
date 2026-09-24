@@ -13,6 +13,8 @@ import type { LobeChatDatabase, Transaction } from '@/database/type';
 import { reconcileTopicBudgetFreezes } from '@/database/utils/reconcileTopicBudgetFreezes';
 import type { CottiTopicManagementInput } from '@/types/cotti/topicOverview';
 
+import { billableMessageFilter } from './accountingFilter';
+
 /** Same persisted cost sources and ownership as the request budget guard. */
 const usageNumber = (field: string) => {
   const raw = sql`coalesce(usage->>${field}, metadata->'usage'->>${field}, metadata->>${field})`;
@@ -33,7 +35,7 @@ export const getTopicAccounting = async (
       coalesce(sum(${usageNumber('inputCachedTokens')}),0) AS "cachedTokens",
       coalesce(sum(${usageNumber('inputWriteCacheTokens')}),0) AS "cacheWriteTokens"
     FROM messages WHERE topic_id=${topicId} AND user_id=${userId} AND role='assistant'
-      AND coalesce(metadata->>'copied','') <> 'true'
+      AND coalesce(metadata->>'copied','') <> 'true' AND ${billableMessageFilter}
     GROUP BY model, provider ORDER BY sum(${usageNumber('cost')}) DESC NULLS LAST
   `);
   return result.rows.map((row) => ({

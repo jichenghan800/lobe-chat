@@ -63,6 +63,48 @@ describe('administrator topic budget controls', () => {
     await db.delete(cottiAuditViewLogs).where(eq(cottiAuditViewLogs.adminUserId, admin));
     await db.delete(users).where(inArray(users.id, [owner, admin]));
   });
+  it('does not report pre-call budget rejection as missing fees, but preserves usage and unknown errors', async () => {
+    const testId = `${id}-billing`;
+    await db.insert(topics).values({ id: testId, userId: owner, title: testId });
+    const error = { type: 400, body: { error: { code: 'TOPIC_COST_FROZEN' } } };
+    await db.insert(messages).values([
+      {
+        id: `${testId}-paid`,
+        topicId: testId,
+        userId: owner,
+        role: 'assistant',
+        usage: { cost: 0.1 },
+      },
+      { id: `${testId}-blocked`, topicId: testId, userId: owner, role: 'assistant', error },
+      {
+        id: `${testId}-usage`,
+        topicId: testId,
+        userId: owner,
+        role: 'assistant',
+        error,
+        usage: { cost: 0.2 },
+      },
+    ]);
+    try {
+      const state = await service.get(testId);
+      expect(state.costComplete).toBe(true);
+      expect(state.costUsd).toBeCloseTo(0.3);
+      expect(state.models.reduce((n, m) => n + m.records, 0)).toBe(2);
+      const overview = new CottiTopicOverviewService(db);
+      expect((await overview.list({ q: testId })).items[0].costComplete).toBe(true);
+      await db.insert(messages).values({
+        id: `${testId}-unknown`,
+        topicId: testId,
+        userId: owner,
+        role: 'assistant',
+        error: { type: 500, body: { error: { code: 'PROVIDER_ERROR' } } },
+      });
+      expect((await service.get(testId)).costComplete).toBe(false);
+      expect((await overview.list({ q: testId })).items[0].costComplete).toBe(false);
+    } finally {
+      await db.delete(topics).where(eq(topics.id, testId));
+    }
+  });
   it('uses actual model costs, excluding copied and foreign messages', async () => {
     const state = await service.get(id);
     expect(state.costUsd).toBe(2);

@@ -4,19 +4,20 @@ import { Flexbox, Input } from '@lobehub/ui';
 import { Button, confirmModal, Text, toast } from '@lobehub/ui/base-ui';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { mutate } from 'swr';
 
 import { cottiTopicOverviewService } from '@/services/cottiTopicOverview';
 import type { CottiTopicManagementInput } from '@/types/cotti/topicOverview';
 
 import { useCottiTopicAccounting } from './hooks';
 import { styles } from './style';
+import { useRefreshTopicOverview } from './useRefreshTopicOverview';
 
 export const topicCny = (usd: number) =>
   usd > 0 && usd * 7.12 < 0.01 ? '<¥0.01' : `¥${(usd * 7.12).toFixed(2)}`;
 
 export const TopicManagement = ({ topicId, onClose }: { topicId: string; onClose: () => void }) => {
   const { t } = useTranslation('topic');
+  const refreshOverview = useRefreshTopicOverview();
   const swr = useCottiTopicAccounting(topicId);
   const data = swr.data;
   const [amount, setAmount] = useState('');
@@ -37,9 +38,7 @@ export const TopicManagement = ({ topicId, onClose }: { topicId: string; onClose
         limitFen: amount.trim() ? Math.round(Number(amount) * 100) : null,
       });
       await swr.mutate(updated, { revalidate: false });
-      await mutate(
-        (key) => Array.isArray(key) && key[0] === 'cotti' && key[1] === 'topic-overview',
-      );
+      await refreshOverview();
       toast.success(t('overview.manage.saved'));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('overview.manage.failed'));
