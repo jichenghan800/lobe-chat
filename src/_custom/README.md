@@ -4,7 +4,7 @@
 
 ## 当前部署与最新变更
 
-2026-09-24：chatdev.cotticoffee.com 与 chat.cotti.ai 同步切换 v2.2.18 完整二开候选，共享新的验收数据库，旧库与旧容器保留。生产不变。[发布与验收记录](deploy/v2218/acceptance-release-20260924.md)。
+2026-09-24：chatdev.cotticoffee.com 与 chat.cotti.ai 同步切换 v2.2.18 完整二开候选，共享新的验收数据库，旧库与旧容器保留。当前为 r2，生产不变。[首次发布记录](deploy/v2218/acceptance-release-20260924.md)、[显示修正](deploy/v2218/acceptance-followup-20260924.md)、[第三轮核心链路](deploy/v2218/acceptance-round3-20260924.md)、[第四轮分享与回退](deploy/v2218/acceptance-round4-20260924.md)。
 
 截至 2026-09-23 最后一次发布，三个入口均为 `lobehub:lingshu-v2217-image-fit-20260923-r1`（源码 `147592dd99`）。开发 `chatdev.cotticoffee.com` 与 `chat.cotti.ai` 共享开发后端；生产 `chat.cotticoffee.com` 保留独立生产数据。生产 OnlyBoxes 已启用，默认容量 2，Docker 未升级。
 
@@ -18,13 +18,14 @@
 - [全览模式与只读活动跟踪](upgrade/overview-live-session.md)
 - [沙箱授权预检](upgrade/sandbox-access-preflight.md)
 
-每个专项记录保留范围、源码隔离点、验证结果及部署状态；不将运行配置或临时排障脚本混入上游业务实现。上传校验 / 合并短暂阶段尚缺完整浏览器动态证据，不能把部分观察写成全部验收通过。
+每个专项记录保留范围、源码隔离点、验证结果及部署状态；不将运行配置或临时排障脚本混入上游业务实现。v2.2.18 已补测 82.2 MiB Excel 上传进度和 “正在完成上传” 阶段；测试范围及其他保留项以各轮验收记录为准，不将部分观察写成全部验收通过。
 
 ## v2.2.18 完整合并候选
 
 - [本次合并与验证状态](upgrade/v2.2.18-merge-status.md)
 - [完整二开核对清单](upgrade/v2.2.18-merge-audit.json)
 - [隔离构建、备份与数据库迁移](deploy/v2218/README.md)
+- [生产只读基线与发布准备](deploy/v2218/production-readiness-20260924.md)
 - [最初的源码差异评估](upgrade/v2.2.18-assessment.md)：历史评估，当前状态以上述合并记录为准。
 
 ## 合并核对与历史基线
