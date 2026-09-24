@@ -20,7 +20,7 @@
 - `lobehub:lingshu-v2218-gpt6-sol-20260924-r1`
 - `sha256:d6cb4851ab262ef1a50c063c71620af89c8825343edb4263d00d20ee4b69fa14`
 
-此前 r2 本机私有镜像包目录 `/opt/backups/lingshu-v2218-production-package-20260924`；归档和 manifest 记录镜像摘要及归档 SHA256。不含生产环境配置，不作为生产已导入的证明。该旧归档不含 GPT-6 Sol；正式发布前须另行导出新候选，传输后再次校验归档和导入镜像摘要。模型定义支持不等于对应渠道已开通，详见 [模型专项](../../upgrade/gpt6-sol.md)。
+此前 r2 本机私有镜像包目录 `/opt/backups/lingshu-v2218-production-package-20260924`；归档和 manifest 记录镜像摘要及归档 SHA256。不含生产环境配置，不作为生产已导入的证明。该旧归档不含 GPT-6 Sol；正式发布前须另行导出新候选，传输后再次校验归档和导入镜像摘要。开发默认组 Azure 和压测组 Astraflow 已分别启用并完成微量接口探测；生产仍需核对自己的渠道配置，详见 [模型专项](../../upgrade/gpt6-sol.md)。
 
 ## 已验证与保留边界
 
